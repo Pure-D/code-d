@@ -68,6 +68,14 @@ export class WorkspaceD extends EventEmitter implements vscode.CompletionItemPro
 			}, reject);
 		});
 	}
+	
+	dispose() {
+		console.log("Disposing");
+		this.request({ cmd: "unload", components: "*" }).then((data) => {
+			console.log("Unloaded " + data.join(", "));
+		});
+		this.instance.kill();
+	}
 
 	private setupDub() {
 		let self = this;
@@ -83,9 +91,7 @@ export class WorkspaceD extends EventEmitter implements vscode.CompletionItemPro
 	private setupDCD() {
 		let self = this;
 		this.request({ cmd: "load", components: ["dcd"], dir: this.projectRoot, autoStart: false }).then((data) => {
-					console.log("DCD loaded");
 			this.request({ cmd: "dcd", subcmd: "find-and-select-port", port: 9166 }).then((data) => {
-					console.log("DCD server port found");
 				this.request({ cmd: "dcd", subcmd: "setup-server" }).then((data) => {
 					console.log("DCD is ready");
 					self.dcdReady = true;

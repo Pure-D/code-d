@@ -7,8 +7,8 @@ export function activate(context: vscode.ExtensionContext) {
 		console.warn("Could not initialize code-d");
 		return;
 	}
-	let subs = context.subscriptions;
 	let workspaced = new WorkspaceD(vscode.workspace.rootPath);
-	subs.push(vscode.languages.registerCompletionItemProvider(D_MODE, workspaced));
+	context.subscriptions.push(vscode.languages.registerCompletionItemProvider(D_MODE, workspaced));
+	context.subscriptions.push(workspaced);
 	console.log("Initialized code-d");
 }
