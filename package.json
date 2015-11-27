@@ -1,0 +1,70 @@
+{
+	"name": "code-d",
+	"description": "D support for vscode",
+	"version": "0.0.1",
+	"publisher": "WebFreak",
+	"engines": {
+		"vscode": "^0.10.1"
+	},
+	"categories": [
+		"Other"
+	],
+	"activationEvents": [
+		"onLanguage:d"
+	],
+	"main": "./out/src/extension",
+	"contributes": {
+		"languages": [
+			{
+				"id": "d",
+				"extensions": [
+					".d",
+					".di"
+				]
+			}
+		],
+		"grammars": [
+			{
+				"language": "d",
+				"scopeName": "source.d",
+				"path": "./syntaxes/d.json"
+			}
+		],
+		"snippets": [
+			{
+				"language": "d",
+				"path": "./snippets/d.json"
+			}
+		],
+		"commands": [
+			{
+				"command": "extension.sayHello",
+				"title": "Hello World"
+			}
+		],
+		"configuration": {
+			"title": "D configuration",
+			"type": "object",
+			"properties": {
+				"d.dcdClientPath": {
+					"type": "string",
+					"default": "dcd-client",
+					"description": "Path of dcd-client executable. Path can be omitted if in $PATH"
+				},
+				"d.dcdServerPath": {
+					"type": "string",
+					"default": "dcd-server",
+					"description": "Path of dcd-server executable. Path can be omitted if in $PATH"
+				}
+			}
+		}
+	},
+	"scripts": {
+		"vscode:prepublish": "node ./node_modules/vscode/bin/compile",
+		"compile": "node ./node_modules/vscode/bin/compile -watch -p ./"
+	},
+	"devDependencies": {
+		"typescript": "^1.6.2",
+		"vscode": "0.10.x"
+	}
+}
