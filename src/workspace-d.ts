@@ -2,7 +2,11 @@ import * as ChildProcess from "child_process"
 import * as vscode from "vscode"
 import { EventEmitter } from "events"
 
-export class WorkspaceD extends EventEmitter implements vscode.CompletionItemProvider, vscode.SignatureHelpProvider, vscode.WorkspaceSymbolProvider {
+export class WorkspaceD extends EventEmitter implements
+	vscode.CompletionItemProvider,
+	vscode.SignatureHelpProvider,
+	vscode.WorkspaceSymbolProvider,
+	vscode.DocumentSymbolProvider {
 	constructor(private projectRoot: string) {
 		super();
 		this.on("error", function(err) {
@@ -69,7 +73,6 @@ export class WorkspaceD extends EventEmitter implements vscode.CompletionItemPro
 		return new Promise((resolve, reject) => {
 			if (!self.dcdReady)
 				return reject("DCD not ready");
-			console.log("Searching " + query);
 			self.request({ cmd: "dcd", subcmd: "search-symbol", query: query }).then((symbols) => {
 				let found = [];
 				symbols.forEach(element => {
@@ -82,13 +85,38 @@ export class WorkspaceD extends EventEmitter implements vscode.CompletionItemPro
 						}
 					});
 					let entry = new vscode.SymbolInformation(query, type, range, uri);
-					console.log("Found");
-					console.log(entry);
 					found.push(entry);
 				});
-				console.log("Resolve");
-				console.log(found);
 				resolve(found);
+			}, reject);
+		});
+	}
+
+	provideDocumentSymbols(document: vscode.TextDocument, token: vscode.CancellationToken): Thenable<vscode.SymbolInformation[]> {
+		let self = this;
+		return new Promise((resolve, reject) => {
+			if (!self.dscannerReady)
+				return reject("DScanner not ready");
+			self.request({ cmd: "dscanner", subcmd: "list-definitions", file: document.uri.fsPath }).then(definitions => {
+				console.log(definitions);
+				let informations: vscode.SymbolInformation[] = [];
+				definitions.forEach(element => {
+					let container = undefined;
+					let range = new vscode.Range(element.line - 1, 0, element.line - 1, 0);
+					let type = self.scanTypes[element.type];
+					if(element.type == "f" && element.name == "this")
+						type = vscode.SymbolKind.Constructor;
+					if(element.attributes.struct)
+						container = element.attributes.struct;
+					if(element.attributes.class)
+						container = element.attributes.class;
+					if(element.attributes.enum)
+						container = element.attributes.enum;
+					if(element.attributes.union)
+						container = element.attributes.union;
+					informations.push(new vscode.SymbolInformation(element.name, type, range, document.uri, container));
+				});
+				resolve(informations);
 			}, reject);
 		});
 	}
@@ -104,7 +132,6 @@ export class WorkspaceD extends EventEmitter implements vscode.CompletionItemPro
 					let range = document.getWordRangeAtPosition(new vscode.Position(element.line - 1, element.column - 1));
 					diagnostics.push(new vscode.Diagnostic(range, element.description, self.mapLintType(element.type)));
 				});
-				console.log(diagnostics);
 				resolve(diagnostics);
 			}, reject);
 		});
@@ -119,7 +146,7 @@ export class WorkspaceD extends EventEmitter implements vscode.CompletionItemPro
 	}
 
 	private mapLintType(type: string): vscode.DiagnosticSeverity {
-		switch(type) {
+		switch (type) {
 			case "warn":
 				return vscode.DiagnosticSeverity.Warning;
 			case "error":
@@ -192,11 +219,11 @@ export class WorkspaceD extends EventEmitter implements vscode.CompletionItemPro
 
 	private handleData(chunk) {
 		this.totalData = Buffer.concat([this.totalData, chunk]);
-		while(this.handleChunks());
+		while (this.handleChunks());
 	}
-	
+
 	private handleChunks() {
-		if(this.totalData.length < 8)
+		if (this.totalData.length < 8)
 			return false;
 		let len = this.totalData.readInt32BE(0);
 		if (this.totalData.length >= len + 4) {
@@ -224,6 +251,18 @@ export class WorkspaceD extends EventEmitter implements vscode.CompletionItemPro
 	private totalData: Buffer;
 	private requestNum = 0;
 	private instance: ChildProcess.ChildProcess;
+	private scanTypes = {
+		g: vscode.SymbolKind.Enum,
+		e: vscode.SymbolKind.Field,
+		v: vscode.SymbolKind.Variable,
+		i: vscode.SymbolKind.Interface,
+		c: vscode.SymbolKind.Class,
+		s: vscode.SymbolKind.Class,
+		f: vscode.SymbolKind.Function,
+		u: vscode.SymbolKind.Class,
+		T: vscode.SymbolKind.Property,
+		a: vscode.SymbolKind.Field
+	};
 	private types = {
 		c: vscode.CompletionItemKind.Class,
 		i: vscode.CompletionItemKind.Interface,

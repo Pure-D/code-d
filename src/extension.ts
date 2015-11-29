@@ -12,12 +12,13 @@ export function activate(context: vscode.ExtensionContext) {
 	let workspaced = new WorkspaceD(vscode.workspace.rootPath);
 	context.subscriptions.push(vscode.languages.registerCompletionItemProvider(D_MODE, workspaced));
 	context.subscriptions.push(vscode.languages.registerSignatureHelpProvider(D_MODE, workspaced));
+	context.subscriptions.push(vscode.languages.registerDocumentSymbolProvider(D_MODE, workspaced));
+	context.subscriptions.push(workspaced);
+	
+	context.subscriptions.push(vscode.languages.registerWorkspaceSymbolProvider(workspaced));
 
 	diagnosticCollection = vscode.languages.createDiagnosticCollection("d");
 	context.subscriptions.push(diagnosticCollection);
-
-	context.subscriptions.push(vscode.languages.registerWorkspaceSymbolProvider(workspaced));
-	context.subscriptions.push(workspaced);
 
 	context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(document => {
 		if (document.languageId != "d")
