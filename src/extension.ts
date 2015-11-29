@@ -15,6 +15,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.languages.registerDocumentSymbolProvider(D_MODE, workspaced));
 	context.subscriptions.push(vscode.languages.registerHoverProvider(D_MODE, workspaced));
 	context.subscriptions.push(vscode.languages.registerDefinitionProvider(D_MODE, workspaced));
+	context.subscriptions.push(vscode.languages.registerDocumentFormattingEditProvider(D_MODE, workspaced));
 	context.subscriptions.push(workspaced);
 
 	context.subscriptions.push(vscode.languages.registerWorkspaceSymbolProvider(workspaced));

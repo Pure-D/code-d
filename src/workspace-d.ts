@@ -8,6 +8,7 @@ export class WorkspaceD extends EventEmitter implements
 	vscode.WorkspaceSymbolProvider,
 	vscode.DocumentSymbolProvider,
 	vscode.DefinitionProvider,
+	vscode.DocumentFormattingEditProvider,
 	vscode.HoverProvider {
 	constructor(private projectRoot: string) {
 		super();
@@ -144,7 +145,7 @@ export class WorkspaceD extends EventEmitter implements
 				return reject("DCD not ready");
 			let offset = document.offsetAt(position);
 			self.request({ cmd: "dcd", subcmd: "find-declaration", code: document.getText(), pos: offset }).then((declaration) => {
-				if(!declaration)
+				if (!declaration)
 					return reject();
 				let range = new vscode.Range(1, 1, 1, 1);
 				let uri = document.uri;
@@ -160,6 +161,20 @@ export class WorkspaceD extends EventEmitter implements
 		});
 	}
 
+	provideDocumentFormattingEdits(document: vscode.TextDocument, options: vscode.FormattingOptions, token: vscode.CancellationToken): Thenable<vscode.TextEdit[]> {
+		let self = this;
+		return new Promise((resolve, reject) => {
+			if (!self.dfmtReady)
+				return reject("Dfmt not ready");
+			self.request({ cmd: "dfmt", code: document.getText() }).then((formatted) => {
+				let lastLine = document.lineCount;
+				let lastLineLastCol = document.lineAt(lastLine - 1).range.end.character;
+				let range = new vscode.Range(0, 0, lastLine - 1, lastLineLastCol);
+				resolve([new vscode.TextEdit(range, formatted)]);
+			}, reject);
+		});
+	}
+
 	lint(document: vscode.TextDocument): Thenable<vscode.Diagnostic[]> {
 		let self = this;
 		return new Promise((resolve, reject) => {
@@ -169,7 +184,7 @@ export class WorkspaceD extends EventEmitter implements
 				let diagnostics: vscode.Diagnostic[] = [];
 				issues.forEach(element => {
 					let range = document.getWordRangeAtPosition(new vscode.Position(Math.max(0, element.line - 1), element.column));
-					if(!range || !range.start)
+					if (!range || !range.start)
 						range = new vscode.Range(Math.max(0, element.line - 1), element.column, Math.max(0, element.line - 1), element.column + 1);
 					diagnostics.push(new vscode.Diagnostic(range, element.description, self.mapLintType(element.type)));
 				});
@@ -203,6 +218,7 @@ export class WorkspaceD extends EventEmitter implements
 			self.dubReady = true;
 			self.setupDCD();
 			self.setupDScanner();
+			self.setupDfmt();
 		}, (err) => {
 			vscode.window.showErrorMessage("Could not initialize dub. See console for details!");
 		});
@@ -221,6 +237,14 @@ export class WorkspaceD extends EventEmitter implements
 			this.startDCD();
 		}, (err) => {
 			vscode.window.showErrorMessage("Could not initialize DCD. See console for details!");
+		});
+	}
+
+	private setupDfmt() {
+		let self = this;
+		this.request({ cmd: "load", components: ["dfmt"], dir: this.projectRoot }).then((data) => {
+			console.log("Dfmt is ready");
+			self.dfmtReady = true;
 		});
 	}
 
@@ -309,6 +333,7 @@ export class WorkspaceD extends EventEmitter implements
 	private runCheckTimeout = -1;
 	private dubReady: boolean = false;
 	private dcdReady: boolean = false;
+	private dfmtReady: boolean = false;
 	private dscannerReady: boolean = false;
 	private totalData: Buffer;
 	private requestNum = 0;
