@@ -6,15 +6,18 @@ export class WorkspaceD extends EventEmitter implements
 	vscode.CompletionItemProvider,
 	vscode.SignatureHelpProvider,
 	vscode.WorkspaceSymbolProvider,
-	vscode.DocumentSymbolProvider {
+	vscode.DocumentSymbolProvider,
+	vscode.DefinitionProvider,
+	vscode.HoverProvider {
 	constructor(private projectRoot: string) {
 		super();
+		let self = this;
 		this.on("error", function(err) {
 			console.error(err);
+			self.ensureDCDRunning();
 		});
 		this.instance = ChildProcess.spawn("workspace-d", [], { cwd: projectRoot });
 		this.totalData = new Buffer(0);
-		let self = this;
 		this.instance.stderr.on("data", function(chunk) {
 			console.log("WorkspaceD Debug: " + chunk);
 		});
@@ -98,25 +101,61 @@ export class WorkspaceD extends EventEmitter implements
 			if (!self.dscannerReady)
 				return reject("DScanner not ready");
 			self.request({ cmd: "dscanner", subcmd: "list-definitions", file: document.uri.fsPath }).then(definitions => {
-				console.log(definitions);
 				let informations: vscode.SymbolInformation[] = [];
 				definitions.forEach(element => {
 					let container = undefined;
 					let range = new vscode.Range(element.line - 1, 0, element.line - 1, 0);
 					let type = self.scanTypes[element.type];
-					if(element.type == "f" && element.name == "this")
+					if (element.type == "f" && element.name == "this")
 						type = vscode.SymbolKind.Constructor;
-					if(element.attributes.struct)
+					if (element.attributes.struct)
 						container = element.attributes.struct;
-					if(element.attributes.class)
+					if (element.attributes.class)
 						container = element.attributes.class;
-					if(element.attributes.enum)
+					if (element.attributes.enum)
 						container = element.attributes.enum;
-					if(element.attributes.union)
+					if (element.attributes.union)
 						container = element.attributes.union;
 					informations.push(new vscode.SymbolInformation(element.name, type, range, document.uri, container));
 				});
 				resolve(informations);
+			}, reject);
+		});
+	}
+
+	provideHover(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken): Thenable<vscode.Hover> {
+		let self = this;
+		return new Promise((resolve, reject) => {
+			if (!self.dcdReady)
+				return reject("DCD not ready");
+			let offset = document.offsetAt(position);
+			self.request({ cmd: "dcd", subcmd: "get-documentation", code: document.getText(), pos: offset }).then((documentation) => {
+				if (!documentation || documentation.trim().length == 0)
+					return reject();
+				resolve(new vscode.Hover({ language: "ddoc", value: documentation.trim() }));
+			}, reject);
+		});
+	}
+
+	provideDefinition(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken): Thenable<vscode.Definition> {
+		let self = this;
+		return new Promise((resolve, reject) => {
+			if (!self.dcdReady)
+				return reject("DCD not ready");
+			let offset = document.offsetAt(position);
+			self.request({ cmd: "dcd", subcmd: "find-declaration", code: document.getText(), pos: offset }).then((declaration) => {
+				if(!declaration)
+					return reject();
+				let range = new vscode.Range(1, 1, 1, 1);
+				let uri = document.uri;
+				if (declaration[0] != "stdin")
+					uri = vscode.Uri.file(declaration[0]);
+				vscode.workspace.textDocuments.forEach(doc => {
+					if (doc.uri.fsPath == uri.fsPath) {
+						range = doc.getWordRangeAtPosition(doc.positionAt(declaration[1]));
+					}
+				});
+				resolve(new vscode.Location(uri, range));
 			}, reject);
 		});
 	}
@@ -176,16 +215,34 @@ export class WorkspaceD extends EventEmitter implements
 	}
 
 	private setupDCD() {
-		let self = this;
 		this.request({ cmd: "load", components: ["dcd"], dir: this.projectRoot, autoStart: false }).then((data) => {
-			this.request({ cmd: "dcd", subcmd: "find-and-select-port", port: 9166 }).then((data) => {
-				this.request({ cmd: "dcd", subcmd: "setup-server" }).then((data) => {
-					this.request({ cmd: "dcd", subcmd: "add-imports", imports: ["/usr/include/dmd/druntime/import", "/usr/include/dmd/phobos"] }).then((data) => {
-						console.log("DCD is ready");
-						self.dcdReady = true;
-					}, (err) => {
-						vscode.window.showErrorMessage("Could not initialize DCD. See console for details!");
-					});
+			this.startDCD();
+		}, (err) => {
+			vscode.window.showErrorMessage("Could not initialize DCD. See console for details!");
+		});
+	}
+
+	private ensureDCDRunning() {
+		clearTimeout(this.runCheckTimeout);
+		this.runCheckTimeout = setTimeout((() => {
+			console.log("Checking status...");
+			this.request({ cmd: "dcd", subcmd: "status" }).then((status) => {
+				console.log("Status:");
+				console.log(status);
+				if (!status.isRunning) {
+					console.error("Restarting DCD");
+					this.startDCD();
+				}
+			});
+		}).bind(this), 500);
+	}
+
+	private startDCD() {
+		this.request({ cmd: "dcd", subcmd: "find-and-select-port", port: 9166 }).then((data) => {
+			this.request({ cmd: "dcd", subcmd: "setup-server" }).then((data) => {
+				this.request({ cmd: "dcd", subcmd: "add-imports", imports: ["/usr/include/dmd/druntime/import", "/usr/include/dmd/phobos"] }).then((data) => {
+					console.log("DCD is ready");
+					this.dcdReady = true;
 				}, (err) => {
 					vscode.window.showErrorMessage("Could not initialize DCD. See console for details!");
 				});
@@ -201,7 +258,7 @@ export class WorkspaceD extends EventEmitter implements
 		let lengthBuffer = new Buffer(4);
 		let idBuffer = new Buffer(4);
 		let dataStr = JSON.stringify(data);
-		lengthBuffer.writeInt32BE(dataStr.length + 4, 0);
+		lengthBuffer.writeInt32BE(Buffer.byteLength(dataStr, "utf8") + 4, 0);
 		let reqID = this.requestNum++;
 		idBuffer.writeInt32BE(reqID, 0);
 		let buf = Buffer.concat([lengthBuffer, idBuffer, new Buffer(dataStr, "utf8")]);
@@ -235,8 +292,8 @@ export class WorkspaceD extends EventEmitter implements
 			this.totalData = newBuf;
 			let obj = JSON.parse(buf.toString());
 			if (typeof obj == "object" && obj && obj["error"]) {
-				this.emit("res-" + id, obj);
 				this.emit("error", obj);
+				this.emit("res-" + id, obj);
 			}
 			else
 				this.emit("res-" + id, null, obj);
@@ -245,6 +302,7 @@ export class WorkspaceD extends EventEmitter implements
 		return false;
 	}
 
+	private runCheckTimeout = -1;
 	private dubReady: boolean = false;
 	private dcdReady: boolean = false;
 	private dscannerReady: boolean = false;
