@@ -10,13 +10,13 @@ export function activate(context: vscode.ExtensionContext) {
 		return;
 	}
 	let workspaced = new WorkspaceD(vscode.workspace.rootPath);
+	context.subscriptions.push(vscode.languages.registerSignatureHelpProvider(D_MODE, workspaced, "(", ","));
 	context.subscriptions.push(vscode.languages.registerCompletionItemProvider(D_MODE, workspaced));
-	context.subscriptions.push(vscode.languages.registerSignatureHelpProvider(D_MODE, workspaced));
 	context.subscriptions.push(vscode.languages.registerDocumentSymbolProvider(D_MODE, workspaced));
 	context.subscriptions.push(vscode.languages.registerHoverProvider(D_MODE, workspaced));
 	context.subscriptions.push(vscode.languages.registerDefinitionProvider(D_MODE, workspaced));
 	context.subscriptions.push(workspaced);
-	
+
 	context.subscriptions.push(vscode.languages.registerWorkspaceSymbolProvider(workspaced));
 
 	diagnosticCollection = vscode.languages.createDiagnosticCollection("d");
