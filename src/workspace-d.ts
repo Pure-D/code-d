@@ -223,6 +223,8 @@ export class WorkspaceD extends EventEmitter implements
 	}
 
 	private ensureDCDRunning() {
+		if (!this.dcdReady)
+			return;
 		clearTimeout(this.runCheckTimeout);
 		this.runCheckTimeout = setTimeout((() => {
 			console.log("Checking status...");
