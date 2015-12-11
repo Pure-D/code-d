@@ -32,7 +32,7 @@ export class WorkspaceD extends EventEmitter implements
 		let self = this;
 		return new Promise((resolve, reject) => {
 			if (!self.dcdReady)
-				return reject("DCD not ready");
+				return resolve(null);
 			let offset = document.offsetAt(position);
 			self.request({ cmd: "dcd", subcmd: "list-completion", code: document.getText(), pos: offset }).then((completions) => {
 				if (completions.type == "identifiers") {
@@ -45,7 +45,7 @@ export class WorkspaceD extends EventEmitter implements
 					resolve(items);
 				}
 				else {
-					reject("Not a valid completable");
+					resolve(null);
 				}
 			}, reject);
 		});
@@ -55,7 +55,7 @@ export class WorkspaceD extends EventEmitter implements
 		let self = this;
 		return new Promise((resolve, reject) => {
 			if (!self.dcdReady)
-				return reject("DCD not ready");
+				return resolve(null);
 			let offset = document.offsetAt(position);
 			self.request({ cmd: "dcd", subcmd: "list-completion", code: document.getText(), pos: offset }).then((completions) => {
 				if (completions.type == "calltips") {
@@ -66,7 +66,7 @@ export class WorkspaceD extends EventEmitter implements
 					resolve(help);
 				}
 				else {
-					reject("Not a valid signature");
+					resolve(null);
 				}
 			}, reject);
 		});
@@ -100,7 +100,7 @@ export class WorkspaceD extends EventEmitter implements
 		let self = this;
 		return new Promise((resolve, reject) => {
 			if (!self.dscannerReady)
-				return reject("DScanner not ready");
+				return resolve(null);
 			self.request({ cmd: "dscanner", subcmd: "list-definitions", file: document.uri.fsPath }).then(definitions => {
 				let informations: vscode.SymbolInformation[] = [];
 				definitions.forEach(element => {
@@ -128,7 +128,7 @@ export class WorkspaceD extends EventEmitter implements
 		let self = this;
 		return new Promise((resolve, reject) => {
 			if (!self.dcdReady)
-				return reject("DCD not ready");
+				return resolve(null);
 			let offset = document.offsetAt(position);
 			self.request({ cmd: "dcd", subcmd: "get-documentation", code: document.getText(), pos: offset }).then((documentation) => {
 				if (!documentation || documentation.trim().length == 0)
@@ -142,7 +142,7 @@ export class WorkspaceD extends EventEmitter implements
 		let self = this;
 		return new Promise((resolve, reject) => {
 			if (!self.dcdReady)
-				return reject("DCD not ready");
+				return resolve(null);
 			let offset = document.offsetAt(position);
 			self.request({ cmd: "dcd", subcmd: "find-declaration", code: document.getText(), pos: offset }).then((declaration) => {
 				if (!declaration)
@@ -165,7 +165,7 @@ export class WorkspaceD extends EventEmitter implements
 		let self = this;
 		return new Promise((resolve, reject) => {
 			if (!self.dfmtReady)
-				return reject("Dfmt not ready");
+				return resolve(null);
 			self.request({ cmd: "dfmt", code: document.getText() }).then((formatted) => {
 				let lastLine = document.lineCount;
 				let lastLineLastCol = document.lineAt(lastLine - 1).range.end.character;
@@ -179,7 +179,7 @@ export class WorkspaceD extends EventEmitter implements
 		let self = this;
 		return new Promise((resolve, reject) => {
 			if (!self.dscannerReady)
-				return reject("DScanner not ready");
+				return resolve(null);
 			self.request({ cmd: "dscanner", subcmd: "lint", file: document.uri.fsPath }).then(issues => {
 				let diagnostics: vscode.Diagnostic[] = [];
 				issues.forEach(element => {
