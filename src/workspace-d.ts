@@ -37,11 +37,12 @@ export class WorkspaceD extends EventEmitter implements
 			self.request({ cmd: "dcd", subcmd: "list-completion", code: document.getText(), pos: offset }).then((completions) => {
 				if (completions.type == "identifiers") {
 					let items = [];
-					completions.identifiers.forEach(element => {
-						let item = new vscode.CompletionItem(element.identifier);
-						item.kind = self.types[element.type] || vscode.CompletionItemKind.Text;
-						items.push(item);
-					});
+					if (completions.identifiers && completions.identifiers.length)
+						completions.identifiers.forEach(element => {
+							let item = new vscode.CompletionItem(element.identifier);
+							item.kind = self.types[element.type] || vscode.CompletionItemKind.Text;
+							items.push(item);
+						});
 					resolve(items);
 				}
 				else {
@@ -60,9 +61,10 @@ export class WorkspaceD extends EventEmitter implements
 			self.request({ cmd: "dcd", subcmd: "list-completion", code: document.getText(), pos: offset }).then((completions) => {
 				if (completions.type == "calltips") {
 					let help = new vscode.SignatureHelp();
-					completions.calltips.forEach(element => {
-						help.signatures.push(new vscode.SignatureInformation(element));
-					});
+					if (completions.calltips && completions.calltips.length)
+						completions.calltips.forEach(element => {
+							help.signatures.push(new vscode.SignatureInformation(element));
+						});
 					resolve(help);
 				}
 				else {
@@ -79,18 +81,20 @@ export class WorkspaceD extends EventEmitter implements
 				return reject("DCD not ready");
 			self.request({ cmd: "dcd", subcmd: "search-symbol", query: query }).then((symbols) => {
 				let found = [];
-				symbols.forEach(element => {
-					let type = self.types[element.type] || vscode.CompletionItemKind.Text;
-					let range = new vscode.Range(1, 1, 1, 1);
-					let uri = vscode.Uri.file(element.file);
-					vscode.workspace.textDocuments.forEach(doc => {
-						if (doc.uri.fsPath == uri.fsPath) {
-							range = doc.getWordRangeAtPosition(doc.positionAt(element.position));
-						}
+				if(symbols && symbols.length)
+					symbols.forEach(element => {
+						let type = self.types[element.type] || vscode.CompletionItemKind.Text;
+						let range = new vscode.Range(1, 1, 1, 1);
+						let uri = vscode.Uri.file(element.file);
+						vscode.workspace.textDocuments.forEach(doc => {
+							if (doc.uri.fsPath == uri.fsPath) {
+								range = doc.getWordRangeAtPosition(doc.positionAt(element.position));
+							}
+						});
+						let entry = new vscode.SymbolInformation(query, type, range, uri);
+						if(entry && range)
+							found.push(entry);
 					});
-					let entry = new vscode.SymbolInformation(query, type, range, uri);
-					found.push(entry);
-				});
 				resolve(found);
 			}, reject);
 		});
@@ -103,22 +107,23 @@ export class WorkspaceD extends EventEmitter implements
 				return resolve(null);
 			self.request({ cmd: "dscanner", subcmd: "list-definitions", file: document.uri.fsPath }).then(definitions => {
 				let informations: vscode.SymbolInformation[] = [];
-				definitions.forEach(element => {
-					let container = undefined;
-					let range = new vscode.Range(element.line - 1, 0, element.line - 1, 0);
-					let type = self.scanTypes[element.type];
-					if (element.type == "f" && element.name == "this")
-						type = vscode.SymbolKind.Constructor;
-					if (element.attributes.struct)
-						container = element.attributes.struct;
-					if (element.attributes.class)
-						container = element.attributes.class;
-					if (element.attributes.enum)
-						container = element.attributes.enum;
-					if (element.attributes.union)
-						container = element.attributes.union;
-					informations.push(new vscode.SymbolInformation(element.name, type, range, document.uri, container));
-				});
+				if(definitions && definitions.length)
+					definitions.forEach(element => {
+						let container = undefined;
+						let range = new vscode.Range(element.line - 1, 0, element.line - 1, 0);
+						let type = self.scanTypes[element.type];
+						if (element.type == "f" && element.name == "this")
+							type = vscode.SymbolKind.Constructor;
+						if (element.attributes.struct)
+							container = element.attributes.struct;
+						if (element.attributes.class)
+							container = element.attributes.class;
+						if (element.attributes.enum)
+							container = element.attributes.enum;
+						if (element.attributes.union)
+							container = element.attributes.union;
+						informations.push(new vscode.SymbolInformation(element.name, type, range, document.uri, container));
+					});
 				resolve(informations);
 			}, reject);
 		});
@@ -182,12 +187,15 @@ export class WorkspaceD extends EventEmitter implements
 				return resolve(null);
 			self.request({ cmd: "dscanner", subcmd: "lint", file: document.uri.fsPath }).then(issues => {
 				let diagnostics: vscode.Diagnostic[] = [];
-				issues.forEach(element => {
-					let range = document.getWordRangeAtPosition(new vscode.Position(Math.max(0, element.line - 1), element.column));
-					if (!range || !range.start)
-						range = new vscode.Range(Math.max(0, element.line - 1), element.column, Math.max(0, element.line - 1), element.column + 1);
-					diagnostics.push(new vscode.Diagnostic(range, element.description, self.mapLintType(element.type)));
-				});
+				if (issues && issues.length)
+					issues.forEach(element => {
+						let range = document.getWordRangeAtPosition(new vscode.Position(Math.max(0, element.line - 1), element.column));
+						if (!range || !range.start)
+							range = new vscode.Range(Math.max(0, element.line - 1), element.column, Math.max(0, element.line - 1), element.column + 1);
+						console.log(range);
+						if (range)
+							diagnostics.push(new vscode.Diagnostic(range, element.description, self.mapLintType(element.type)));
+					});
 				resolve(diagnostics);
 			}, reject);
 		});
