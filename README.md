@@ -1,8 +1,15 @@
 # Code-D
 
-Adds D language support for vscode
+Adds D language support for visual studio code.
 
 Also [available for Atom](https://github.com/Vild/atomize-d)!
+
+## Features
+
+* Autocompletion
+* Code formatting
+* Static linting
+* Outlining and searching for symbols
 
 ## Installation
 
@@ -32,4 +39,8 @@ for their great package manager and library "dub"
 ## Authors
 
 * Dan "Wild" Printzell
-* "WebFreak001"
+* Jan "WebFreak" Jurzitza
+
+## Issues
+
+Please submit issues to [github](https://github.com/WebFreak001/code-d)

@@ -2,11 +2,18 @@
 	"name": "code-d",
 	"description": "D support for vscode",
 	"version": "0.0.1",
-	"publisher": "WebFreak",
+	"publisher": "webfreak",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/WebFreak001/code-d.git"
+	},
 	"engines": {
 		"vscode": "^0.10.1"
 	},
 	"categories": [
+		"Languages",
+		"Snippets",
+		"Linters",
 		"Other"
 	],
 	"activationEvents": [
@@ -37,12 +44,6 @@
 			{
 				"language": "d",
 				"path": "./snippets/d.json"
-			}
-		],
-		"commands": [
-			{
-				"command": "extension.sayHello",
-				"title": "Hello World"
 			}
 		],
 		"configuration": {
