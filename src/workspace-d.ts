@@ -30,6 +30,7 @@ export class WorkspaceD extends EventEmitter implements
 
 	provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken): Thenable<vscode.CompletionItem[]> {
 		let self = this;
+		console.log("provideCompletionItems");
 		return new Promise((resolve, reject) => {
 			if (!self.dcdReady)
 				return resolve(null);
@@ -43,9 +44,12 @@ export class WorkspaceD extends EventEmitter implements
 							item.kind = self.types[element.type] || vscode.CompletionItemKind.Text;
 							items.push(item);
 						});
+					console.log("resolve");
+					console.log(items);
 					resolve(items);
 				}
 				else {
+					console.log("resolve null");
 					resolve(null);
 				}
 			}, reject);
@@ -54,6 +58,7 @@ export class WorkspaceD extends EventEmitter implements
 
 	provideSignatureHelp(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken): Thenable<vscode.SignatureHelp> {
 		let self = this;
+		console.log("provideSignatureHelp");
 		return new Promise((resolve, reject) => {
 			if (!self.dcdReady)
 				return resolve(null);
@@ -65,9 +70,12 @@ export class WorkspaceD extends EventEmitter implements
 						completions.calltips.forEach(element => {
 							help.signatures.push(new vscode.SignatureInformation(element));
 						});
+					console.log("resolve");
+					console.log(help);
 					resolve(help);
 				}
 				else {
+					console.log("resolve null");
 					resolve(null);
 				}
 			}, reject);
@@ -76,6 +84,7 @@ export class WorkspaceD extends EventEmitter implements
 
 	provideWorkspaceSymbols(query: string, token: vscode.CancellationToken): Thenable<vscode.SymbolInformation[]> {
 		let self = this;
+		console.log("provideWorkspaceSymbols");
 		return new Promise((resolve, reject) => {
 			if (!self.dcdReady)
 				return reject("DCD not ready");
@@ -95,6 +104,8 @@ export class WorkspaceD extends EventEmitter implements
 						if(entry && range)
 							found.push(entry);
 					});
+				console.log("resolve");
+				console.log(found);
 				resolve(found);
 			}, reject);
 		});
@@ -102,6 +113,7 @@ export class WorkspaceD extends EventEmitter implements
 
 	provideDocumentSymbols(document: vscode.TextDocument, token: vscode.CancellationToken): Thenable<vscode.SymbolInformation[]> {
 		let self = this;
+		console.log("provideDocumentSymbols");
 		return new Promise((resolve, reject) => {
 			if (!self.dscannerReady)
 				return resolve(null);
@@ -124,6 +136,8 @@ export class WorkspaceD extends EventEmitter implements
 							container = element.attributes.union;
 						informations.push(new vscode.SymbolInformation(element.name, type, range, document.uri, container));
 					});
+				console.log("resolve");
+				console.log(informations);
 				resolve(informations);
 			}, reject);
 		});
@@ -131,13 +145,18 @@ export class WorkspaceD extends EventEmitter implements
 
 	provideHover(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken): Thenable<vscode.Hover> {
 		let self = this;
+		console.log("provideHover");
 		return new Promise((resolve, reject) => {
 			if (!self.dcdReady)
 				return resolve(null);
 			let offset = document.offsetAt(position);
 			self.request({ cmd: "dcd", subcmd: "get-documentation", code: document.getText(), pos: offset }).then((documentation) => {
-				if (!documentation || documentation.trim().length == 0)
-					return reject();
+				if (!documentation || documentation.trim().length == 0) {
+					console.log("resolve null");
+					return resolve(null);
+				}
+				console.log("resolve");
+				console.log(new vscode.Hover({ language: "ddoc", value: documentation.trim() }));
 				resolve(new vscode.Hover({ language: "ddoc", value: documentation.trim() }));
 			}, reject);
 		});
@@ -145,13 +164,16 @@ export class WorkspaceD extends EventEmitter implements
 
 	provideDefinition(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken): Thenable<vscode.Definition> {
 		let self = this;
+		console.log("provideDefinition");
 		return new Promise((resolve, reject) => {
 			if (!self.dcdReady)
 				return resolve(null);
 			let offset = document.offsetAt(position);
 			self.request({ cmd: "dcd", subcmd: "find-declaration", code: document.getText(), pos: offset }).then((declaration) => {
-				if (!declaration)
-					return reject();
+				if (!declaration) {
+					console.log("Resolve null");
+					return resolve(null);
+				}
 				let range = new vscode.Range(1, 1, 1, 1);
 				let uri = document.uri;
 				if (declaration[0] != "stdin")
@@ -161,6 +183,8 @@ export class WorkspaceD extends EventEmitter implements
 						range = doc.getWordRangeAtPosition(doc.positionAt(declaration[1]));
 					}
 				});
+				console.log("resolve");
+				console.log(new vscode.Location(uri, range));
 				resolve(new vscode.Location(uri, range));
 			}, reject);
 		});
@@ -168,13 +192,18 @@ export class WorkspaceD extends EventEmitter implements
 
 	provideDocumentFormattingEdits(document: vscode.TextDocument, options: vscode.FormattingOptions, token: vscode.CancellationToken): Thenable<vscode.TextEdit[]> {
 		let self = this;
+		console.log("provideDocumentFormattingEdits");
 		return new Promise((resolve, reject) => {
-			if (!self.dfmtReady)
+			if (!self.dfmtReady) {
+				console.log("Resolve null");
 				return resolve(null);
+			}
 			self.request({ cmd: "dfmt", code: document.getText() }).then((formatted) => {
 				let lastLine = document.lineCount;
 				let lastLineLastCol = document.lineAt(lastLine - 1).range.end.character;
 				let range = new vscode.Range(0, 0, lastLine - 1, lastLineLastCol);
+				console.log("resolve");
+				console.log([new vscode.TextEdit(range, formatted)]);
 				resolve([new vscode.TextEdit(range, formatted)]);
 			}, reject);
 		});
@@ -182,9 +211,12 @@ export class WorkspaceD extends EventEmitter implements
 
 	lint(document: vscode.TextDocument): Thenable<vscode.Diagnostic[]> {
 		let self = this;
+		console.log("lint");
 		return new Promise((resolve, reject) => {
-			if (!self.dscannerReady)
+			if (!self.dscannerReady) {
+				console.log("Resolve null");
 				return resolve(null);
+			}
 			self.request({ cmd: "dscanner", subcmd: "lint", file: document.uri.fsPath }).then(issues => {
 				let diagnostics: vscode.Diagnostic[] = [];
 				if (issues && issues.length)
@@ -196,6 +228,8 @@ export class WorkspaceD extends EventEmitter implements
 						if (range)
 							diagnostics.push(new vscode.Diagnostic(range, element.description, self.mapLintType(element.type)));
 					});
+				console.log("Resolve");
+				console.log(diagnostics);
 				resolve(diagnostics);
 			}, reject);
 		});
