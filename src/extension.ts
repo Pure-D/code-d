@@ -4,6 +4,10 @@ import { WorkspaceD } from "./workspace-d"
 
 let diagnosticCollection: vscode.DiagnosticCollection;
 
+function config() {
+	return vscode.workspace.getConfiguration("d");
+}
+
 export function activate(context: vscode.ExtensionContext) {
 	if (!vscode.workspace.rootPath) {
 		console.warn("Could not initialize code-d");
@@ -26,10 +30,11 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(document => {
 		if (document.languageId != "d")
 			return;
-		workspaced.lint(document).then(errors => {
-			diagnosticCollection.delete(document.uri);
-			diagnosticCollection.set(document.uri, errors);
-		});
+		if(config().get("enableLinting", true))
+			workspaced.lint(document).then(errors => {
+				diagnosticCollection.delete(document.uri);
+				diagnosticCollection.set(document.uri, errors);
+			});
 	}));
 
 	console.log("Initialized code-d");

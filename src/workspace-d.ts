@@ -2,6 +2,10 @@ import * as ChildProcess from "child_process"
 import * as vscode from "vscode"
 import { EventEmitter } from "events"
 
+function config() {
+	return vscode.workspace.getConfiguration("d");
+}
+
 export class WorkspaceD extends EventEmitter implements
 	vscode.CompletionItemProvider,
 	vscode.SignatureHelpProvider,
@@ -17,13 +21,38 @@ export class WorkspaceD extends EventEmitter implements
 			console.error(err);
 			self.ensureDCDRunning();
 		});
-		this.instance = ChildProcess.spawn("workspace-d", [], { cwd: projectRoot });
+		this.startWorkspaceD();
+	}
+
+	startWorkspaceD() {
+		let self = this;
+		this.workspaced = true;
+		let path = config().get("workspacedPath", "workspace-d");
+		this.instance = ChildProcess.spawn(path, [], { cwd: this.projectRoot });
 		this.totalData = new Buffer(0);
 		this.instance.stderr.on("data", function(chunk) {
 			console.log("WorkspaceD Debug: " + chunk);
 		});
 		this.instance.stdout.on("data", function(chunk) {
 			self.handleData.call(self, chunk);
+		});
+		this.instance.on("error", function(err) {
+			console.log("WorkspaceD ended with an error:");
+			console.log(err);
+			if (err && (<any>err).code == "ENOENT") {
+				vscode.window.showErrorMessage("'" + path + "' is not a valid executable. Please check your D config!", "Retry").then(s => {
+					if (s == "Retry")
+						self.startWorkspaceD.call(self);
+				});
+				self.workspaced = false;
+			}
+		});
+		this.instance.on("exit", function(code) {
+			console.log("WorkspaceD ended with code " + code);
+			vscode.window.showWarningMessage("Workspace-D crashed. Please kill dcd-server if neccessary!", "Restart").then(s => {
+				if (s == "Restart")
+					self.startWorkspaceD.call(self);
+			});
 		});
 		this.setupDub();
 	}
@@ -90,7 +119,7 @@ export class WorkspaceD extends EventEmitter implements
 				return reject("DCD not ready");
 			self.request({ cmd: "dcd", subcmd: "search-symbol", query: query }).then((symbols) => {
 				let found = [];
-				if(symbols && symbols.length)
+				if (symbols && symbols.length)
 					symbols.forEach(element => {
 						let type = self.types[element.type] || vscode.CompletionItemKind.Text;
 						let range = new vscode.Range(1, 1, 1, 1);
@@ -101,7 +130,7 @@ export class WorkspaceD extends EventEmitter implements
 							}
 						});
 						let entry = new vscode.SymbolInformation(query, type, range, uri);
-						if(entry && range)
+						if (entry && range)
 							found.push(entry);
 					});
 				console.log("resolve");
@@ -119,7 +148,7 @@ export class WorkspaceD extends EventEmitter implements
 				return resolve(null);
 			self.request({ cmd: "dscanner", subcmd: "list-definitions", file: document.uri.fsPath }).then(definitions => {
 				let informations: vscode.SymbolInformation[] = [];
-				if(definitions && definitions.length)
+				if (definitions && definitions.length)
 					definitions.forEach(element => {
 						let container = undefined;
 						let range = new vscode.Range(element.line - 1, 0, element.line - 1, 0);
@@ -268,23 +297,31 @@ export class WorkspaceD extends EventEmitter implements
 
 	private setupDScanner() {
 		let self = this;
-		this.request({ cmd: "load", components: ["dscanner"], dir: this.projectRoot }).then((data) => {
+		this.request({ cmd: "load", components: ["dscanner"], dir: this.projectRoot, dscannerPath: config().get("dscannerPath", "dscanner") }).then((data) => {
 			console.log("DScanner is ready");
 			self.dscannerReady = true;
 		});
 	}
 
 	private setupDCD() {
-		this.request({ cmd: "load", components: ["dcd"], dir: this.projectRoot, autoStart: false }).then((data) => {
-			this.startDCD();
-		}, (err) => {
-			vscode.window.showErrorMessage("Could not initialize DCD. See console for details!");
-		});
+		if (config().get("enableAutoComplete", true))
+			this.request({
+				cmd: "load",
+				components: ["dcd"],
+				dir: this.projectRoot,
+				autoStart: false,
+				clientPath: config().get("dcdClientPath", "dcd-client"),
+				serverPath: config().get("dcdServerPath", "dcd-server")
+			}).then((data) => {
+				this.startDCD();
+			}, (err) => {
+				vscode.window.showErrorMessage("Could not initialize DCD. See console for details!");
+			});
 	}
 
 	private setupDfmt() {
 		let self = this;
-		this.request({ cmd: "load", components: ["dfmt"], dir: this.projectRoot }).then((data) => {
+		this.request({ cmd: "load", components: ["dfmt"], dir: this.projectRoot, dfmtPath: config().get("dfmtPath", "dfmt") }).then((data) => {
 			console.log("Dfmt is ready");
 			self.dfmtReady = true;
 		});
@@ -308,7 +345,11 @@ export class WorkspaceD extends EventEmitter implements
 	}
 
 	private startDCD() {
-		this.request({ cmd: "dcd", subcmd: "find-and-select-port", port: 9166 }).then((data) => {
+		this.request({
+			cmd: "dcd",
+			subcmd: "find-and-select-port",
+			port: 9166
+		}).then((data) => {
 			this.request({ cmd: "dcd", subcmd: "setup-server" }).then((data) => {
 				this.request({ cmd: "dcd", subcmd: "add-imports", imports: ["/usr/include/dmd/druntime/import", "/usr/include/dmd/phobos"] }).then((data) => {
 					console.log("DCD is ready");
@@ -373,6 +414,7 @@ export class WorkspaceD extends EventEmitter implements
 	}
 
 	private runCheckTimeout = -1;
+	private workspaced: boolean = true;
 	private dubReady: boolean = false;
 	private dcdReady: boolean = false;
 	private dfmtReady: boolean = false;

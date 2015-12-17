@@ -49,15 +49,40 @@
 			"title": "D configuration",
 			"type": "object",
 			"properties": {
+				"d.workspacedPath": {
+					"type": "string",
+					"default": "workspace-d",
+					"description": "Path of the workspace-d executable. Path can be omitted if in $PATH"
+				},
 				"d.dcdClientPath": {
 					"type": "string",
 					"default": "dcd-client",
-					"description": "Path of dcd-client executable. Path can be omitted if in $PATH"
+					"description": "Path of the dcd-client executable. Path can be omitted if in $PATH"
 				},
 				"d.dcdServerPath": {
 					"type": "string",
 					"default": "dcd-server",
-					"description": "Path of dcd-server executable. Path can be omitted if in $PATH"
+					"description": "Path of the dcd-server executable. Path can be omitted if in $PATH"
+				},
+				"d.dscannerPath": {
+					"type": "string",
+					"default": "dscanner",
+					"description": "Path of the dscanner executable. Path can be omitted if in $PATH"
+				},
+				"d.dfmtPath": {
+					"type": "string",
+					"default": "dfmt",
+					"description": "Path of the dfmt executable. Path can be omitted if in $PATH"
+				},
+				"d.enableLinting": {
+					"type": "boolean",
+					"default": true,
+					"description": "If code-d should watch for file saves and report static analysis. Might interfere with other lint plugins or settings."
+				},
+				"d.enableAutoComplete": {
+					"type": "boolean",
+					"default": true,
+					"description": "Start dcd-server at startup and complete using dcd-client."
 				}
 			}
 		}
