@@ -20,6 +20,9 @@
 				"extensions": [
 					".d",
 					".di"
+				],
+				"aliases": [
+					"D"
 				]
 			}
 		],
