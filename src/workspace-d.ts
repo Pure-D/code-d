@@ -32,6 +32,8 @@ export class WorkspaceD extends EventEmitter implements
 		this.totalData = new Buffer(0);
 		this.instance.stderr.on("data", function(chunk) {
 			console.log("WorkspaceD Debug: " + chunk);
+			if (chunk.toString().indexOf("DCD-Server stopped with code") != -1)
+				self.ensureDCDRunning();
 		});
 		this.instance.stdout.on("data", function(chunk) {
 			self.handleData.call(self, chunk);
