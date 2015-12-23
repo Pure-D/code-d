@@ -1,6 +1,6 @@
 {
 	"name": "code-d",
-	"description": "D support for vscode",
+	"description": "auto-complete, snippets, linter and formatter for dlang",
 	"version": "0.0.1",
 	"publisher": "webfreak",
 	"repository": {

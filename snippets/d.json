@@ -45,12 +45,12 @@
 		"description": "mixin template MyMixin()"
 	},
 	"interface": {
-		"prefix": "mixt",
+		"prefix": "interface",
 		"body": ["interface ${1:MyInterface}$3 {$2}"],
 		"description": "interface MyInterface"
 	},
 	"class": {
-		"prefix": "mixt",
+		"prefix": "class",
 		"body": ["class ${1:MyClass}$3 {$2}"],
 		"description": "class MyClass"
 	},
