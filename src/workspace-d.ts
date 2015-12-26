@@ -274,6 +274,22 @@ export class WorkspaceD extends EventEmitter implements
 		this.instance.kill();
 	}
 
+	listConfigurations(): Thenable<string[]> {
+		return this.request({ cmd: "dub", subcmd: "list:configurations" });
+	}
+
+	setConfiguration(config: string) {
+		this.request({ cmd: "dub", subcmd: "set:configuration", configuration: config }).then((success) => {
+			console.log("Configuration: " + config + " = " + success);
+			if (!success)
+				vscode.window.showInformationMessage("No import paths available for this project. Autocompletion could be broken!", "Switch Configuration").then((s) => {
+					if (s == "Switch Configuration") {
+						vscode.commands.executeCommand("code-d.switchConfiguration");
+					}
+				});
+		});
+	}
+
 	private mapLintType(type: string): vscode.DiagnosticSeverity {
 		switch (type) {
 			case "warn":
@@ -292,6 +308,13 @@ export class WorkspaceD extends EventEmitter implements
 			self.setupDCD();
 			self.setupDScanner();
 			self.setupDfmt();
+			self.listConfigurations().then((configs) => {
+				if (configs.length == 0) {
+					vscode.window.showInformationMessage("No configurations available for this project. Autocompletion could be broken!");
+				} else {
+					self.setConfiguration(configs[0]);
+				}
+			});
 		}, (err) => {
 			vscode.window.showErrorMessage("Could not initialize dub. See console for details!");
 		});

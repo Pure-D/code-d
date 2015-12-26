@@ -86,7 +86,13 @@
 					"description": "Start dcd-server at startup and complete using dcd-client."
 				}
 			}
-		}
+		},
+		"commands": [
+			{
+				"command": "code-d.switchConfiguration",
+				"title": "code-d: Switch Configuration"
+			}
+		]
 	},
 	"scripts": {
 		"vscode:prepublish": "node ./node_modules/vscode/bin/compile",

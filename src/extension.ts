@@ -30,12 +30,20 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(document => {
 		if (document.languageId != "d")
 			return;
-		if(config().get("enableLinting", true))
+		if (config().get("enableLinting", true))
 			workspaced.lint(document).then(errors => {
 				diagnosticCollection.delete(document.uri);
 				diagnosticCollection.set(document.uri, errors);
 			});
 	}));
+
+	vscode.commands.registerCommand("code-d.switchConfiguration", () => {
+		let self = <WorkspaceD>workspaced;
+		vscode.window.showQuickPick(self.listConfigurations()).then((config) => {
+			if (config)
+				self.setConfiguration(config);
+		});
+	});
 
 	console.log("Initialized code-d");
 }
