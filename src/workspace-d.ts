@@ -280,8 +280,9 @@ export class WorkspaceD extends EventEmitter implements
 
 	setConfiguration(config: string) {
 		this.request({ cmd: "dub", subcmd: "set:configuration", configuration: config }).then((success) => {
-			console.log("Configuration: " + config + " = " + success);
-			if (!success)
+			if (success)
+				this.request({ cmd: "dub", subcmd: "list:import" }).then(console.log);
+			else
 				vscode.window.showInformationMessage("No import paths available for this project. Autocompletion could be broken!", "Switch Configuration").then((s) => {
 					if (s == "Switch Configuration") {
 						vscode.commands.executeCommand("code-d.switchConfiguration");
