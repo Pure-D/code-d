@@ -92,6 +92,12 @@
 				"command": "code-d.switchConfiguration",
 				"title": "code-d: Switch Configuration"
 			}
+		],
+		"jsonValidation": [
+			{
+				"fileMatch": "dub.json",
+				"url": "./json-validation/dub.schema.json"
+			}
 		]
 	},
 	"scripts": {
