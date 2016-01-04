@@ -22,6 +22,28 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.languages.registerDocumentFormattingEditProvider(D_MODE, workspaced));
 	context.subscriptions.push(workspaced);
 
+	vscode.languages.setLanguageConfiguration(D_MODE.language, {
+		__electricCharacterSupport: {
+			brackets: [
+				{ tokenType: 'delimiter.curly.ts', open: '{', close: '}', isElectric: true },
+				{ tokenType: 'delimiter.square.ts', open: '[', close: ']', isElectric: true },
+				{ tokenType: 'delimiter.paren.ts', open: '(', close: ')', isElectric: true }
+			]
+		},
+
+		__characterPairSupport: {
+			autoClosingPairs: [
+				{ open: '{', close: '}' },
+				{ open: '[', close: ']' },
+				{ open: '(', close: ')' },
+				{ open: '`', close: '`', notIn: ['string'] },
+				{ open: '"', close: '"', notIn: ['string'] },
+				{ open: '\'', close: '\'', notIn: ['string', 'comment'] }
+			]
+		}
+	});
+
+
 	context.subscriptions.push(vscode.languages.registerWorkspaceSymbolProvider(workspaced));
 
 	diagnosticCollection = vscode.languages.createDiagnosticCollection("d");
