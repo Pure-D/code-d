@@ -228,10 +228,8 @@ export class WorkspaceD extends EventEmitter implements
 		let self = this;
 		console.log("provideDocumentFormattingEdits");
 		return new Promise((resolve, reject) => {
-			if (!self.dfmtReady) {
-				console.log("Resolve null");
+			if (!self.dfmtReady)
 				return resolve(null);
-			}
 			self.request({ cmd: "dfmt", code: document.getText() }).then((formatted) => {
 				let lastLine = document.lineCount;
 				let lastLineLastCol = document.lineAt(lastLine - 1).range.end.character;
@@ -247,10 +245,8 @@ export class WorkspaceD extends EventEmitter implements
 		let self = this;
 		console.log("lint");
 		return new Promise((resolve, reject) => {
-			if (!self.dscannerReady) {
-				console.log("Resolve null");
+			if (!self.dscannerReady)
 				return resolve(null);
-			}
 			self.request({ cmd: "dscanner", subcmd: "lint", file: document.uri.fsPath }).then(issues => {
 				let diagnostics: vscode.Diagnostic[] = [];
 				if (issues && issues.length)
@@ -296,11 +292,35 @@ export class WorkspaceD extends EventEmitter implements
 	}
 
 	killServer(): Thenable<any> {
+		if (!this.dcdReady)
+			return new Promise((resolve, reject) => { reject(); });
 		return this.request({ cmd: "dcd", subcmd: "kill-server" });
 	}
 
 	restartServer(): Thenable<any> {
+		if (!this.dcdReady)
+			return new Promise((resolve, reject) => { reject(); });
 		return this.request({ cmd: "dcd", subcmd: "restart-server" });
+	}
+
+	updateImports(): Thenable<boolean> {
+		return new Promise((resolve, reject) => {
+			if (!this.dubReady)
+				reject();
+			this.request({ cmd: "dub", subcmd: "update" }).then((success) => {
+				if (!success)
+					return resolve(success);
+				if (this.dcdReady) {
+					this.request({ cmd: "dcd", subcmd: "refresh-imports" }).then(() => {
+						resolve(true);
+						this.request({ cmd: "dub", subcmd: "list:import" }).then(console.log);
+					});
+				} else {
+					vscode.window.showWarningMessage("Could not update DCD. Please restart DCD if its not working properly");
+					resolve(true);
+				}
+			});
+		});
 	}
 
 	private mapLintType(type: string): vscode.DiagnosticSeverity {

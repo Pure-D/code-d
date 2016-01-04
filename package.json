@@ -99,6 +99,10 @@
 			{
 				"command": "code-d.restartServer",
 				"title": "code-d: Restart DCD Server"
+			},
+			{
+				"command": "code-d.reloadImports",
+				"title": "code-d: Reload import paths"
 			}
 		],
 		"jsonValidation": [

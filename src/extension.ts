@@ -90,5 +90,16 @@ export function activate(context: vscode.ExtensionContext) {
 		});
 	});
 
+	vscode.commands.registerCommand("code-d.reloadImports", () => {
+		workspaced.updateImports().then((success) => {
+			if (success)
+				vscode.window.showInformationMessage("Successfully reloaded import paths");
+			else
+				vscode.window.showWarningMessage("Import paths are empty!");
+		}, (err) => {
+			vscode.window.showErrorMessage("Could not update imports. dub might not be initialized yet!");
+		});
+	});
+
 	console.log("Initialized code-d");
 }
