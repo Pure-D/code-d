@@ -19,12 +19,15 @@ export class WorkspaceD extends EventEmitter implements
 		let self = this;
 		this.on("error", function(err) {
 			console.error(err);
-			self.ensureDCDRunning();
+			if (this.shouldRestart)
+				self.ensureDCDRunning();
 		});
 		this.startWorkspaceD();
 	}
 
 	startWorkspaceD() {
+		if (!this.shouldRestart)
+			return;
 		let self = this;
 		this.workspaced = true;
 		let path = config().get("workspacedPath", "workspace-d");
@@ -267,6 +270,7 @@ export class WorkspaceD extends EventEmitter implements
 	}
 
 	dispose() {
+		this.shouldRestart = false;
 		console.log("Disposing");
 		this.request({ cmd: "unload", components: "*" }).then((data) => {
 			console.log("Unloaded " + data.join(", "));
@@ -289,6 +293,14 @@ export class WorkspaceD extends EventEmitter implements
 					}
 				});
 		});
+	}
+
+	killServer(): Thenable<any> {
+		return this.request({ cmd: "dcd", subcmd: "kill-server" });
+	}
+
+	restartServer(): Thenable<any> {
+		return this.request({ cmd: "dcd", subcmd: "restart-server" });
 	}
 
 	private mapLintType(type: string): vscode.DiagnosticSeverity {
@@ -355,6 +367,8 @@ export class WorkspaceD extends EventEmitter implements
 
 	private ensureDCDRunning() {
 		if (!this.dcdReady)
+			return;
+		if (!this.shouldRestart)
 			return;
 		clearTimeout(this.runCheckTimeout);
 		this.runCheckTimeout = setTimeout((() => {
@@ -445,6 +459,7 @@ export class WorkspaceD extends EventEmitter implements
 	private dcdReady: boolean = false;
 	private dfmtReady: boolean = false;
 	private dscannerReady: boolean = false;
+	private shouldRestart: boolean = true;
 	private totalData: Buffer;
 	private requestNum = 0;
 	private instance: ChildProcess.ChildProcess;

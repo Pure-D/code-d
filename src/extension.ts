@@ -60,10 +60,33 @@ export function activate(context: vscode.ExtensionContext) {
 	}));
 
 	vscode.commands.registerCommand("code-d.switchConfiguration", () => {
-		let self = <WorkspaceD>workspaced;
-		vscode.window.showQuickPick(self.listConfigurations()).then((config) => {
+		vscode.window.showQuickPick(workspaced.listConfigurations()).then((config) => {
 			if (config)
-				self.setConfiguration(config);
+				workspaced.setConfiguration(config);
+		});
+	}, (err) => {
+		console.error(err);
+		vscode.window.showErrorMessage("Failed to switch configuration. See console for details.");
+	});
+
+	vscode.commands.registerCommand("code-d.killServer", () => {
+		workspaced.killServer().then((res) => {
+			vscode.window.showInformationMessage("Killed DCD-Server", "Restart").then((pick) => {
+				if (pick == "Restart")
+					vscode.commands.executeCommand("code-d.restartServer");
+			});
+		}, (err) => {
+			console.error(err);
+			vscode.window.showErrorMessage("Failed to kill DCD-Server. See console for details.");
+		});
+	});
+
+	vscode.commands.registerCommand("code-d.restartServer", () => {
+		workspaced.restartServer().then((res) => {
+			vscode.window.showInformationMessage("Restarted DCD-Server");
+		}, (err) => {
+			console.error(err);
+			vscode.window.showErrorMessage("Failed to kill DCD-Server. See console for details.");
 		});
 	});
 

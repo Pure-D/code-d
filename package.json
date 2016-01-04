@@ -91,6 +91,14 @@
 			{
 				"command": "code-d.switchConfiguration",
 				"title": "code-d: Switch Configuration"
+			},
+			{
+				"command": "code-d.killServer",
+				"title": "code-d: Kill DCD Server"
+			},
+			{
+				"command": "code-d.restartServer",
+				"title": "code-d: Restart DCD Server"
 			}
 		],
 		"jsonValidation": [
