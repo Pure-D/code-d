@@ -6,6 +6,8 @@ function config() {
 	return vscode.workspace.getConfiguration("d");
 }
 
+const TARGET_VERSION = [2, 1, 0];
+
 export class WorkspaceD extends EventEmitter implements
 	vscode.CompletionItemProvider,
 	vscode.SignatureHelpProvider,
@@ -59,7 +61,7 @@ export class WorkspaceD extends EventEmitter implements
 					self.startWorkspaceD.call(self);
 			});
 		});
-		this.setupDub();
+		this.checkVersion();
 	}
 
 	provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken): Thenable<vscode.CompletionItem[]> {
@@ -362,6 +364,20 @@ export class WorkspaceD extends EventEmitter implements
 		}
 	}
 
+	private checkVersion() {
+		this.request({ cmd: "version" }).then(version => {
+			if (version.major < TARGET_VERSION[0])
+				return vscode.window.showErrorMessage("workspace-d is outdated! (target=" + formatVersion(TARGET_VERSION) + ", workspaced=" + formatVersion([version.major, version.minor, version.patch]) + ")");
+			if (version.minor < TARGET_VERSION[1])
+				return vscode.window.showErrorMessage("workspace-d is outdated! (target=" + formatVersion(TARGET_VERSION) + ", workspaced=" + formatVersion([version.major, version.minor, version.patch]) + ")");
+			if (version.path < TARGET_VERSION[2])
+				return vscode.window.showErrorMessage("workspace-d is outdated! (target=" + formatVersion(TARGET_VERSION) + ", workspaced=" + formatVersion([version.major, version.minor, version.patch]) + ")");
+			this.setupDub();
+		}, () => {
+			vscode.window.showErrorMessage("Could not identify workspace-d version. Please update workspace-d!");
+		});
+	}
+
 	private setupDub() {
 		let self = this;
 		this.request({ cmd: "load", components: ["dub"], dir: this.projectRoot }).then((data) => {
@@ -547,4 +563,8 @@ export class WorkspaceD extends EventEmitter implements
 		t: vscode.CompletionItemKind.Property,
 		T: vscode.CompletionItemKind.Property,
 	};
+}
+
+function formatVersion(version: number[]): string {
+	return version[0] + "." + version[1] + "." + version[2];
 }
