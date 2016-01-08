@@ -112,6 +112,18 @@
 			{
 				"command": "code-d.reloadImports",
 				"title": "code-d: Reload import paths"
+			},
+			{
+				"command": "code-d.run",
+				"title": "code-d: Run project"
+			},
+			{
+				"command": "code-d.build",
+				"title": "code-d: Build project"
+			},
+			{
+				"command": "code-d.stop",
+				"title": "code-d: Stop project"
 			}
 		],
 		"jsonValidation": [

@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { D_MODE } from "./dmode"
 import { WorkspaceD } from "./workspace-d"
+import { CompileButtons } from "./compile-buttons"
 import * as statusbar from "./statusbar"
 
 let diagnosticCollection: vscode.DiagnosticCollection;
@@ -14,6 +15,7 @@ export function activate(context: vscode.ExtensionContext) {
 		console.warn("Could not initialize code-d");
 		return;
 	}
+
 	let workspaced = new WorkspaceD(vscode.workspace.rootPath);
 	context.subscriptions.push(vscode.languages.registerSignatureHelpProvider(D_MODE, workspaced, "(", ","));
 	context.subscriptions.push(vscode.languages.registerCompletionItemProvider(D_MODE, workspaced));
@@ -22,7 +24,9 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.languages.registerDefinitionProvider(D_MODE, workspaced));
 	context.subscriptions.push(vscode.languages.registerDocumentFormattingEditProvider(D_MODE, workspaced));
 	context.subscriptions.push(workspaced);
+
 	context.subscriptions.push(statusbar.setup(workspaced));
+	context.subscriptions.push(new CompileButtons(workspaced));
 
 	vscode.languages.setLanguageConfiguration(D_MODE.language, {
 		__electricCharacterSupport: {
@@ -86,7 +90,7 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	}));
 
-	vscode.commands.registerCommand("code-d.switchConfiguration", () => {
+	context.subscriptions.push(vscode.commands.registerCommand("code-d.switchConfiguration", () => {
 		vscode.window.showQuickPick(workspaced.listConfigurations()).then((config) => {
 			if (config)
 				workspaced.setConfiguration(config);
@@ -94,9 +98,9 @@ export function activate(context: vscode.ExtensionContext) {
 	}, (err) => {
 		console.error(err);
 		vscode.window.showErrorMessage("Failed to switch configuration. See console for details.");
-	});
+	}));
 
-	vscode.commands.registerCommand("code-d.switchBuildType", () => {
+	context.subscriptions.push(vscode.commands.registerCommand("code-d.switchBuildType", () => {
 		vscode.window.showQuickPick(workspaced.listBuildTypes()).then((config) => {
 			if (config)
 				workspaced.setBuildType(config);
@@ -104,9 +108,9 @@ export function activate(context: vscode.ExtensionContext) {
 	}, (err) => {
 		console.error(err);
 		vscode.window.showErrorMessage("Failed to switch build type. See console for details.");
-	});
+	}));
 
-	vscode.commands.registerCommand("code-d.killServer", () => {
+	context.subscriptions.push(vscode.commands.registerCommand("code-d.killServer", () => {
 		workspaced.killServer().then((res) => {
 			vscode.window.showInformationMessage("Killed DCD-Server", "Restart").then((pick) => {
 				if (pick == "Restart")
@@ -116,18 +120,18 @@ export function activate(context: vscode.ExtensionContext) {
 			console.error(err);
 			vscode.window.showErrorMessage("Failed to kill DCD-Server. See console for details.");
 		});
-	});
+	}));
 
-	vscode.commands.registerCommand("code-d.restartServer", () => {
+	context.subscriptions.push(vscode.commands.registerCommand("code-d.restartServer", () => {
 		workspaced.restartServer().then((res) => {
 			vscode.window.showInformationMessage("Restarted DCD-Server");
 		}, (err) => {
 			console.error(err);
 			vscode.window.showErrorMessage("Failed to kill DCD-Server. See console for details.");
 		});
-	});
+	}));
 
-	vscode.commands.registerCommand("code-d.reloadImports", () => {
+	context.subscriptions.push(vscode.commands.registerCommand("code-d.reloadImports", () => {
 		workspaced.updateImports().then((success) => {
 			if (success)
 				vscode.window.showInformationMessage("Successfully reloaded import paths");
@@ -136,7 +140,7 @@ export function activate(context: vscode.ExtensionContext) {
 		}, (err) => {
 			vscode.window.showErrorMessage("Could not update imports. dub might not be initialized yet!");
 		});
-	});
+	}));
 
 	console.log("Initialized code-d");
 }

@@ -22,6 +22,7 @@ class ConfigSelector implements vscode.Disposable {
 	private create() {
 		this.item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 2);
 		this.item.command = "code-d.switchConfiguration";
+		this.item.tooltip = "Switch Configuration";
 		this.item.show();
 		this.workspaced.on("configuration-change", config => {
 			this.item.text = config;
@@ -47,6 +48,7 @@ class BuildSelector implements vscode.Disposable {
 	private create() {
 		this.item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 1);
 		this.item.command = "code-d.switchBuildType";
+		this.item.tooltip = "Switch Build Type";
 		this.item.show();
 		this.workspaced.on("build-type-change", config => {
 			this.item.text = config;
