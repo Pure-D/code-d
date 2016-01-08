@@ -51,14 +51,39 @@ export function activate(context: vscode.ExtensionContext) {
 	diagnosticCollection = vscode.languages.createDiagnosticCollection("d");
 	context.subscriptions.push(diagnosticCollection);
 
+	let version;
+	let oldLint = [[], []];
 	context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(document => {
 		if (document.languageId != "d")
 			return;
-		if (config().get("enableLinting", true))
-			workspaced.lint(document).then(errors => {
-				diagnosticCollection.delete(document.uri);
-				diagnosticCollection.set(document.uri, errors);
+		version = document.version;
+		let target = version;
+		if (config().get("enableLinting", true)) {
+			let allErrors: [vscode.Uri, vscode.Diagnostic[]][] = [];
+
+			let fresh = true;
+			let buildErrors = () => {
+				allErrors = [];
+				oldLint.forEach(errors => {
+					allErrors.push.apply(allErrors, errors);
+				});
+				diagnosticCollection.set(allErrors);
+			};
+
+			workspaced.lint(document).then((errors: [vscode.Uri, vscode.Diagnostic[]][]) => {
+				if (target == version) {
+					oldLint[0] = errors;
+					buildErrors();
+				}
 			});
+			if (config().get("enableDubLinting", true))
+				workspaced.dubBuild(document).then((errors: [vscode.Uri, vscode.Diagnostic[]][]) => {
+					if (target == version) {
+						oldLint[1] = errors;
+						buildErrors();
+					}
+				});
+		}
 	}));
 
 	vscode.commands.registerCommand("code-d.switchConfiguration", () => {

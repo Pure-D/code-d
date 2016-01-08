@@ -1,12 +1,13 @@
 import * as ChildProcess from "child_process"
 import * as vscode from "vscode"
+import * as path from "path"
 import { EventEmitter } from "events"
 
 function config() {
 	return vscode.workspace.getConfiguration("d");
 }
 
-const TARGET_VERSION = [2, 1, 0];
+const TARGET_VERSION = [2, 2, 0];
 
 export class WorkspaceD extends EventEmitter implements
 	vscode.CompletionItemProvider,
@@ -47,7 +48,7 @@ export class WorkspaceD extends EventEmitter implements
 			console.log("WorkspaceD ended with an error:");
 			console.log(err);
 			if (err && (<any>err).code == "ENOENT") {
-				vscode.window.showErrorMessage("'" + path + "' is not a valid executable. Please check your D config!", "Retry").then(s => {
+				vscode.window.showErrorMessage("'" + path + "' is not a valid executable. Please check your user settings and make sure workspace-d is installed!", "Retry").then(s => {
 					if (s == "Retry")
 						self.startWorkspaceD.call(self);
 				});
@@ -243,7 +244,7 @@ export class WorkspaceD extends EventEmitter implements
 		});
 	}
 
-	lint(document: vscode.TextDocument): Thenable<vscode.Diagnostic[]> {
+	lint(document: vscode.TextDocument): Thenable<[vscode.Uri, vscode.Diagnostic[]][]> {
 		let self = this;
 		console.log("lint");
 		return new Promise((resolve, reject) => {
@@ -261,9 +262,38 @@ export class WorkspaceD extends EventEmitter implements
 							diagnostics.push(new vscode.Diagnostic(range, element.description, self.mapLintType(element.type)));
 					});
 				console.log("Resolve");
+				console.log([[document.uri, diagnostics]]);
+				resolve([[document.uri, diagnostics]]);
+			}, reject);
+		});
+	}
+
+	dubBuild(document: vscode.TextDocument): Thenable<[vscode.Uri, vscode.Diagnostic[]][]> {
+		console.log("dubBuild");
+		return new Promise((resolve, reject) => {
+			if (!this.dubReady)
+				return resolve(null);
+			this.request({ cmd: "dub", subcmd: "build" }).then((issues: { line: number, column: number, file: string, type: number, text: string }[]) => {
+				let diagnostics: [vscode.Uri, vscode.Diagnostic[]][] = [];
+				if (issues && issues.length)
+					issues.forEach(element => {
+						let range = new vscode.Range(Math.max(0, element.line - 1), element.column - 1, Math.max(0, element.line - 1), element.column + 500);
+						let uri = vscode.Uri.file(path.join(vscode.workspace.rootPath, element.file));
+						let error = new vscode.Diagnostic(range, element.text, this.mapDubLintType(element.type));
+						let found = false;
+						diagnostics.forEach(element => {
+							if (element[0].fsPath == uri.fsPath) {
+								found = true;
+								element[1].push(error);
+							}
+						});
+						if (!found)
+							diagnostics.push([uri, [error]]);
+					});
+				console.log("Resolve");
 				console.log(diagnostics);
 				resolve(diagnostics);
-			}, reject);
+			});
 		});
 	}
 
@@ -359,6 +389,18 @@ export class WorkspaceD extends EventEmitter implements
 			case "warn":
 				return vscode.DiagnosticSeverity.Warning;
 			case "error":
+			default:
+				return vscode.DiagnosticSeverity.Error;
+		}
+	}
+
+	private mapDubLintType(type: number): vscode.DiagnosticSeverity {
+		switch (type) {
+			case 2:
+				return vscode.DiagnosticSeverity.Information;
+			case 1:
+				return vscode.DiagnosticSeverity.Warning;
+			case 0:
 			default:
 				return vscode.DiagnosticSeverity.Error;
 		}
