@@ -93,6 +93,10 @@
 				"title": "code-d: Switch Configuration"
 			},
 			{
+				"command": "code-d.switchBuildType",
+				"title": "code-d: Switch Build Type"
+			},
+			{
 				"command": "code-d.killServer",
 				"title": "code-d: Kill DCD Server"
 			},

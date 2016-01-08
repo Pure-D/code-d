@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { D_MODE } from "./dmode"
 import { WorkspaceD } from "./workspace-d"
+import * as statusbar from "./statusbar"
 
 let diagnosticCollection: vscode.DiagnosticCollection;
 
@@ -21,6 +22,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.languages.registerDefinitionProvider(D_MODE, workspaced));
 	context.subscriptions.push(vscode.languages.registerDocumentFormattingEditProvider(D_MODE, workspaced));
 	context.subscriptions.push(workspaced);
+	context.subscriptions.push(statusbar.setup(workspaced));
 
 	vscode.languages.setLanguageConfiguration(D_MODE.language, {
 		__electricCharacterSupport: {
@@ -67,6 +69,16 @@ export function activate(context: vscode.ExtensionContext) {
 	}, (err) => {
 		console.error(err);
 		vscode.window.showErrorMessage("Failed to switch configuration. See console for details.");
+	});
+
+	vscode.commands.registerCommand("code-d.switchBuildType", () => {
+		vscode.window.showQuickPick(workspaced.listBuildTypes()).then((config) => {
+			if (config)
+				workspaced.setBuildType(config);
+		});
+	}, (err) => {
+		console.error(err);
+		vscode.window.showErrorMessage("Failed to switch build type. See console for details.");
 	});
 
 	vscode.commands.registerCommand("code-d.killServer", () => {

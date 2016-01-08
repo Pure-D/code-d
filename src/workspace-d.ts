@@ -278,14 +278,43 @@ export class WorkspaceD extends EventEmitter implements
 		return this.request({ cmd: "dub", subcmd: "list:configurations" });
 	}
 
+	getConfiguration(): Thenable<string> {
+		return this.request({ cmd: "dub", subcmd: "get:configuration" });
+	}
+
 	setConfiguration(config: string) {
 		this.request({ cmd: "dub", subcmd: "set:configuration", configuration: config }).then((success) => {
-			if (success)
+			if (success) {
 				this.request({ cmd: "dub", subcmd: "list:import" }).then(console.log);
+				this.emit("configuration-change", config);
+			}
 			else
 				vscode.window.showInformationMessage("No import paths available for this project. Autocompletion could be broken!", "Switch Configuration").then((s) => {
 					if (s == "Switch Configuration") {
 						vscode.commands.executeCommand("code-d.switchConfiguration");
+					}
+				});
+		});
+	}
+
+	listBuildTypes(): Thenable<string[]> {
+		return this.request({ cmd: "dub", subcmd: "list:build-types" });
+	}
+
+	getBuildType(): Thenable<string> {
+		return this.request({ cmd: "dub", subcmd: "get:build-type" });
+	}
+
+	setBuildType(config: string) {
+		this.request({ cmd: "dub", subcmd: "set:build-type", "build-type": config }).then((success) => {
+			if (success) {
+				this.request({ cmd: "dub", subcmd: "list:import" }).then(console.log);
+				this.emit("build-type-change", config);
+			}
+			else
+				vscode.window.showInformationMessage("No import paths available for this build type. Autocompletion could be broken!", "Switch Build Type").then((s) => {
+					if (s == "Switch Build Type") {
+						vscode.commands.executeCommand("code-d.switchBuildType");
 					}
 				});
 		});
@@ -338,6 +367,7 @@ export class WorkspaceD extends EventEmitter implements
 		this.request({ cmd: "load", components: ["dub"], dir: this.projectRoot }).then((data) => {
 			console.log("dub is ready");
 			self.dubReady = true;
+			self.emit("dub-ready");
 			self.setupDCD();
 			self.setupDScanner();
 			self.setupDfmt();
@@ -357,6 +387,7 @@ export class WorkspaceD extends EventEmitter implements
 		let self = this;
 		this.request({ cmd: "load", components: ["dscanner"], dir: this.projectRoot, dscannerPath: config().get("dscannerPath", "dscanner") }).then((data) => {
 			console.log("DScanner is ready");
+			self.emit("dscanner-ready");
 			self.dscannerReady = true;
 		});
 	}
@@ -381,6 +412,7 @@ export class WorkspaceD extends EventEmitter implements
 		let self = this;
 		this.request({ cmd: "load", components: ["dfmt"], dir: this.projectRoot, dfmtPath: config().get("dfmtPath", "dfmt") }).then((data) => {
 			console.log("Dfmt is ready");
+			self.emit("dfmt-ready");
 			self.dfmtReady = true;
 		});
 	}
@@ -413,6 +445,7 @@ export class WorkspaceD extends EventEmitter implements
 			this.request({ cmd: "dcd", subcmd: "setup-server" }).then((data) => {
 				this.request({ cmd: "dcd", subcmd: "add-imports", imports: ["/usr/include/dmd/druntime/import", "/usr/include/dmd/phobos"] }).then((data) => {
 					console.log("DCD is ready");
+					this.emit("dcd-ready");
 					this.dcdReady = true;
 				}, (err) => {
 					vscode.window.showErrorMessage("Could not initialize DCD. See console for details!");
