@@ -59,6 +59,7 @@ export class CompileButtons implements vscode.Disposable {
 		if (!this.child) {
 			this.output.show(vscode.ViewColumn.Three);
 			this.output.clear();
+			vscode.workspace.saveAll(false);
 			this.buildButton.hide();
 			this.startButton.hide();
 			Promise.all([this.workspaced.getConfiguration(), this.workspaced.getBuildType()]).then(values => {
