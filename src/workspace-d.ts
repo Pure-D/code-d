@@ -501,7 +501,7 @@ export class WorkspaceD extends EventEmitter implements
 			port: 9166
 		}).then((data) => {
 			this.request({ cmd: "dcd", subcmd: "setup-server" }).then((data) => {
-				this.request({ cmd: "dcd", subcmd: "add-imports", imports: ["/usr/include/dmd/druntime/import", "/usr/include/dmd/phobos"] }).then((data) => {
+				this.request({ cmd: "dcd", subcmd: "add-imports", imports: vscode.workspace.getConfiguration("d").get("stdlibPath", ["/usr/include/dmd/druntime/import", "/usr/include/dmd/phobos"]) }).then((data) => {
 					console.log("DCD is ready");
 					this.emit("dcd-ready");
 					this.dcdReady = true;

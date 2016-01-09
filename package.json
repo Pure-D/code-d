@@ -67,6 +67,14 @@
 					"default": "workspace-d",
 					"description": "Path of the workspace-d executable. Path can be omitted if in $PATH"
 				},
+				"d.stdlibPath": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					},
+					"default": ["/usr/include/dmd/druntime/import", "/usr/include/dmd/phobos"],
+					"description": "Array of paths to phobos and D runtime for automatic inclusion for auto completion"
+				},
 				"d.dcdClientPath": {
 					"type": "string",
 					"default": "dcd-client",
