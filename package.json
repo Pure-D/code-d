@@ -20,6 +20,9 @@
 		"onLanguage:d"
 	],
 	"main": "./out/src/extension",
+	"extensionDependencies": [
+		"vscode.jade"
+	],
 	"contributes": {
 		"languages": [
 			{
@@ -30,6 +33,15 @@
 				],
 				"aliases": [
 					"D"
+				]
+			},
+			{
+				"id": "jade",
+				"aliases": [
+					"Diet"
+				],
+				"extensions": [
+					".dt"
 				]
 			}
 		],
