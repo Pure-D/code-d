@@ -2,7 +2,9 @@ import * as vscode from 'vscode';
 import { D_MODE } from "./dmode"
 import { WorkspaceD } from "./workspace-d"
 import { CompileButtons } from "./compile-buttons"
+import { uploadCode } from "./util"
 import * as statusbar from "./statusbar"
+import * as path from "path"
 
 let diagnosticCollection: vscode.DiagnosticCollection;
 
@@ -88,6 +90,22 @@ export function activate(context: vscode.ExtensionContext) {
 					}
 				});
 		}
+	}));
+
+	context.subscriptions.push(vscode.commands.registerCommand("code-d.uploadSelection", () => {
+		if(vscode.window.activeTextEditor.selection.isEmpty)
+			vscode.window.showErrorMessage("No code selected");
+		else {
+			let code = vscode.window.activeTextEditor.document.getText(vscode.window.activeTextEditor.selection);
+			let name = path.basename(vscode.window.activeTextEditor.document.fileName);
+			let syntax = vscode.window.activeTextEditor.document.languageId;
+			uploadCode(name, syntax, code).then((url) => {
+				vscode.window.showInformationMessage("Code pasted on " + url);
+			});
+		}
+	}, (err) => {
+		console.error(err);
+		vscode.window.showErrorMessage("Failed to switch configuration. See console for details.");
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand("code-d.switchConfiguration", () => {

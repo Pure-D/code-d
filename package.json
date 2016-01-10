@@ -72,7 +72,10 @@
 					"items": {
 						"type": "string"
 					},
-					"default": ["/usr/include/dmd/druntime/import", "/usr/include/dmd/phobos"],
+					"default": [
+						"/usr/include/dmd/druntime/import",
+						"/usr/include/dmd/phobos"
+					],
 					"description": "Array of paths to phobos and D runtime for automatic inclusion for auto completion"
 				},
 				"d.dcdClientPath": {
@@ -144,6 +147,10 @@
 			{
 				"command": "code-d.stop",
 				"title": "code-d: Stop project"
+			},
+			{
+				"command": "code-d.uploadSelection",
+				"title": "code-d: Upload selection to dpaste.com"
 			}
 		],
 		"jsonValidation": [
@@ -156,6 +163,9 @@
 	"scripts": {
 		"vscode:prepublish": "node ./node_modules/vscode/bin/compile",
 		"compile": "node ./node_modules/vscode/bin/compile -watch -p ./"
+	},
+	"dependencies": {
+		"request": "^2.67.0"
 	},
 	"devDependencies": {
 		"typescript": "^1.6.2",
