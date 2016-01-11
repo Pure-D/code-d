@@ -1,4 +1,4 @@
-import * as request from "request";
+var request = require("request");
 
 export function uploadCode(title: string, syntax: string, code: string): Thenable<string> {
 	return new Promise((resolve, reject) => {
