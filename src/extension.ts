@@ -6,6 +6,7 @@ import { uploadCode } from "./util"
 import * as statusbar from "./statusbar"
 import * as path from "path"
 import { DlangUIHandler } from "./dlangui"
+import { lintDfmt } from "./dfmt-check"
 
 let diagnosticCollection: vscode.DiagnosticCollection;
 
@@ -21,7 +22,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	let workspaced = new WorkspaceD(vscode.workspace.rootPath);
 	context.subscriptions.push(vscode.languages.registerCompletionItemProvider(DML_MODE, workspaced.getDlangUI()));
-	
+
 	context.subscriptions.push(vscode.languages.registerCompletionItemProvider(D_MODE, workspaced, "."));
 	context.subscriptions.push(vscode.languages.registerSignatureHelpProvider(D_MODE, workspaced, "(", ","));
 	context.subscriptions.push(vscode.languages.registerDocumentSymbolProvider(D_MODE, workspaced));
@@ -79,7 +80,7 @@ export function activate(context: vscode.ExtensionContext) {
 			decreaseIndentPattern: /\}/,
 			increaseIndentPattern: /\{/
 		},
-		
+
 		wordPattern: /[a-zA-Z_][a-zA-Z0-9_]*/g,
 
 		brackets: [
@@ -95,7 +96,34 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(diagnosticCollection);
 
 	let version;
-	let oldLint = [[], []];
+	let writeTimeout;
+	let oldLint: [vscode.Uri, vscode.Diagnostic[]][][] = [[], [], []];
+	context.subscriptions.push(vscode.workspace.onDidChangeTextDocument(event => {
+		clearTimeout(writeTimeout);
+		writeTimeout = setTimeout(function() {
+			let document = event.document;
+			if (document.languageId != "d")
+				return;
+			version = document.version;
+			let target = version;
+			if (config().get("enableLinting", true)) {
+				let allErrors: [vscode.Uri, vscode.Diagnostic[]][] = [];
+
+				let fresh = true;
+				let buildErrors = () => {
+					allErrors = [];
+					oldLint.forEach(errors => {
+						allErrors.push.apply(allErrors, errors);
+					});
+					diagnosticCollection.set(allErrors);
+				};
+
+				oldLint[2] = [[document.uri, lintDfmt(document, document.getText())]];
+				buildErrors();
+			}
+		}, 500);
+	}));
+
 	context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(document => {
 		if (document.languageId != "d")
 			return;
@@ -113,6 +141,8 @@ export function activate(context: vscode.ExtensionContext) {
 				diagnosticCollection.set(allErrors);
 			};
 
+			oldLint[2] = [[document.uri, lintDfmt(document, document.getText())]];
+			buildErrors();
 			workspaced.lint(document).then((errors: [vscode.Uri, vscode.Diagnostic[]][]) => {
 				if (target == version) {
 					oldLint[0] = errors;
@@ -196,7 +226,7 @@ export function activate(context: vscode.ExtensionContext) {
 			vscode.window.showErrorMessage("Could not update imports. dub might not be initialized yet!");
 		});
 	}));
-	
+
 	context.subscriptions.push(vscode.commands.registerCommand("code-d.insertDscanner", () => {
 		vscode.window.activeTextEditor.edit((bld) => {
 			bld.insert(vscode.window.activeTextEditor.selection.start, `; Configurue which static analysis checks are enabled
