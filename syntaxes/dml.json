@@ -127,6 +127,31 @@
 					"include": "source.js.regexp"
 				}
 			]
+		},
+		{
+			"begin": "/\\*",
+			"beginCaptures": {
+				"0": {
+					"name": "punctuation.definition.comment.begin.d"
+				}
+			},
+			"end": "\\*/",
+			"endCaptures": {
+				"0": {
+					"name": "punctuation.definition.comment.end.d"
+				}
+			},
+			"name": "comment.block.d"
+		},
+		{
+			"begin": "//",
+			"beginCaptures": {
+				"0": {
+					"name": "punctuation.definition.comment.d"
+				}
+			},
+			"end": "\\n",
+			"name": "comment.line.double-slash.d"
 		}
 	]
 }
