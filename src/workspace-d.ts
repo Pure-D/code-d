@@ -1,6 +1,7 @@
 import * as ChildProcess from "child_process"
 import * as vscode from "vscode"
 import * as path from "path"
+import * as fs from "fs"
 import { EventEmitter } from "events"
 import { DlangUIHandler } from "./dlangui"
 
@@ -8,7 +9,7 @@ function config() {
 	return vscode.workspace.getConfiguration("d");
 }
 
-const TARGET_VERSION = [2, 3, 0];
+const TARGET_VERSION = [2, 3, 1];
 
 export class WorkspaceD extends EventEmitter implements
 	vscode.CompletionItemProvider,
@@ -251,7 +252,8 @@ export class WorkspaceD extends EventEmitter implements
 		return new Promise((resolve, reject) => {
 			if (!self.dscannerReady)
 				return resolve(null);
-			self.request({ cmd: "dscanner", subcmd: "lint", file: document.uri.fsPath }).then(issues => {
+			let useProjectIni = fs.existsSync(path.join(self.projectRoot, "dscanner.ini"));
+			self.request({ cmd: "dscanner", subcmd: "lint", file: document.uri.fsPath, ini: useProjectIni ? path.join(self.projectRoot, "dscanner.ini") : "" }).then(issues => {
 				let diagnostics: vscode.Diagnostic[] = [];
 				if (issues && issues.length)
 					issues.forEach(element => {
