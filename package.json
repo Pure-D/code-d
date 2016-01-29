@@ -165,6 +165,10 @@
 			{
 				"command": "code-d.uploadSelection",
 				"title": "code-d: Upload selection to dpaste.com"
+			},
+			{
+				"command": "code-d.insertDscanner",
+				"title": "code-d: Insert default dscanner.ini content"
 			}
 		],
 		"jsonValidation": [
