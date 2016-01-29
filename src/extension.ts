@@ -1,10 +1,11 @@
 import * as vscode from 'vscode';
-import { D_MODE } from "./dmode"
+import { D_MODE, DML_MODE } from "./dmode"
 import { WorkspaceD } from "./workspace-d"
 import { CompileButtons } from "./compile-buttons"
 import { uploadCode } from "./util"
 import * as statusbar from "./statusbar"
 import * as path from "path"
+import { DlangUIHandler } from "./dlangui"
 
 let diagnosticCollection: vscode.DiagnosticCollection;
 
@@ -14,17 +15,20 @@ function config() {
 
 export function activate(context: vscode.ExtensionContext) {
 	if (!vscode.workspace.rootPath) {
-		console.warn("Could not initialize code-d");
+		console.warn("code-d requires a folder to be open to work");
 		return;
 	}
 
 	let workspaced = new WorkspaceD(vscode.workspace.rootPath);
+	context.subscriptions.push(vscode.languages.registerCompletionItemProvider(DML_MODE, workspaced.getDlangUI()));
+	
+	context.subscriptions.push(vscode.languages.registerCompletionItemProvider(D_MODE, workspaced, "."));
 	context.subscriptions.push(vscode.languages.registerSignatureHelpProvider(D_MODE, workspaced, "(", ","));
-	context.subscriptions.push(vscode.languages.registerCompletionItemProvider(D_MODE, workspaced));
 	context.subscriptions.push(vscode.languages.registerDocumentSymbolProvider(D_MODE, workspaced));
 	context.subscriptions.push(vscode.languages.registerHoverProvider(D_MODE, workspaced));
 	context.subscriptions.push(vscode.languages.registerDefinitionProvider(D_MODE, workspaced));
 	context.subscriptions.push(vscode.languages.registerDocumentFormattingEditProvider(D_MODE, workspaced));
+
 	context.subscriptions.push(workspaced);
 
 	context.subscriptions.push(statusbar.setup(workspaced));
@@ -51,6 +55,39 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	});
 
+	vscode.languages.setLanguageConfiguration(DML_MODE.language, {
+		__electricCharacterSupport: {
+			brackets: [
+				{ tokenType: 'delimiter.curly.ts', open: '{', close: '}', isElectric: true },
+				{ tokenType: 'delimiter.square.ts', open: '[', close: ']', isElectric: true },
+				{ tokenType: 'delimiter.paren.ts', open: '(', close: ')', isElectric: true }
+			]
+		},
+
+		__characterPairSupport: {
+			autoClosingPairs: [
+				{ open: '{', close: '}' },
+				{ open: '[', close: ']' },
+				{ open: '(', close: ')' },
+				{ open: '`', close: '`', notIn: ['string'] },
+				{ open: '"', close: '"', notIn: ['string'] },
+				{ open: '\'', close: '\'', notIn: ['string', 'comment'] }
+			]
+		},
+
+		indentationRules: {
+			decreaseIndentPattern: /\}/,
+			increaseIndentPattern: /\{/
+		},
+		
+		wordPattern: /[a-zA-Z_][a-zA-Z0-9_]*/g,
+
+		brackets: [
+			['{', '}'],
+			['[', ']'],
+			['(', ')'],
+		]
+	});
 
 	context.subscriptions.push(vscode.languages.registerWorkspaceSymbolProvider(workspaced));
 
@@ -93,7 +130,7 @@ export function activate(context: vscode.ExtensionContext) {
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand("code-d.uploadSelection", () => {
-		if(vscode.window.activeTextEditor.selection.isEmpty)
+		if (vscode.window.activeTextEditor.selection.isEmpty)
 			vscode.window.showErrorMessage("No code selected");
 		else {
 			let code = vscode.window.activeTextEditor.document.getText(vscode.window.activeTextEditor.selection);

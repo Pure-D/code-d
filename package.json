@@ -1,11 +1,11 @@
 {
 	"name": "code-d",
 	"description": "auto-complete, snippets, linter and formatter for dlang",
-	"version": "0.6.0",
+	"version": "0.7.0",
 	"publisher": "webfreak",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/WebFreak001/code-d.git"
+		"url": "https://github.com/Pure-D/code-d.git"
 	},
 	"engines": {
 		"vscode": "^0.10.1"
@@ -36,6 +36,15 @@
 				]
 			},
 			{
+				"id": "dml",
+				"aliases": [
+					"DlangUI Markup Language"
+				],
+				"extensions": [
+					".dml"
+				]
+			},
+			{
 				"id": "jade",
 				"aliases": [
 					"Diet"
@@ -50,6 +59,11 @@
 				"language": "d",
 				"scopeName": "source.d",
 				"path": "./syntaxes/d.json"
+			},
+			{
+				"language": "dml",
+				"scopeName": "source.dml",
+				"path": "./syntaxes/dml.json"
 			}
 		],
 		"snippets": [

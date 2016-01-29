@@ -2,12 +2,13 @@ import * as ChildProcess from "child_process"
 import * as vscode from "vscode"
 import * as path from "path"
 import { EventEmitter } from "events"
+import { DlangUIHandler } from "./dlangui"
 
 function config() {
 	return vscode.workspace.getConfiguration("d");
 }
 
-const TARGET_VERSION = [2, 2, 0];
+const TARGET_VERSION = [2, 3, 0];
 
 export class WorkspaceD extends EventEmitter implements
 	vscode.CompletionItemProvider,
@@ -17,7 +18,7 @@ export class WorkspaceD extends EventEmitter implements
 	vscode.DefinitionProvider,
 	vscode.DocumentFormattingEditProvider,
 	vscode.HoverProvider {
-	constructor(private projectRoot: string) {
+	constructor(public projectRoot: string) {
 		super();
 		let self = this;
 		this.on("error", function(err) {
@@ -384,7 +385,11 @@ export class WorkspaceD extends EventEmitter implements
 		});
 	}
 
-	private mapLintType(type: string): vscode.DiagnosticSeverity {
+	getDlangUI(): DlangUIHandler {
+		return new DlangUIHandler(this);
+	}
+
+	public mapLintType(type: string): vscode.DiagnosticSeverity {
 		switch (type) {
 			case "warn":
 				return vscode.DiagnosticSeverity.Warning;
@@ -394,7 +399,7 @@ export class WorkspaceD extends EventEmitter implements
 		}
 	}
 
-	private mapDubLintType(type: number): vscode.DiagnosticSeverity {
+	public mapDubLintType(type: number): vscode.DiagnosticSeverity {
 		switch (type) {
 			case 2:
 				return vscode.DiagnosticSeverity.Information;
@@ -406,21 +411,21 @@ export class WorkspaceD extends EventEmitter implements
 		}
 	}
 
-	private checkVersion() {
+	public checkVersion() {
 		this.request({ cmd: "version" }).then(version => {
 			if (version.major < TARGET_VERSION[0])
-				return vscode.window.showErrorMessage("workspace-d is outdated! (target=" + formatVersion(TARGET_VERSION) + ", workspaced=" + formatVersion([version.major, version.minor, version.patch]) + ")");
-			if (version.minor < TARGET_VERSION[1])
-				return vscode.window.showErrorMessage("workspace-d is outdated! (target=" + formatVersion(TARGET_VERSION) + ", workspaced=" + formatVersion([version.major, version.minor, version.patch]) + ")");
-			if (version.path < TARGET_VERSION[2])
-				return vscode.window.showErrorMessage("workspace-d is outdated! (target=" + formatVersion(TARGET_VERSION) + ", workspaced=" + formatVersion([version.major, version.minor, version.patch]) + ")");
+				return vscode.window.showErrorMessage("workspace-d is outdated! Please update to continue using this plugin. (target=" + formatVersion(TARGET_VERSION) + ", workspaced=" + formatVersion([version.major, version.minor, version.patch]) + ")");
+			if (version.major == TARGET_VERSION[0] && version.minor < TARGET_VERSION[1])
+				vscode.window.showWarningMessage("workspace-d might be outdated! Please update if things are not working as expected. (target=" + formatVersion(TARGET_VERSION) + ", workspaced=" + formatVersion([version.major, version.minor, version.patch]) + ")");
+			if (version.major == TARGET_VERSION[0] && version.minor == TARGET_VERSION[1] && version.path < TARGET_VERSION[2])
+				vscode.window.showInformationMessage("workspace-d has a new optional update! Please update before submitting a bug report. (target=" + formatVersion(TARGET_VERSION) + ", workspaced=" + formatVersion([version.major, version.minor, version.patch]) + ")");
 			this.setupDub();
 		}, () => {
 			vscode.window.showErrorMessage("Could not identify workspace-d version. Please update workspace-d!");
 		});
 	}
 
-	private setupDub() {
+	public setupDub() {
 		let self = this;
 		this.request({ cmd: "load", components: ["dub"], dir: this.projectRoot }).then((data) => {
 			console.log("dub is ready");
@@ -429,6 +434,7 @@ export class WorkspaceD extends EventEmitter implements
 			self.setupDCD();
 			self.setupDScanner();
 			self.setupDfmt();
+			self.setupDlangUI();
 			self.listConfigurations().then((configs) => {
 				if (configs.length == 0) {
 					vscode.window.showInformationMessage("No configurations available for this project. Autocompletion could be broken!");
@@ -441,7 +447,7 @@ export class WorkspaceD extends EventEmitter implements
 		});
 	}
 
-	private setupDScanner() {
+	public setupDScanner() {
 		let self = this;
 		this.request({ cmd: "load", components: ["dscanner"], dir: this.projectRoot, dscannerPath: config().get("dscannerPath", "dscanner") }).then((data) => {
 			console.log("DScanner is ready");
@@ -450,7 +456,7 @@ export class WorkspaceD extends EventEmitter implements
 		});
 	}
 
-	private setupDCD() {
+	public setupDCD() {
 		if (config().get("enableAutoComplete", true))
 			this.request({
 				cmd: "load",
@@ -466,7 +472,7 @@ export class WorkspaceD extends EventEmitter implements
 			});
 	}
 
-	private setupDfmt() {
+	public setupDfmt() {
 		let self = this;
 		this.request({ cmd: "load", components: ["dfmt"], dir: this.projectRoot, dfmtPath: config().get("dfmtPath", "dfmt") }).then((data) => {
 			console.log("Dfmt is ready");
@@ -475,7 +481,16 @@ export class WorkspaceD extends EventEmitter implements
 		});
 	}
 
-	private ensureDCDRunning() {
+	public setupDlangUI() {
+		let self = this;
+		this.request({ cmd: "load", components: ["dlangui"] }).then((data) => {
+			console.log("DlangUI is ready");
+			self.emit("dlangui-ready");
+			self.dlanguiReady = true;
+		});
+	}
+
+	public ensureDCDRunning() {
 		if (!this.dcdReady)
 			return;
 		if (!this.shouldRestart)
@@ -494,7 +509,7 @@ export class WorkspaceD extends EventEmitter implements
 		}).bind(this), 500);
 	}
 
-	private startDCD() {
+	public startDCD() {
 		this.request({
 			cmd: "dcd",
 			subcmd: "find-and-select-port",
@@ -516,7 +531,7 @@ export class WorkspaceD extends EventEmitter implements
 		});
 	}
 
-	private request(data): Thenable<any> {
+	public request(data): Thenable<any> {
 		let lengthBuffer = new Buffer(4);
 		let idBuffer = new Buffer(4);
 		let dataStr = JSON.stringify(data);
@@ -536,12 +551,12 @@ export class WorkspaceD extends EventEmitter implements
 		});
 	}
 
-	private handleData(chunk) {
+	public handleData(chunk) {
 		this.totalData = Buffer.concat([this.totalData, chunk]);
 		while (this.handleChunks());
 	}
 
-	private handleChunks() {
+	public handleChunks() {
 		if (this.totalData.length < 8)
 			return false;
 		let len = this.totalData.readInt32BE(0);
@@ -564,17 +579,18 @@ export class WorkspaceD extends EventEmitter implements
 		return false;
 	}
 
-	private runCheckTimeout = -1;
-	private workspaced: boolean = true;
-	private dubReady: boolean = false;
-	private dcdReady: boolean = false;
-	private dfmtReady: boolean = false;
-	private dscannerReady: boolean = false;
-	private shouldRestart: boolean = true;
-	private totalData: Buffer;
-	private requestNum = 0;
-	private instance: ChildProcess.ChildProcess;
-	private scanTypes = {
+	public runCheckTimeout = -1;
+	public workspaced: boolean = true;
+	public dubReady: boolean = false;
+	public dcdReady: boolean = false;
+	public dfmtReady: boolean = false;
+	public dlanguiReady: boolean = false;
+	public dscannerReady: boolean = false;
+	public shouldRestart: boolean = true;
+	public totalData: Buffer;
+	public requestNum = 0;
+	public instance: ChildProcess.ChildProcess;
+	public scanTypes = {
 		g: vscode.SymbolKind.Enum,
 		e: vscode.SymbolKind.Field,
 		v: vscode.SymbolKind.Variable,
@@ -586,7 +602,7 @@ export class WorkspaceD extends EventEmitter implements
 		T: vscode.SymbolKind.Property,
 		a: vscode.SymbolKind.Field
 	};
-	private types = {
+	public types = {
 		c: vscode.CompletionItemKind.Class,
 		i: vscode.CompletionItemKind.Interface,
 		s: vscode.CompletionItemKind.Unit,
