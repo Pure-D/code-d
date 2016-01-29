@@ -320,7 +320,7 @@ export class WorkspaceD extends EventEmitter implements
 	setConfiguration(config: string) {
 		this.request({ cmd: "dub", subcmd: "set:configuration", configuration: config }).then((success) => {
 			if (success) {
-				this.request({ cmd: "dub", subcmd: "list:import" }).then(console.log);
+				this.listImports().then(console.log);
 				this.emit("configuration-change", config);
 			}
 			else
@@ -377,7 +377,7 @@ export class WorkspaceD extends EventEmitter implements
 				if (this.dcdReady) {
 					this.request({ cmd: "dcd", subcmd: "refresh-imports" }).then(() => {
 						resolve(true);
-						this.request({ cmd: "dub", subcmd: "list:import" }).then(console.log);
+						this.listImports().then(console.log);
 					});
 				} else {
 					vscode.window.showWarningMessage("Could not update DCD. Please restart DCD if its not working properly");
@@ -385,6 +385,12 @@ export class WorkspaceD extends EventEmitter implements
 				}
 			});
 		});
+	}
+
+	listImports(): Thenable<string[]> {
+		if (!this.dubReady)
+			return new Promise((resolve, reject) => { resolve([]); });
+		return this.request({ cmd: "dub", subcmd: "list:import" });
 	}
 
 	getDlangUI(): DlangUIHandler {
