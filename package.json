@@ -36,6 +36,15 @@
 				]
 			},
 			{
+				"id": "dscript",
+				"aliases": [
+					"arsd.DScript"
+				],
+				"extensions": [
+					"dscript"
+				]
+			},
+			{
 				"id": "dml",
 				"aliases": [
 					"DlangUI Markup Language"
@@ -59,6 +68,11 @@
 				"language": "d",
 				"scopeName": "source.d",
 				"path": "./syntaxes/d.json"
+			},
+			{
+				"language": "dscript",
+				"scopeName": "source.dscript",
+				"path": "./syntaxes/arsd.dscript.json"
 			},
 			{
 				"language": "dml",

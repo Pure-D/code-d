@@ -132,26 +132,26 @@
 			"begin": "/\\*",
 			"beginCaptures": {
 				"0": {
-					"name": "punctuation.definition.comment.begin.d"
+					"name": "punctuation.definition.comment.begin.dml"
 				}
 			},
 			"end": "\\*/",
 			"endCaptures": {
 				"0": {
-					"name": "punctuation.definition.comment.end.d"
+					"name": "punctuation.definition.comment.end.dml"
 				}
 			},
-			"name": "comment.block.d"
+			"name": "comment.block.dml"
 		},
 		{
 			"begin": "//",
 			"beginCaptures": {
 				"0": {
-					"name": "punctuation.definition.comment.d"
+					"name": "punctuation.definition.comment.dml"
 				}
 			},
 			"end": "\\n",
-			"name": "comment.line.double-slash.d"
+			"name": "comment.line.double-slash.dml"
 		}
 	]
 }
