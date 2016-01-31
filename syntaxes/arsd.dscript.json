@@ -72,7 +72,7 @@
 					"name": "storage.modifier.safety.d"
 				},
 				{
-					"match": "\\b(scope|auto|override|final|abstract|synchronized|lazy|align|deprecated|pure|nothrow|ref)\\b",
+					"match": "\\b(scope|auto|var|override|final|abstract|synchronized|lazy|align|deprecated|pure|nothrow|ref)\\b",
 					"name": "storage.modifier.d"
 				},
 				{
@@ -395,7 +395,7 @@
 					"name": "keyword.control.branch.d"
 				},
 				{
-					"match": "\\b(version|with|scope|asm|mixin)\\b",
+					"match": "\\b(version|with|scope|asm|mixin|eval)\\b",
 					"name": "keyword.control.d"
 				},
 				{
@@ -411,11 +411,11 @@
 					"name": "keyword.control.exception.d"
 				},
 				{
-					"match": "\\b(deprecated|mixin|pragma|new|is|in)\\b",
+					"match": "\\b(deprecated|mixin|eval|pragma|new|is|in)\\b",
 					"name": "keyword.other.d"
 				},
 				{
-					"begin": "\\b(function|delegate)\\s*\\(",
+					"begin": "\\b(function|delegate|macro)\\s*\\(",
 					"beginCaptures": {
 						"0": {
 							"name": "keyword.other.function.d"
