@@ -41,7 +41,7 @@
 					"arsd.DScript"
 				],
 				"extensions": [
-					"dscript"
+					".dscript"
 				]
 			},
 			{
@@ -51,6 +51,15 @@
 				],
 				"extensions": [
 					".dml"
+				]
+			},
+			{
+				"id": "sdl",
+				"aliases": [
+					"Simple Declarative Language"
+				],
+				"extensions": [
+					".sdl"
 				]
 			},
 			{
@@ -78,6 +87,11 @@
 				"language": "dml",
 				"scopeName": "source.dml",
 				"path": "./syntaxes/dml.json"
+			},
+			{
+				"language": "sdl",
+				"scopeName": "source.sdl",
+				"path": "./syntaxes/sdl.json"
 			}
 		],
 		"snippets": [
