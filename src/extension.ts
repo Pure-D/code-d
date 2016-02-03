@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { D_MODE, DML_MODE } from "./dmode"
+import { D_MODE, DML_MODE, DSCRIPT_MODE } from "./dmode"
 import { WorkspaceD } from "./workspace-d"
 import { CompileButtons } from "./compile-buttons"
 import { uploadCode } from "./util"
@@ -43,6 +43,49 @@ export function activate(context: vscode.ExtensionContext) {
 				{ tokenType: 'delimiter.paren.ts', open: '(', close: ')', isElectric: true }
 			]
 		},
+		
+		comments: {
+			blockComment: ["/*", "*/"],
+			lineComment: "//"
+		},
+		
+		brackets: [
+			["(", ")"],
+			["{", "}"],
+			["[", "]"]
+		],
+
+		__characterPairSupport: {
+			autoClosingPairs: [
+				{ open: '{', close: '}' },
+				{ open: '[', close: ']' },
+				{ open: '(', close: ')' },
+				{ open: '`', close: '`', notIn: ['string'] },
+				{ open: '"', close: '"', notIn: ['string'] },
+				{ open: '\'', close: '\'', notIn: ['string', 'comment'] }
+			]
+		}
+	});
+
+	vscode.languages.setLanguageConfiguration(DSCRIPT_MODE.language, {
+		__electricCharacterSupport: {
+			brackets: [
+				{ tokenType: 'delimiter.curly.ts', open: '{', close: '}', isElectric: true },
+				{ tokenType: 'delimiter.square.ts', open: '[', close: ']', isElectric: true },
+				{ tokenType: 'delimiter.paren.ts', open: '(', close: ')', isElectric: true }
+			]
+		},
+		
+		brackets: [
+			["(", ")"],
+			["{", "}"],
+			["[", "]"]
+		],
+		
+		comments: {
+			blockComment: ["/*", "*/"],
+			lineComment: "//"
+		},
 
 		__characterPairSupport: {
 			autoClosingPairs: [
@@ -64,6 +107,17 @@ export function activate(context: vscode.ExtensionContext) {
 				{ tokenType: 'delimiter.paren.ts', open: '(', close: ')', isElectric: true }
 			]
 		},
+		
+		comments: {
+			blockComment: ["/*", "*/"],
+			lineComment: "//"
+		},
+		
+		brackets: [
+			["(", ")"],
+			["{", "}"],
+			["[", "]"]
+		],
 
 		__characterPairSupport: {
 			autoClosingPairs: [
@@ -81,13 +135,7 @@ export function activate(context: vscode.ExtensionContext) {
 			increaseIndentPattern: /\{/
 		},
 
-		wordPattern: /[a-zA-Z_][a-zA-Z0-9_]*/g,
-
-		brackets: [
-			['{', '}'],
-			['[', ']'],
-			['(', ')'],
-		]
+		wordPattern: /[a-zA-Z_][a-zA-Z0-9_]*/g
 	});
 
 	context.subscriptions.push(vscode.languages.registerWorkspaceSymbolProvider(workspaced));
