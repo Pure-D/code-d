@@ -41,7 +41,8 @@
 					"arsd.DScript"
 				],
 				"extensions": [
-					".dscript"
+					".dscript",
+					".ds"
 				]
 			},
 			{

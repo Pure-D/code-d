@@ -1,6 +1,7 @@
 {
 	"fileTypes": [
-		"dscript"
+		"dscript",
+		"ds"
 	],
 	"name": "arsd.DScript",
 	"scopeName": "source.dscript",
@@ -326,8 +327,8 @@
 							]
 						},
 						{
-							"begin": "(?=in|out)",
-							"end": "\\b(?=body)",
+							"begin": "(in|out)",
+							"end": "\\b(body)",
 							"patterns": [
 								{
 									"begin": "\\b(in)\\b",
@@ -445,44 +446,40 @@
 					"name": "keyword.operator.d"
 				},
 				{
-					"match": "=",
-					"name": "keyword.operator.assignment.d"
-				},
-				{
-					"match": "[\\+\\-\\*/%]",
-					"name": "keyword.operator.arithmetic.d"
+					"match": "(\\-\\-|\\+\\+)",
+					"name": "keyword.operator.increment-decrement.d"
 				},
 				{
 					"match": "[\\+\\-\\*/%]=",
 					"name": "keyword.operator.assignment.arithmetic.d"
 				},
 				{
-					"match": "(\\-\\-|\\+\\+)",
-					"name": "keyword.operator.increment-decrement.d"
+					"match": "[\\+\\-\\*/%]",
+					"name": "keyword.operator.arithmetic.d"
 				},
 				{
 					"match": "\\^\\^",
 					"name": "keyword.operator.power.d"
 				},
 				{
-					"match": "<<|>>?|\\||\\^|&",
-					"name": "keyword.operator.bitwise.d"
+					"match": "(&&|\\|\\|)",
+					"name": "keyword.operator.logical.d"
 				},
 				{
 					"match": "(<<|>>?|\\||\\^|&)=",
 					"name": "keyword.operator.assignment.bitwise.d"
 				},
 				{
-					"match": "(&&|\\|\\|)",
-					"name": "keyword.operator.logical.d"
-				},
-				{
-					"match": "!(?!\\s*\\()",
-					"name": "keyword.operator.logical.d"
+					"match": "(<<|>>?|\\||\\^|&)",
+					"name": "keyword.operator.bitwise.d"
 				},
 				{
 					"match": "(==|!=|<=|>=|<>|<|>)",
 					"name": "keyword.operator.comparison.d"
+				},
+				{
+					"match": "!(?!\\s*\\()",
+					"name": "keyword.operator.logical.d"
 				},
 				{
 					"match": "[\\?:]",
@@ -493,16 +490,20 @@
 					"name": "keyword.operator.dereference.d"
 				},
 				{
-					"match": "~",
-					"name": "keyword.operator.concatenation.d"
-				},
-				{
 					"match": "~=",
 					"name": "keyword.operator.assignment.concatenation.d"
 				},
 				{
+					"match": "~",
+					"name": "keyword.operator.concatenation.d"
+				},
+				{
 					"match": "=>",
 					"name": "keyword.operator.lambda.d"
+				},
+				{
+					"match": "=",
+					"name": "keyword.operator.assignment.d"
 				},
 				{
 					"match": ",",
@@ -718,6 +719,9 @@
 						},
 						{
 							"include": "#constants-and-special-vars"
+						},
+						{
+							"include": "#strings"
 						}
 					]
 				}
