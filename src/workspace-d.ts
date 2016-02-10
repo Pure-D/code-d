@@ -9,7 +9,7 @@ function config() {
 	return vscode.workspace.getConfiguration("d");
 }
 
-const TARGET_VERSION = [2, 3, 1];
+const TARGET_VERSION = [2, 3, 2];
 
 export class WorkspaceD extends EventEmitter implements
 	vscode.CompletionItemProvider,
@@ -523,14 +523,10 @@ export class WorkspaceD extends EventEmitter implements
 			subcmd: "find-and-select-port",
 			port: 9166
 		}).then((data) => {
-			this.request({ cmd: "dcd", subcmd: "setup-server" }).then((data) => {
-				this.request({ cmd: "dcd", subcmd: "add-imports", imports: vscode.workspace.getConfiguration("d").get("stdlibPath", ["/usr/include/dmd/druntime/import", "/usr/include/dmd/phobos"]) }).then((data) => {
-					console.log("DCD is ready");
-					this.emit("dcd-ready");
-					this.dcdReady = true;
-				}, (err) => {
-					vscode.window.showErrorMessage("Could not initialize DCD. See console for details!");
-				});
+			this.request({ cmd: "dcd", subcmd: "setup-server", additionalImports: vscode.workspace.getConfiguration("d").get("stdlibPath", ["/usr/include/dmd/druntime/import", "/usr/include/dmd/phobos"]) }).then((data) => {
+				console.log("DCD is ready");
+				this.emit("dcd-ready");
+				this.dcdReady = true;
 			}, (err) => {
 				vscode.window.showErrorMessage("Could not initialize DCD. See console for details!");
 			});
