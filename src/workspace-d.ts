@@ -72,7 +72,7 @@ export class WorkspaceD extends EventEmitter implements
 		console.log("provideCompletionItems");
 		return new Promise((resolve, reject) => {
 			if (!self.dcdReady)
-				return resolve(null);
+				return resolve([]);
 			let offset = document.offsetAt(position);
 			self.request({ cmd: "dcd", subcmd: "list-completion", code: document.getText(), pos: offset }).then((completions) => {
 				if (completions.type == "identifiers") {
@@ -89,7 +89,7 @@ export class WorkspaceD extends EventEmitter implements
 				}
 				else {
 					console.log("resolve null");
-					resolve(null);
+					resolve([]);
 				}
 			}, reject);
 		});
@@ -126,7 +126,7 @@ export class WorkspaceD extends EventEmitter implements
 		console.log("provideWorkspaceSymbols");
 		return new Promise((resolve, reject) => {
 			if (!self.dcdReady)
-				return reject("DCD not ready");
+				return resolve([]);
 			self.request({ cmd: "dcd", subcmd: "search-symbol", query: query }).then((symbols) => {
 				let found = [];
 				if (symbols && symbols.length)
@@ -155,7 +155,7 @@ export class WorkspaceD extends EventEmitter implements
 		console.log("provideDocumentSymbols");
 		return new Promise((resolve, reject) => {
 			if (!self.dscannerReady)
-				return resolve(null);
+				return resolve([]);
 			self.request({ cmd: "dscanner", subcmd: "list-definitions", file: document.uri.fsPath }).then(definitions => {
 				let informations: vscode.SymbolInformation[] = [];
 				if (definitions && definitions.length)
@@ -234,7 +234,7 @@ export class WorkspaceD extends EventEmitter implements
 		console.log("provideDocumentFormattingEdits");
 		return new Promise((resolve, reject) => {
 			if (!self.dfmtReady)
-				return resolve(null);
+				return resolve([]);
 			self.request({ cmd: "dfmt", code: document.getText() }).then((formatted) => {
 				let lastLine = document.lineCount;
 				let lastLineLastCol = document.lineAt(lastLine - 1).range.end.character;
@@ -251,7 +251,7 @@ export class WorkspaceD extends EventEmitter implements
 		console.log("lint");
 		return new Promise((resolve, reject) => {
 			if (!self.dscannerReady)
-				return resolve(null);
+				return resolve([]);
 			let useProjectIni = fs.existsSync(path.join(self.projectRoot, "dscanner.ini"));
 			self.request({ cmd: "dscanner", subcmd: "lint", file: document.uri.fsPath, ini: useProjectIni ? path.join(self.projectRoot, "dscanner.ini") : "" }).then(issues => {
 				let diagnostics: vscode.Diagnostic[] = [];
@@ -275,7 +275,7 @@ export class WorkspaceD extends EventEmitter implements
 		console.log("dubBuild");
 		return new Promise((resolve, reject) => {
 			if (!this.dubReady)
-				return resolve(null);
+				return resolve([]);
 			this.request({ cmd: "dub", subcmd: "build" }).then((issues: { line: number, column: number, file: string, type: number, text: string }[]) => {
 				let diagnostics: [vscode.Uri, vscode.Diagnostic[]][] = [];
 				if (issues && issues.length)
