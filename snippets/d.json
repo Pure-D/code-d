@@ -226,7 +226,7 @@
 			"}",
 			"}"
 		],
-		"descrption": "Class extending Exception. Use this for recoverable errors that may be catched in the application."
+		"description": "Class extending Exception. Use this for recoverable errors that may be catched in the application."
 	},
 	"inheritedError": {
 		"prefix": "er",
@@ -237,6 +237,29 @@
 			"}",
 			"}"
 		],
-		"descrption": "Class extending Error. Use this for unrecoverable errors that applications should not catch."
+		"description": "Class extending Error. Use this for unrecoverable errors that applications should not catch."
+	},
+	"inputRange": {
+		"prefix": "inrange",
+		"body": [
+			"${3:struct} ${1:Range} {",
+			"void popFront() {}",
+			"bool empty() @property { ${5:return true;} }",
+			"${2:auto} front() @property { ${4:return 0;} }",
+			"}"
+		],
+		"description": "A class/struct containing input range methods."
+	},
+	"forwardRange": {
+		"prefix": "fwrange",
+		"body": [
+			"${3:struct} ${1:Range} {",
+			"void popFront() {}",
+			"${1:Range} save() { ${6:return null;} }",
+			"bool empty() @property { ${5:return true;} }",
+			"${2:auto} front() @property { ${4:return 0;} }",
+			"}"
+		],
+		"description": "A class/struct containing forward range methods."
 	}
 }
