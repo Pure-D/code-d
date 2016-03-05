@@ -9,7 +9,7 @@ function config() {
 	return vscode.workspace.getConfiguration("d");
 }
 
-const TARGET_VERSION = [2, 3, 2];
+const TARGET_VERSION = [2, 4, 0];
 
 export class WorkspaceD extends EventEmitter implements
 	vscode.CompletionItemProvider,
