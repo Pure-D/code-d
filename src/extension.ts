@@ -21,7 +21,7 @@ export function activate(context: vscode.ExtensionContext) {
 	}
 
 	let workspaced = new WorkspaceD(vscode.workspace.rootPath);
-	context.subscriptions.push(vscode.languages.registerCompletionItemProvider(DML_MODE, workspaced.getDlangUI()));
+	context.subscriptions.push(vscode.languages.registerCompletionItemProvider(DML_MODE, workspaced.getDlangUI(), ":", ";"));
 
 	context.subscriptions.push(vscode.languages.registerCompletionItemProvider(D_MODE, workspaced, "."));
 	context.subscriptions.push(vscode.languages.registerSignatureHelpProvider(D_MODE, workspaced, "(", ","));
@@ -43,12 +43,12 @@ export function activate(context: vscode.ExtensionContext) {
 				{ tokenType: 'delimiter.paren.ts', open: '(', close: ')', isElectric: true }
 			]
 		},
-		
+
 		comments: {
 			blockComment: ["/*", "*/"],
 			lineComment: "//"
 		},
-		
+
 		brackets: [
 			["(", ")"],
 			["{", "}"],
@@ -75,13 +75,13 @@ export function activate(context: vscode.ExtensionContext) {
 				{ tokenType: 'delimiter.paren.ts', open: '(', close: ')', isElectric: true }
 			]
 		},
-		
+
 		brackets: [
 			["(", ")"],
 			["{", "}"],
 			["[", "]"]
 		],
-		
+
 		comments: {
 			blockComment: ["/*", "*/"],
 			lineComment: "//"
@@ -107,12 +107,12 @@ export function activate(context: vscode.ExtensionContext) {
 				{ tokenType: 'delimiter.paren.ts', open: '(', close: ')', isElectric: true }
 			]
 		},
-		
+
 		comments: {
 			blockComment: ["/*", "*/"],
 			lineComment: "//"
 		},
-		
+
 		brackets: [
 			["(", ")"],
 			["{", "}"],
@@ -146,12 +146,12 @@ export function activate(context: vscode.ExtensionContext) {
 				{ tokenType: 'delimiter.paren.ts', open: '(', close: ')', isElectric: true }
 			]
 		},
-		
+
 		comments: {
 			blockComment: ["/*", "*/"],
 			lineComment: "//"
 		},
-		
+
 		brackets: [
 			["(", ")"],
 			["{", "}"],
