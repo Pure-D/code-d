@@ -12,7 +12,10 @@ export class CompileButtons implements vscode.Disposable {
 
 	constructor(workspaced: WorkspaceD) {
 		this.workspaced = workspaced;
+		workspaced.once("dub-ready", this.create.bind(this));
+	}
 
+	private create() {
 		this.output = vscode.window.createOutputChannel("Run output");
 
 		this.buildButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 0.99);
