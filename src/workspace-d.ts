@@ -442,6 +442,10 @@ export class WorkspaceD extends EventEmitter implements
 	}
 
 	public setupDub() {
+		if (config().get("neverUseDub", false)) {
+			this.setupCustomWorkspace();
+			return;
+		}
 		if (this.dubPackageDescriptorExists()) {
 			this.request({ cmd: "load", components: ["dub"], dir: this.projectRoot }).then((data) => {
 				console.log("dub is ready");
@@ -467,15 +471,31 @@ export class WorkspaceD extends EventEmitter implements
 	}
 
 	private getPossibleSourceRoots(): string[] {
+		let confPaths = config().get("projectImportPaths", []);
+		if (confPaths && confPaths.length) {
+			let roots = [];
+			confPaths.forEach(p => {
+				if (path.isAbsolute(p))
+					roots.push(p);
+				else
+					roots.push(path.join(this.projectRoot, p));
+			});
+			return roots;
+		}
 		if (fs.existsSync(path.join(this.projectRoot, "source")))
 			return [path.join(this.projectRoot, "source")];
 		if (fs.existsSync(path.join(this.projectRoot, "src")))
 			return [path.join(this.projectRoot, "src")];
-		return [];
+		return [this.projectRoot];
 	}
 
 	public setupCustomWorkspace() {
-		this.request({ cmd: "load", components: ["fsworkspace"], dir: this.projectRoot, additionalPaths: this.getPossibleSourceRoots() }).then((data) => {
+		let paths = this.getPossibleSourceRoots();
+		let rootDir = paths[0];
+		let addPaths = [];
+		if (paths.length > 1)
+			addPaths = paths.slice(1);
+		this.request({ cmd: "load", components: ["fsworkspace"], dir: rootDir, additionalPaths: addPaths }).then((data) => {
 			console.log("fsworkspace is ready");
 			this.setupDCD();
 			this.setupDScanner();
