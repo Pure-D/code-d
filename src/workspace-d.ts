@@ -303,10 +303,12 @@ export class WorkspaceD extends EventEmitter implements
 	dispose() {
 		this.shouldRestart = false;
 		console.log("Disposing");
+		let to = setTimeout(this.instance.kill, 150);
 		this.request({ cmd: "unload", components: "*" }).then((data) => {
-			console.log("Unloaded " + data.join(", "));
+			console.log("Unloaded");
+			this.instance.kill();
+			clearTimeout(to);
 		});
-		this.instance.kill();
 	}
 
 	listConfigurations(): Thenable<string[]> {
