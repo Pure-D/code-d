@@ -9,7 +9,7 @@ function config() {
 	return vscode.workspace.getConfiguration("d");
 }
 
-const TARGET_VERSION = [2, 5, 0];
+const TARGET_VERSION = [2, 6, 0];
 
 export class WorkspaceD extends EventEmitter implements
 	vscode.CompletionItemProvider,
@@ -281,7 +281,7 @@ export class WorkspaceD extends EventEmitter implements
 				if (issues && issues.length)
 					issues.forEach(element => {
 						let range = new vscode.Range(Math.max(0, element.line - 1), element.column - 1, Math.max(0, element.line - 1), element.column + 500);
-						let uri = vscode.Uri.file(path.join(vscode.workspace.rootPath, element.file));
+						let uri = vscode.Uri.file(path.join(this.projectRoot, element.file));
 						let error = new vscode.Diagnostic(range, element.text, this.mapDubLintType(element.type));
 						let found = false;
 						diagnostics.forEach(element => {
@@ -435,34 +435,62 @@ export class WorkspaceD extends EventEmitter implements
 		});
 	}
 
+	private dubPackageDescriptorExists() {
+		return fs.existsSync(path.join(this.projectRoot, "dub.json")) ||
+			fs.existsSync(path.join(this.projectRoot, "dub.sdl")) ||
+			fs.existsSync(path.join(this.projectRoot, "package.json"));
+	}
+
 	public setupDub() {
-		let self = this;
-		this.request({ cmd: "load", components: ["dub"], dir: this.projectRoot }).then((data) => {
-			console.log("dub is ready");
-			self.dubReady = true;
-			self.emit("dub-ready");
-			self.setupDCD();
-			self.setupDScanner();
-			self.setupDfmt();
-			self.setupDlangUI();
-			self.listConfigurations().then((configs) => {
-				if (configs.length == 0) {
-					vscode.window.showInformationMessage("No configurations available for this project. Autocompletion could be broken!");
-				} else {
-					self.setConfiguration(configs[0]);
-				}
+		if (this.dubPackageDescriptorExists()) {
+			this.request({ cmd: "load", components: ["dub"], dir: this.projectRoot }).then((data) => {
+				console.log("dub is ready");
+				this.dubReady = true;
+				this.emit("dub-ready");
+				this.setupDCD();
+				this.setupDScanner();
+				this.setupDfmt();
+				this.setupDlangUI();
+				this.listConfigurations().then((configs) => {
+					if (configs.length == 0) {
+						vscode.window.showInformationMessage("No configurations available for this project. Autocompletion could be broken!");
+					} else {
+						this.setConfiguration(configs[0]);
+					}
+				});
+			}, (err) => {
+				vscode.window.showWarningMessage("Could not initialize dub. Falling back to limited functionality!");
+				this.setupCustomWorkspace();
 			});
+		}
+		else this.setupCustomWorkspace();
+	}
+
+	private getPossibleSourceRoots(): string[] {
+		if (fs.existsSync(path.join(this.projectRoot, "source")))
+			return [path.join(this.projectRoot, "source")];
+		if (fs.existsSync(path.join(this.projectRoot, "src")))
+			return [path.join(this.projectRoot, "src")];
+		return [];
+	}
+
+	public setupCustomWorkspace() {
+		this.request({ cmd: "load", components: ["fsworkspace"], dir: this.projectRoot, additionalPaths: this.getPossibleSourceRoots() }).then((data) => {
+			console.log("fsworkspace is ready");
+			this.setupDCD();
+			this.setupDScanner();
+			this.setupDfmt();
+			this.setupDlangUI();
 		}, (err) => {
-			vscode.window.showErrorMessage("Could not initialize dub. See console for details!");
+			vscode.window.showErrorMessage("Could not initialize fsworkspace. See console for details!");
 		});
 	}
 
 	public setupDScanner() {
-		let self = this;
 		this.request({ cmd: "load", components: ["dscanner"], dir: this.projectRoot, dscannerPath: config().get("dscannerPath", "dscanner") }).then((data) => {
 			console.log("DScanner is ready");
-			self.emit("dscanner-ready");
-			self.dscannerReady = true;
+			this.emit("dscanner-ready");
+			this.dscannerReady = true;
 		});
 	}
 
@@ -483,20 +511,18 @@ export class WorkspaceD extends EventEmitter implements
 	}
 
 	public setupDfmt() {
-		let self = this;
 		this.request({ cmd: "load", components: ["dfmt"], dir: this.projectRoot, dfmtPath: config().get("dfmtPath", "dfmt") }).then((data) => {
 			console.log("Dfmt is ready");
-			self.emit("dfmt-ready");
-			self.dfmtReady = true;
+			this.emit("dfmt-ready");
+			this.dfmtReady = true;
 		});
 	}
 
 	public setupDlangUI() {
-		let self = this;
 		this.request({ cmd: "load", components: ["dlangui"] }).then((data) => {
 			console.log("DlangUI is ready");
-			self.emit("dlangui-ready");
-			self.dlanguiReady = true;
+			this.emit("dlangui-ready");
+			this.dlanguiReady = true;
 		});
 	}
 
@@ -546,9 +572,8 @@ export class WorkspaceD extends EventEmitter implements
 		idBuffer.writeInt32BE(reqID, 0);
 		let buf = Buffer.concat([lengthBuffer, idBuffer, new Buffer(dataStr, "utf8")]);
 		this.instance.stdin.write(buf);
-		let self = this;
 		return new Promise((resolve, reject) => {
-			self.once("res-" + reqID, function(error, data) {
+			this.once("res-" + reqID, function(error, data) {
 				if (error)
 					reject(error);
 				else
