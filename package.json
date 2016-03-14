@@ -18,7 +18,10 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onLanguage:d"
+		"onLanguage:d",
+		"onLanguage:dml",
+		"workspaceContains:dub.json",
+		"workspaceContains:dub.sdl"
 	],
 	"main": "./out/src/extension",
 	"extensionDependencies": [
