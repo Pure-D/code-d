@@ -7,6 +7,7 @@ import * as statusbar from "./statusbar"
 import * as path from "path"
 import { DlangUIHandler } from "./dlangui"
 import { lintDfmt } from "./dfmt-check"
+import * as ChildProcess from "child_process"
 
 let diagnosticCollection: vscode.DiagnosticCollection;
 
@@ -244,6 +245,38 @@ export function activate(context: vscode.ExtensionContext) {
 					}
 				});
 		}
+	}));
+
+	let rdmdOutput = vscode.window.createOutputChannel("rdmd");
+	context.subscriptions.push(vscode.commands.registerCommand("code-d.rdmdCurrent", () => {
+		let proc;
+		if (!vscode.window.activeTextEditor.document.fileName)
+			proc = ChildProcess.spawn("rdmd", ["--eval=" + vscode.window.activeTextEditor.document.getText()], { cwd: vscode.workspace.rootPath });
+		else
+			proc = ChildProcess.spawn("rdmd", [vscode.window.activeTextEditor.document.fileName], { cwd: vscode.workspace.rootPath });
+
+		rdmdOutput.show();
+		rdmdOutput.clear();
+
+		let handleData = (data) => {
+			let lines = data.toString("utf8").split('\n');
+			for (var i = 0; i < lines.length - 1; i++) {
+				rdmdOutput.appendLine(lines[i]);
+			}
+			rdmdOutput.append(lines[lines.length - 1]);
+		};
+
+		proc.stderr.on("data", handleData.bind(this));
+		proc.stdout.on("data", handleData.bind(this));
+		proc.once("close", (code) => {
+			code = (code || 0);
+			if (code !== 0)
+				rdmdOutput.appendLine("rdmd stopped with error code " + code);
+		});
+		proc.once("error", (err) => {
+			rdmdOutput.appendLine("rdmd crashed:");
+			rdmdOutput.appendLine(err.toString());
+		});
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand("code-d.uploadSelection", () => {

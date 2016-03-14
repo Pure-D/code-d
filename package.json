@@ -215,6 +215,10 @@
 			{
 				"command": "code-d.insertDscanner",
 				"title": "code-d: Insert default dscanner.ini content"
+			},
+			{
+				"command": "code-d.rdmdCurrent",
+				"title": "code-d: Run current document using rdmd"
 			}
 		],
 		"jsonValidation": [
