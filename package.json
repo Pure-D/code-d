@@ -1,12 +1,13 @@
 {
 	"name": "code-d",
 	"description": "auto-complete, snippets, linter and formatter for dlang",
-	"version": "0.10.2",
+	"version": "0.10.3",
 	"publisher": "webfreak",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/Pure-D/code-d.git"
 	},
+	"icon": "images/dlogo-square.svg",
 	"license": "MIT",
 	"engines": {
 		"vscode": "^0.10.8"
