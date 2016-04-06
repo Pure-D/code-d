@@ -272,6 +272,8 @@ export function activate(context: vscode.ExtensionContext) {
 			code = (code || 0);
 			if (code !== 0)
 				rdmdOutput.appendLine("rdmd stopped with error code " + code);
+			else
+				rdmdOutput.appendLine("rdmd stopped with no errors");
 		});
 		proc.once("error", (err) => {
 			rdmdOutput.appendLine("rdmd crashed:");
