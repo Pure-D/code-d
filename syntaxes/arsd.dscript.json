@@ -543,7 +543,7 @@
 		"unittests": {
 			"patterns": [
 				{
-					"begin": "\\b(unittest)\\b",
+					"match": "\\b(unittest)\\b",
 					"name": "keyword.other.unittest.d"
 				}
 			]
