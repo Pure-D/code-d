@@ -3,14 +3,11 @@
 		"dscript",
 		"ds"
 	],
-	"name": "arsd.DScript",
+	"name": "arsd.script",
 	"scopeName": "source.dscript",
 	"patterns": [
 		{
 			"include": "#comments"
-		},
-		{
-			"include": "#parentheses"
 		},
 		{
 			"include": "#imports"
@@ -26,9 +23,6 @@
 		},
 		{
 			"include": "#classes"
-		},
-		{
-			"include": "#templates"
 		},
 		{
 			"include": "#unittests"
@@ -77,17 +71,11 @@
 					"name": "storage.modifier.d"
 				},
 				{
-					"match": "\\b(static)(?!s+if)\\b",
+					"match": "\\b(static)(?!\\s+if)\\b",
 					"name": "storage.modifier.d"
 				},
 				{
-					"begin": "\\b(extern)\\s*\\(",
-					"beginCaptures": {
-						"1": {
-							"name": "keyword.other.extern.d"
-						}
-					},
-					"end": "\\)",
+					"match": "\\b(extern)\\b",
 					"name": "storage.modifier.linkage.d"
 				},
 				{
@@ -97,30 +85,6 @@
 				{
 					"match": "\\b(const|immutable|inout|shared|__gshared)\\b",
 					"name": "storage.modifier.qualifier.d"
-				}
-			]
-		},
-		"block": {
-			"patterns": [
-				{
-					"begin": "{",
-					"beginCaptures": {
-						"0": {
-							"name": "punctuation.section.block.begin.d"
-						}
-					},
-					"end": "}",
-					"endCaptures": {
-						"0": {
-							"name": "punctuation.section.block.end.d"
-						}
-					},
-					"name": "meta.block.d",
-					"patterns": [
-						{
-							"include": "$self"
-						}
-					]
 				}
 			]
 		},
@@ -236,8 +200,8 @@
 		"classes": {
 			"patterns": [
 				{
-					"begin": "\\b(class|struct|interface|template|union)\\s+(\\w+)",
-					"beginCaptures": {
+					"match": "\\b(class|struct|interface|template|union)\\s+(\\w+)",
+					"captures": {
 						"1": {
 							"name": "keyword.other.type.d"
 						},
@@ -245,139 +209,22 @@
 							"name": "entity.name.class.d"
 						}
 					},
-					"end": "(?<=})",
-					"endCaptures": {
-						"0": {
-							"name": "punctuation.section.type.end.d"
-						}
-					},
-					"name": "meta.class.d",
-					"patterns": [
-						{
-							"begin": ":",
-							"end": "(?={)",
-							"name": "meta.class.inheritance.d",
-							"patterns": [
-								{
-									"#include": "#types"
-								}
-							]
-						},
-						{
-							"include": "#block"
-						}
-					]
+					"name": "meta.class.d"
 				}
 			]
 		},
 		"functions": {
 			"patterns": [
 				{
-					"begin": "(?x)\n((?=\\S*\\w)[\\w\\[\\]\\(\\)\\. !,]+) # return type\n\\s+\n(?!while|for|do|if|else|switch|assert|enforce|const|immutable|shared|version|function|delegate) # function name is not keyword\n(\\w+)                      # function name\n\\s*\n(?=\\([^\\)]*\\))           # has parentheses following\n(?![^{]*;)                  # does not have semicolon before braces (hacky)",
-					"beginCaptures": {
+					"match": "\\b(\\w+)\\s+(\\w+)\\s*(?=\\()",
+					"captures": {
 						"1": {
 							"name": "storage.type.return.d"
 						},
 						"2": {
 							"name": "entity.name.function.d"
-						},
-						"3": {
-							"name": "keyword.other.function.d"
 						}
-					},
-					"end": "(?<=})",
-					"name": "meta.function.d",
-					"patterns": [
-						{
-							"begin": "\\(",
-							"end": "\\)",
-							"contentName": "meta.function.parameters.d",
-							"patterns": [
-								{
-									"include": "#attributes"
-								},
-								{
-									"include": "#types"
-								},
-								{
-									"include": "#parentheses"
-								},
-								{
-									"match": "\\w+",
-									"name": "variable.parameter.d"
-								}
-							]
-						},
-						{
-							"include": "#attributes"
-						},
-						{
-							"begin": "(if)\\s*\\(",
-							"beginCaptures": {
-								"1": {
-									"name": "keyword.control.constraint.d"
-								}
-							},
-							"end": "\\)",
-							"name": "meta.function.constraint.d",
-							"patterns": [
-								{
-									"include": "$self"
-								}
-							]
-						},
-						{
-							"begin": "(in|out)",
-							"end": "\\b(body)",
-							"patterns": [
-								{
-									"begin": "\\b(in)\\b",
-									"beginCaptures": {
-										"0": {
-											"name": "keyword.control.contract.pre.d"
-										}
-									},
-									"end": "(?<=})",
-									"patterns": [
-										{
-											"include": "#block"
-										}
-									]
-								},
-								{
-									"begin": "\\b(out)(?:\\s*\\(\\s*(\\w+)\\s*\\))?",
-									"beginCaptures": {
-										"1": {
-											"name": "keyword.control.contract.post.d"
-										},
-										"2": {
-											"name": "variable.parameter.d"
-										}
-									},
-									"end": "(?<=})",
-									"patterns": [
-										{
-											"include": "#block"
-										}
-									]
-								}
-							]
-						},
-						{
-							"begin": "\\b(body)\\b|(?={)",
-							"beginCaptures": {
-								"1": {
-									"name": "keyword.control.body.d"
-								}
-							},
-							"end": "(?<=})",
-							"patterns": [
-								{
-									"include": "#block"
-								}
-							]
-						}
-					]
+					}
 				}
 			]
 		},
@@ -412,26 +259,12 @@
 					"name": "keyword.control.exception.d"
 				},
 				{
-					"match": "\\b(deprecated|mixin|eval|pragma|new|is|in)\\b",
+					"match": "\\b(deprecated|mixin|pragma|new|is|in|out|body)\\b",
 					"name": "keyword.other.d"
 				},
 				{
-					"begin": "\\b(function|delegate|macro)\\s*\\(",
-					"beginCaptures": {
-						"0": {
-							"name": "keyword.other.function.d"
-						}
-					},
-					"end": "\\)",
-					"patterns": [
-						{
-							"include": "#types"
-						},
-						{
-							"match": "\\w+",
-							"name": "variable.parameter.d"
-						}
-					]
+					"match": "\\b(function|delegate|macro)\\b",
+					"name": "keyword.other.function.d"
 				},
 				{
 					"match": "\\b((static\\s+)?assert)\\b",
@@ -595,32 +428,7 @@
 			"patterns": [
 				{
 					"begin": "\\b(invariant)\\b",
-					"beginCaptures": {
-						"0": {
-							"name": "keyword.other.invariant.d"
-						}
-					},
-					"end": "(?<=})",
-					"name": "meta.class.invariant.d",
-					"patterns": [
-						{
-							"include": "#block"
-						}
-					]
-				}
-			]
-		},
-		"parentheses": {
-			"patterns": [
-				{
-					"begin": "\\(",
-					"end": "\\)",
-					"name": "meta.parentheses.d",
-					"patterns": [
-						{
-							"include": "$self"
-						}
-					]
+					"name": "keyword.other.invariant.d"
 				}
 			]
 		},
@@ -649,7 +457,15 @@
 							"name": "constant.character.escape.d"
 						},
 						{
+							"match": "\\\\x\\h{2}",
+							"name": "constant.character.escape.d"
+						},
+						{
 							"match": "\\\\u\\h{4}",
+							"name": "constant.character.escape.d"
+						},
+						{
+							"match": "\\\\U\\h{8}",
 							"name": "constant.character.escape.d"
 						}
 					]
@@ -670,12 +486,7 @@
 							"name": "punctuation.definition.string.postfix.d"
 						}
 					},
-					"name": "string.regex.d",
-					"patterns": [
-						{
-							"include": "source.regexp.python"
-						}
-					]
+					"name": "string.regex.d"
 				},
 				{
 					"begin": "`",
@@ -693,37 +504,7 @@
 							"name": "punctuation.definition.string.postfix.d"
 						}
 					},
-					"name": "string.regex.d",
-					"patterns": [
-						{
-							"include": "source.js.regexp"
-						}
-					]
-				}
-			]
-		},
-		"templates": {
-			"patterns": [
-				{
-					"begin": "(!)\\s*\\(",
-					"beginCaptures": {
-						"1": {
-							"name": "keyword.operator.template.instantiation.d"
-						}
-					},
-					"end": "\\)",
-					"name": "meta.template.parameter.d",
-					"patterns": [
-						{
-							"include": "#types"
-						},
-						{
-							"include": "#constants-and-special-vars"
-						},
-						{
-							"include": "#strings"
-						}
-					]
+					"name": "string.regex.d"
 				}
 			]
 		},
@@ -763,18 +544,7 @@
 			"patterns": [
 				{
 					"begin": "\\b(unittest)\\b",
-					"beginCaptures": {
-						"1": {
-							"name": "keyword.other.unittest.d"
-						}
-					},
-					"end": "(?<=})",
-					"name": "meta.unittest.d",
-					"patterns": [
-						{
-							"include": "#block"
-						}
-					]
+					"name": "keyword.other.unittest.d"
 				}
 			]
 		}
