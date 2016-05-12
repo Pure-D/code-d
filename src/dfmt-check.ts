@@ -10,7 +10,7 @@ function getMatchIndices(regex: RegExp, str: string) {
 
 let validDfmt = /\/\/dfmt (off|on)(\n|\s+|$)/;
 
-export function lintDfmt(doc: vscode.TextDocument, code: string) {
+export function lintDfmt(doc: vscode.TextDocument, code = doc.getText()) {
 	let locations = getMatchIndices(/\/\/dfmt/g, code);
 	let issues: vscode.Diagnostic[] = [];
 	let isOn: boolean = true;

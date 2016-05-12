@@ -10,6 +10,7 @@ import { lintDfmt } from "./dfmt-check"
 import * as ChildProcess from "child_process"
 
 let diagnosticCollection: vscode.DiagnosticCollection;
+let oldLint: [vscode.Uri, vscode.Diagnostic[]][][] = [[], [], []];
 
 function config() {
 	return vscode.workspace.getConfiguration("d");
@@ -182,70 +183,69 @@ export function activate(context: vscode.ExtensionContext) {
 
 	diagnosticCollection = vscode.languages.createDiagnosticCollection("d");
 	context.subscriptions.push(diagnosticCollection);
-
 	let version;
 	let writeTimeout;
-	let oldLint: [vscode.Uri, vscode.Diagnostic[]][][] = [[], [], []];
-	context.subscriptions.push(vscode.workspace.onDidChangeTextDocument(event => {
+	let buildErrors = () => {
+		diagnosticCollection.clear();
+		let allErrors: [vscode.Uri, vscode.Diagnostic[]][] = [];
+		oldLint.forEach(errors => {
+			errors.forEach(error => {
+				for (var i = 0; i < allErrors.length; i++) {
+					if (allErrors[i][0] == error[0]) {
+						var arr = allErrors[i][1];
+						if (!arr)
+							arr = [];
+						arr.push.apply(arr, error[1]);
+						allErrors[i][1] = arr;
+						return;
+					}
+				}
+				var dup: [vscode.Uri, vscode.Diagnostic[]] = [error[0], []];
+				error[1].forEach(errElem => {
+					dup[1].push(errElem);
+				});
+				allErrors.push(dup);
+			});
+		});
+		diagnosticCollection.set(allErrors);
+	};
+	vscode.workspace.onDidChangeTextDocument(event => {
+		let document = event.document;
+		if (document.languageId != "d")
+			return;
 		clearTimeout(writeTimeout);
-		writeTimeout = setTimeout(function() {
-			let document = event.document;
-			if (document.languageId != "d")
-				return;
-			version = document.version;
-			let target = version;
+		writeTimeout = setTimeout(function () {
 			if (config().get("enableLinting", true)) {
-				let allErrors: [vscode.Uri, vscode.Diagnostic[]][] = [];
-
-				let fresh = true;
-				let buildErrors = () => {
-					allErrors = [];
-					oldLint.forEach(errors => {
-						allErrors.push.apply(allErrors, errors);
-					});
-					diagnosticCollection.set(allErrors);
-				};
-
-				oldLint[2] = [[document.uri, lintDfmt(document, document.getText())]];
+				let issues = lintDfmt(document);
+				if (issues)
+					oldLint[2] = [[document.uri, issues]];
+				else
+					oldLint[2] = [];
 				buildErrors();
 			}
-		}, 500);
-	}));
+		}, 200);
+	}, null, context.subscriptions);
 
-	context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(document => {
+	vscode.workspace.onDidSaveTextDocument(document => {
 		if (document.languageId != "d")
 			return;
 		version = document.version;
 		let target = version;
-		if (config().get("enableLinting", true)) {
-			let allErrors: [vscode.Uri, vscode.Diagnostic[]][] = [];
-
-			let fresh = true;
-			let buildErrors = () => {
-				allErrors = [];
-				oldLint.forEach(errors => {
-					allErrors.push.apply(allErrors, errors);
-				});
-				diagnosticCollection.set(allErrors);
-			};
-
-			oldLint[2] = [[document.uri, lintDfmt(document, document.getText())]];
-			buildErrors();
+		if (config().get("enableLinting", true))
 			workspaced.lint(document).then((errors: [vscode.Uri, vscode.Diagnostic[]][]) => {
 				if (target == version) {
 					oldLint[0] = errors;
 					buildErrors();
 				}
 			});
-			if (config().get("enableDubLinting", true))
-				workspaced.dubBuild(document).then((errors: [vscode.Uri, vscode.Diagnostic[]][]) => {
-					if (target == version) {
-						oldLint[1] = errors;
-						buildErrors();
-					}
-				});
-		}
-	}));
+		if (config().get("enableDubLinting", true))
+			workspaced.dubBuild(document).then((errors: [vscode.Uri, vscode.Diagnostic[]][]) => {
+				if (target == version) {
+					oldLint[1] = errors;
+					buildErrors();
+				}
+			});
+	}, null, context.subscriptions);
 
 	let rdmdOutput = vscode.window.createOutputChannel("rdmd");
 	context.subscriptions.push(vscode.commands.registerCommand("code-d.rdmdCurrent", () => {
