@@ -19,27 +19,27 @@ export class DubJSONContribution implements IJSONContribution {
 	}
 
 	public getInfoContribution(fileName: string, location: Location): Thenable<vscode.MarkedString[]> {
-		if ((location.matches(["dependencies", "*"]) || location.matches(["frameworks", "*", "dependencies", "*"]) || location.matches(["frameworks", "*", "frameworkAssemblies", "*"]))) {
-			let pack = location.path[location.path.length - 1];
-			if (typeof pack === "string") {
-				return this.getInfo(pack).then(info => {
-					let htmlContent: vscode.MarkedString[] = [];
-					htmlContent.push("Package " + pack);
-					if (info.description) {
-						htmlContent.push(info.description);
-					}
-					if (info.version) {
-						htmlContent.push("Latest version: " + info.version);
-					}
-					return htmlContent;
-				});
-			}
+		if (location.path.length < 2 || location.path[location.path.length - 2] != "dependencies")
+			return null;
+		let pack = location.path[location.path.length - 1];
+		if (typeof pack === "string") {
+			return this.getInfo(pack).then(info => {
+				let htmlContent: vscode.MarkedString[] = [];
+				htmlContent.push("Package " + pack);
+				if (info.description) {
+					htmlContent.push(info.description);
+				}
+				if (info.version) {
+					htmlContent.push("Latest version: " + info.version);
+				}
+				return htmlContent;
+			});
 		}
 		return null;
 	}
 
 	public collectPropertySuggestions(fileName: string, location: Location, currentWord: string, addValue: boolean, isLast: boolean, result: ISuggestionsCollector): Thenable<any> {
-		if (!location.matches(['dependencies']))
+		if (location.path.length < 1 || location.path[location.path.length - 1] != "dependencies")
 			return null;
 		return new Promise((resolve, reject) => {
 			if (currentWord.length > 0) {
@@ -117,9 +117,9 @@ export class DubJSONContribution implements IJSONContribution {
 
 	public collectValueSuggestions(fileName: string, location: Location, result: ISuggestionsCollector): Thenable<any> {
 		let currentKey = undefined;
-		if (location.matches(["dependencies", "*"]))
+		if (location.path.length >= 2 && location.path[location.path.length - 2] == "dependencies")
 			currentKey = location.path[location.path.length - 1];
-		else if (location.matches(["dependencies", "*", "version"]))
+		else if (location.path.length >= 3 && location.path[location.path.length - 3] == "dependencies" && location.path[location.path.length - 1] == "version")
 			currentKey = location.path[location.path.length - 2];
 		else
 			return null;
