@@ -7,6 +7,7 @@ import * as statusbar from "./statusbar"
 import * as path from "path"
 import { DlangUIHandler } from "./dlangui"
 import { lintDfmt } from "./dfmt-check"
+import { addJSONProviders } from "./json-contributions"
 import * as ChildProcess from "child_process"
 
 let diagnosticCollection: vscode.DiagnosticCollection;
@@ -34,18 +35,12 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(workspaced);
 
+	context.subscriptions.push(addJSONProviders());
+
 	context.subscriptions.push(statusbar.setup(workspaced));
 	context.subscriptions.push(new CompileButtons(workspaced));
 
 	vscode.languages.setLanguageConfiguration(D_MODE.language, {
-		__electricCharacterSupport: {
-			brackets: [
-				{ tokenType: 'delimiter.curly.ts', open: '{', close: '}', isElectric: true },
-				{ tokenType: 'delimiter.square.ts', open: '[', close: ']', isElectric: true },
-				{ tokenType: 'delimiter.paren.ts', open: '(', close: ')', isElectric: true }
-			]
-		},
-
 		comments: {
 			blockComment: ["/*", "*/"],
 			lineComment: "//"
@@ -70,14 +65,6 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 
 	vscode.languages.setLanguageConfiguration(DSCRIPT_MODE.language, {
-		__electricCharacterSupport: {
-			brackets: [
-				{ tokenType: 'delimiter.curly.ts', open: '{', close: '}', isElectric: true },
-				{ tokenType: 'delimiter.square.ts', open: '[', close: ']', isElectric: true },
-				{ tokenType: 'delimiter.paren.ts', open: '(', close: ')', isElectric: true }
-			]
-		},
-
 		brackets: [
 			["(", ")"],
 			["{", "}"],
@@ -102,14 +89,6 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 
 	vscode.languages.setLanguageConfiguration(DML_MODE.language, {
-		__electricCharacterSupport: {
-			brackets: [
-				{ tokenType: 'delimiter.curly.ts', open: '{', close: '}', isElectric: true },
-				{ tokenType: 'delimiter.square.ts', open: '[', close: ']', isElectric: true },
-				{ tokenType: 'delimiter.paren.ts', open: '(', close: ')', isElectric: true }
-			]
-		},
-
 		comments: {
 			blockComment: ["/*", "*/"],
 			lineComment: "//"
@@ -141,14 +120,6 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 
 	vscode.languages.setLanguageConfiguration(SDL_MODE.language, {
-		__electricCharacterSupport: {
-			brackets: [
-				{ tokenType: 'delimiter.curly.ts', open: '{', close: '}', isElectric: true },
-				{ tokenType: 'delimiter.square.ts', open: '[', close: ']', isElectric: true },
-				{ tokenType: 'delimiter.paren.ts', open: '(', close: ')', isElectric: true }
-			]
-		},
-
 		comments: {
 			blockComment: ["/*", "*/"],
 			lineComment: "//"
