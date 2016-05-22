@@ -22,7 +22,7 @@ export class WorkspaceD extends EventEmitter implements
 	constructor(public projectRoot: string) {
 		super();
 		let self = this;
-		this.on("error", function(err) {
+		this.on("error", function (err) {
 			console.error(err);
 			if (this.shouldRestart)
 				self.ensureDCDRunning();
@@ -38,15 +38,15 @@ export class WorkspaceD extends EventEmitter implements
 		let path = config().get("workspacedPath", "workspace-d");
 		this.instance = ChildProcess.spawn(path, [], { cwd: this.projectRoot });
 		this.totalData = new Buffer(0);
-		this.instance.stderr.on("data", function(chunk) {
+		this.instance.stderr.on("data", function (chunk) {
 			console.log("WorkspaceD Debug: " + chunk);
 			if (chunk.toString().indexOf("DCD-Server stopped with code") != -1)
 				self.ensureDCDRunning();
 		});
-		this.instance.stdout.on("data", function(chunk) {
+		this.instance.stdout.on("data", function (chunk) {
 			self.handleData.call(self, chunk);
 		});
-		this.instance.on("error", function(err) {
+		this.instance.on("error", function (err) {
 			console.log("WorkspaceD ended with an error:");
 			console.log(err);
 			if (err && (<any>err).code == "ENOENT") {
@@ -57,7 +57,7 @@ export class WorkspaceD extends EventEmitter implements
 				self.workspaced = false;
 			}
 		});
-		this.instance.on("exit", function(code) {
+		this.instance.on("exit", function (code) {
 			console.log("WorkspaceD ended with code " + code);
 			vscode.window.showWarningMessage("Workspace-D crashed. Please kill dcd-server if neccessary!", "Restart").then(s => {
 				if (s == "Restart")
@@ -324,6 +324,11 @@ export class WorkspaceD extends EventEmitter implements
 			if (success) {
 				this.listImports().then(console.log);
 				this.emit("configuration-change", config);
+				if (this.dcdReady) {
+					this.request({ cmd: "dcd", subcmd: "refresh-imports" }).then(() => {
+						console.log("Updated completion for dcd");
+					});
+				}
 			}
 			else
 				vscode.window.showInformationMessage("No import paths available for this project. Autocompletion could be broken!", "Switch Configuration").then((s) => {
@@ -571,10 +576,19 @@ export class WorkspaceD extends EventEmitter implements
 			subcmd: "find-and-select-port",
 			port: 9166
 		}).then((data) => {
-			this.request({ cmd: "dcd", subcmd: "setup-server", additionalImports: vscode.workspace.getConfiguration("d").get("stdlibPath", ["/usr/include/dmd/druntime/import", "/usr/include/dmd/phobos"]) }).then((data) => {
+			this.request({ cmd: "dcd", subcmd: "start-server", additionalImports: vscode.workspace.getConfiguration("d").get("stdlibPath", ["/usr/include/dmd/druntime/import", "/usr/include/dmd/phobos"]) }).then((data) => {
 				console.log("DCD is ready");
 				this.emit("dcd-ready");
 				this.dcdReady = true;
+				if (this.dcdReady) {
+					this.request({ cmd: "dcd", subcmd: "refresh-imports" }).then(() => {
+						this.listImports().then((paths) => {
+							console.log("Loaded completions for " + paths.length + " import paths");
+						});
+					});
+				} else {
+					vscode.window.showWarningMessage("Could not update DCD. Please restart DCD if its not working properly");
+				}
 			}, (err) => {
 				vscode.window.showErrorMessage("Could not initialize DCD. See console for details!");
 			});
@@ -593,7 +607,7 @@ export class WorkspaceD extends EventEmitter implements
 		let buf = Buffer.concat([lengthBuffer, idBuffer, new Buffer(dataStr, "utf8")]);
 		this.instance.stdin.write(buf);
 		return new Promise((resolve, reject) => {
-			this.once("res-" + reqID, function(error, data) {
+			this.once("res-" + reqID, function (error, data) {
 				if (error)
 					reject(error);
 				else
