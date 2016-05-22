@@ -219,9 +219,16 @@ export class WorkspaceD extends EventEmitter implements
 					uri = vscode.Uri.file(declaration[0]);
 				vscode.workspace.textDocuments.forEach(doc => {
 					if (doc.uri.fsPath == uri.fsPath) {
-						range = doc.getWordRangeAtPosition(doc.positionAt(declaration[1]));
+						let pos = doc.positionAt(declaration[1]);
+						if (!pos)
+							pos = new vscode.Position(1, 1);
+						range = doc.getWordRangeAtPosition(pos);
+						if (!range)
+							range = new vscode.Range(pos, pos);
 					}
 				});
+				if (!range)
+					range = new vscode.Range(1, 1, 1, 1);
 				console.log("resolve");
 				console.log(new vscode.Location(uri, range));
 				resolve(new vscode.Location(uri, range));
