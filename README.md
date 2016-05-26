@@ -13,24 +13,32 @@ Also [available for Atom](https://github.com/Vild/atomize-d)!
 
 ## Installation
 
-**Easy Installation using the official [workspace-d-installer](https://github.com/Pure-D/workspace-d-installer)**
+### Dependencies:
 
-Make sure you install all components!
+Code-d needs its backend, [workspace-d](https://github.com/Pure-D/workspace-d). Go there and follow the installation instructions.
+Installing it will automatically detect or install the necessary D tools 
+([dcd](https://github.com/Hackerpilot/DCD), [dfmt](https://github.com/Hackerpilot/dfmt), [dscanner](https://github.com/Hackerpilot/Dscanner)).
 
-### Manual installation (if the installer doesn't work)
+### Code-d installation
 
-[dcd](https://github.com/Hackerpilot/DCD),
-[dfmt](https://github.com/Hackerpilot/dfmt),
-[dscanner](https://github.com/Hackerpilot/Dscanner) and 
-[workspace-d](https://github.com/Pure-D/workspace-d)
+This assumes [workspace-d](https://github.com/Pure-D/workspace-d) is already installed.
 
-```
-cd ~/.vscode/extensions/
-git clone https://github.com/Pure-D/code-d.git
-cd code-d
-npm install
-node ./node_modules/vscode/bin/compile
-```
+* Automatic:
+  Open Visual Studio Code and install _code-d_ extension the normal way:
+
+  ```
+  ext install webfreak.code-d
+  ```
+
+* Manual (if the automatic way doesn't work)
+
+    ```
+    cd ~/.vscode/extensions/
+    git clone https://github.com/Pure-D/code-d.git
+    cd code-d
+    npm install
+    node ./node_modules/vscode/bin/compile
+    ```
 
 ## License
 
