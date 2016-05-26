@@ -21,8 +21,14 @@ Installing it will automatically detect or install the necessary D tools
 
 ### Code-d installation
 
+This assumes [workspace-d](https://github.com/Pure-D/workspace-d) is already installed.
+
 * Automatic:
-  Open Visual Studio Code and install _code-d_ extension the normal way.
+  Open Visual Studio Code and install _code-d_ extension the normal way:
+
+  ```
+  ext install webfreak.code-d
+  ```
 
 * Manual (if the automatic way doesn't work)
 
