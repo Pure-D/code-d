@@ -15,23 +15,24 @@ Also [available for Atom](https://github.com/Vild/atomize-d)!
 
 ### Dependencies:
 
-Code-d needs its backend, [workspace-d](https://github.com/Pure-D/workspace-d). 
+Code-d needs its backend, [workspace-d](https://github.com/Pure-D/workspace-d). Go there and follow the installation instructions.
 Installing it will automatically detect or install the necessary D tools 
 ([dcd](https://github.com/Hackerpilot/DCD), [dfmt](https://github.com/Hackerpilot/dfmt), [dscanner](https://github.com/Hackerpilot/Dscanner)).
 
-### Automatic code-d installation
+### Code-d installation
 
-Open VS Code and install code-d extension the normal way.
+* Automatic:
+  Open Visual Studio Code and install _code-d_ extension the normal way.
 
-### Manual code-d installation (if the installer doesn't work)
+* Manual (if the automatic way doesn't work)
 
-```
-cd ~/.vscode/extensions/
-git clone https://github.com/Pure-D/code-d.git
-cd code-d
-npm install
-node ./node_modules/vscode/bin/compile
-```
+    ```
+    cd ~/.vscode/extensions/
+    git clone https://github.com/Pure-D/code-d.git
+    cd code-d
+    npm install
+    node ./node_modules/vscode/bin/compile
+    ```
 
 ## License
 
