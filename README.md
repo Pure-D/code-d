@@ -13,16 +13,17 @@ Also [available for Atom](https://github.com/Vild/atomize-d)!
 
 ## Installation
 
-**Easy Installation using the official [workspace-d-installer](https://github.com/Pure-D/workspace-d-installer)**
+### Dependencies:
 
-Make sure you install all components!
+Code-d needs its backend, [workspace-d](https://github.com/Pure-D/workspace-d). 
+Installing it will automatically detect or install the necessary D tools 
+([dcd](https://github.com/Hackerpilot/DCD), [dfmt](https://github.com/Hackerpilot/dfmt), [dscanner](https://github.com/Hackerpilot/Dscanner)).
 
-### Manual installation (if the installer doesn't work)
+### Automatic code-d installation
 
-[dcd](https://github.com/Hackerpilot/DCD),
-[dfmt](https://github.com/Hackerpilot/dfmt),
-[dscanner](https://github.com/Hackerpilot/Dscanner) and 
-[workspace-d](https://github.com/Pure-D/workspace-d)
+Open VS Code and install code-d extension the normal way.
+
+### Manual code-d installation (if the installer doesn't work)
 
 ```
 cd ~/.vscode/extensions/
