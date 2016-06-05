@@ -41,10 +41,24 @@
 		],
 		"description": "final switch() with(T)"
 	},
+	"foreach": {
+		"prefix": "fore",
+		"body": [
+			"foreach(${1:value}; ${2:array}) {$3}"
+		],
+		"description": "foreach(value; array)"
+	},
+	"foreach ref": {
+		"prefix": "forr",
+		"body": [
+			"foreach(ref ${1:value}; ${2:array}) {$3}"
+		],
+		"description": "foreach(ref value; array)"
+	},
 	"foreach ref with": {
 		"prefix": "forw",
 		"body": [
-			"foreach(ref ${2:value}; ${1:array}) with(${2:value}) {$4}"
+			"foreach(ref ${1:value}; ${2:array}) with(${1:value}) {$3}"
 		],
 		"description": "foreach(ref value; array) with(value)"
 	},
