@@ -288,7 +288,7 @@ export class WorkspaceD extends EventEmitter implements
 				if (issues && issues.length)
 					issues.forEach(element => {
 						let range = new vscode.Range(Math.max(0, element.line - 1), element.column - 1, Math.max(0, element.line - 1), element.column + 500);
-						let uri = vscode.Uri.file(path.join(this.projectRoot, element.file));
+						let uri = vscode.Uri.file(path.isAbsolute(element.file) ? element.file : path.join(this.projectRoot, element.file));
 						let error = new vscode.Diagnostic(range, element.text, this.mapDubLintType(element.type));
 						let found = false;
 						diagnostics.forEach(element => {
