@@ -64,6 +64,7 @@ export class WorkspaceD extends EventEmitter implements
 					self.startWorkspaceD.call(self);
 			});
 		});
+		this.emit("workspace-d-start");
 		this.checkVersion();
 	}
 
@@ -459,6 +460,30 @@ export class WorkspaceD extends EventEmitter implements
 			default:
 				return vscode.DiagnosticSeverity.Error;
 		}
+	}
+
+	public checkResponsiveness(): Thenable<boolean> {
+		return new Promise((resolve) => {
+			var unresponsiveTimeout = setTimeout(() => {
+				vscode.window.showWarningMessage("Workspace-D is unresponsive. Auto completion might not work", "Restart").then(s => {
+					if (s == "Restart") {
+						this.shouldRestart = true;
+						try {
+							process.kill(-this.instance.pid);
+						}
+						catch (e) {
+							vscode.window.showErrorMessage("Could not kill workspace-d. Please manually kill it! PID: " + this.instance.pid);
+						}
+						this.startWorkspaceD();
+					}
+				});
+				resolve(false);
+			}, 10 * 1000);
+			this.request({ cmd: "version" }).then(version => {
+				clearTimeout(unresponsiveTimeout);
+				resolve(true);
+			});
+		});
 	}
 
 	public checkVersion() {

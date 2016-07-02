@@ -35,6 +35,16 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.languages.registerDocumentFormattingEditProvider(D_MODE, workspaced));
 
 	context.subscriptions.push(workspaced);
+	function checkUnresponsive() {
+		setTimeout(() => {
+			workspaced.checkResponsiveness().then(responsive => {
+				if (responsive)
+					checkUnresponsive();
+			});
+		}, 10 * 1000);
+	}
+	workspaced.on("workspace-d-start", checkUnresponsive);
+	checkUnresponsive();
 
 	context.subscriptions.push(addSDLProviders());
 	context.subscriptions.push(addJSONProviders());
