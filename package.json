@@ -151,6 +151,11 @@
 					"default": true,
 					"description": "If code-d should watch for file saves and report static analysis. Might interfere with other lint plugins or settings."
 				},
+				"d.enableSDLLinting": {
+					"type": "boolean",
+					"default": true,
+					"description": "If code-d should report errors in your dub.sdl file."
+				},
 				"d.enableDubLinting": {
 					"type": "boolean",
 					"default": true,
@@ -208,6 +213,10 @@
 			{
 				"command": "code-d.stop",
 				"title": "code-d: Stop project"
+			},
+			{
+				"command": "code-d.debug",
+				"title": "code-d: Debug project using code-debug"
 			},
 			{
 				"command": "code-d.uploadSelection",
