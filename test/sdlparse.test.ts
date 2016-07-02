@@ -59,11 +59,13 @@ matrix {
     4 5 6
 }`);
 		// TODO: make test more automatic instead of relying on tokenizer not changing
+		// TODO: do we even need a tokenizer test? The value test should be enough
 		assert.deepStrictEqual(tokens[0], { type: "identifier", range: [0, 6], name: "my_tag" });
-		assert.deepStrictEqual(tokens.length, 83, "Tokenizer has changed");
+		assert.deepStrictEqual(tokens.length, 91, "Tokenizer has changed");
 	});
 	test("example sdl file", () => {
 		let root = parseSDL(`# a tag having only a name
+420
 my_tag
 
 # three tags acting as name value pairs
@@ -71,7 +73,7 @@ first_name "Akiko"
 last_name "Johnson"
 height 68
 
-"anon1"
+"anon2"
 
 # a tag with a value list
 person "Akiko" "Johnson" 68
@@ -141,7 +143,8 @@ matrix {
 		assert.deepStrictEqual(root.tags["last_name"][0].values[0].value, "Johnson");
 		assert.deepStrictEqual(root.tags["height"][0].values.length, 1);
 		assert.deepStrictEqual(root.tags["height"][0].values[0].value, 68);
-		assert.deepStrictEqual(root.tags[""][0].values[0].value, "anon1");
+		assert.deepStrictEqual(root.tags[""][0].values[0].value, 420);
+		assert.deepStrictEqual(root.tags[""][0].values[1].value, "anon2");
 		assert.deepStrictEqual(root.tags["person"][0].values.length, 3);
 		assert.deepStrictEqual(root.tags["person"][0].values[0].value, "Akiko");
 		assert.deepStrictEqual(root.tags["person"][0].values[1].value, "Johnson");

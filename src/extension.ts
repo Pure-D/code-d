@@ -8,6 +8,7 @@ import * as path from "path"
 import { DlangUIHandler } from "./dlangui"
 import { lintDfmt } from "./dfmt-check"
 import { addJSONProviders } from "./json-contributions"
+import { addSDLProviders } from "./sdl/sdl-contributions"
 import * as ChildProcess from "child_process"
 
 let diagnosticCollection: vscode.DiagnosticCollection;
@@ -35,6 +36,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(workspaced);
 
+	context.subscriptions.push(addSDLProviders());
 	context.subscriptions.push(addJSONProviders());
 
 	context.subscriptions.push(statusbar.setup(workspaced));

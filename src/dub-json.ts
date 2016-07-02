@@ -1,7 +1,7 @@
 import { IJSONContribution, ISuggestionsCollector } from "./json-contributions";
 import * as vscode from "vscode";
 import { Location } from "jsonc-parser";
-var request = require("request");
+import { searchDubPackages, listPackages, getPackageInfo, getLatestPackageInfo } from "./dub-api"
 
 var semverRegex = /(\d+)\.(\d+)\.(\d+)/;
 
@@ -23,7 +23,7 @@ export class DubJSONContribution implements IJSONContribution {
 			return null;
 		let pack = location.path[location.path.length - 1];
 		if (typeof pack === "string") {
-			return this.getInfo(pack).then(info => {
+			return getLatestPackageInfo(pack).then(info => {
 				let htmlContent: vscode.MarkedString[] = [];
 				htmlContent.push("Package " + pack);
 				if (info.description) {
@@ -45,12 +45,7 @@ export class DubJSONContribution implements IJSONContribution {
 			if (currentWord.length > 0) {
 				var colonIdx = currentWord.indexOf(":");
 				if (colonIdx == -1) {
-					request("https://code.dlang.org/api/packages/search?q=" + currentWord, function (error, response, body) {
-						if (error || response.statusCode == 404) {
-							result.error("Packages not found");
-							return resolve();
-						}
-						var json = JSON.parse(body);
+					searchDubPackages(currentWord).then(json => {
 						json.forEach(element => {
 							var item = new vscode.CompletionItem(element.name);
 							var insertText = JSON.stringify(element.name);
@@ -65,10 +60,14 @@ export class DubJSONContribution implements IJSONContribution {
 							result.add(item);
 						});
 						resolve();
+					}, err => {
+						console.log("Error searching for packages");
+						console.log(err);
+						resolve();
 					});
 				} else {
 					var pkgName = currentWord.substr(0, colonIdx);
-					this.getInfo(pkgName).then(info => {
+					getLatestPackageInfo(pkgName).then(info => {
 						info.subPackages.forEach(subPkgName => {
 							var completionName = pkgName + ":" + subPkgName;
 							var item = new vscode.CompletionItem(completionName);
@@ -91,12 +90,7 @@ export class DubJSONContribution implements IJSONContribution {
 				}
 			}
 			else {
-				request("https://code.dlang.org/packages/index.json", function (error, response, body) {
-					if (error || response.statusCode == 404) {
-						result.error("Packages not found");
-						return resolve();
-					}
-					var json = JSON.parse(body);
+				listPackages().then(json => {
 					json.forEach(element => {
 						var item = new vscode.CompletionItem(element);
 						item.kind = vscode.CompletionItemKind.Property;
@@ -109,6 +103,10 @@ export class DubJSONContribution implements IJSONContribution {
 						item.insertText = insertText;
 						result.add(item);
 					});
+					resolve();
+				}, err => {
+					console.log("Error searching for packages");
+					console.log(err);
 					resolve();
 				});
 			}
@@ -125,12 +123,7 @@ export class DubJSONContribution implements IJSONContribution {
 			return null;
 		if (typeof currentKey === "string") {
 			return new Promise((resolve, reject) => {
-				request("https://code.dlang.org/api/packages/" + currentKey + "/info", function (error, response, body) {
-					if (error || response.statusCode != 200) {
-						result.error(response.statusCode == 404 ? "Package not found" : error.toString());
-						return resolve();
-					}
-					var json = JSON.parse(body);
+				getPackageInfo(currentKey).then(json => {
 					var versions = json.versions;
 					if (!versions || !versions.length) {
 						result.error("No versions found");
@@ -150,6 +143,9 @@ export class DubJSONContribution implements IJSONContribution {
 						result.add(item);
 					}
 					resolve();
+				}, error => {
+					result.error(error.toString());
+					resolve();
 				});
 			});
 		}
@@ -159,7 +155,7 @@ export class DubJSONContribution implements IJSONContribution {
 	public resolveSuggestion(item: vscode.CompletionItem): Thenable<vscode.CompletionItem> {
 		if (item.kind === vscode.CompletionItemKind.Property) {
 			let pack = item.label
-			return this.getInfo(pack).then(info => {
+			return getLatestPackageInfo(pack).then(info => {
 				if (info.description) {
 					item.documentation = info.description;
 				}
@@ -173,25 +169,5 @@ export class DubJSONContribution implements IJSONContribution {
 			});
 		}
 		return null;
-	}
-
-	private getInfo(pack: string): Thenable<{ description?: string; version?: string; subPackages?: string[] }> {
-		return new Promise((resolve, reject) => {
-			request("https://code.dlang.org/api/packages/" + pack + "/latest/info", function (error, response, body) {
-				if (error || response.statusCode != 200)
-					return reject(error);
-				var json = JSON.parse(body);
-				var subPackages = [];
-				if (json.info.subPackages)
-					json.info.subPackages.forEach(pkg => {
-						subPackages.push(pkg.name);
-					});
-				resolve({
-					version: json.version,
-					description: json.info.description,
-					subPackages: subPackages
-				});
-			});
-		});
 	}
 }
