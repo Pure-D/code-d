@@ -1,7 +1,7 @@
 {
 	"name": "code-d",
 	"description": "auto-complete, snippets, linter and formatter for dlang",
-	"version": "0.10.12",
+	"version": "0.10.13",
 	"publisher": "webfreak",
 	"repository": {
 		"type": "git",
