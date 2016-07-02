@@ -154,6 +154,15 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(vscode.languages.registerWorkspaceSymbolProvider(workspaced));
 
+	function upgradeDubPackage(document: vscode.TextDocument) {
+		if (path.basename(document.fileName) == "dub.json" || path.basename(document.fileName) == "dub.sdl") {
+			workspaced.upgrade();
+			workspaced.updateImports();
+		}
+	}
+
+	vscode.workspace.onDidSaveTextDocument(upgradeDubPackage, null, context.subscriptions);
+
 	diagnosticCollection = vscode.languages.createDiagnosticCollection("d");
 	context.subscriptions.push(diagnosticCollection);
 	let version;

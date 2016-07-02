@@ -318,6 +318,10 @@ export class WorkspaceD extends EventEmitter implements
 		});
 	}
 
+	upgrade() {
+		this.request({ cmd: "dub", subcmd: "upgrade" });
+	}
+
 	listConfigurations(): Thenable<string[]> {
 		return this.request({ cmd: "dub", subcmd: "list:configurations" });
 	}
