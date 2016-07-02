@@ -290,6 +290,18 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.window.showErrorMessage("Failed to switch build type. See console for details.");
 	}));
 
+	context.subscriptions.push(vscode.commands.registerCommand("code-d.switchCompiler", () => {
+		workspaced.getCompiler().then(compiler => {
+			vscode.window.showInputBox({ value: compiler, prompt: "Enter compiler identifier. (e.g. dmd, ldc2, gdc)" }).then(compiler => {
+				if (compiler)
+					workspaced.setCompiler(compiler);
+			});
+		}, (err) => {
+			console.error(err);
+			vscode.window.showErrorMessage("Failed to switch compiler. See console for details.");
+		});
+	}));
+
 	context.subscriptions.push(vscode.commands.registerCommand("code-d.killServer", () => {
 		workspaced.killServer().then((res) => {
 			vscode.window.showInformationMessage("Killed DCD-Server", "Restart").then((pick) => {

@@ -191,6 +191,10 @@
 				"title": "code-d: Switch Build Type"
 			},
 			{
+				"command": "code-d.switchCompiler",
+				"title": "code-d: Switch Compiler"
+			},
+			{
 				"command": "code-d.killServer",
 				"title": "code-d: Kill DCD Server"
 			},

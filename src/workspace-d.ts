@@ -346,6 +346,30 @@ export class WorkspaceD extends EventEmitter implements
 		});
 	}
 
+	getCompiler(): Thenable<string> {
+		return this.request({ cmd: "dub", subcmd: "get:compiler" });
+	}
+
+	setCompiler(comp: string) {
+		this.request({ cmd: "dub", subcmd: "set:compiler", compiler: comp }).then((success) => {
+			if (success) {
+				this.listImports().then(console.log);
+				this.getCompiler().then(comp => this.emit("compiler-change", comp));
+				if (this.dcdReady) {
+					this.request({ cmd: "dcd", subcmd: "refresh-imports" }).then(() => {
+						console.log("Updated completion for dcd");
+					});
+				}
+			}
+			else
+				vscode.window.showErrorMessage("Could not switch compiler", "Switch Compiler").then((s) => {
+					if (s == "Switch Compiler") {
+						vscode.commands.executeCommand("code-d.switchCompiler");
+					}
+				});
+		});
+	}
+
 	listBuildTypes(): Thenable<string[]> {
 		return this.request({ cmd: "dub", subcmd: "list:build-types" });
 	}

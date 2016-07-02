@@ -7,6 +7,7 @@ export function setup(workspaced: WorkspaceD): vscode.Disposable {
 
 	subscriptions.push(new ConfigSelector(workspaced));
 	subscriptions.push(new BuildSelector(workspaced));
+	subscriptions.push(new CompilerSelector(workspaced));
 
 	return vscode.Disposable.from(...subscriptions);
 }
@@ -20,7 +21,7 @@ class ConfigSelector implements vscode.Disposable {
 	}
 
 	private create() {
-		this.item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 2);
+		this.item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 1.7);
 		this.item.command = "code-d.switchConfiguration";
 		this.item.tooltip = "Switch Configuration";
 		this.item.show();
@@ -46,7 +47,7 @@ class BuildSelector implements vscode.Disposable {
 	}
 
 	private create() {
-		this.item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 1);
+		this.item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 1.69);
 		this.item.command = "code-d.switchBuildType";
 		this.item.tooltip = "Switch Build Type";
 		this.item.show();
@@ -54,6 +55,32 @@ class BuildSelector implements vscode.Disposable {
 			this.item.text = config;
 		});
 		this.workspaced.getBuildType().then(config => {
+			this.item.text = config;
+		});
+	}
+
+	dispose() {
+		vscode.Disposable.from(...this.subscriptions).dispose();
+	}
+}
+
+class CompilerSelector implements vscode.Disposable {
+	subscriptions: vscode.Disposable[] = [];
+	private item: vscode.StatusBarItem;
+
+	constructor(private workspaced: WorkspaceD) {
+		workspaced.once("dub-ready", this.create.bind(this));
+	}
+
+	private create() {
+		this.item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 1.68);
+		this.item.command = "code-d.switchCompiler";
+		this.item.tooltip = "Switch Compiler";
+		this.item.show();
+		this.workspaced.on("compiler-change", config => {
+			this.item.text = config;
+		});
+		this.workspaced.getCompiler().then(config => {
 			this.item.text = config;
 		});
 	}
