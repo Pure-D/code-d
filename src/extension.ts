@@ -5,8 +5,10 @@ import { CompileButtons } from "./compile-buttons"
 import { uploadCode } from "./util"
 import * as statusbar from "./statusbar"
 import * as path from "path"
+import * as fs from "fs"
 import { DlangUIHandler } from "./dlangui"
 import { lintDfmt } from "./dfmt-check"
+import { GCProfiler } from "./gcprofiler"
 import { addJSONProviders } from "./json-contributions"
 import { addSDLProviders } from "./sdl/sdl-contributions"
 import * as ChildProcess from "child_process"
@@ -172,6 +174,21 @@ export function activate(context: vscode.ExtensionContext) {
 	}
 
 	vscode.workspace.onDidSaveTextDocument(upgradeDubPackage, null, context.subscriptions);
+
+	let gcprofiler = new GCProfiler();
+	vscode.languages.registerCodeLensProvider(D_MODE, gcprofiler);
+
+	let watcher = vscode.workspace.createFileSystemWatcher("**/profilegc.log", false, false, false);
+	watcher.onDidCreate(gcprofiler.updateProfileCache.bind(gcprofiler), null, context.subscriptions);
+	watcher.onDidChange(gcprofiler.updateProfileCache.bind(gcprofiler), null, context.subscriptions);
+	watcher.onDidDelete(gcprofiler.clearProfileCache.bind(gcprofiler), null, context.subscriptions);
+	context.subscriptions.push(watcher);
+
+	let profileGCPath = path.join(vscode.workspace.rootPath, "profilegc.log");
+	if (fs.existsSync(profileGCPath))
+		gcprofiler.updateProfileCache(vscode.Uri.file(profileGCPath));
+	
+	context.subscriptions.push(vscode.commands.registerCommand("code-d.showGCCalls", gcprofiler.listProfileCache.bind(gcprofiler)));
 
 	diagnosticCollection = vscode.languages.createDiagnosticCollection("d");
 	context.subscriptions.push(diagnosticCollection);

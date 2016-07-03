@@ -234,6 +234,10 @@
 			{
 				"command": "code-d.rdmdCurrent",
 				"title": "code-d: Run current document using rdmd"
+			},
+			{
+				"command": "code-d.showGCCalls",
+				"title": "code-d: Show GC calls from profilegc.log"
 			}
 		],
 		"jsonValidation": [
