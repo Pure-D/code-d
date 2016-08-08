@@ -27,7 +27,7 @@ export function activate(context: vscode.ExtensionContext) {
 	}
 
 	let workspaced = new WorkspaceD(vscode.workspace.rootPath);
-	context.subscriptions.push(vscode.languages.registerCompletionItemProvider(DML_MODE, workspaced.getDlangUI(), ":", ";"));
+	context.subscriptions.push(vscode.languages.registerCompletionItemProvider(DML_MODE, workspaced.getDlangUI(context.subscriptions), ":", ";"));
 
 	context.subscriptions.push(vscode.languages.registerCompletionItemProvider(D_MODE, workspaced, "."));
 	context.subscriptions.push(vscode.languages.registerSignatureHelpProvider(D_MODE, workspaced, "(", ","));

@@ -436,8 +436,12 @@ export class WorkspaceD extends EventEmitter implements
 		return this.request({ cmd: "dub", subcmd: "list:import" });
 	}
 
-	getDlangUI(): DlangUIHandler {
-		return new DlangUIHandler(this);
+	getDlangUI(subs: vscode.Disposable[]): DlangUIHandler {
+		var decoType = vscode.window.createTextEditorDecorationType({});
+		subs.push(decoType);
+		var handler = new DlangUIHandler(this, decoType);
+		vscode.workspace.onDidChangeTextDocument(e => handler.fileUpdate(e));
+		return handler;
 	}
 
 	public mapLintType(type: string): vscode.DiagnosticSeverity {
