@@ -21,13 +21,13 @@ export class DlangUIHandler implements vscode.CompletionItemProvider {
 					i.documentation = item.documentation;
 					i.insertText = item.value + ": ";
 					if (item.type === 1)
-						i.insertText = item.value + " {}";
+						i.insertText = item.value + " \\{{{}}\\}";
 					else if (item.type === 4)
-						i.insertText = item.value + ": \"#000000\"";
+						i.insertText = item.value + ": \"{{#000000}}\"";
 					else if (item.type === 5)
 						i.insertText = item.enumName + "." + item.value;
 					else if (item.type === 7)
-						i.insertText = item.value + ": Rect { 0, 0, 0, 0 }";
+						i.insertText = item.value + ": {{0}}";
 					else if (item.type === 9)
 						i.insertText = undefined;
 					items.push(i);
