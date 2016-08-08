@@ -182,6 +182,15 @@
 				}
 			}
 		},
+		"menus": {
+			"explorer/context": [
+				{
+					"when": "resourceLangId == d",
+					"command": "code-d.rdmdCurrent",
+					"group": "1_modification"
+				}
+			]
+		},
 		"commands": [
 			{
 				"command": "code-d.switchConfiguration",
@@ -233,7 +242,7 @@
 			},
 			{
 				"command": "code-d.rdmdCurrent",
-				"title": "code-d: Run current document using rdmd"
+				"title": "Run document using rdmd"
 			},
 			{
 				"command": "code-d.showGCCalls",

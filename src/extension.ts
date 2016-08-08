@@ -187,7 +187,7 @@ export function activate(context: vscode.ExtensionContext) {
 	let profileGCPath = path.join(vscode.workspace.rootPath, "profilegc.log");
 	if (fs.existsSync(profileGCPath))
 		gcprofiler.updateProfileCache(vscode.Uri.file(profileGCPath));
-	
+
 	context.subscriptions.push(vscode.commands.registerCommand("code-d.showGCCalls", gcprofiler.listProfileCache.bind(gcprofiler)));
 
 	diagnosticCollection = vscode.languages.createDiagnosticCollection("d");
@@ -257,15 +257,19 @@ export function activate(context: vscode.ExtensionContext) {
 	}, null, context.subscriptions);
 
 	let rdmdOutput = vscode.window.createOutputChannel("rdmd");
-	context.subscriptions.push(vscode.commands.registerCommand("code-d.rdmdCurrent", () => {
+	context.subscriptions.push(vscode.commands.registerCommand("code-d.rdmdCurrent", (file: vscode.Uri) => {
 		let proc;
-		if (!vscode.window.activeTextEditor.document.fileName)
-			proc = ChildProcess.spawn("rdmd", ["--eval=" + vscode.window.activeTextEditor.document.getText()], { cwd: vscode.workspace.rootPath });
+		var args = [];
+		if (file)
+			proc = ChildProcess.spawn("rdmd", args = [file.fsPath], { cwd: vscode.workspace.rootPath });
+		else if (!vscode.window.activeTextEditor.document.fileName)
+			proc = ChildProcess.spawn("rdmd", args = ["--eval=" + vscode.window.activeTextEditor.document.getText()], { cwd: vscode.workspace.rootPath });
 		else
-			proc = ChildProcess.spawn("rdmd", [vscode.window.activeTextEditor.document.fileName], { cwd: vscode.workspace.rootPath });
+			proc = ChildProcess.spawn("rdmd", args = [vscode.window.activeTextEditor.document.fileName], { cwd: vscode.workspace.rootPath });
 
 		rdmdOutput.show();
 		rdmdOutput.clear();
+		rdmdOutput.appendLine("rdmd " + args.join(" "));
 
 		let handleData = (data) => {
 			let lines = data.toString("utf8").split('\n');
