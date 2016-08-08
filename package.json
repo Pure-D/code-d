@@ -179,6 +179,18 @@
 					},
 					"default": [],
 					"description": "Setting for import paths in your workspace if not using dub. This will replace other paths. Its recommended to set this in your workspace settings instead of your user settings to keep it separate for each project."
+				},
+				"d.dubConfiguration": {
+					"type": "string",
+					"description": "Sets the default configuration to use when starting up"
+				},
+				"d.dubBuildType": {
+					"type": "string",
+					"description": "Sets the default build type to use when starting up"
+				},
+				"d.dubCompiler": {
+					"type": "string",
+					"description": "Sets the default compiler to use when starting up"
 				}
 			}
 		},

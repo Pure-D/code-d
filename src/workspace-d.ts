@@ -331,8 +331,8 @@ export class WorkspaceD extends EventEmitter implements
 		return this.request({ cmd: "dub", subcmd: "get:configuration" });
 	}
 
-	setConfiguration(config: string) {
-		this.request({ cmd: "dub", subcmd: "set:configuration", configuration: config }).then((success) => {
+	setConfiguration(config: string): Thenable<boolean> {
+		return this.request({ cmd: "dub", subcmd: "set:configuration", configuration: config }).then((success) => {
 			if (success) {
 				this.listImports().then(console.log);
 				this.emit("configuration-change", config);
@@ -348,6 +348,7 @@ export class WorkspaceD extends EventEmitter implements
 						vscode.commands.executeCommand("code-d.switchConfiguration");
 					}
 				});
+			return success;
 		});
 	}
 
@@ -355,8 +356,8 @@ export class WorkspaceD extends EventEmitter implements
 		return this.request({ cmd: "dub", subcmd: "get:compiler" });
 	}
 
-	setCompiler(comp: string) {
-		this.request({ cmd: "dub", subcmd: "set:compiler", compiler: comp }).then((success) => {
+	setCompiler(comp: string): Thenable<boolean> {
+		return this.request({ cmd: "dub", subcmd: "set:compiler", compiler: comp }).then((success) => {
 			if (success) {
 				this.listImports().then(console.log);
 				this.getCompiler().then(comp => this.emit("compiler-change", comp));
@@ -372,6 +373,7 @@ export class WorkspaceD extends EventEmitter implements
 						vscode.commands.executeCommand("code-d.switchCompiler");
 					}
 				});
+			return success;
 		});
 	}
 
@@ -383,8 +385,8 @@ export class WorkspaceD extends EventEmitter implements
 		return this.request({ cmd: "dub", subcmd: "get:build-type" });
 	}
 
-	setBuildType(config: string) {
-		this.request({ cmd: "dub", subcmd: "set:build-type", "build-type": config }).then((success) => {
+	setBuildType(config: string): Thenable<boolean> {
+		return this.request({ cmd: "dub", subcmd: "set:build-type", "build-type": config }).then((success) => {
 			if (success) {
 				this.request({ cmd: "dub", subcmd: "list:import" }).then(console.log);
 				this.emit("build-type-change", config);
@@ -395,6 +397,7 @@ export class WorkspaceD extends EventEmitter implements
 						vscode.commands.executeCommand("code-d.switchBuildType");
 					}
 				});
+			return success;
 		});
 	}
 
@@ -528,7 +531,35 @@ export class WorkspaceD extends EventEmitter implements
 					if (configs.length == 0) {
 						vscode.window.showInformationMessage("No configurations available for this project. Autocompletion could be broken!");
 					} else {
-						this.setConfiguration(configs[0]);
+						var defaultConfig = config().get("dubConfiguration", "");
+						if (defaultConfig) {
+							if (configs.indexOf(defaultConfig) == -1) {
+								vscode.window.showErrorMessage("Configuration '" + defaultConfig + "' which is specified in the config is not available!");
+								return this.setConfiguration(configs[0]);
+							}
+							else {
+								return this.setConfiguration(defaultConfig);
+							}
+						}
+						else {
+							return this.setConfiguration(configs[0]);
+						}
+					}
+				}).then(success => {
+					console.log("Configuration: " + success);
+					var defaultBuildType = config().get("dubBuildType", "");
+					var defaultCompiler = config().get("dubCompiler", "");
+					if (defaultBuildType) {
+						this.setBuildType(defaultBuildType).then(success => {
+							if (!success)
+								vscode.window.showErrorMessage("Build Type '" + defaultBuildType + "' which is specified in the config is not available!");
+						});
+					}
+					if (defaultCompiler) {
+						this.setCompiler(defaultCompiler).then(success => {
+							if (!success)
+								vscode.window.showErrorMessage("Compiler '" + defaultCompiler + "' which is specified in the config is not available!");
+						});
 					}
 				});
 			}, (err) => {
