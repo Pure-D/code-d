@@ -184,6 +184,10 @@
 					"type": "string",
 					"description": "Sets the default configuration to use when starting up"
 				},
+				"d.dubArchType": {
+					"type": "string",
+					"description": "Sets the default arch type to use when starting up"
+				},
 				"d.dubBuildType": {
 					"type": "string",
 					"description": "Sets the default build type to use when starting up"
@@ -207,6 +211,10 @@
 			{
 				"command": "code-d.switchConfiguration",
 				"title": "code-d: Switch Configuration"
+			},
+			{
+				"command": "code-d.switchArchType",
+				"title": "code-d: Switch Arch Type"
 			},
 			{
 				"command": "code-d.switchBuildType",

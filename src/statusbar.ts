@@ -6,6 +6,7 @@ export function setup(workspaced: WorkspaceD): vscode.Disposable {
 	let subscriptions: vscode.Disposable[] = [];
 
 	subscriptions.push(new ConfigSelector(workspaced));
+	subscriptions.push(new ArchSelector(workspaced));
 	subscriptions.push(new BuildSelector(workspaced));
 	subscriptions.push(new CompilerSelector(workspaced));
 
@@ -38,7 +39,7 @@ class ConfigSelector implements vscode.Disposable {
 	}
 }
 
-class BuildSelector implements vscode.Disposable {
+class ArchSelector implements vscode.Disposable {
 	subscriptions: vscode.Disposable[] = [];
 	private item: vscode.StatusBarItem;
 
@@ -48,6 +49,32 @@ class BuildSelector implements vscode.Disposable {
 
 	private create() {
 		this.item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 1.69);
+		this.item.command = "code-d.switchArchType";
+		this.item.tooltip = "Switch Arch Type";
+		this.item.show();
+		this.workspaced.on("arch-type-change", arch => {
+			this.item.text = arch;
+		});
+		this.workspaced.getArchType().then(arch => {
+			this.item.text = arch;
+		});
+	}
+
+	dispose() {
+		vscode.Disposable.from(...this.subscriptions).dispose();
+	}
+}
+
+class BuildSelector implements vscode.Disposable {
+	subscriptions: vscode.Disposable[] = [];
+	private item: vscode.StatusBarItem;
+
+	constructor(private workspaced: WorkspaceD) {
+		workspaced.once("dub-ready", this.create.bind(this));
+	}
+
+	private create() {
+		this.item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 1.68);
 		this.item.command = "code-d.switchBuildType";
 		this.item.tooltip = "Switch Build Type";
 		this.item.show();
@@ -73,7 +100,7 @@ class CompilerSelector implements vscode.Disposable {
 	}
 
 	private create() {
-		this.item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 1.68);
+		this.item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 1.67);
 		this.item.command = "code-d.switchCompiler";
 		this.item.tooltip = "Switch Compiler";
 		this.item.show();

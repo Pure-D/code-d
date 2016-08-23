@@ -83,9 +83,9 @@ export class CompileButtons implements vscode.Disposable {
 			this.buildButton.hide();
 			this.startButton.hide();
 			this.debugButton.hide();
-			Promise.all([this.workspaced.getConfiguration(), this.workspaced.getBuildType(), this.workspaced.getCompiler()]).then(values => {
+			Promise.all([this.workspaced.getConfiguration(), this.workspaced.getArchType(), this.workspaced.getBuildType(), this.workspaced.getCompiler()]).then(values => {
 				this.debugValuesCache = values;
-				let args = [cmd, "--config=" + values[0], "--build=" + values[1], "--compiler=" + values[2]];
+				let args = [cmd, "--config=" + values[0], "--arch=" + values[1], "--build=" + values[2], "--compiler=" + values[3]];
 				this.output.appendLine("> dub " + args.join(" "));
 				this.child = ChildProcess.spawn("dub", args, { cwd: vscode.workspace.rootPath, detached: true });
 				this.child.stderr.on("data", this.handleData.bind(this));
@@ -117,7 +117,21 @@ export class CompileButtons implements vscode.Disposable {
 		this.stopButton.hide();
 		if (this.isDebug && code == 0) {
 			this.isDebug = false;
-			var proc = ChildProcess.spawn("dub", ["describe", "--config=" + this.debugValuesCache[0], "--build=" + this.debugValuesCache[1], "--compiler=" + this.debugValuesCache[2], "--data=target-path,target-name,working-directory", "--data-list"], { cwd: vscode.workspace.rootPath, detached: true });
+			var proc = ChildProcess.spawn("dub",
+				[
+					"describe",
+					"--config=" + this.debugValuesCache[0],
+					"--arch=" + this.debugValuesCache[1],
+					"--build=" + this.debugValuesCache[2],
+					"--compiler=" + this.debugValuesCache[3],
+					"--data=target-path,target-name,working-directory",
+					"--data-list"
+				],
+				{
+					cwd: vscode.workspace.rootPath,
+					detached: true
+				});
+				
 			var allData = "";
 			proc.stdout.on('data', function (data) {
 				allData += data;

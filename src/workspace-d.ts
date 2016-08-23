@@ -377,6 +377,25 @@ export class WorkspaceD extends EventEmitter implements
 		});
 	}
 
+	listArchTypes(): Thenable<string[]> {
+		return this.request({ cmd: "dub", subcmd: "list:arch-types" });
+	}
+
+	getArchType(): Thenable<string> {
+		return this.request({ cmd: "dub", subcmd: "get:arch-type" });
+	}
+
+	setArchType(arch: string): Thenable<boolean> {
+		return this.request({ cmd: "dub", subcmd: "set:arch-type", "arch-type": arch }).then((success) => {
+			if(success)
+			{
+				this.emit("arch-type-change", arch);
+			}
+
+			return success;
+		});
+	}
+
 	listBuildTypes(): Thenable<string[]> {
 		return this.request({ cmd: "dub", subcmd: "list:build-types" });
 	}
@@ -547,8 +566,15 @@ export class WorkspaceD extends EventEmitter implements
 					}
 				}).then(success => {
 					console.log("Configuration: " + success);
+					var defaultArchType = config().get("dubArchType", "");
 					var defaultBuildType = config().get("dubBuildType", "");
 					var defaultCompiler = config().get("dubCompiler", "");
+					if (defaultArchType) {
+						this.setArchType(defaultArchType).then(success => {
+							if(!success)
+								vscode.window.showErrorMessage("Arch Type '" + defaultArchType + "' which is specified in the config is not available!");
+						});
+					}
 					if (defaultBuildType) {
 						this.setBuildType(defaultBuildType).then(success => {
 							if (!success)
