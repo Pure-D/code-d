@@ -387,11 +387,16 @@ export class WorkspaceD extends EventEmitter implements
 
 	setArchType(arch: string): Thenable<boolean> {
 		return this.request({ cmd: "dub", subcmd: "set:arch-type", "arch-type": arch }).then((success) => {
-			if(success)
-			{
-				this.emit("arch-type-change", arch);
-			}
 
+			if(success)
+				this.emit("arch-type-change", arch);
+			else
+				vscode.window.showInformationMessage("Could not switch arch type", "Switch Arch Type").then((s) => {
+					if (s == "Switch Arch Type") {
+						vscode.commands.executeCommand("code-d.switchArchType");
+					}
+				});
+			
 			return success;
 		});
 	}
