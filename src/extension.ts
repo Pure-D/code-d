@@ -320,6 +320,16 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.window.showErrorMessage("Failed to switch configuration. See console for details.");
 	}));
 
+	context.subscriptions.push(vscode.commands.registerCommand("code-d.switchArchType", () => {
+		vscode.window.showQuickPick(workspaced.listArchTypes()).then((arch) => {
+			if (arch)
+				workspaced.setArchType(arch);
+		});
+	}, (err) => {
+		console.error(err);
+		vscode.window.showErrorMessage("Failed to switch arch type. See console for details.");
+	}));
+
 	context.subscriptions.push(vscode.commands.registerCommand("code-d.switchBuildType", () => {
 		vscode.window.showQuickPick(workspaced.listBuildTypes()).then((config) => {
 			if (config)
