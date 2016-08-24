@@ -398,6 +398,11 @@ export class WorkspaceD extends EventEmitter implements
 				});
 			
 			return success;
+		},
+		err => {
+			console.error(err);
+			vscode.window.showErrorMessage("Failed to switch arch type. See console for details.");
+			return false;
 		});
 	}
 
