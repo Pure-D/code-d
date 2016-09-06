@@ -26,7 +26,11 @@ export function activate(context: vscode.ExtensionContext) {
 		return;
 	}
 
-	let workspaced = new WorkspaceD(vscode.workspace.rootPath);
+	let env = process.env;
+	let proxy = vscode.workspace.getConfiguration("http").get("proxy", "");
+	if (proxy)
+		env["http_proxy"] = proxy;
+	let workspaced = new WorkspaceD(vscode.workspace.rootPath, env);
 	context.subscriptions.push(vscode.languages.registerCompletionItemProvider(DML_MODE, workspaced.getDlangUI(context.subscriptions), ":", ";"));
 
 	context.subscriptions.push(vscode.languages.registerCompletionItemProvider(D_MODE, workspaced, "."));

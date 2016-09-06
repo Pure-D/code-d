@@ -19,7 +19,7 @@ export class WorkspaceD extends EventEmitter implements
 	vscode.DefinitionProvider,
 	vscode.DocumentFormattingEditProvider,
 	vscode.HoverProvider {
-	constructor(public projectRoot: string) {
+	constructor(public projectRoot: string, public processEnv: any) {
 		super();
 		let self = this;
 		this.on("error", function (err) {
@@ -36,7 +36,7 @@ export class WorkspaceD extends EventEmitter implements
 		let self = this;
 		this.workspaced = true;
 		let path = config().get("workspacedPath", "workspace-d");
-		this.instance = ChildProcess.spawn(path, [], { cwd: this.projectRoot });
+		this.instance = ChildProcess.spawn(path, [], { cwd: this.projectRoot, env: this.processEnv });
 		this.totalData = new Buffer(0);
 		this.instance.stderr.on("data", function (chunk) {
 			console.log("WorkspaceD Debug: " + chunk);

@@ -1,9 +1,17 @@
 import * as vscode from "vscode";
 var request = require("request");
 
+function req() {
+	let proxy = vscode.workspace.getConfiguration("http").get("proxy", "");
+	if (proxy)
+		return request.defaults({ "proxy": proxy });
+	else
+		return request;
+}
+
 export function searchDubPackages(query: string): Thenable<any[]> {
 	return new Promise((resolve, reject) => {
-		request("https://code.dlang.org/api/packages/search?q=" + encodeURIComponent(query), function (error, response, body) {
+		req()("https://code.dlang.org/api/packages/search?q=" + encodeURIComponent(query), function (error, response, body) {
 			if (error || response.statusCode != 200)
 				return reject(error || "No packages found");
 			var json: any[] = JSON.parse(body);
@@ -14,7 +22,7 @@ export function searchDubPackages(query: string): Thenable<any[]> {
 
 export function listPackages(): Thenable<any[]> {
 	return new Promise((resolve, reject) => {
-		request("https://code.dlang.org/packages/index.json", function (error, response, body) {
+		req()("https://code.dlang.org/packages/index.json", function (error, response, body) {
 			if (error || response.statusCode != 200)
 				return reject(error || "No packages found");
 			var json: any[] = JSON.parse(body);
@@ -25,7 +33,7 @@ export function listPackages(): Thenable<any[]> {
 
 export function getPackageInfo(pkg: string): Thenable<any> {
 	return new Promise((resolve, reject) => {
-		request("https://code.dlang.org/api/packages/" + encodeURIComponent(pkg) + "/info", function (error, response, body) {
+		req()("https://code.dlang.org/api/packages/" + encodeURIComponent(pkg) + "/info", function (error, response, body) {
 			if (error || response.statusCode != 200)
 				return reject(error || "Package not found");
 			var json: any = JSON.parse(body);
@@ -36,7 +44,7 @@ export function getPackageInfo(pkg: string): Thenable<any> {
 
 export function getLatestPackageInfo(pkg: string): Thenable<{ description?: string; version?: string; subPackages?: string[] }> {
 	return new Promise((resolve, reject) => {
-		request("https://code.dlang.org/api/packages/" + encodeURIComponent(pkg) + "/latest/info", function (error, response, body) {
+		req()("https://code.dlang.org/api/packages/" + encodeURIComponent(pkg) + "/latest/info", function (error, response, body) {
 			if (error || response.statusCode != 200)
 				return reject(error);
 			var json = JSON.parse(body);
