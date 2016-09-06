@@ -101,24 +101,22 @@ export class WorkspaceD extends EventEmitter implements
 		let params = [];
 		let i = sig.length - 1;
 
-		if(sig[i] == ')')
+		if (sig[i] == ')')
 			i -= 1;
 
 		let paramEnd = i;
-		
 
 		let skip = (open: string, close: string) => {
-			
+
 			i -= 1;
 
 			let depth = 1;
 
-			while(i < 0 && depth > 0)
-			{
-				if(sig[i] == open) {
+			while (i < 0 && depth > 0) {
+				if (sig[i] == open) {
 					depth += 1;
 				}
-				else if(sig[i] == close) {
+				else if (sig[i] == close) {
 					depth -= 1;
 				}
 
@@ -127,32 +125,32 @@ export class WorkspaceD extends EventEmitter implements
 
 		};
 
-		while(i >= 0) {
-			switch(sig[i]) {
-			case ',':
-				params.push(sig.substr(i + 1, paramEnd - i).trim());
-				i -= 1;
-				paramEnd = i;
-				break;
-			case ';':
-			case '(':
-				let param = sig.substr(i + 1, paramEnd - i).trim();
+		while (i >= 0) {
+			switch (sig[i]) {
+				case ',':
+					params.push(sig.substr(i + 1, paramEnd - i).trim());
+					i -= 1;
+					paramEnd = i;
+					break;
+				case ';':
+				case '(':
+					let param = sig.substr(i + 1, paramEnd - i).trim();
 
-				if(param.length != 0)
-					params.push(param);
+					if (param.length != 0)
+						params.push(param);
 
-				return params.reverse();
-			case ')':
-				skip(')', '(');
-				break;
-			case '}':
-				skip('}', '{');
-				break;
-			case ']':
-				skip(']', '[');
-				break;
-			default:
-				i -= 1;
+					return params.reverse();
+				case ')':
+					skip(')', '(');
+					break;
+				case '}':
+					skip('}', '{');
+					break;
+				case ']':
+					skip(']', '[');
+					break;
+				default:
+					i -= 1;
 			}
 		}
 
@@ -462,7 +460,7 @@ export class WorkspaceD extends EventEmitter implements
 	setArchType(arch: string): Thenable<boolean> {
 		return this.request({ cmd: "dub", subcmd: "set:arch-type", "arch-type": arch }).then((success) => {
 
-			if(success)
+			if (success)
 				this.emit("arch-type-change", arch);
 			else
 				vscode.window.showInformationMessage("Could not switch arch type", "Switch Arch Type").then((s) => {
@@ -470,14 +468,14 @@ export class WorkspaceD extends EventEmitter implements
 						vscode.commands.executeCommand("code-d.switchArchType");
 					}
 				});
-			
+
 			return success;
 		},
-		err => {
-			console.error(err);
-			vscode.window.showErrorMessage("Failed to switch arch type. See console for details.");
-			return false;
-		});
+			err => {
+				console.error(err);
+				vscode.window.showErrorMessage("Failed to switch arch type. See console for details.");
+				return false;
+			});
 	}
 
 	listBuildTypes(): Thenable<string[]> {
@@ -655,7 +653,7 @@ export class WorkspaceD extends EventEmitter implements
 					var defaultCompiler = config().get("dubCompiler", "");
 					if (defaultArchType) {
 						this.setArchType(defaultArchType).then(success => {
-							if(!success)
+							if (!success)
 								vscode.window.showErrorMessage("Arch Type '" + defaultArchType + "' which is specified in the config is not available!");
 						});
 					}

@@ -131,7 +131,7 @@ export class CompileButtons implements vscode.Disposable {
 					cwd: vscode.workspace.rootPath,
 					detached: true
 				});
-				
+
 			var allData = "";
 			proc.stdout.on('data', function (data) {
 				allData += data;
