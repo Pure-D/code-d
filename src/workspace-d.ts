@@ -96,6 +96,69 @@ export class WorkspaceD extends EventEmitter implements
 		});
 	}
 
+
+	extractFunctionParameters(sig: string) {
+		let params = [];
+		let i = sig.length - 1;
+
+		if(sig[i] == ')')
+			i -= 1;
+
+		let paramEnd = i;
+		
+
+		let skip = (open: string, close: string) => {
+			
+			i -= 1;
+
+			let depth = 1;
+
+			while(i < 0 && depth > 0)
+			{
+				if(sig[i] == open) {
+					depth += 1;
+				}
+				else if(sig[i] == close) {
+					depth -= 1;
+				}
+
+				i -= 1;
+			}
+
+		};
+
+		while(i >= 0) {
+			switch(sig[i]) {
+			case ',':
+				params.push(sig.substr(i + 1, paramEnd - i).trim());
+				i -= 1;
+				paramEnd = i;
+				break;
+			case ';':
+			case '(':
+				let param = sig.substr(i + 1, paramEnd - i).trim();
+
+				if(param.length != 0)
+					params.push(param);
+
+				return params.reverse();
+			case ')':
+				skip(')', '(');
+				break;
+			case '}':
+				skip('}', '{');
+				break;
+			case ']':
+				skip(']', '[');
+				break;
+			default:
+				i -= 1;
+			}
+		}
+
+		return params;
+	}
+
 	provideSignatureHelp(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken): Thenable<vscode.SignatureHelp> {
 		let self = this;
 		console.log("provideSignatureHelp");
@@ -106,12 +169,23 @@ export class WorkspaceD extends EventEmitter implements
 			self.request({ cmd: "dcd", subcmd: "list-completion", code: document.getText(), pos: offset }).then((completions) => {
 				if (completions.type == "calltips") {
 					let help = new vscode.SignatureHelp();
-					if (completions.calltips && completions.calltips.length)
+					if (completions.calltips && completions.calltips.length) {
 						completions.calltips.forEach(element => {
-							help.signatures.push(new vscode.SignatureInformation(element));
+							let sig = new vscode.SignatureInformation(element);
+							let params = self.extractFunctionParameters(element);
+
+							params.forEach(param => {
+								sig.parameters.push(new vscode.ParameterInformation(param));
+							});
+
+							help.signatures.push(sig);
 						});
+
+						let text = document.getText(new vscode.Range(new vscode.Position(0, 0), position));
+						help.activeParameter = Math.max(0, self.extractFunctionParameters(text).length - 1);
+					}
+
 					console.log("resolve");
-					console.log(help);
 					resolve(help);
 				}
 				else {
@@ -387,12 +461,22 @@ export class WorkspaceD extends EventEmitter implements
 
 	setArchType(arch: string): Thenable<boolean> {
 		return this.request({ cmd: "dub", subcmd: "set:arch-type", "arch-type": arch }).then((success) => {
-			if(success)
-			{
-				this.emit("arch-type-change", arch);
-			}
 
+			if(success)
+				this.emit("arch-type-change", arch);
+			else
+				vscode.window.showInformationMessage("Could not switch arch type", "Switch Arch Type").then((s) => {
+					if (s == "Switch Arch Type") {
+						vscode.commands.executeCommand("code-d.switchArchType");
+					}
+				});
+			
 			return success;
+		},
+		err => {
+			console.error(err);
+			vscode.window.showErrorMessage("Failed to switch arch type. See console for details.");
+			return false;
 		});
 	}
 
