@@ -22,7 +22,7 @@ class ConfigSelector implements vscode.Disposable {
 	}
 
 	private create() {
-		this.item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 1.7);
+		this.item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 0.92145);
 		this.item.command = "code-d.switchConfiguration";
 		this.item.tooltip = "Switch Configuration";
 		this.item.show();
@@ -48,7 +48,7 @@ class ArchSelector implements vscode.Disposable {
 	}
 
 	private create() {
-		this.item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 1.69);
+		this.item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 0.92144);
 		this.item.command = "code-d.switchArchType";
 		this.item.tooltip = "Switch Arch Type";
 		this.item.show();
@@ -74,7 +74,7 @@ class BuildSelector implements vscode.Disposable {
 	}
 
 	private create() {
-		this.item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 1.68);
+		this.item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 0.92143);
 		this.item.command = "code-d.switchBuildType";
 		this.item.tooltip = "Switch Build Type";
 		this.item.show();
@@ -100,7 +100,7 @@ class CompilerSelector implements vscode.Disposable {
 	}
 
 	private create() {
-		this.item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 1.67);
+		this.item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 0.92142);
 		this.item.command = "code-d.switchCompiler";
 		this.item.tooltip = "Switch Compiler";
 		this.item.show();

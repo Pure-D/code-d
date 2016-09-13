@@ -22,9 +22,9 @@ export class CompileButtons implements vscode.Disposable {
 	private create() {
 		this.output = vscode.window.createOutputChannel("Run output");
 
-		this.buildButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 0.99);
-		this.startButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 0.98);
-		this.debugButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 0.97);
+		this.buildButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 0.72135);
+		this.startButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 0.72134);
+		this.debugButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 0.72133);
 
 		this.buildButton.text = "$(file-binary)";
 		this.startButton.text = " $(triangle-right) ";
