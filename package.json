@@ -70,7 +70,7 @@
 				]
 			},
 			{
-				"id": "jade",
+				"id": "diet",
 				"aliases": [
 					"Diet"
 				],
@@ -99,6 +99,11 @@
 				"language": "sdl",
 				"scopeName": "source.sdl",
 				"path": "./syntaxes/sdl.json"
+			},
+			{
+				"language": "diet",
+				"scopeName": "source.diet",
+				"path": "./syntaxes/diet.json"
 			}
 		],
 		"snippets": [
