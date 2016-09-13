@@ -82,7 +82,9 @@ export class CompileButtons implements vscode.Disposable {
 			Promise.all([this.workspaced.getConfiguration(), this.workspaced.getArchType(), this.workspaced.getBuildType(), this.workspaced.getCompiler()]).then(values => {
 				this.terminal.show(true);
 				this.terminal.sendText(`cd "${vscode.workspace.rootPath}"`);
-				this.terminal.sendText(`dub --config=${values[0]} --arch=${values[1]} --build=${values[2]} --compiler=${values[3]}`);
+				if (cmd == "run" && (values[2].toString() == "unittest" || values[2].toString() == "unittest-cov"))
+					cmd = "test";
+				this.terminal.sendText(`dub ${cmd} --config=${values[0]} --arch=${values[1]} --build=${values[2]} --compiler=${values[3]}`);
 				this.buildButton.show();
 				this.startButton.show();
 				this.debugButton.show();
