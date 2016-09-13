@@ -9,6 +9,14 @@ function config() {
 	return vscode.workspace.getConfiguration("d");
 }
 
+function byteOffsetAt(editor: vscode.TextDocument, pos: vscode.Position): number {
+	return Buffer.byteLength(editor.getText(new vscode.Range(new vscode.Position(0, 0), pos)), "utf8");
+}
+
+function positionFromByteOffset(editor: vscode.TextDocument, byteOff: number): vscode.Position {
+	return editor.positionAt(new Buffer(editor.getText()).slice(0, byteOff).toString("utf8").length);
+}
+
 const TARGET_VERSION = [2, 7, 2];
 
 export class WorkspaceD extends EventEmitter implements
@@ -74,7 +82,7 @@ export class WorkspaceD extends EventEmitter implements
 		return new Promise((resolve, reject) => {
 			if (!self.dcdReady)
 				return resolve([]);
-			let offset = document.offsetAt(position);
+			let offset = byteOffsetAt(document, position);
 			self.request({ cmd: "dcd", subcmd: "list-completion", code: document.getText(), pos: offset }).then((completions) => {
 				if (completions.type == "identifiers") {
 					let items = [];
@@ -163,7 +171,7 @@ export class WorkspaceD extends EventEmitter implements
 		return new Promise((resolve, reject) => {
 			if (!self.dcdReady)
 				return resolve(null);
-			let offset = document.offsetAt(position);
+			let offset = byteOffsetAt(document, position);
 			self.request({ cmd: "dcd", subcmd: "list-completion", code: document.getText(), pos: offset }).then((completions) => {
 				if (completions.type == "calltips") {
 					let help = new vscode.SignatureHelp();
@@ -209,7 +217,7 @@ export class WorkspaceD extends EventEmitter implements
 						let uri = vscode.Uri.file(element.file);
 						vscode.workspace.textDocuments.forEach(doc => {
 							if (doc.uri.fsPath == uri.fsPath) {
-								range = doc.getWordRangeAtPosition(doc.positionAt(element.position));
+								range = doc.getWordRangeAtPosition(positionFromByteOffset(doc, element.position));
 							}
 						});
 						let entry = new vscode.SymbolInformation(query, type, range, uri);
@@ -261,7 +269,7 @@ export class WorkspaceD extends EventEmitter implements
 		return new Promise((resolve, reject) => {
 			if (!self.dcdReady)
 				return resolve(null);
-			let offset = document.offsetAt(position);
+			let offset = byteOffsetAt(document, position);
 			self.request({ cmd: "dcd", subcmd: "get-documentation", code: document.getText(), pos: offset }).then((documentation) => {
 				if (!documentation || documentation.trim().length == 0) {
 					console.log("resolve null");
@@ -280,7 +288,7 @@ export class WorkspaceD extends EventEmitter implements
 		return new Promise((resolve, reject) => {
 			if (!self.dcdReady)
 				return resolve(null);
-			let offset = document.offsetAt(position);
+			let offset = byteOffsetAt(document, position);
 			self.request({ cmd: "dcd", subcmd: "find-declaration", code: document.getText(), pos: offset }).then((declaration) => {
 				if (!declaration) {
 					console.log("Resolve null");
@@ -292,7 +300,7 @@ export class WorkspaceD extends EventEmitter implements
 					uri = vscode.Uri.file(declaration[0]);
 				vscode.workspace.textDocuments.forEach(doc => {
 					if (doc.uri.fsPath == uri.fsPath) {
-						let pos = doc.positionAt(declaration[1]);
+						let pos = positionFromByteOffset(doc, declaration[1]);
 						if (!pos)
 							pos = new vscode.Position(1, 1);
 						range = doc.getWordRangeAtPosition(pos);
