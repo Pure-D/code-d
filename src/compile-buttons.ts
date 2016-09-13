@@ -6,13 +6,13 @@ import { WorkspaceD } from "./workspace-d"
 export class CompileButtons implements vscode.Disposable {
 	buildButton: vscode.StatusBarItem;
 	startButton: vscode.StatusBarItem;
-	stopButton: vscode.StatusBarItem;
 	debugButton: vscode.StatusBarItem;
 	child: ChildProcess.ChildProcess;
 	workspaced: WorkspaceD;
 	output: vscode.OutputChannel;
 	isDebug: boolean = false;
 	debugValuesCache: any = null;
+	terminal: vscode.Terminal;
 
 	constructor(workspaced: WorkspaceD) {
 		this.workspaced = workspaced;
@@ -24,22 +24,18 @@ export class CompileButtons implements vscode.Disposable {
 
 		this.buildButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 0.99);
 		this.startButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 0.98);
-		this.stopButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 0.97);
-		this.debugButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 0.96);
+		this.debugButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 0.97);
 
 		this.buildButton.text = "$(file-binary)";
 		this.startButton.text = " $(triangle-right) ";
-		this.stopButton.text = "$(primitive-square)";
 		this.debugButton.text = "$(bug)";
 
 		this.buildButton.tooltip = "Build project";
 		this.startButton.tooltip = "Run project";
-		this.stopButton.tooltip = "Stop running project";
 		this.debugButton.tooltip = "Debug project";
 
 		this.buildButton.command = "code-d.build";
 		this.startButton.command = "code-d.run";
-		this.stopButton.command = "code-d.stop";
 		this.debugButton.command = "code-d.debug";
 
 		this.buildButton.show();
@@ -62,12 +58,12 @@ export class CompileButtons implements vscode.Disposable {
 
 	run() {
 		this.isDebug = false;
-		this.startProc("run");
+		this.startProc("run", true);
 	}
 
 	build() {
 		this.isDebug = false;
-		this.startProc("build");
+		this.startProc("build", true);
 	}
 
 	debug() {
@@ -75,8 +71,24 @@ export class CompileButtons implements vscode.Disposable {
 		this.startProc("build");
 	}
 
-	startProc(cmd) {
-		if (!this.child) {
+	startProc(cmd, inTerminal = false) {
+		if (inTerminal) {
+			if (!this.terminal)
+				this.terminal = vscode.window.createTerminal("Build Output");
+			vscode.workspace.saveAll(false);
+			this.buildButton.hide();
+			this.startButton.hide();
+			this.debugButton.hide();
+			Promise.all([this.workspaced.getConfiguration(), this.workspaced.getArchType(), this.workspaced.getBuildType(), this.workspaced.getCompiler()]).then(values => {
+				this.terminal.show(true);
+				this.terminal.sendText(`cd "${vscode.workspace.rootPath}"`);
+				this.terminal.sendText(`dub --config=${values[0]} --arch=${values[1]} --build=${values[2]} --compiler=${values[3]}`);
+				this.buildButton.show();
+				this.startButton.show();
+				this.debugButton.show();
+			});
+		}
+		else if (!this.child) {
 			this.output.show(vscode.ViewColumn.Three);
 			this.output.clear();
 			vscode.workspace.saveAll(false);
@@ -103,8 +115,6 @@ export class CompileButtons implements vscode.Disposable {
 					this.output.appendLine(err.toString());
 					this.handleStop(-1);
 				});
-
-				this.stopButton.show();
 			});
 		}
 	}
@@ -114,7 +124,6 @@ export class CompileButtons implements vscode.Disposable {
 		this.buildButton.show();
 		this.startButton.show();
 		this.debugButton.show();
-		this.stopButton.hide();
 		if (this.isDebug && code == 0) {
 			this.isDebug = false;
 			var proc = ChildProcess.spawn("dub",
