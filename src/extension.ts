@@ -260,7 +260,7 @@ export function activate(context: vscode.ExtensionContext) {
 			});
 	}, null, context.subscriptions);
 
-	let rdmdOutput = vscode.window.createOutputChannel("rdmd");
+	let rdmdTerminal: vscode.Terminal;
 	context.subscriptions.push(vscode.commands.registerCommand("code-d.rdmdCurrent", (file: vscode.Uri) => {
 		let proc;
 		var args = [];
@@ -271,31 +271,10 @@ export function activate(context: vscode.ExtensionContext) {
 		else
 			proc = ChildProcess.spawn("rdmd", args = [vscode.window.activeTextEditor.document.fileName], { cwd: vscode.workspace.rootPath });
 
-		rdmdOutput.show();
-		rdmdOutput.clear();
-		rdmdOutput.appendLine("rdmd " + args.join(" "));
-
-		let handleData = (data) => {
-			let lines = data.toString("utf8").split('\n');
-			for (var i = 0; i < lines.length - 1; i++) {
-				rdmdOutput.appendLine(lines[i]);
-			}
-			rdmdOutput.append(lines[lines.length - 1]);
-		};
-
-		proc.stderr.on("data", handleData.bind(this));
-		proc.stdout.on("data", handleData.bind(this));
-		proc.once("close", (code) => {
-			code = (code || 0);
-			if (code !== 0)
-				rdmdOutput.appendLine("rdmd stopped with error code " + code);
-			else
-				rdmdOutput.appendLine("rdmd stopped with no errors");
-		});
-		proc.once("error", (err) => {
-			rdmdOutput.appendLine("rdmd crashed:");
-			rdmdOutput.appendLine(err.toString());
-		});
+		if (!rdmdTerminal)
+			rdmdTerminal = vscode.window.createTerminal("rdmd Output");
+		rdmdTerminal.show();
+		rdmdTerminal.sendText("rdmd " + args.join(" "));
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand("code-d.uploadSelection", () => {
