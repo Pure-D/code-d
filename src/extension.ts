@@ -198,8 +198,9 @@ export function activate(context: vscode.ExtensionContext) {
 	}
 	{
 		let coverageanal = new CoverageAnalyzer();
+		context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider("dcoveragereport", coverageanal));
 
-		let watcher = vscode.workspace.createFileSystemWatcher("*.lst", false, false, false);
+		let watcher = vscode.workspace.createFileSystemWatcher("**/*.lst", false, false, false);
 		watcher.onDidCreate(coverageanal.updateCache, coverageanal, context.subscriptions);
 		watcher.onDidChange(coverageanal.updateCache, coverageanal, context.subscriptions);
 		watcher.onDidDelete(coverageanal.removeCache, coverageanal, context.subscriptions);
@@ -211,6 +212,10 @@ export function activate(context: vscode.ExtensionContext) {
 			files.forEach(file => {
 				coverageanal.updateCache(file);
 			});
+		});
+
+		vscode.commands.registerCommand("code-d.generateCoverageReport", () => {
+			vscode.commands.executeCommand("vscode.previewHtml", vscode.Uri.parse("dcoveragereport://null"));
 		});
 	}
 

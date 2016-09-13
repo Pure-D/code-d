@@ -270,6 +270,10 @@
 				"title": "Run document using rdmd"
 			},
 			{
+				"command": "code-d.generateCoverageReport",
+				"title": "code-d: Generate coverage report"
+			},
+			{
 				"command": "code-d.showGCCalls",
 				"title": "code-d: Show GC calls from profilegc.log"
 			}
