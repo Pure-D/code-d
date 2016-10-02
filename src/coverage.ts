@@ -91,6 +91,8 @@ export class CoverageAnalyzer implements vscode.TextDocumentContentProvider {
 
 	populateCurrent() {
 		var editor = vscode.window.activeTextEditor;
+		if (!editor || !editor.document)
+			return;
 		var name = pathToName(editor.document.fileName);
 		if (!name)
 			return;
