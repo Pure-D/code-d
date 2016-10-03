@@ -28,6 +28,43 @@ export function activate(context: vscode.ExtensionContext) {
 		return;
 	}
 
+	{
+		var phobosPath = config().get("stdlibPath", ["/usr/include/dmd/druntime/import", "/usr/include/dmd/phobos"]);
+		var foundCore = false;
+		var foundStd = false;
+		var someError = false;
+		var userSettings = (r) => {
+			if (r == "Open User Settings")
+				vscode.commands.executeCommand("workbench.action.openGlobalSettings");
+		};
+		var i = 0;
+		var fn = function () {
+			fs.exists(phobosPath[i], function (exists) {
+				if (exists) {
+					fs.readdir(phobosPath[i], function (err, files) {
+						if (files.indexOf("std") != -1)
+							foundStd = true;
+						if (files.indexOf("core") != -1)
+							foundCore = true;
+						if (++i < phobosPath.length)
+							fn();
+						else {
+							if (!foundStd && !foundCore)
+								vscode.window.showWarningMessage("Your d.stdlibPath setting doesn't contain a path to phobos or druntime. Auto completion might lack some symbols!", "Open User Settings").then(userSettings);
+							else if (!foundStd)
+								vscode.window.showWarningMessage("Your d.stdlibPath setting doesn't contain a path to phobos. Auto completion might lack some symbols!", "Open User Settings").then(userSettings);
+							else if (!foundCore)
+								vscode.window.showWarningMessage("Your d.stdlibPath setting doesn't contain a path to druntime. Auto completion might lack some symbols!", "Open User Settings").then(userSettings);
+						}
+					});
+				}
+				else
+					vscode.window.showWarningMessage("A path in your d.stdlibPath setting doesn't exist. Auto completion might lack some symbols!", "Open User Settings").then(userSettings);
+			});
+		};
+		fn();
+	}
+
 	if (!config().get("disableWorkspaceD", false)) {
 		let env = process.env;
 		let proxy = vscode.workspace.getConfiguration("http").get("proxy", "");
@@ -62,10 +99,10 @@ export function activate(context: vscode.ExtensionContext) {
 
 		function upgradeDubPackage(document: vscode.TextDocument) {
 			if (path.relative(vscode.workspace.rootPath, document.fileName) == "dub.json" || path.relative(vscode.workspace.rootPath, document.fileName) == "dub.sdl") {
-				workspaced.upgrade().then(() => {}, (err) => {
+				workspaced.upgrade().then(() => { }, (err) => {
 					vscode.window.showWarningMessage("Could not upgrade dub project");
 				});
-				workspaced.updateImports().then(() => {}, (err) => {
+				workspaced.updateImports().then(() => { }, (err) => {
 					vscode.window.showWarningMessage("Could not update import paths. Please check your build settings in the status bar.");
 				});
 			}
