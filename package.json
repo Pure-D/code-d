@@ -200,6 +200,11 @@
 				"d.dubCompiler": {
 					"type": "string",
 					"description": "Sets the default compiler to use when starting up"
+				},
+				"d.disableWorkspaceD": {
+					"type": "boolean",
+					"default": false,
+					"description": "Disables most code-d features. Intended for debugging/working on new features with lots of vscode restarts"
 				}
 			}
 		},
@@ -209,6 +214,18 @@
 					"when": "resourceLangId == d",
 					"command": "code-d.rdmdCurrent",
 					"group": "1_modification"
+				}
+			],
+			"editor/title": [
+				{
+					"when": "resourceFilename == 'dub.json'",
+					"command": "dub.openSettingsEditor",
+					"group": "navigation"
+				},
+				{
+					"when": "resourceScheme == dubsettings",
+					"command": "dub.closeSettingsEditor",
+					"group": "navigation"
 				}
 			]
 		},
@@ -276,6 +293,22 @@
 			{
 				"command": "code-d.showGCCalls",
 				"title": "code-d: Show GC calls from profilegc.log"
+			},
+			{
+				"command": "dub.openSettingsEditor",
+				"title": "code-d/dub: Open project settings",
+				"icon": {
+					"light": "./images/edit-dub-inverse.svg",
+					"dark": "./images/edit-dub.svg"
+				}
+			},
+			{
+				"command": "dub.closeSettingsEditor",
+				"title": "code-d/dub: Close project settings",
+				"icon": {
+					"light": "./images/edit-source-inverse.svg",
+					"dark": "./images/edit-source.svg"
+				}
 			}
 		],
 		"jsonValidation": [
@@ -291,8 +324,8 @@
 		"compile": "node ./node_modules/vscode/bin/compile -watch -p ./"
 	},
 	"dependencies": {
-		"request": "^2.72.0",
-		"jsonc-parser": "^0.2.0"
+		"request": "^2.75.0",
+		"jsonc-parser": "^0.2.3"
 	},
 	"devDependencies": {
 		"typescript": "^1.8.10",

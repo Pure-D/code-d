@@ -1,0 +1,1551 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<style>
+		.configurationbar {
+			display: block;
+			min-height: 1.5em;
+			line-height: 1.5em;
+			padding: 4px;
+		}
+		
+		.configurationbar label {
+			white-space: nowrap;
+			margin: 4px;
+		}
+		
+		.hsplit .master {
+			float: left;
+			width: 200px;
+			box-sizing: border-box;
+			margin: 0;
+			padding: 0;
+			list-style: none;
+		}
+		
+		.hsplit .master li {
+			margin: 0;
+			padding: 8px;
+			list-style: none;
+			cursor: pointer;
+		}
+		
+		.hsplit .child {
+			float: left;
+			width: calc(100% - 200px);
+			box-sizing: border-box;
+			display: none;
+			margin: 0;
+			padding: 8px;
+		}
+		
+		.hsplit .child.visible {
+			display: block;
+		}
+		
+		.clear {
+			clear: both;
+		}
+		
+		table#dependencies tr td:nth-child(1) {
+			text-align: right;
+		}
+		
+		label.label {
+			font-size: 0.9em;
+			display: block;
+			margin: 8px;
+			box-sizing: border-box;
+			max-width: 400px;
+		}
+		
+		label.label.lite {
+			margin: 0;
+		}
+		
+		label.labelcb {
+			display: block;
+			margin: 8px;
+			box-sizing: border-box;
+		}
+		
+		label.label input,
+		label.label textarea,
+		label.label select {
+			display: block;
+			width: 100%;
+		}
+		
+		#filedialog {
+			position: fixed;
+			left: 0;
+			right: 0;
+			top: 0;
+			bottom: 0;
+			padding: 16px;
+			margin: auto;
+			width: 300px;
+			height: 200px;
+		}
+		
+		#filedialog .content {
+			padding: 8px;
+		}
+		
+		#filedialog .content .label,
+		#filedialog .content .labelcb {
+			margin: 0;
+			margin-bottom: 8px;
+		}
+		
+		#filedialog .buttons {
+			position: absolute;
+			left: 0;
+			bottom: 0;
+			right: 0;
+			width: 100%;
+			height: 48px;
+			padding: 8px 0;
+			box-sizing: border-box;
+		}
+
+		#filedialog .buttons button {
+			box-sizing: border-box;
+			height: 32px;
+			float: right;
+			margin-right: 8px;
+		}
+
+		input, textarea {
+			font-family: monospace;
+		}
+
+		/* Light Theme */
+		.vscode-light .configurationbar {
+			background-color: rgba(0, 0, 0, 0.2);
+		}
+		
+		.vscode-light .hsplit .master {
+			background-color: rgba(0, 0, 0, 0.1);
+			box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+		}
+		
+		.vscode-light .hsplit .master li:hover {
+			background-color: rgba(0, 0, 0, 0.1);
+		}
+		
+		.vscode-light .hsplit .master .active {
+			background-color: rgba(0, 0, 0, 0.05);
+		}
+		
+		.vscode-light #filedialog {
+			background-color: #eeeeee;
+			box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+		}
+		
+		.vscode-light #filedialog .buttons {
+			background-color: #e0e0e0;
+		}
+		
+		.vscode-light #filedialog .error {
+			color: #ff1744;
+		}
+
+		/* Dark Theme */
+		.vscode-dark .configurationbar {
+			background-color: rgba(255, 255, 255, 0.05);
+		}
+		
+		.vscode-dark .hsplit .master {
+			background-color: rgba(255, 255, 255, 0.04);
+			box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+		}
+		
+		.vscode-dark .hsplit .master li:hover {
+			background-color: rgba(255, 255, 255, 0.04);
+		}
+		
+		.vscode-dark .hsplit .master .active {
+			background-color: rgba(255, 255, 255, 0.02);
+		}
+		
+		.vscode-dark #filedialog {
+			background-color: #263238;
+			box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+		}
+		
+		.vscode-dark #filedialog .buttons {
+			background-color: #37474f;
+		}
+		
+		.vscode-dark #filedialog .error {
+			color: #ff1744;
+		}
+
+		/* High Contrast Theme */
+		.vscode-high-contrast .configurationbar {
+			border-bottom: 1px solid #6FC3DF;
+		}
+		
+		.vscode-high-contrast .hsplit .master {
+			border-right: 1px solid #6FC3DF;
+		}
+		
+		.vscode-high-contrast .hsplit .master .active {
+			border: 2px solid #F38518;
+		}
+		
+		.vscode-high-contrast #filedialog {
+			background-color: #0C141F;
+			border: 1px solid #6FC3DF;
+		}
+		
+		.vscode-high-contrast #filedialog .buttons {
+			border-top: 1px solid #6FC3DF;
+		}
+		
+		.vscode-high-contrast #filedialog .error {
+			color: red;
+		}
+	</style>
+</head>
+
+<body>
+	<div class="configurationbar">
+		<label>
+			Configuration:
+			<select id="configurations">
+				<option value="">Default</option>
+			</select>
+		</label>
+		<label>
+			Build Type:
+			<select id="buildtypes">
+				<option value="">Default</option>
+			</select>
+		</label>
+		<label>
+			Platform:
+			<select id="platforms">
+				<!-- Source: https://github.com/dlang/dub/blob/master/source/dub/platform.d -->
+				<option value="">All</option>
+				<option value="windows">Windows</option>
+				<option value="linux">Linux</option>
+				<option value="posix">Posix</option>
+				<option value="osx">OSX</option>
+				<option value="freebsd">FreeBSD</option>
+				<option value="openbsd">OpenBSD</option>
+				<option value="netbsd">NetBSD</option>
+				<option value="dragonflybsd">DragonFlyBSD</option>
+				<option value="bsd">BSD</option>
+				<option value="solaris">Solaris</option>
+				<option value="aix">AIX</option>
+				<option value="haiku">Haiku</option>
+				<option value="skyos">SkyOS</option>
+				<option value="sysv3">SysV3</option>
+				<option value="sysv4">SysV4</option>
+				<option value="hurd">Hurd</option>
+				<option value="android">Android</option>
+				<option value="cygwin">Cygwin</option>
+				<option value="mingw">MinGW</option>
+			</select>
+		</label>
+		<label>
+			Architecture:
+			<select id="architectures">
+				<option value="">All</option>
+				<option value="x86">X86</option>
+				<option value="x86_64">X86_64</option>
+				<option value="arm">ARM</option>
+				<option value="arm_thumb">ARM_Thumb</option>
+				<option value="arm_softfloat">ARM_SoftFloat</option>
+				<option value="arm_hardfloat">ARM_HardFloat</option>
+				<option value="arm64">ARM64</option>
+				<option value="ppc">PPC</option>
+				<option value="ppc_softfp">PPC_SoftFP</option>
+				<option value="ppc_hardfp">PPC_HardFP</option>
+				<option value="ppc64">PPC64</option>
+				<option value="ia64">IA64</option>
+				<option value="mips">MIPS</option>
+				<option value="mips32">MIPS32</option>
+				<option value="mips64">MIPS64</option>
+				<option value="mips_o32">MIPS_O32</option>
+				<option value="mips_n32">MIPS_N32</option>
+				<option value="mips_o64">MIPS_O64</option>
+				<option value="mips_n64">MIPS_N64</option>
+				<option value="mips_eabi">MIPS_EABI</option>
+				<option value="mips_nofloat">MIPS_NoFloat</option>
+				<option value="mips_softfloat">MIPS_SoftFloat</option>
+				<option value="mips_hardfloat">MIPS_HardFloat</option>
+				<option value="sparc">SPARC</option>
+				<option value="sparc_v8plus">SPARC_V8Plus</option>
+				<option value="sparc_softfp">SPARC_SoftFP</option>
+				<option value="sparc_hardfp">SPARC_HardFP</option>
+				<option value="sparc64">SPARC64</option>
+				<option value="s390">S390</option>
+				<option value="s390x">S390X</option>
+				<option value="hppa">HPPA</option>
+				<option value="hppa64">HPPA64</option>
+				<option value="sh">SH</option>
+				<option value="sh64">SH64</option>
+				<option value="alpha">Alpha</option>
+				<option value="alpha_softfp">Alpha_SoftFP</option>
+				<option value="alpha_hardfp">Alpha_HardFP</option>
+			</select>
+		</label>
+		<label>
+			Compiler:
+			<select id="compilers">
+				<option value="">All</option>
+				<option value="dmd">DMD</option>
+				<option value="gdc">GDC</option>
+				<option value="ldc2">LDC</option>
+				<option value="sdc">SDC</option>
+			</select>
+		</label>
+	</div>
+	<div class="hsplit">
+		<ul class="master" id="tabs">
+			<li id="tabGeneral" has-config="false">General</li>
+			<li id="tabBuildOutput">Output</li>
+			<li id="tabDependencies">Dependencies</li>
+			<li id="tabBuildSettings" has-suffix="true">Build Settings</li>
+			<li id="tabBuildCommands" has-suffix="true">Build Scripts</li>
+			<li id="tabBuildRequirements" has-suffix="true">Build Requirements</li>
+			<li id="tabBuildOptions" has-suffix="true">Build Options</li>
+			<li id="tabSources" has-suffix="true">Sources</li>
+			<li id="tabBuildTypes" has-config="false">Build Types</li>
+			<li id="tabConfigurations" has-config="false" has-suffix="true">Configurations</li>
+		</ul>
+		<div class="child" id="pageGeneral">
+			<label class="label" title="Name of the package, used to uniquely identify the package. Must be comprised of only lower case ASCII alpha-numeric characters, &quot;-&quot; or &quot;_&quot;.">
+				Name
+				<input type="text" class="setting" has-config="false" json-path="name" />
+			</label>
+			<label class="label" title="URL of the project website">
+				Homepage
+				<input type="text" class="setting" has-config="false" json-path="homepage" />
+			</label>
+			<label class="label" title="Brief description of the package">
+				Description
+				<input type="text" class="setting" has-config="false" json-path="description" />
+			</label>
+			<label class="label" title="Copyright declaration string">
+				Copyright
+				<input type="text" class="setting" has-config="false" json-path="copyright" />
+			</label>
+			<label class="label" title="License(s) under which the project can be used - see the license specification section for possible values">
+				License
+				<input type="text" class="setting" has-config="false" json-path="license" />
+			</label>
+			<label class="label" title="List of project authors (the suggested format is either &quot;Peter Parker&quot; or &quot;Peter Parker <pparker@example.com>&quot;)">
+				Authors
+				<textarea type="text" rows="5" class="setting" has-config="false" json-type="string[]" json-path="authors"></textarea>
+			</label>
+			<label class="label" title="Specifies a list of command line flags usable for controlling filter behavior for --build=ddox [experimental]">
+				ddox Filter Args
+				<textarea type="text" rows="5" class="setting" has-config="false" json-type="string[]" json-path="-ddoxFilterArgs"></textarea>
+			</label>
+		</div>
+		<div class="child" id="pageBuildOutput">
+			<label class="label" title="Sets the base name of the output file; type and platform specific pre- and suffixes are added automatically">
+				Target Name
+				<input type="text" class="setting" json-path="targetName" />
+			</label>
+			<label class="label" title="Specifies a specific target type">
+				Target Type
+				<select class="setting" json-path="targetType">
+					<option value="autodetect">Auto Detect</option>
+					<option value="none">None</option>
+					<option value="executable">Executable</option>
+					<option value="library">Library</option>
+					<option value="sourceLibrary">Source Library</option>
+					<option value="staticLibrary">Static Library</option>
+					<option value="dynamicLibrary">Dynamic Library</option>
+				</select>
+			</label>
+			<label class="label" title="The destination path of the output binary">
+				Target Path
+				<input type="text" class="setting" json-path="targetPath" />
+			</label>
+			<label class="label" title="A fixed working directory from which the generated executable will be run">
+				Working Directory
+				<input type="text" class="setting" json-path="workingDirectory" />
+			</label>
+			<label class="label" title="Determines the file that contains the main() function. This setting can be used by dub to exclude this file in situations where a different main function is defined (e.g. for &quot;dub test&quot;)">
+				Main Source File
+				<input type="text" class="setting" json-path="mainSourceFile">
+			</label>
+		</div>
+		<div class="child" id="pageDependencies">
+			<table id="dependencies">
+			</table>
+			<button>Add</button>
+			<!-- <datalist> creates an arrow for auto completion but popup cant appear -->
+			<!--datalist id="dependencylist"></datalist>-->
+		</div>
+		<div class="child" id="pageBuildSettings">
+			<label class="label" title="A textual description of the required system dependencies (external C libraries) required by the package. This will be visible on the registry and will be displayed in case of linker errors.">
+				System Dependencies
+				<input type="text" class="setting" has-suffix="true" json-path="systemDependencies" />
+			</label>
+			<label class="label" title="A list of external library names - depending on the compiler, these will be converted to the proper linker flag (e.g. &quot;ssl&quot; might get translated to &quot;-L-lssl&quot;)">
+				Libraries (Linker)
+				<textarea type="text" rows="5" class="setting" has-suffix="true" json-type="string[]" json-path="libs"></textarea>
+			</label>
+			<label class="label" title="A list of D versions to be defined during compilation">
+				Versions
+				<textarea type="text" rows="5" class="setting" has-suffix="true" json-type="string[]" json-path="versions"></textarea>
+			</label>
+			<label class="label" title="A list of D debug identifiers to be defined during compilation">
+				Debug Versions
+				<textarea type="text" rows="5" class="setting" has-suffix="true" json-type="string[]" json-path="debugVersions"></textarea>
+			</label>
+			<label class="label" title="Additional flags passed to the D compiler - note that these flags are usually specific to the compiler in use, but a set of flags is automatically translated from DMD to the selected compiler">
+				Compiler Flags
+				<textarea type="text" rows="5" class="setting" has-suffix="true" json-type="string[]" json-path="dflags"></textarea>
+			</label>
+			<label class="label" title="Additional flags passed to the linker - note that these flags are usually specific to the linker in use">
+				Linker Flags
+				<textarea type="text" rows="5" class="setting" has-suffix="true" json-type="string[]" json-path="lflags"></textarea>
+			</label>
+		</div>
+		<div class="child" id="pageBuildCommands">
+			<label class="label" title="A list of shell commands that is executed before project generation is started">
+				Pre-Generate Commands
+				<textarea type="text" rows="5" class="setting" has-suffix="true" json-type="string[]" json-path="preGenerateCommands"></textarea>
+			</label>
+			<label class="label" title="A list of shell commands that is executed after project generation is finished">
+				Post-Generate Commands
+				<textarea type="text" rows="5" class="setting" has-suffix="true" json-type="string[]" json-path="postGenerateCommands"></textarea>
+			</label>
+			<label class="label" title="A list of shell commands that is executed always before the project is built">
+				Pre-Build Commands
+				<textarea type="text" rows="5" class="setting" has-suffix="true" json-type="string[]" json-path="preBuildCommands"></textarea>
+			</label>
+			<label class="label" title="A list of shell commands that is executed always after the project is built">
+				Post-Build Commands
+				<textarea type="text" rows="5" class="setting" has-suffix="true" json-type="string[]" json-path="postBuildCommands"></textarea>
+			</label>
+		</div>
+		<div class="child" id="pageBuildRequirements">
+			<label class="labelcb" title="Warnings do not abort compilation">
+				<input type="checkbox" class="setting" has-suffix="true" json-type="string[]" json-value="allowWarnings" json-path="buildRequirements">
+				Allow Warnings
+			</label>
+			<label class="labelcb" title="Don't show warnings">
+				<input type="checkbox" class="setting" has-suffix="true" json-type="string[]" json-value="silenceWarnings" json-path="buildRequirements">
+				Silence Warnings
+			</label>
+			<label class="labelcb" title="Using deprecated features aborts compilation">
+				<input type="checkbox" class="setting" has-suffix="true" json-type="string[]" json-value="disallowDeprecations" json-path="buildRequirements">
+				Disallow Deprecations
+			</label>
+			<label class="labelcb" title="Don't show deprecation warnings">
+				<input type="checkbox" class="setting" has-suffix="true" json-type="string[]" json-value="silenceDeprecations" json-path="buildRequirements">
+				Silence Deprecations
+			</label>
+			<label class="labelcb" title="Avoid function inlining, even in release builds">
+				<input type="checkbox" class="setting" has-suffix="true" json-type="string[]" json-value="disallowInlining" json-path="buildRequirements">
+				Disallow Inlining
+			</label>
+			<label class="labelcb" title="Avoid optimizations, even in release builds">
+				<input type="checkbox" class="setting" has-suffix="true" json-type="string[]" json-value="disallowOptimization" json-path="buildRequirements">
+				Disallow Optimization
+			</label>
+			<label class="labelcb" title="Always perform bounds checks">
+				<input type="checkbox" class="setting" has-suffix="true" json-type="string[]" json-value="requireBoundsCheck" json-path="buildRequirements">
+				Require Bounds Check
+			</label>
+			<label class="labelcb" title="Leave assertions and contracts enabled in release builds">
+				<input type="checkbox" class="setting" has-suffix="true" json-type="string[]" json-value="requireContracts" json-path="buildRequirements">
+				Require Contracts
+			</label>
+		</div>
+		<div class="child" id="pageBuildOptions">
+			<label class="labelcb" title="Compile in debug mode (enables contracts)">
+				<input type="checkbox" class="setting" has-suffix="true" json-type="string[]" json-value="debugMode" json-path="buildOptions">
+				Debug Mode
+			</label>
+			<label class="labelcb" title="Compile in release mode (disables assertions and bounds checks)">
+				<input type="checkbox" class="setting" has-suffix="true" json-type="string[]" json-value="releaseMode" json-path="buildOptions">
+				Release Mode
+			</label>
+			<label class="labelcb" title="Enable code coverage analysis">
+				<input type="checkbox" class="setting" has-suffix="true" json-type="string[]" json-value="coverage" json-path="buildOptions">
+				Coverage
+			</label>
+			<label class="labelcb" title="Enable symbolic debug information">
+				<input type="checkbox" class="setting" has-suffix="true" json-type="string[]" json-value="debugInfo" json-path="buildOptions">
+				Debug Information
+			</label>
+			<label class="labelcb" title="Enable symbolic debug information in C compatible form">
+				<input type="checkbox" class="setting" has-suffix="true" json-type="string[]" json-value="debugInfoC" json-path="buildOptions">
+				Debug Information (C compatible)
+			</label>
+			<label class="labelcb" title="Always generate a stack frame">
+				<input type="checkbox" class="setting" has-suffix="true" json-type="string[]" json-value="alwaysStackFrame" json-path="buildOptions">
+				Always generate a stack frame
+			</label>
+			<label class="labelcb" title="Perform stack stomping">
+				<input type="checkbox" class="setting" has-suffix="true" json-type="string[]" json-value="stackStomping" json-path="buildOptions">
+				Stack Stomping
+			</label>
+			<label class="labelcb" title="Perform function inlining">
+				<input type="checkbox" class="setting" has-suffix="true" json-type="string[]" json-value="inline" json-path="buildOptions">
+				Inline
+			</label>
+			<label class="labelcb" title="Disable all bounds checking">
+				<input type="checkbox" class="setting" has-suffix="true" json-type="string[]" json-value="noBoundsCheck" json-path="buildOptions">
+				No Bounds Check
+			</label>
+			<label class="labelcb" title="Enable optimizations">
+				<input type="checkbox" class="setting" has-suffix="true" json-type="string[]" json-value="optimize" json-path="buildOptions">
+				Optimize
+			</label>
+			<label class="labelcb" title="Emit profiling code">
+				<input type="checkbox" class="setting" has-suffix="true" json-type="string[]" json-value="profile" json-path="buildOptions">
+				Profile
+			</label>
+			<label class="labelcb" title="Compile unit tests">
+				<input type="checkbox" class="setting" has-suffix="true" json-type="string[]" json-value="unittests" json-path="buildOptions">
+				Unit tests
+			</label>
+			<label class="labelcb" title="Verbose compiler output">
+				<input type="checkbox" class="setting" has-suffix="true" json-type="string[]" json-value="verbose" json-path="buildOptions">
+				Verbose compiler output
+			</label>
+			<label class="labelcb" title="Ignores unknown pragmas during compilation">
+				<input type="checkbox" class="setting" has-suffix="true" json-type="string[]" json-value="ignoreUnknownPragmas" json-path="buildOptions">
+				Ignore unknown pragmas
+			</label>
+			<label class="labelcb" title="Don't generate object files">
+				<input type="checkbox" class="setting" has-suffix="true" json-type="string[]" json-value="syntaxOnly" json-path="buildOptions">
+				Syntax only
+			</label>
+		</div>
+		<div class="child" id="pageSources">
+			<label class="label" title="Additional files passed to the compiler - can be useful to add certain configuration dependent source files that are not contained in the general source folder">
+				Additional Source Files
+				<select multiple class="complex-setting" has-suffix="true" json-type="files" json-paths="Include:sourceFiles;Exclude:excludedSourceFiles"></select>
+				<button class="add">Add</button>
+				<button class="edit">Edit</button>
+				<button class="remove">Remove</button>
+			</label>
+			<label class="label" title="Allows to customize the path where to look for source files (any folder &quot;source&quot; or &quot;src&quot; is automatically used as a source path if no sourcePaths setting is specified)">
+				Source Paths
+				<select multiple class="complex-setting" has-suffix="true" json-type="files" json-paths="Import:importPaths;Source:sourcePaths;String Import:stringImportPaths"></select>
+				<button class="add">Add</button>
+				<button class="edit">Edit</button>
+				<button class="remove">Remove</button>
+			</label>
+			<label class="label" title="A list of globs matching files or directories to be copied to targetPath. Matching directories are copied recursively, i.e. &quot;copyFiles&quot;: [&quot;path/to/dir&quot;]&quot; recursively copies dir, while &quot;copyFiles&quot;: [&quot;path/to/dir/*&quot;]&quot; only copies files within dir.">
+				Copy Files
+				<textarea type="text" rows="5" class="setting" has-suffix="true" json-type="string[]" json-path="copyFiles"></textarea>
+			</label>
+		</div>
+		<div class="child" id="pageBuildTypes">
+			<label class="label" title="Defines additional custom build types or overrides the default ones (chosen on the command line using --build=...)">
+				Build Types
+				<select multiple class="list-setting" has-config="false" json-path="buildTypes" json-default="{}" onupdate="refreshSettings();">
+				</select>
+				<button class="add">Add</button>
+				<button class="rename">Rename</button>
+				<button class="remove">Remove</button>
+			</label>
+		</div>
+		<div class="child" id="pageConfigurations">
+			<label class="label" title="Speficies an optional list of build configurations (chosen on the command line using --config=...)">
+				Configurations
+				<select multiple class="list-setting" has-config="false" json-array="true" json-array-key="name" json-path="configurations" json-default="{}" onupdate="refreshSettings();">
+				</select>
+				<button class="add">Add</button>
+				<button class="rename">Rename</button>
+				<button class="remove">Remove</button>
+			</label>
+		</div>
+		<div class="clear"></div>
+		<div id="filedialog" style="display:none">
+			<div class="content">
+			</div>
+			<div class="error">
+			</div>
+			<div class="buttons">
+			</div>
+		</div>
+		<!-- Hack for running vscode commands in JS -->
+		<a style="display:none" id="commandrunner"></a>
+	</div>
+	<script>
+// var dubFile = "foo";
+// var packageType = "json" or "sdl";
+/* INJECT EDITOR */
+var content = {};
+
+var pathSeparator = " >_> ";
+
+// See above where id="dependencylist" why this is commented out
+/*
+var dependencyReq = new XMLHttpRequest();
+dependencyReq.addEventListener("load", function () {
+	var packages = JSON.parse(dependencyReq.responseText);
+	var list = document.getElementById("dependencylist");
+	for (var i = 0; i < packages.length; i++) {
+		var completion = document.createElement("option");
+		completion.value = packages[i].name;
+		list.appendChild(completion);
+	}
+	console.log("Loaded " + packages.length + " packages for autocompletion");
+});
+dependencyReq.open("GET", "https://code.dlang.org/api/packages/search");
+dependencyReq.send();
+*/
+
+var oReq = new XMLHttpRequest();
+oReq.addEventListener("load", function () {
+	content = JSON.parse(oReq.responseText);
+	ready();
+});
+oReq.open("GET", dubFile);
+oReq.send();
+
+var commandrunner = document.getElementById("commandrunner");
+function runCommand(command, argument) {
+	commandrunner.href = encodeURI("command:" + command + (argument !== undefined ? "?" + JSON.stringify(argument) : ""));
+	commandrunner.click();
+}
+
+if (packageType != "json" && packageType != "sdl")
+	throw "Invalid type";
+
+function isSameValue(a, b) {
+	if (typeof a != typeof b)
+		return false;
+	if (typeof a == "object") {
+		if (Array.isArray(a)) {
+			if (!Array.isArray(b))
+				return false;
+			if (a.length != b.length)
+				return false;
+			for (var i = 0; i < b.length; i++)
+				if (a[i] != b[i])
+					return false;
+			return true;
+		}
+		else {
+			// there are no object primitive values used!
+			return a == b;
+		}
+	}
+	else return a == b;
+}
+
+function showDialog(options, buttons, onButtonClick) {
+	var dialog = document.getElementById("filedialog");
+	var contentSpace = dialog.querySelector(".content");
+	var msgSpace = dialog.querySelector(".error");
+	var btnSpace = dialog.querySelector(".buttons");
+	for (var i = contentSpace.children.length - 1; i >= 0; i--)
+		contentSpace.removeChild(contentSpace.children[i]);
+	for (var i = btnSpace.children.length - 1; i >= 0; i--)
+		btnSpace.removeChild(btnSpace.children[i]);
+	msgSpace.textContent = "";
+	var buttonHandler = function (e) {
+		if (!onButtonClick)
+			dialog.style.display = "none";
+		else {
+			var msg = onButtonClick(e.target.getAttribute("cb"));
+			if (msg)
+				msgSpace.textContent = msg;
+			else
+				dialog.style.display = "none";
+		}
+	};
+	for (var i = 0; i < buttons.length; i++) {
+		var button = document.createElement("button");
+		button.textContent = buttons[i];
+		button.setAttribute("cb", buttons[i]);
+		button.onclick = buttonHandler;
+		btnSpace.appendChild(button);
+	}
+	for (var i = 0; i < options.length; i++) {
+		var opt = options[i];
+		var element = document.createElement("label");
+		if (opt.type == "checkbox") {
+			element.className = "labelcb";
+			opt.element = opt.element || document.createElement("input");
+			opt.element.setAttribute("type", "checkbox");
+			opt.element.checked = !!opt.defaultValue;
+			element.appendChild(opt.element);
+			element.appendChild(document.createTextNode(opt.name));
+		}
+		else {
+			element.className = "label";
+			element.appendChild(document.createTextNode(opt.name));
+			opt.element = opt.element || document.createElement(opt.type == "textarea" ? "textarea" : "input");
+			opt.element.setAttribute("type", opt.type);
+			if (opt.rows)
+				opt.element.setAttribute("rows", opt.rows);
+			opt.element.value = opt.defaultValue || "";
+			element.appendChild(opt.element);
+		}
+		if (opt.readonly)
+			opt.element.setAttribute("readonly", "readonly");
+		contentSpace.appendChild(element);
+	}
+	dialog.style.display = "block";
+}
+
+function getPath(path) {
+	console.log("GET " + JSON.stringify(path));
+	var splits = path.split(pathSeparator);
+	var scope = content;
+	for (var i = 0; i < splits.length; i++) {
+		if (scope === undefined)
+			return undefined;
+		var path = splits[i];
+		if (path[0] == ":") {
+			var eqIdx = path.indexOf("=");
+			var key = path.substring(1, eqIdx);
+			var value = path.substr(eqIdx + 1);
+			for (var j = 0; j < scope.length; j++)
+				if (scope[j][key] == value) {
+					scope = scope[j];
+					break;
+				}
+		}
+		else
+			scope = scope[path];
+	}
+	return scope;
+}
+
+function setPath(path, value) {
+	console.log("SET " + JSON.stringify(path) + " = " + JSON.stringify(value));
+	var splits = path.split(pathSeparator);
+	var scope = content;
+	for (var i = 0; i < splits.length - 1; i++) {
+		var path = splits[i];
+		if (path[0] == ":") {
+			if (scope === undefined)
+				return;
+			var eqIdx = path.indexOf("=");
+			var key = path.substring(1, eqIdx);
+			var val = path.substr(eqIdx + 1);
+			for (var j = 0; j < scope.length; j++)
+				if (scope[j][key] == val) {
+					scope = scope[j];
+					break;
+				}
+		}
+		else {
+			if (scope[splits[i]] === undefined)
+				scope[splits[i]] = {};
+			scope = scope[path];
+		}
+	}
+	scope[splits[splits.length - 1]] = value;
+	if (value === undefined)
+		delete scope[splits[splits.length - 1]];
+}
+
+function getInArray(arr, name, isArray, propName) {
+	if (isArray) {
+		for (var i = 0; i < arr.length; i++)
+			if (arr[i][propName] == name)
+				return arr[i];
+		return undefined;
+	}
+	else
+		return arr[name];
+}
+
+function setInArray(arr, name, isArray, propName, value) {
+	if (isArray) {
+		value[propName] = name;
+		for (var i = 0; i < arr.length; i++)
+			if (arr[i][propName] == name)
+				return arr[i] = value;
+		arr.push(value);
+		return value;
+	}
+	else
+		return arr[name] = value;
+}
+
+function removeInArray(arr, name, isArray, propName) {
+	if (isArray) {
+		for (var i = 0; i < arr.length; i++)
+			if (arr[i][propName] == name)
+				return arr.splice(i, 1);
+	}
+	else
+		delete arr[name];
+}
+
+var configurationSelector = document.getElementById("configurations");
+var buildtypeSelector = document.getElementById("buildtypes");
+var platformSelector = document.getElementById("platforms");
+var architectureSelector = document.getElementById("architectures");
+var compilerSelector = document.getElementById("compilers");
+
+function makePath(setting, path, addSuffix) {
+	var suffix = "";
+	var prefix = "";
+	if (setting.getAttribute("has-suffix") == "true") {
+		if (platformSelector.value)
+			suffix += "-" + platformSelector.value;
+		if (architectureSelector.value)
+			suffix += "-" + architectureSelector.value;
+		if (compilerSelector.value)
+			suffix += "-" + compilerSelector.value;
+
+		if (buildtypeSelector.value)
+			prefix = "buildTypes" + pathSeparator + buildtypeSelector.value + pathSeparator;
+	}
+	// important: config and buildtypes cant mix!
+	if (setting.getAttribute("has-config") != "false") {
+		if (configurationSelector.value)
+			prefix = "configurations" + pathSeparator + ":name=" + configurationSelector.value + pathSeparator;
+	}
+	return prefix + path + (addSuffix ? suffix : "");
+}
+
+var refreshSettings;
+
+function updateBuildTypes() {
+	var selected = buildtypeSelector.value;
+	for (var i = buildtypeSelector.options.length - 1; i >= 0; i--)
+		if (buildtypeSelector.options[i].value)
+			buildtypeSelector.removeChild(buildtypeSelector.options[i]);
+	if (!content.buildTypes || typeof content.buildTypes != "object")
+		return;
+	var buildTypes = Object.keys(content["buildTypes"]);
+	for (var i = 0; i < buildTypes.length; i++) {
+		var option = document.createElement("option");
+		option.value = buildTypes[i];
+		option.textContent = buildTypes[i];
+		buildtypeSelector.appendChild(option);
+	}
+	if (selected && buildTypes.indexOf(selected) == -1) {
+		console.log("Deleted build type");
+		console.log("Array: " + JSON.stringify(buildTypes) + ", selected: " + selected);
+		buildtypeSelector.value = "";
+	}
+	else
+		buildtypeSelector.value = selected;
+}
+
+function updateConfigurations() {
+	var selected = configurationSelector.value;
+	for (var i = configurationSelector.options.length - 1; i >= 0; i--)
+		if (configurationSelector.options[i].value)
+			configurationSelector.removeChild(configurationSelector.options[i]);
+	if (!content.configurations || !Array.isArray(content.configurations))
+		return;
+	var configurations = [];
+	for (var i = 0; i < content.configurations.length; i++)
+		if (content.configurations[i].name)
+			configurations.push(content.configurations[i].name);
+	for (var i = 0; i < configurations.length; i++) {
+		var option = document.createElement("option");
+		option.value = configurations[i];
+		option.textContent = configurations[i];
+		configurationSelector.appendChild(option);
+	}
+	if (selected && configurations.indexOf(selected) == -1) {
+		console.log("Deleted configuration");
+		console.log("Array: " + JSON.stringify(configurations) + ", selected: " + selected);
+		configurationSelector.value = "";
+	}
+	else
+		configurationSelector.value = selected;
+}
+
+var configDisabled = false;
+var suffixDisabled = false;
+
+function fixSelectors() {
+	console.log("Fix Selectors");
+	if (configurationSelector.value) {
+		buildtypeSelector.value = "";
+		buildtypeSelector.setAttribute("disabled", "disabled");
+		console.log("Disabled buildtypeSelector");
+	}
+	else if (!suffixDisabled)
+		buildtypeSelector.removeAttribute("disabled");
+
+	if (buildtypeSelector.value) {
+		configurationSelector.value = "";
+		configurationSelector.setAttribute("disabled", "disabled");
+		console.log("Disabled configurationSelector");
+	}
+	else if (!configDisabled)
+		configurationSelector.removeAttribute("disabled");
+}
+
+function ready() {
+	updateBuildTypes();
+	updateConfigurations();
+	fixSelectors();
+
+	configurationSelector.value = window.localStorage["dub.configuration"] || "";
+	buildtypeSelector.value = window.localStorage["dub.configuration"] || "";
+	platformSelector.value = window.localStorage["dub.platform"] || "";
+	architectureSelector.value = window.localStorage["dub.architecture"] || "";
+	compilerSelector.value = window.localStorage["dub.compiler"] || "";
+
+	// fill content
+	var settings = document.querySelectorAll(".setting");
+	var complexSettings = document.querySelectorAll(".complex-setting");
+	var listSettings = document.querySelectorAll(".list-setting");
+	refreshSettings = function () {
+		configurationSelector.onchange = refreshSettings;
+		buildtypeSelector.onchange = refreshSettings;
+		platformSelector.onchange = refreshSettings;
+		architectureSelector.onchange = refreshSettings;
+		compilerSelector.onchange = refreshSettings;
+
+		try {
+			updateBuildTypes();
+			updateConfigurations();
+			fixSelectors();
+
+			window.localStorage["dub.configuration"] = configurationSelector.value;
+			window.localStorage["dub.buildtype"] = buildtypeSelector.value;
+			window.localStorage["dub.platform"] = platformSelector.value;
+			window.localStorage["dub.architecture"] = architectureSelector.value;
+			window.localStorage["dub.compiler"] = compilerSelector.value;
+
+			if (packageType == "json") {
+				for (var i = 0; i < settings.length; i++) {
+					var setting = settings[i];
+					// json-path="description"
+					// json-value="name" in string[] for checkboxes
+					// json-type="string[]"
+
+					var inputType = setting.getAttribute("type");
+					var path = setting.getAttribute("json-path");
+					if (!path)
+						continue;
+					var type = setting.getAttribute("json-type");
+					var strValue = setting.getAttribute("json-value");
+					var configPath = undefined;
+					var pathWithSuffix = makePath(setting, path, true);
+					var pathWithoutSuffix = makePath(setting, path, false);
+					if (getPath(pathWithSuffix) !== undefined)
+						configPath = pathWithSuffix;
+					else if (pathWithSuffix != pathWithoutSuffix && getPath(pathWithoutSuffix) !== undefined)
+						configPath = pathWithoutSuffix;
+					var encode, decode;
+					if (inputType == "checkbox") {
+						if (type == "string[]" && strValue) {
+							decode = function (configPath, value) {
+								setting.checked = configPath === undefined ? !!value : value.indexOf(strValue) != -1;
+							};
+							encode = (function (configPath, strValue, setting, e) {
+								var value = getPath(configPath).slice();
+								if (setting.checked) {
+									if (value.indexOf(strValue) == -1)
+										value.push(strValue);
+								}
+								else {
+									var index = value.indexOf(strValue);
+									if (index != -1)
+										value.splice(index, 1);
+								}
+								return value;
+							}).bind(this, configPath, strValue, setting);
+						}
+						else {
+							decode = function (configPath, value) {
+								setting.checked = configPath === undefined ? !!value : value;
+							};
+							encode = (function (setting, e) {
+								return setting.checked;
+							}).bind(this, setting);
+						}
+					}
+					else {
+						decode = function (configPath, value) {
+							setting.value = configPath === undefined ? (value || "") : (
+								type == "string[]" ?
+									(value || []).join("\n")
+									: (value || ""));
+						};
+						encode = (function (type, setting, e) {
+							var newVal;
+							if (type == "string[]") {
+								if (setting.value.trim() == "")
+									newVal = undefined;
+								else
+									newVal = setting.value.split("\n");
+							}
+							else
+								newVal = setting.value || undefined;
+							return newVal;
+						}).bind(this, type, setting);
+					}
+					var configSetting;
+					if (configPath !== undefined)
+						configSetting = getPath(configPath);
+					else
+						configSetting = setting.getAttribute("json-default");
+					decode(configPath, configSetting);
+					configPath = makePath(setting, path, true);
+					setting.onchange = (function (setting, configPath, path, encode, e) {
+						var value = encode(e);
+						var set = true;
+						var suffixlessPath = makePath(setting, path, false);
+						if (configPath != suffixlessPath)
+							if (isSameValue(getPath(suffixlessPath), value))
+								set = false;
+						value = set ? value : undefined;
+						runCommand("_dubedit.setValue", {
+							path: configPath,
+							value: value,
+							file: dubFile
+						});
+						setPath(configPath, value);
+					}).bind(this, setting, configPath, path, encode);
+				}
+				for (var i = 0; i < complexSettings.length; i++) {
+					var setting = complexSettings[i];
+					// Import:importPaths;Source:sourcePaths;String Import:stringImportPaths
+					var paths = setting.getAttribute("json-paths").split(";");
+					if (!paths)
+						continue;
+					var type = setting.getAttribute("json-type");
+					if (type == "files") {
+						var addBtn = setting.parentElement.querySelector(".add");
+						var editBtn = setting.parentElement.querySelector(".edit");
+						var removeBtn = setting.parentElement.querySelector(".remove");
+
+						removeBtn.onclick = (function (setting) {
+							var options = setting.options;
+							var toRemove = [];
+							for (var i = options.length - 1; i >= 0; i--)
+								if (options[i].selected) {
+									toRemove.push({
+										name: options[i].value,
+										paths: options[i].getAttribute("paths").split(";;")
+									});
+									setting.removeChild(options[i]);
+								}
+							for (var i = 0; i < toRemove.length; i++) {
+								var elem = toRemove[i];
+								for (var j = 0; j < elem.paths.length; j++) {
+									var path = elem.paths[j];
+									var configPath = undefined;
+									if (getPath(makePath(setting, path, true)) !== undefined)
+										configPath = makePath(setting, path, true);
+									else if (getPath(makePath(setting, path, false)) !== undefined)
+										configPath = makePath(setting, path, false);
+									var index = getPath(configPath).indexOf(elem.name);
+									if (index != -1) {
+										getPath(configPath).splice(index, 1);
+										runCommand("_dubedit.setValue", {
+											path: configPath,
+											value: getPath(configPath),
+											file: dubFile
+										});
+									}
+									else console.log("Path not in dub.json?!");
+								}
+							}
+						}).bind(this, setting);
+
+						addBtn.onclick = (function (setting, paths) {
+							var options = [
+								{ type: "text", name: "File" }
+							];
+							for (var j = 0; j < paths.length; j++) {
+								var parts = paths[j].split(":");
+								options.push({
+									type: "checkbox",
+									name: parts[0],
+									jsonPath: parts[1]
+								});
+							}
+							showDialog(options, ["Add", "Cancel"], function (btn) {
+								if (btn == "Add") {
+									var file = options[0].element.value;
+									if (!file)
+										return "Please enter a file path";
+									var addedCount = 0;
+									var paths = [];
+									var names = [];
+									for (var j = 1; j < options.length; j++) {
+										if (!options[j].element.checked)
+											continue;
+										addedCount++;
+										var path = options[j].jsonPath;
+										var configPath = makePath(setting, path, true);
+
+										if (getPath(configPath) === undefined)
+											setPath(configPath, (getPath(path) || []).slice());
+										if (getPath(configPath).indexOf(file) == -1)
+											getPath(configPath).push(file);
+										// set anyway in case of new field creation
+										runCommand("_dubedit.setValue", {
+											path: configPath,
+											value: getPath(configPath),
+											file: dubFile
+										});
+										names.push(options[j].name);
+										paths.push(path);
+									}
+									if (addedCount == 0)
+										return "Select at least one category";
+									var existing = false;
+									var option = document.createElement("option");
+									for (var j = 0; j < setting.options.length; j++)
+										if (setting.options[j].value == file) {
+											option = setting.options[j];
+											existing = true;
+											break;
+										}
+									option.value = file;
+									option.setAttribute("paths", paths.join(";;"));
+									var tags = "";
+									if (names.length)
+										tags = " (" + names.join(", ") + ")";
+									option.textContent = file + tags;
+									if (!existing)
+										setting.appendChild(option);
+								}
+							});
+						}).bind(this, setting, paths);
+
+						editBtn.onclick = (function (setting, paths) {
+							var selected = undefined;
+							for (var i = setting.options.length - 1; i >= 0; i--)
+								if (setting.options[i].selected) {
+									selected = setting.options[i];
+									break;
+								}
+							if (!selected)
+								return;
+							var options = [
+								{ type: "text", name: "File", readonly: true, defaultValue: selected.value, option: selected }
+							];
+							var file = selected.value;
+							for (var j = 0; j < paths.length; j++) {
+								var parts = paths[j].split(":");
+								var path = parts[1];
+								var configPath = makePath(setting, path, true);
+
+								if (getPath(configPath) === undefined)
+									setPath(configPath, (getPath(path) || []).slice());
+								options.push({
+									type: "checkbox",
+									name: parts[0],
+									jsonPath: path,
+									defaultValue: getPath(configPath).indexOf(file) != -1
+								});
+							}
+							showDialog(options, ["Update", "Cancel"], function (btn) {
+								if (btn == "Update") {
+									var addedCount = 0;
+									var paths = [];
+									var names = [];
+									for (var j = 1; j < options.length; j++) {
+										var path = options[j].jsonPath;
+										var configPath = makePath(setting, path, true);
+
+										if (getPath(configPath) === undefined)
+											setPath(configPath, (getPath(path) || []).slice());
+										if (options[j].element.checked) {
+											if (getPath(configPath).indexOf(file) == -1)
+												getPath(configPath).push(file);
+										}
+										else {
+											var index = getPath(configPath).indexOf(file);
+											if (index != -1)
+												getPath(configPath).splice(index, 1);
+										}
+										// set anyway in case of new field creation
+										runCommand("_dubedit.setValue", {
+											path: configPath,
+											value: getPath(configPath),
+											file: dubFile
+										});
+										if (options[j].element.checked) {
+											names.push(options[j].name);
+											paths.push(path);
+										}
+									}
+									var option = options[0].option;
+									option.setAttribute("paths", paths.join(";;"));
+									var tags = "";
+									if (names.length)
+										tags = " (" + names.join(", ") + ")";
+									option.textContent = file + tags;
+								}
+							});
+						}).bind(this, setting, paths);
+
+						var found = [];
+						for (var j = 0; j < paths.length; j++) {
+							var parts = paths[j].split(":");
+							var name = parts[0];
+							var path = parts[1];
+							var configPath = undefined;
+							if (getPath(makePath(setting, path, true)) !== undefined)
+								configPath = makePath(setting, path, true);
+							else if (getPath(makePath(setting, path, false)) !== undefined)
+								configPath = makePath(setting, path, false);
+
+							if (configPath !== undefined) {
+								var files = getPath(configPath);
+								for (var fi = 0; fi < files.length; fi++) {
+									var file = files[fi];
+									var handled = false;
+									for (var fo = 0; fo < found.length; fo++) {
+										if (found[fo].file == file) {
+											found[fo].paths.push(path);
+											found[fo].names.push(name);
+											handled = true;
+										}
+									}
+									if (!handled) {
+										found.push({
+											file: file,
+											paths: [path],
+											names: [name]
+										});
+									}
+								}
+							}
+						}
+
+						for (var j = setting.options.length - 1; j >= 0; j--)
+							setting.removeChild(setting.options[j]);
+
+						for (var j = 0; j < found.length; j++) {
+							var option = document.createElement("option");
+							option.value = found[j].file;
+							option.setAttribute("paths", found[j].paths.join(";;"));
+							var tags = "";
+							if (found[j].names.length)
+								tags = " (" + found[j].names.join(", ") + ")";
+							option.textContent = found[j].file + tags;
+							setting.appendChild(option);
+						}
+					}
+					else throw "Unsupported complex setting: " + type;
+				}
+				for (var i = 0; i < listSettings.length; i++) {
+					var setting = listSettings[i];
+					var path = setting.getAttribute("json-path");
+					if (!path)
+						continue;
+					var arrayType = setting.getAttribute("json-array") == "true";
+					var arrayProp = setting.getAttribute("json-array-key");
+					var addBtn = setting.parentElement.querySelector(".add");
+					var renameBtn = setting.parentElement.querySelector(".rename");
+					var removeBtn = setting.parentElement.querySelector(".remove");
+
+					addBtn.onclick = (function (setting, path, arrayType, arrayProp) {
+						var options = [{
+							type: "text",
+							name: "Name"
+						}];
+						showDialog(options, ["Add", "Cancel"], function (r) {
+							if (r == "Add") {
+								var name = options[0].element.value.trim();
+								if (!name)
+									return "Please enter a name";
+								if (!getPath(path))
+									setPath(path, arrayType ? [] : {});
+								if (getInArray(getPath(path), name, arrayType, arrayProp))
+									return "An entry with this name already exists";
+								setInArray(getPath(path), name, arrayType, arrayProp, JSON.parse(setting.getAttribute("json-default") || "null"));
+								runCommand("_dubedit.setValue", {
+									path: path,
+									value: getPath(path),
+									file: dubFile
+								});
+								var option = document.createElement("option");
+								option.value = name;
+								option.textContent = name;
+								setting.appendChild(option);
+								if (setting.getAttribute("onupdate"))
+									eval(setting.getAttribute("onupdate"));
+							}
+						});
+					}).bind(this, setting, path, arrayType, arrayProp);
+					removeBtn.onclick = (function (setting, path, arrayType, arrayProp) {
+						if (!getPath(path))
+							return;
+						var options = setting.options;
+						for (var i = options.length - 1; i >= 0; i--)
+							if (options[i].selected) {
+								removeInArray(getPath(path), options[i].value, arrayType, arrayProp);
+								setting.removeChild(options[i]);
+							}
+						runCommand("_dubedit.setValue", {
+							path: path,
+							value: getPath(path),
+							file: dubFile
+						});
+						if (setting.getAttribute("onupdate"))
+							eval(setting.getAttribute("onupdate"));
+					}).bind(this, setting, path, arrayType, arrayProp);
+					renameBtn.onclick = (function (setting, path, arrayType, arrayProp) {
+						var selected = undefined;
+						for (var i = setting.options.length - 1; i >= 0; i--)
+							if (setting.options[i].selected) {
+								selected = setting.options[i];
+								break;
+							}
+						if (!selected)
+							return;
+						var options = [{
+							type: "text",
+							name: "Name",
+							defaultValue: selected.value
+						}];
+						var origName = selected.value;
+						showDialog(options, ["Rename", "Cancel"], function (r) {
+							if (r == "Rename") {
+								var name = options[0].element.value.trim();
+								if (!name)
+									return "Please enter a name";
+								if (!getPath(path))
+									setPath(path, {});
+								var oldValue = getInArray(getPath(path), origName, arrayType, arrayProp);
+								if (!oldValue)
+									return "Could not rename, try reopening the settings";
+								if (getInArray(getPath(path), name, arrayType, arrayProp))
+									return "An entry with this name already exists";
+								if (arrayType) {
+									oldValue[arrayProp] = name;
+								}
+								else {
+									getPath(path)[name] = oldValue;
+									delete getPath(path)[origName];
+								}
+								runCommand("_dubedit.setValue", {
+									path: path,
+									value: getPath(path),
+									file: dubFile
+								});
+								selected.value = name;
+								selected.textContent = name;
+								if (setting.getAttribute("onupdate"))
+									eval(setting.getAttribute("onupdate"));
+							}
+						});
+					}).bind(this, setting, path, arrayType, arrayProp);
+
+					for (var j = setting.options.length - 1; j >= 0; j--)
+						setting.removeChild(setting.options[j]);
+
+					var values = getPath(path);
+					if (values) {
+						if (arrayType) {
+							for (var j = 0; j < values.length; j++) {
+								var option = document.createElement("option");
+								option.value = values[j][arrayProp];
+								option.textContent = values[j][arrayProp];
+								setting.appendChild(option);
+							}
+						}
+						else {
+							var names = Object.keys(values);
+							for (var j = 0; j < names.length; j++) {
+								var option = document.createElement("option");
+								option.value = names[j];
+								option.textContent = names[j];
+								setting.appendChild(option);
+							}
+						}
+					}
+				}
+				{
+					var dependencies = document.getElementById("dependencies");
+					for (var i = dependencies.children.length - 1; i >= 0; i--)
+						dependencies.removeChild(dependencies.children[i]);
+					var addDependency = function (key, depObj) {
+						var tr = document.createElement("tr");
+						var name = document.createElement("td");
+						var version = document.createElement("td");
+						var removeBtn = document.createElement("td");
+
+						name.textContent = key;
+						var versionOrPath;
+						var type = "Version";
+						if (typeof depObj == "string")
+							versionOrPath = depObj;
+						else {
+							if (depObj.path) {
+								type = "Path";
+								versionOrPath = depObj.path;
+							}
+							else if (depObj.version)
+								versionOrPath = depObj.version;
+							else
+								return;
+						}
+						var versionLabel = document.createElement("label");
+						versionLabel.className = "label lite";
+						var versionInput = document.createElement("input");
+						versionInput.value = versionOrPath;
+						versionInput.setAttribute("depname", key);
+						versionInput.onchange = (function (key, versionInput) {
+							var depObj = content.dependencies[key];
+							if (!depObj)
+								return;
+							if (typeof depObj == "string")
+								content.dependencies[key] = versionInput.value;
+							else if (depObj.path)
+								depObj.path = versionInput.value;
+							else if (depObj.version)
+								depObj.version = versionInput.value;
+
+							runCommand("_dubedit.setValue", {
+								path: "dependencies",
+								value: content.dependencies,
+								file: dubFile
+							});
+						}).bind(this, key, versionInput);
+						versionLabel.appendChild(document.createTextNode(type));
+						versionLabel.appendChild(versionInput);
+						version.appendChild(versionLabel);
+						var removeLabel = document.createElement("button");
+						removeLabel.textContent = "Remove";
+						removeLabel.onclick = (function (key, tr) {
+							delete content.dependencies[key];
+							dependencies.removeChild(tr);
+
+							runCommand("_dubedit.setValue", {
+								path: "dependencies",
+								value: content.dependencies,
+								file: dubFile
+							});
+						}).bind(this, key, tr);
+						removeBtn.appendChild(removeLabel);
+
+						tr.appendChild(name);
+						tr.appendChild(version);
+						tr.appendChild(removeBtn);
+
+						dependencies.appendChild(tr);
+					}
+					var addButton = dependencies.parentElement.querySelector("button");
+					addButton.onclick = function () {
+						var options = [{
+							name: "Name",
+							type: "text"
+						}, {
+								name: "From Path",
+								type: "checkbox"
+							}, {
+								name: "Path or Version",
+								type: "text"
+							}];
+						showDialog(options, ["Add", "Cancel"], function (r) {
+							if (r == "Add") {
+								if (!content.dependencies)
+									content.dependencies = {};
+								var name = options[0].element.value;
+								var pathOrVersion = options[2].element.value;
+								if (!name)
+									return "Please enter a name";
+								if (!pathOrVersion)
+									return "Please enter a path or version";
+								if (content.dependencies[name])
+									return "This dependency already exists!";
+								if (options[1].element.checked) {
+									content.dependencies[name] = { path: pathOrVersion };
+								}
+								else {
+									content.dependencies[name] = pathOrVersion;
+								}
+								runCommand("_dubedit.setValue", {
+									path: "dependencies",
+									value: content.dependencies,
+									file: dubFile
+								});
+								addDependency(name, content.dependencies[name]);
+							}
+						});
+					};
+					if (content.dependencies) {
+						for (var key in content.dependencies) {
+							if (content.dependencies.hasOwnProperty(key)) {
+								addDependency(key, content.dependencies[key]);
+							}
+						}
+					}
+				}
+			}
+			else if (type == "sdl") {
+				document.write("dub.sdl files are not supported yet");
+			}
+		}
+		catch (e) {
+			console.log(e);
+		}
+	}
+
+	refreshSettings();
+
+	// setup tabs
+	var activeTab = undefined;
+
+	function switchTab(element) {
+		if (activeTab === element.id || element.id === undefined)
+			return;
+		if (activeTab !== undefined) {
+			var page = "page" + activeTab.substr(3);
+			document.getElementById(page).setAttribute("class", "child");
+			document.getElementById(activeTab).setAttribute("class", "");
+		}
+		activeTab = element.id;
+		page = "page" + activeTab.substr(3);
+		document.getElementById(page).setAttribute("class", "child visible");
+		element.setAttribute("class", "active");
+		window.localStorage["dub.activeTab"] = activeTab;
+		var hasSuffixMembers = !!element.getAttribute("has-suffix");
+		var hasConfiguration = element.getAttribute("has-config") != "false";
+		if (hasSuffixMembers) {
+			platformSelector.removeAttribute("disabled");
+			architectureSelector.removeAttribute("disabled");
+			compilerSelector.removeAttribute("disabled");
+			buildtypeSelector.removeAttribute("disabled");
+		}
+		else {
+			platformSelector.setAttribute("disabled", "disabled");
+			architectureSelector.setAttribute("disabled", "disabled");
+			compilerSelector.setAttribute("disabled", "disabled");
+			buildtypeSelector.setAttribute("disabled", "disabled");
+		}
+		if (hasConfiguration)
+			configurationSelector.removeAttribute("disabled");
+		else
+			configurationSelector.setAttribute("disabled", "disabled")
+		suffixDisabled = !hasSuffixMembers;
+		configDisabled = !hasConfiguration;
+
+		fixSelectors();
+	}
+
+	var tabsMenu = document.getElementById("tabs").querySelectorAll("li");
+	for (var i = 0; i < tabsMenu.length; i++) {
+		tabsMenu[i].onclick = (function () {
+			switchTab(this);
+		}).bind(tabsMenu[i]);
+	}
+
+	if (window.localStorage["dub.activeTab"])
+		switchTab(document.getElementById(window.localStorage["dub.activeTab"]));
+	else
+		switchTab(document.getElementById("tabGeneral"));
+}
+	</script>
+</body>
+
+</html>

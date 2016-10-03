@@ -400,7 +400,7 @@ export class WorkspaceD extends EventEmitter implements
 	}
 
 	upgrade() {
-		this.request({ cmd: "dub", subcmd: "upgrade" });
+		return this.request({ cmd: "dub", subcmd: "upgrade" });
 	}
 
 	listConfigurations(): Thenable<string[]> {
@@ -533,12 +533,12 @@ export class WorkspaceD extends EventEmitter implements
 					this.request({ cmd: "dcd", subcmd: "refresh-imports" }).then(() => {
 						resolve(true);
 						this.listImports().then(console.log);
-					});
+					}, reject);
 				} else {
 					vscode.window.showWarningMessage("Could not update DCD. Please restart DCD if its not working properly");
 					resolve(true);
 				}
-			});
+			}, reject);
 		});
 	}
 

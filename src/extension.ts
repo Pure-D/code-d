@@ -12,6 +12,7 @@ import { GCProfiler } from "./gcprofiler"
 import { CoverageAnalyzer } from "./coverage"
 import { addJSONProviders } from "./json-contributions"
 import { addSDLProviders } from "./sdl/sdl-contributions"
+import { DubEditor } from "./dub-editor"
 import * as ChildProcess from "child_process"
 
 let diagnosticCollection: vscode.DiagnosticCollection;
@@ -27,37 +28,193 @@ export function activate(context: vscode.ExtensionContext) {
 		return;
 	}
 
-	let env = process.env;
-	let proxy = vscode.workspace.getConfiguration("http").get("proxy", "");
-	if (proxy)
-		env["http_proxy"] = proxy;
-	let workspaced = new WorkspaceD(vscode.workspace.rootPath, env);
-	context.subscriptions.push(vscode.languages.registerCompletionItemProvider(DML_MODE, workspaced.getDlangUI(context.subscriptions), ":", ";"));
+	if (!config().get("disableWorkspaceD", false)) {
+		let env = process.env;
+		let proxy = vscode.workspace.getConfiguration("http").get("proxy", "");
+		if (proxy)
+			env["http_proxy"] = proxy;
+		let workspaced = new WorkspaceD(vscode.workspace.rootPath, env);
+		context.subscriptions.push(vscode.languages.registerCompletionItemProvider(DML_MODE, workspaced.getDlangUI(context.subscriptions), ":", ";"));
 
-	context.subscriptions.push(vscode.languages.registerCompletionItemProvider(D_MODE, workspaced, "."));
-	context.subscriptions.push(vscode.languages.registerSignatureHelpProvider(D_MODE, workspaced, "(", ","));
-	context.subscriptions.push(vscode.languages.registerDocumentSymbolProvider(D_MODE, workspaced));
-	context.subscriptions.push(vscode.languages.registerHoverProvider(D_MODE, workspaced));
-	context.subscriptions.push(vscode.languages.registerDefinitionProvider(D_MODE, workspaced));
-	context.subscriptions.push(vscode.languages.registerDocumentFormattingEditProvider(D_MODE, workspaced));
+		context.subscriptions.push(vscode.languages.registerCompletionItemProvider(D_MODE, workspaced, "."));
+		context.subscriptions.push(vscode.languages.registerSignatureHelpProvider(D_MODE, workspaced, "(", ","));
+		context.subscriptions.push(vscode.languages.registerDocumentSymbolProvider(D_MODE, workspaced));
+		context.subscriptions.push(vscode.languages.registerHoverProvider(D_MODE, workspaced));
+		context.subscriptions.push(vscode.languages.registerDefinitionProvider(D_MODE, workspaced));
+		context.subscriptions.push(vscode.languages.registerDocumentFormattingEditProvider(D_MODE, workspaced));
 
-	context.subscriptions.push(workspaced);
-	function checkUnresponsive() {
-		setTimeout(() => {
-			workspaced.checkResponsiveness().then(responsive => {
-				if (responsive)
-					checkUnresponsive();
+		context.subscriptions.push(workspaced);
+		function checkUnresponsive() {
+			setTimeout(() => {
+				workspaced.checkResponsiveness().then(responsive => {
+					if (responsive)
+						checkUnresponsive();
+				});
+			}, 10 * 1000);
+		}
+		workspaced.on("workspace-d-start", checkUnresponsive);
+		checkUnresponsive();
+
+		context.subscriptions.push(statusbar.setup(workspaced));
+		context.subscriptions.push(new CompileButtons(workspaced));
+
+		context.subscriptions.push(vscode.languages.registerWorkspaceSymbolProvider(workspaced));
+
+		function upgradeDubPackage(document: vscode.TextDocument) {
+			if (path.relative(vscode.workspace.rootPath, document.fileName) == "dub.json" || path.relative(vscode.workspace.rootPath, document.fileName) == "dub.sdl") {
+				workspaced.upgrade().then(() => {}, (err) => {
+					vscode.window.showWarningMessage("Could not upgrade dub project");
+				});
+				workspaced.updateImports().then(() => {}, (err) => {
+					vscode.window.showWarningMessage("Could not update import paths. Please check your build settings in the status bar.");
+				});
+			}
+		}
+
+		vscode.workspace.onDidSaveTextDocument(upgradeDubPackage, null, context.subscriptions);
+
+		diagnosticCollection = vscode.languages.createDiagnosticCollection("d");
+		context.subscriptions.push(diagnosticCollection);
+		let version;
+		let writeTimeout;
+		let buildErrors = () => {
+			diagnosticCollection.clear();
+			let allErrors: [vscode.Uri, vscode.Diagnostic[]][] = [];
+			oldLint.forEach(errors => {
+				errors.forEach(error => {
+					for (var i = 0; i < allErrors.length; i++) {
+						if (allErrors[i][0] == error[0]) {
+							var arr = allErrors[i][1];
+							if (!arr)
+								arr = [];
+							arr.push.apply(arr, error[1]);
+							allErrors[i][1] = arr;
+							return;
+						}
+					}
+					var dup: [vscode.Uri, vscode.Diagnostic[]] = [error[0], []];
+					error[1].forEach(errElem => {
+						dup[1].push(errElem);
+					});
+					allErrors.push(dup);
+				});
 			});
-		}, 10 * 1000);
+			diagnosticCollection.set(allErrors);
+		};
+		vscode.workspace.onDidChangeTextDocument(event => {
+			let document = event.document;
+			if (document.languageId != "d")
+				return;
+			clearTimeout(writeTimeout);
+			writeTimeout = setTimeout(function () {
+				if (config().get("enableLinting", true)) {
+					let issues = lintDfmt(document);
+					if (issues)
+						oldLint[2] = [[document.uri, issues]];
+					else
+						oldLint[2] = [];
+					buildErrors();
+				}
+			}, 200);
+		}, null, context.subscriptions);
+
+		vscode.workspace.onDidSaveTextDocument(document => {
+			if (document.languageId != "d")
+				return;
+			version = document.version;
+			let target = version;
+			if (config().get("enableLinting", true))
+				workspaced.lint(document).then((errors: [vscode.Uri, vscode.Diagnostic[]][]) => {
+					if (target == version) {
+						oldLint[0] = errors;
+						buildErrors();
+					}
+				});
+			if (config().get("enableDubLinting", true))
+				workspaced.dubBuild(document).then((errors: [vscode.Uri, vscode.Diagnostic[]][]) => {
+					if (target == version) {
+						oldLint[1] = errors;
+						buildErrors();
+					}
+				});
+		}, null, context.subscriptions);
+		context.subscriptions.push(vscode.commands.registerCommand("code-d.switchConfiguration", () => {
+			vscode.window.showQuickPick(workspaced.listConfigurations()).then((config) => {
+				if (config)
+					workspaced.setConfiguration(config);
+			});
+		}, (err) => {
+			console.error(err);
+			vscode.window.showErrorMessage("Failed to switch configuration. See console for details.");
+		}));
+
+		context.subscriptions.push(vscode.commands.registerCommand("code-d.switchArchType", () => {
+			vscode.window.showQuickPick(workspaced.listArchTypes()).then((arch) => {
+				if (arch)
+					workspaced.setArchType(arch);
+			});
+		}, (err) => {
+			console.error(err);
+			vscode.window.showErrorMessage("Failed to switch arch type. See console for details.");
+		}));
+
+		context.subscriptions.push(vscode.commands.registerCommand("code-d.switchBuildType", () => {
+			vscode.window.showQuickPick(workspaced.listBuildTypes()).then((config) => {
+				if (config)
+					workspaced.setBuildType(config);
+			});
+		}, (err) => {
+			console.error(err);
+			vscode.window.showErrorMessage("Failed to switch build type. See console for details.");
+		}));
+
+		context.subscriptions.push(vscode.commands.registerCommand("code-d.switchCompiler", () => {
+			workspaced.getCompiler().then(compiler => {
+				vscode.window.showInputBox({ value: compiler, prompt: "Enter compiler identifier. (e.g. dmd, ldc2, gdc)" }).then(compiler => {
+					if (compiler)
+						workspaced.setCompiler(compiler);
+				});
+			}, (err) => {
+				console.error(err);
+				vscode.window.showErrorMessage("Failed to switch compiler. See console for details.");
+			});
+		}));
+
+		context.subscriptions.push(vscode.commands.registerCommand("code-d.killServer", () => {
+			workspaced.killServer().then((res) => {
+				vscode.window.showInformationMessage("Killed DCD-Server", "Restart").then((pick) => {
+					if (pick == "Restart")
+						vscode.commands.executeCommand("code-d.restartServer");
+				});
+			}, (err) => {
+				console.error(err);
+				vscode.window.showErrorMessage("Failed to kill DCD-Server. See console for details.");
+			});
+		}));
+
+		context.subscriptions.push(vscode.commands.registerCommand("code-d.restartServer", () => {
+			workspaced.restartServer().then((res) => {
+				vscode.window.showInformationMessage("Restarted DCD-Server");
+			}, (err) => {
+				console.error(err);
+				vscode.window.showErrorMessage("Failed to kill DCD-Server. See console for details.");
+			});
+		}));
+
+		context.subscriptions.push(vscode.commands.registerCommand("code-d.reloadImports", () => {
+			workspaced.updateImports().then((success) => {
+				if (success)
+					vscode.window.showInformationMessage("Successfully reloaded import paths");
+				else
+					vscode.window.showWarningMessage("Import paths are empty!");
+			}, (err) => {
+				vscode.window.showErrorMessage("Could not update imports. dub might not be initialized yet!");
+			});
+		}));
 	}
-	workspaced.on("workspace-d-start", checkUnresponsive);
-	checkUnresponsive();
 
 	context.subscriptions.push(addSDLProviders());
 	context.subscriptions.push(addJSONProviders());
-
-	context.subscriptions.push(statusbar.setup(workspaced));
-	context.subscriptions.push(new CompileButtons(workspaced));
 
 	vscode.languages.setLanguageConfiguration(D_MODE.language, {
 		comments: {
@@ -169,22 +326,12 @@ export function activate(context: vscode.ExtensionContext) {
 		wordPattern: /[a-zA-Z0-9_\-\.\$]+/g
 	});
 
-	context.subscriptions.push(vscode.languages.registerWorkspaceSymbolProvider(workspaced));
-
-	function upgradeDubPackage(document: vscode.TextDocument) {
-		if (path.relative(vscode.workspace.rootPath, document.fileName) == "dub.json" || path.relative(vscode.workspace.rootPath, document.fileName) == "dub.sdl") {
-			workspaced.upgrade();
-			workspaced.updateImports();
-		}
-	}
-
-	vscode.workspace.onDidSaveTextDocument(upgradeDubPackage, null, context.subscriptions);
-
 	{
 		let gcprofiler = new GCProfiler();
 		vscode.languages.registerCodeLensProvider(D_MODE, gcprofiler);
 
 		let watcher = vscode.workspace.createFileSystemWatcher("**/profilegc.log", false, false, false);
+
 		watcher.onDidCreate(gcprofiler.updateProfileCache, gcprofiler, context.subscriptions);
 		watcher.onDidChange(gcprofiler.updateProfileCache, gcprofiler, context.subscriptions);
 		watcher.onDidDelete(gcprofiler.clearProfileCache, gcprofiler, context.subscriptions);
@@ -194,13 +341,14 @@ export function activate(context: vscode.ExtensionContext) {
 		if (fs.existsSync(profileGCPath))
 			gcprofiler.updateProfileCache(vscode.Uri.file(profileGCPath));
 
-		context.subscriptions.push(vscode.commands.registerCommand("code-d.showGCCalls", gcprofiler.listProfileCache.bind(gcprofiler)));
+		context.subscriptions.push(vscode.commands.registerCommand("code-d.showGCCalls", gcprofiler.listProfileCache, gcprofiler));
 	}
 	{
 		let coverageanal = new CoverageAnalyzer();
 		context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider("dcoveragereport", coverageanal));
 
 		let watcher = vscode.workspace.createFileSystemWatcher("**/*.lst", false, false, false);
+
 		watcher.onDidCreate(coverageanal.updateCache, coverageanal, context.subscriptions);
 		watcher.onDidChange(coverageanal.updateCache, coverageanal, context.subscriptions);
 		watcher.onDidDelete(coverageanal.removeCache, coverageanal, context.subscriptions);
@@ -218,83 +366,22 @@ export function activate(context: vscode.ExtensionContext) {
 			vscode.commands.executeCommand("vscode.previewHtml", vscode.Uri.parse("dcoveragereport://null"));
 		});
 	}
-
-	diagnosticCollection = vscode.languages.createDiagnosticCollection("d");
-	context.subscriptions.push(diagnosticCollection);
-	let version;
-	let writeTimeout;
-	let buildErrors = () => {
-		diagnosticCollection.clear();
-		let allErrors: [vscode.Uri, vscode.Diagnostic[]][] = [];
-		oldLint.forEach(errors => {
-			errors.forEach(error => {
-				for (var i = 0; i < allErrors.length; i++) {
-					if (allErrors[i][0] == error[0]) {
-						var arr = allErrors[i][1];
-						if (!arr)
-							arr = [];
-						arr.push.apply(arr, error[1]);
-						allErrors[i][1] = arr;
-						return;
-					}
-				}
-				var dup: [vscode.Uri, vscode.Diagnostic[]] = [error[0], []];
-				error[1].forEach(errElem => {
-					dup[1].push(errElem);
-				});
-				allErrors.push(dup);
-			});
-		});
-		diagnosticCollection.set(allErrors);
-	};
-	vscode.workspace.onDidChangeTextDocument(event => {
-		let document = event.document;
-		if (document.languageId != "d")
-			return;
-		clearTimeout(writeTimeout);
-		writeTimeout = setTimeout(function () {
-			if (config().get("enableLinting", true)) {
-				let issues = lintDfmt(document);
-				if (issues)
-					oldLint[2] = [[document.uri, issues]];
-				else
-					oldLint[2] = [];
-				buildErrors();
-			}
-		}, 200);
-	}, null, context.subscriptions);
-
-	vscode.workspace.onDidSaveTextDocument(document => {
-		if (document.languageId != "d")
-			return;
-		version = document.version;
-		let target = version;
-		if (config().get("enableLinting", true))
-			workspaced.lint(document).then((errors: [vscode.Uri, vscode.Diagnostic[]][]) => {
-				if (target == version) {
-					oldLint[0] = errors;
-					buildErrors();
-				}
-			});
-		if (config().get("enableDubLinting", true))
-			workspaced.dubBuild(document).then((errors: [vscode.Uri, vscode.Diagnostic[]][]) => {
-				if (target == version) {
-					oldLint[1] = errors;
-					buildErrors();
-				}
-			});
-	}, null, context.subscriptions);
+	{
+		let editor = new DubEditor(context);
+		context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider("dubsettings", editor));
+		context.subscriptions.push(vscode.commands.registerCommand("dub.openSettingsEditor", editor.open, editor));
+		context.subscriptions.push(vscode.commands.registerCommand("dub.closeSettingsEditor", editor.close, editor));
+	}
 
 	let rdmdTerminal: vscode.Terminal;
 	context.subscriptions.push(vscode.commands.registerCommand("code-d.rdmdCurrent", (file: vscode.Uri) => {
-		let proc;
 		var args = [];
 		if (file)
-			proc = ChildProcess.spawn("rdmd", args = [file.fsPath], { cwd: vscode.workspace.rootPath });
+			args = [file.fsPath];
 		else if (!vscode.window.activeTextEditor.document.fileName)
-			proc = ChildProcess.spawn("rdmd", args = ["--eval=" + vscode.window.activeTextEditor.document.getText()], { cwd: vscode.workspace.rootPath });
+			args = ["--eval=\"" + vscode.window.activeTextEditor.document.getText().replace(/\\/g, "\\\\").replace(/"/g, "\\\"") + "\""];
 		else
-			proc = ChildProcess.spawn("rdmd", args = [vscode.window.activeTextEditor.document.fileName], { cwd: vscode.workspace.rootPath });
+			args = [vscode.window.activeTextEditor.document.fileName];
 
 		if (!rdmdTerminal)
 			rdmdTerminal = vscode.window.createTerminal("rdmd Output");
@@ -316,80 +403,6 @@ export function activate(context: vscode.ExtensionContext) {
 	}, (err) => {
 		console.error(err);
 		vscode.window.showErrorMessage("Failed to switch configuration. See console for details.");
-	}));
-
-	context.subscriptions.push(vscode.commands.registerCommand("code-d.switchConfiguration", () => {
-		vscode.window.showQuickPick(workspaced.listConfigurations()).then((config) => {
-			if (config)
-				workspaced.setConfiguration(config);
-		});
-	}, (err) => {
-		console.error(err);
-		vscode.window.showErrorMessage("Failed to switch configuration. See console for details.");
-	}));
-
-	context.subscriptions.push(vscode.commands.registerCommand("code-d.switchArchType", () => {
-		vscode.window.showQuickPick(workspaced.listArchTypes()).then((arch) => {
-			if (arch)
-				workspaced.setArchType(arch);
-		});
-	}, (err) => {
-		console.error(err);
-		vscode.window.showErrorMessage("Failed to switch arch type. See console for details.");
-	}));
-
-	context.subscriptions.push(vscode.commands.registerCommand("code-d.switchBuildType", () => {
-		vscode.window.showQuickPick(workspaced.listBuildTypes()).then((config) => {
-			if (config)
-				workspaced.setBuildType(config);
-		});
-	}, (err) => {
-		console.error(err);
-		vscode.window.showErrorMessage("Failed to switch build type. See console for details.");
-	}));
-
-	context.subscriptions.push(vscode.commands.registerCommand("code-d.switchCompiler", () => {
-		workspaced.getCompiler().then(compiler => {
-			vscode.window.showInputBox({ value: compiler, prompt: "Enter compiler identifier. (e.g. dmd, ldc2, gdc)" }).then(compiler => {
-				if (compiler)
-					workspaced.setCompiler(compiler);
-			});
-		}, (err) => {
-			console.error(err);
-			vscode.window.showErrorMessage("Failed to switch compiler. See console for details.");
-		});
-	}));
-
-	context.subscriptions.push(vscode.commands.registerCommand("code-d.killServer", () => {
-		workspaced.killServer().then((res) => {
-			vscode.window.showInformationMessage("Killed DCD-Server", "Restart").then((pick) => {
-				if (pick == "Restart")
-					vscode.commands.executeCommand("code-d.restartServer");
-			});
-		}, (err) => {
-			console.error(err);
-			vscode.window.showErrorMessage("Failed to kill DCD-Server. See console for details.");
-		});
-	}));
-
-	context.subscriptions.push(vscode.commands.registerCommand("code-d.restartServer", () => {
-		workspaced.restartServer().then((res) => {
-			vscode.window.showInformationMessage("Restarted DCD-Server");
-		}, (err) => {
-			console.error(err);
-			vscode.window.showErrorMessage("Failed to kill DCD-Server. See console for details.");
-		});
-	}));
-
-	context.subscriptions.push(vscode.commands.registerCommand("code-d.reloadImports", () => {
-		workspaced.updateImports().then((success) => {
-			if (success)
-				vscode.window.showInformationMessage("Successfully reloaded import paths");
-			else
-				vscode.window.showWarningMessage("Import paths are empty!");
-		}, (err) => {
-			vscode.window.showErrorMessage("Could not update imports. dub might not be initialized yet!");
-		});
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand("code-d.insertDscanner", () => {
