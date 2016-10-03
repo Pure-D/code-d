@@ -4,10 +4,8 @@ import * as path from "path"
 import * as fs from "fs"
 import { EventEmitter } from "events"
 import { DlangUIHandler } from "./dlangui"
-
-function config() {
-	return vscode.workspace.getConfiguration("d");
-}
+import { installWorkspaceD } from "./installer"
+import { config, getDCDClientPath, getDCDServerPath, getDfmtPath, getDscannerPath, getWorkspaceDPath } from "./extension"
 
 function byteOffsetAt(editor: vscode.TextDocument, pos: vscode.Position): number {
 	return Buffer.byteLength(editor.getText(new vscode.Range(new vscode.Position(0, 0), pos)), "utf8");
@@ -43,7 +41,7 @@ export class WorkspaceD extends EventEmitter implements
 			return;
 		let self = this;
 		this.workspaced = true;
-		let path = config().get("workspacedPath", "workspace-d");
+		let path = getWorkspaceDPath();
 		this.instance = ChildProcess.spawn(path, [], { cwd: this.projectRoot, env: this.processEnv });
 		this.totalData = new Buffer(0);
 		this.instance.stderr.on("data", function (chunk) {
@@ -58,9 +56,13 @@ export class WorkspaceD extends EventEmitter implements
 			console.log("WorkspaceD ended with an error:");
 			console.log(err);
 			if (err && (<any>err).code == "ENOENT") {
-				vscode.window.showErrorMessage("'" + path + "' is not a valid executable. Please check your user settings and make sure workspace-d is installed!", "Retry").then(s => {
+				vscode.window.showErrorMessage("workspace-d is not installed or points to a folder", "Install workspace-d", "Open User Settings", "Retry").then(s => {
 					if (s == "Retry")
 						self.startWorkspaceD.call(self);
+					else if (s == "Open User Settings")
+						vscode.commands.executeCommand("workbench.action.openGlobalSettings");
+					else if (s == "Install workspace-d")
+						installWorkspaceD();
 				});
 				self.workspaced = false;
 			}
@@ -723,7 +725,7 @@ export class WorkspaceD extends EventEmitter implements
 	}
 
 	public setupDScanner() {
-		this.request({ cmd: "load", components: ["dscanner"], dir: this.projectRoot, dscannerPath: config().get("dscannerPath", "dscanner") }).then((data) => {
+		this.request({ cmd: "load", components: ["dscanner"], dir: this.projectRoot, dscannerPath: getDscannerPath() }).then((data) => {
 			console.log("DScanner is ready");
 			this.emit("dscanner-ready");
 			this.dscannerReady = true;
@@ -737,8 +739,8 @@ export class WorkspaceD extends EventEmitter implements
 				components: ["dcd"],
 				dir: this.projectRoot,
 				autoStart: false,
-				clientPath: config().get("dcdClientPath", "dcd-client"),
-				serverPath: config().get("dcdServerPath", "dcd-server")
+				clientPath: getDCDClientPath(),
+				serverPath: getDCDServerPath()
 			}).then((data) => {
 				this.startDCD();
 			}, (err) => {
@@ -747,7 +749,7 @@ export class WorkspaceD extends EventEmitter implements
 	}
 
 	public setupDfmt() {
-		this.request({ cmd: "load", components: ["dfmt"], dir: this.projectRoot, dfmtPath: config().get("dfmtPath", "dfmt") }).then((data) => {
+		this.request({ cmd: "load", components: ["dfmt"], dir: this.projectRoot, dfmtPath: getDfmtPath() }).then((data) => {
 			console.log("Dfmt is ready");
 			this.emit("dfmt-ready");
 			this.dfmtReady = true;

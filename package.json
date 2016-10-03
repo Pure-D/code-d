@@ -119,7 +119,7 @@
 				"d.workspacedPath": {
 					"type": "string",
 					"default": "workspace-d",
-					"description": "Path of the workspace-d executable. Path can be omitted if in $PATH"
+					"description": "Path of the workspace-d executable. Path can be omitted if in $PATH or installed using code-d"
 				},
 				"d.stdlibPath": {
 					"type": "array",
@@ -135,22 +135,27 @@
 				"d.dcdClientPath": {
 					"type": "string",
 					"default": "dcd-client",
-					"description": "Path of the dcd-client executable. Path can be omitted if in $PATH"
+					"description": "Path of the dcd-client executable. Path can be omitted if in $PATH or installed using code-d"
 				},
 				"d.dcdServerPath": {
 					"type": "string",
 					"default": "dcd-server",
-					"description": "Path of the dcd-server executable. Path can be omitted if in $PATH"
+					"description": "Path of the dcd-server executable. Path can be omitted if in $PATH or installed using code-d"
 				},
 				"d.dscannerPath": {
 					"type": "string",
 					"default": "dscanner",
-					"description": "Path of the dscanner executable. Path can be omitted if in $PATH"
+					"description": "Path of the dscanner executable. Path can be omitted if in $PATH or installed using code-d"
 				},
 				"d.dfmtPath": {
 					"type": "string",
 					"default": "dfmt",
-					"description": "Path of the dfmt executable. Path can be omitted if in $PATH"
+					"description": "Path of the dfmt executable. Path can be omitted if in $PATH or installed using code-d"
+				},
+				"d.dubPath": {
+					"type": "string",
+					"default": "dub",
+					"description": "Path of the dub executable. Path can be omitted if in $PATH or installed using code-d"
 				},
 				"d.enableLinting": {
 					"type": "boolean",
@@ -325,7 +330,10 @@
 	},
 	"dependencies": {
 		"request": "^2.75.0",
-		"jsonc-parser": "^0.2.3"
+		"request-progress": "^2.0.1",
+		"jsonc-parser": "^0.2.3",
+		"unzip": "^0.1.11",
+		"async": "^2.0.1"
 	},
 	"devDependencies": {
 		"typescript": "^1.8.10",
