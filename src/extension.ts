@@ -50,11 +50,6 @@ export function getDubPath() {
 }
 
 export function activate(context: vscode.ExtensionContext) {
-	if (!vscode.workspace.rootPath) {
-		console.warn("code-d requires a folder to be open to work");
-		return;
-	}
-
 	extensionContext = context;
 	setContext(context);
 
@@ -95,7 +90,9 @@ export function activate(context: vscode.ExtensionContext) {
 		fn();
 	}
 
-	if (!config().get("disableWorkspaceD", false)) {
+	if (!vscode.workspace.rootPath)
+		console.warn("No folder open, disabling workspace-d");
+	if (!config().get("disableWorkspaceD", false) && vscode.workspace.rootPath) {
 		let env = process.env;
 		let proxy = vscode.workspace.getConfiguration("http").get("proxy", "");
 		if (proxy)
@@ -438,45 +435,47 @@ export function activate(context: vscode.ExtensionContext) {
 		wordPattern: /[a-zA-Z0-9_\-\.\$]+/g
 	});
 
-	{
-		let gcprofiler = new GCProfiler();
-		vscode.languages.registerCodeLensProvider(D_MODE, gcprofiler);
+	if (vscode.workspace.rootPath) {
+		{
+			let gcprofiler = new GCProfiler();
+			vscode.languages.registerCodeLensProvider(D_MODE, gcprofiler);
 
-		let watcher = vscode.workspace.createFileSystemWatcher("**/profilegc.log", false, false, false);
+			let watcher = vscode.workspace.createFileSystemWatcher("**/profilegc.log", false, false, false);
 
-		watcher.onDidCreate(gcprofiler.updateProfileCache, gcprofiler, context.subscriptions);
-		watcher.onDidChange(gcprofiler.updateProfileCache, gcprofiler, context.subscriptions);
-		watcher.onDidDelete(gcprofiler.clearProfileCache, gcprofiler, context.subscriptions);
-		context.subscriptions.push(watcher);
+			watcher.onDidCreate(gcprofiler.updateProfileCache, gcprofiler, context.subscriptions);
+			watcher.onDidChange(gcprofiler.updateProfileCache, gcprofiler, context.subscriptions);
+			watcher.onDidDelete(gcprofiler.clearProfileCache, gcprofiler, context.subscriptions);
+			context.subscriptions.push(watcher);
 
-		let profileGCPath = path.join(vscode.workspace.rootPath, "profilegc.log");
-		if (fs.existsSync(profileGCPath))
-			gcprofiler.updateProfileCache(vscode.Uri.file(profileGCPath));
+			let profileGCPath = path.join(vscode.workspace.rootPath, "profilegc.log");
+			if (fs.existsSync(profileGCPath))
+				gcprofiler.updateProfileCache(vscode.Uri.file(profileGCPath));
 
-		context.subscriptions.push(vscode.commands.registerCommand("code-d.showGCCalls", gcprofiler.listProfileCache, gcprofiler));
-	}
-	{
-		let coverageanal = new CoverageAnalyzer();
-		context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider("dcoveragereport", coverageanal));
+			context.subscriptions.push(vscode.commands.registerCommand("code-d.showGCCalls", gcprofiler.listProfileCache, gcprofiler));
+		}
+		{
+			let coverageanal = new CoverageAnalyzer();
+			context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider("dcoveragereport", coverageanal));
 
-		let watcher = vscode.workspace.createFileSystemWatcher("**/*.lst", false, false, false);
+			let watcher = vscode.workspace.createFileSystemWatcher("**/*.lst", false, false, false);
 
-		watcher.onDidCreate(coverageanal.updateCache, coverageanal, context.subscriptions);
-		watcher.onDidChange(coverageanal.updateCache, coverageanal, context.subscriptions);
-		watcher.onDidDelete(coverageanal.removeCache, coverageanal, context.subscriptions);
-		context.subscriptions.push(watcher);
+			watcher.onDidCreate(coverageanal.updateCache, coverageanal, context.subscriptions);
+			watcher.onDidChange(coverageanal.updateCache, coverageanal, context.subscriptions);
+			watcher.onDidDelete(coverageanal.removeCache, coverageanal, context.subscriptions);
+			context.subscriptions.push(watcher);
 
-		vscode.workspace.onDidOpenTextDocument(coverageanal.populateCurrent, coverageanal, context.subscriptions);
+			vscode.workspace.onDidOpenTextDocument(coverageanal.populateCurrent, coverageanal, context.subscriptions);
 
-		vscode.workspace.findFiles("*.lst", "").then(files => {
-			files.forEach(file => {
-				coverageanal.updateCache(file);
+			vscode.workspace.findFiles("*.lst", "").then(files => {
+				files.forEach(file => {
+					coverageanal.updateCache(file);
+				});
 			});
-		});
 
-		vscode.commands.registerCommand("code-d.generateCoverageReport", () => {
-			vscode.commands.executeCommand("vscode.previewHtml", vscode.Uri.parse("dcoveragereport://null"));
-		});
+			vscode.commands.registerCommand("code-d.generateCoverageReport", () => {
+				vscode.commands.executeCommand("vscode.previewHtml", vscode.Uri.parse("dcoveragereport://null"));
+			});
+		}
 	}
 	{
 		let editor = new DubEditor(context);
