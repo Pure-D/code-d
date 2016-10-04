@@ -58,7 +58,8 @@
 				],
 				"aliases": [
 					"D"
-				]
+				],
+				"configuration": "./lang-configs/d.json"
 			},
 			{
 				"id": "dscript",
@@ -68,7 +69,8 @@
 				"extensions": [
 					".dscript",
 					".ds"
-				]
+				],
+				"configuration": "./lang-configs/d.json"
 			},
 			{
 				"id": "dml",
@@ -77,7 +79,8 @@
 				],
 				"extensions": [
 					".dml"
-				]
+				],
+				"configuration": "./lang-configs/d.json"
 			},
 			{
 				"id": "sdl",
@@ -86,7 +89,8 @@
 				],
 				"extensions": [
 					".sdl"
-				]
+				],
+				"configuration": "./lang-configs/d.json"
 			},
 			{
 				"id": "diet",
