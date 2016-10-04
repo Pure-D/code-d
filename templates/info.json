@@ -25,7 +25,11 @@
 		"name": "Empty GtkD Application",
 		"detail": "An empty GUI application using GtkD",
 		"path": "EmptyGTKD",
-		"dub": {}
+		"dub": {
+			"dependencies": {
+				"gtk-d:gtkd": "~>3.3.1"
+			}
+		}
 	},
 	{
 		"name": "Empty Web Server",
