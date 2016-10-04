@@ -1,0 +1,11 @@
+doctype html
+html
+	head
+		title My Website
+		link(rel="stylesheet", href="/css/style.css")
+	body
+		h1 Hello World!
+		p Edit
+			code views/index.dt
+			| to edit this template
+		a(href="/api/users") Example REST API

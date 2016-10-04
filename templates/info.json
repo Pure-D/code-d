@@ -35,13 +35,27 @@
 		"name": "Empty Web Server",
 		"detail": "An empty web server using vibe.d",
 		"path": "EmptyVibeServer",
-		"dub": {}
+		"dub": {
+			"dependencies": {
+				"vibe-d": "~>0.7.30-rc.1"
+			},
+			"versions": [
+				"VibeDefaultMain"
+			]
+		}
 	},
 	{
 		"name": "Basic Web Server",
 		"detail": "A web server using vibe.d containing a placeholder index template and session support",
 		"path": "BasicVibeServer",
-		"dub": {}
+		"dub": {
+			"dependencies": {
+				"vibe-d": "~>0.7.30-rc.1"
+			},
+			"versions": [
+				"VibeDefaultMain"
+			]
+		}
 	},
 	{
 		"name": "Empty OpenGL Application using SDL",
