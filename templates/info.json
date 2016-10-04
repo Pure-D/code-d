@@ -89,6 +89,10 @@
 		"name": "Empty X11 Application",
 		"detail": "An empty window using xlib",
 		"path": "EmptyX11",
-		"dub": {}
+		"dub": {
+			"dependencies": {
+				"x11": "~>1.0.15"
+			}
+		}
 	}
 ]
