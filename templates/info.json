@@ -59,15 +59,25 @@
 	},
 	{
 		"name": "Empty OpenGL Application using SDL",
-		"detail": "An empty SDL window using OpenGL 3.2",
+		"detail": "A triangle in a SDL window using OpenGL 3.2",
 		"path": "EmptyOpenGL_SDL",
-		"dub": {}
+		"dub": {
+			"dependencies": {
+				"derelict-gl3": "~>1.0.19",
+				"derelict-sdl2": "~>1.9.7"
+			}
+		}
 	},
 	{
 		"name": "Empty Legacy OpenGL Application using SDL",
 		"detail": "A triangle in a SDL window using legacy OpenGL",
 		"path": "EmptyLegacyOpenGL_SDL",
-		"dub": {}
+		"dub": {
+			"dependencies": {
+				"derelict-gl3": "~>1.0.19",
+				"derelict-sdl2": "~>1.9.7"
+			}
+		}
 	},
 	{
 		"name": "Empty Win32 Application",
