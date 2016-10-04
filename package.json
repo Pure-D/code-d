@@ -23,7 +23,26 @@
 		"onLanguage:d",
 		"onLanguage:dml",
 		"workspaceContains:dub.json",
-		"workspaceContains:dub.sdl"
+		"workspaceContains:dub.sdl",
+		"onCommand:code-d.switchConfiguration",
+		"onCommand:code-d.switchArchType",
+		"onCommand:code-d.switchBuildType",
+		"onCommand:code-d.switchCompiler",
+		"onCommand:code-d.killServer",
+		"onCommand:code-d.restartServer",
+		"onCommand:code-d.reloadImports",
+		"onCommand:code-d.run",
+		"onCommand:code-d.build",
+		"onCommand:code-d.stop",
+		"onCommand:code-d.debug",
+		"onCommand:code-d.uploadSelection",
+		"onCommand:code-d.insertDscanner",
+		"onCommand:code-d.rdmdCurrent",
+		"onCommand:code-d.generateCoverageReport",
+		"onCommand:code-d.showGCCalls",
+		"onCommand:dub.openSettingsEditor",
+		"onCommand:dub.closeSettingsEditor",
+		"onCommand:code-d.createProject"
 	],
 	"main": "./out/src/extension",
 	"extensionDependencies": [
@@ -314,6 +333,10 @@
 					"light": "./images/edit-source-inverse.svg",
 					"dark": "./images/edit-source.svg"
 				}
+			},
+			{
+				"command": "code-d.createProject",
+				"title": "code-d: Create new Project"
 			}
 		],
 		"jsonValidation": [
@@ -333,7 +356,8 @@
 		"request-progress": "^2.0.1",
 		"jsonc-parser": "^0.2.3",
 		"unzip": "^0.1.11",
-		"async": "^2.0.1"
+		"async": "^2.0.1",
+		"ncp": "^2.0.0"
 	},
 	"devDependencies": {
 		"typescript": "^1.8.10",

@@ -1,0 +1,62 @@
+[
+	{
+		"name": "Empty Console Application",
+		"detail": "An empty main function with some common includes",
+		"path": "EmptyConsole",
+		"dub": {}
+	},
+	{
+		"name": "Basic Console Application",
+		"detail": "A console application with command line arguments and config loading",
+		"path": "BasicConsole",
+		"dub": {}
+	},
+	{
+		"name": "Empty DlangUI Application",
+		"detail": "An empty cross-platform GUI application using DlangUI",
+		"path": "EmptyDlangUI",
+		"dub": {}
+	},
+	{
+		"name": "Empty GtkD Application",
+		"detail": "An empty GUI application using GtkD",
+		"path": "EmptyGTKD",
+		"dub": {}
+	},
+	{
+		"name": "Empty Web Server",
+		"detail": "An empty web server using vibe.d",
+		"path": "EmptyVibeServer",
+		"dub": {}
+	},
+	{
+		"name": "Basic Web Server",
+		"detail": "A web server using vibe.d containing a placeholder index template and session support",
+		"path": "BasicVibeServer",
+		"dub": {}
+	},
+	{
+		"name": "Empty OpenGL Application using SDL",
+		"detail": "An empty SDL window using OpenGL 3.2",
+		"path": "EmptyOpenGL_SDL",
+		"dub": {}
+	},
+	{
+		"name": "Empty Legacy OpenGL Application using SDL",
+		"detail": "A triangle in a SDL window using legacy OpenGL",
+		"path": "EmptyLegacyOpenGL_SDL",
+		"dub": {}
+	},
+	{
+		"name": "Empty Win32 Application",
+		"detail": "An empty window using the Win32 API",
+		"path": "EmptyWin32",
+		"dub": {}
+	},
+	{
+		"name": "Empty X11 Application",
+		"detail": "An empty window using xlib",
+		"path": "EmptyX11",
+		"dub": {}
+	}
+]

@@ -15,6 +15,7 @@ import { addSDLProviders } from "./sdl/sdl-contributions"
 import { DubEditor } from "./dub-editor"
 import * as ChildProcess from "child_process"
 import { setContext, compileDScanner, compileDfmt, compileDCD, downloadDub, fixConfigExePaths } from "./installer"
+import { showProjectCreator, performTemplateCopy, openFolderWithExtension } from "./project-creator"
 
 let diagnosticCollection: vscode.DiagnosticCollection;
 let oldLint: [vscode.Uri, vscode.Diagnostic[]][][] = [[], [], []];
@@ -52,6 +53,22 @@ export function getDubPath() {
 export function activate(context: vscode.ExtensionContext) {
 	extensionContext = context;
 	setContext(context);
+
+	if (context.globalState.get("restorePackageBackup", false)) {
+		context.globalState.update("restorePackageBackup", false);
+		var pkgPath = path.join(context.extensionPath, "package.json");
+		fs.readFile(pkgPath + ".bak", function (err, data) {
+			if (err)
+				return vscode.window.showErrorMessage("Failed to restore after reload! Please reinstall code-d if problems occur before reporting!");
+			fs.writeFile(pkgPath, data, function (err) {
+				if (err)
+					return vscode.window.showErrorMessage("Failed to restore after reload! Please reinstall code-d if problems occur before reporting!");
+				fs.unlink(pkgPath + ".bak", function (err) {
+					console.error(err);
+				});
+			});
+		});
+	}
 
 	{
 		var phobosPath = config().get("stdlibPath", ["/usr/include/dmd/druntime/import", "/usr/include/dmd/phobos"]);
@@ -499,6 +516,41 @@ export function activate(context: vscode.ExtensionContext) {
 		rdmdTerminal.show();
 		rdmdTerminal.sendText("rdmd " + args.join(" "));
 	}));
+
+	context.subscriptions.push(vscode.commands.registerCommand("code-d.createProject", () => {
+		showProjectCreator(context);
+	}));
+
+	if (context.globalState.get("create-template", "")) {
+		var id = context.globalState.get("create-template", "");
+		context.globalState.update("create-template", undefined);
+		fs.readFile(path.join(context.extensionPath, "templates", "info.json"), function (err, data) {
+			if (err)
+				return vscode.window.showErrorMessage("Failed to parse templates");
+			var templates = JSON.parse(data.toString());
+			for (var i = 0; i < templates.length; i++)
+				if (templates[i].path == id) {
+					fs.readdir(vscode.workspace.rootPath, function (err, files) {
+						if (files.length == 0)
+							performTemplateCopy(context, id, templates[i].dub, vscode.workspace.rootPath, function () {
+								vscode.commands.executeCommand("workbench.action.reloadWindow");
+							});
+						else
+							vscode.window.showWarningMessage("The current workspace is not empty!", "Select other Folder", "Merge into Folder").then(r => {
+								if (r == "Select other Folder") {
+									context.globalState.update("create-template", id);
+									openFolderWithExtension(context);
+								} else if (r == "Merge into Folder") {
+									performTemplateCopy(context, id, templates[i].dub, vscode.workspace.rootPath, function () {
+										vscode.commands.executeCommand("workbench.action.reloadWindow");
+									});
+								}
+							});
+					});
+					return;
+				}
+		});
+	}
 
 	context.subscriptions.push(vscode.commands.registerCommand("code-d.uploadSelection", () => {
 		if (vscode.window.activeTextEditor.selection.isEmpty)
