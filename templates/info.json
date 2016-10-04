@@ -15,7 +15,11 @@
 		"name": "Empty DlangUI Application",
 		"detail": "An empty cross-platform GUI application using DlangUI",
 		"path": "EmptyDlangUI",
-		"dub": {}
+		"dub": {
+			"dependencies": {
+				"dlangui": "~>0.9.7"
+			}
+		}
 	},
 	{
 		"name": "Empty GtkD Application",
