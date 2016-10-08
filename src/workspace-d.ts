@@ -15,6 +15,14 @@ function positionFromByteOffset(editor: vscode.TextDocument, byteOff: number): v
 	return editor.positionAt(new Buffer(editor.getText()).slice(0, byteOff).toString("utf8").length);
 }
 
+var mixinRegex = /-mixin-\d+$/;
+function fixMixinPath(path: string): string {
+	var match = mixinRegex.exec(path);
+	if (!match)
+		return path;
+	return path.slice(0, -match[0].length);
+}
+
 const TARGET_VERSION = [2, 7, 2];
 
 export class WorkspaceD extends EventEmitter implements
@@ -371,7 +379,7 @@ export class WorkspaceD extends EventEmitter implements
 				if (issues && issues.length)
 					issues.forEach(element => {
 						let range = new vscode.Range(Math.max(0, element.line - 1), element.column - 1, Math.max(0, element.line - 1), element.column + 500);
-						let uri = vscode.Uri.file(path.isAbsolute(element.file) ? element.file : path.join(this.projectRoot, element.file));
+						let uri = vscode.Uri.file(fixMixinPath(path.isAbsolute(element.file) ? element.file : path.join(this.projectRoot, element.file)));
 						let error = new vscode.Diagnostic(range, element.text, this.mapDubLintType(element.type));
 						let found = false;
 						diagnostics.forEach(element => {
