@@ -186,9 +186,12 @@ export class WorkspaceD extends EventEmitter implements
 				if (completions.type == "calltips") {
 					let help = new vscode.SignatureHelp();
 					if (completions.calltips && completions.calltips.length) {
+						let paramsCounts = [];
 						completions.calltips.forEach(element => {
 							let sig = new vscode.SignatureInformation(element);
 							let params = self.extractFunctionParameters(element);
+
+							paramsCounts.push(params.length - 1);
 
 							params.forEach(param => {
 								sig.parameters.push(new vscode.ParameterInformation(param));
@@ -198,7 +201,14 @@ export class WorkspaceD extends EventEmitter implements
 						});
 
 						let text = document.getText(new vscode.Range(new vscode.Position(0, 0), position));
-						help.activeParameter = Math.max(0, self.extractFunctionParameters(text).length - 1);
+						let extractedParams = self.extractFunctionParameters(text);
+						help.activeParameter = Math.max(0, extractedParams.length - 1);
+						let possibleFunctions = [];
+						for (var i = 0; i < paramsCounts.length; i++) {
+							if (paramsCounts[i] >= extractedParams.length - 1)
+								possibleFunctions.push(i);
+						}
+						help.activeSignature = possibleFunctions[0] || 0;
 					}
 
 					console.log("resolve");
