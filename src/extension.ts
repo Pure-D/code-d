@@ -81,28 +81,29 @@ export function activate(context: vscode.ExtensionContext) {
 		};
 		var i = 0;
 		var fn = function () {
-			fs.exists(phobosPath[i], function (exists) {
-				if (exists) {
-					fs.readdir(phobosPath[i], function (err, files) {
-						if (files.indexOf("std") != -1)
-							foundStd = true;
-						if (files.indexOf("core") != -1)
-							foundCore = true;
-						if (++i < phobosPath.length)
-							fn();
-						else {
-							if (!foundStd && !foundCore)
-								vscode.window.showWarningMessage("Your d.stdlibPath setting doesn't contain a path to phobos or druntime. Auto completion might lack some symbols!", "Open User Settings").then(userSettings);
-							else if (!foundStd)
-								vscode.window.showWarningMessage("Your d.stdlibPath setting doesn't contain a path to phobos. Auto completion might lack some symbols!", "Open User Settings").then(userSettings);
-							else if (!foundCore)
-								vscode.window.showWarningMessage("Your d.stdlibPath setting doesn't contain a path to druntime. Auto completion might lack some symbols!", "Open User Settings").then(userSettings);
-						}
-					});
-				}
-				else
-					vscode.window.showWarningMessage("A path in your d.stdlibPath setting doesn't exist. Auto completion might lack some symbols!", "Open User Settings").then(userSettings);
-			});
+			if (typeof phobosPath[i] == "string")
+				fs.exists(phobosPath[i], function (exists) {
+					if (exists) {
+						fs.readdir(phobosPath[i], function (err, files) {
+							if (files.indexOf("std") != -1)
+								foundStd = true;
+							if (files.indexOf("core") != -1)
+								foundCore = true;
+							if (++i < phobosPath.length)
+								fn();
+							else {
+								if (!foundStd && !foundCore)
+									vscode.window.showWarningMessage("Your d.stdlibPath setting doesn't contain a path to phobos or druntime. Auto completion might lack some symbols!", "Open User Settings").then(userSettings);
+								else if (!foundStd)
+									vscode.window.showWarningMessage("Your d.stdlibPath setting doesn't contain a path to phobos. Auto completion might lack some symbols!", "Open User Settings").then(userSettings);
+								else if (!foundCore)
+									vscode.window.showWarningMessage("Your d.stdlibPath setting doesn't contain a path to druntime. Auto completion might lack some symbols!", "Open User Settings").then(userSettings);
+							}
+						});
+					}
+					else
+						vscode.window.showWarningMessage("A path in your d.stdlibPath setting doesn't exist. Auto completion might lack some symbols!", "Open User Settings").then(userSettings);
+				});
 		};
 		fn();
 	}
