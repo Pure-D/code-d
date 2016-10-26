@@ -1,0 +1,8 @@
+{
+  "ambientDependencies": {
+    "node": "registry:dt/node#6.0.0+20161019125345"
+  },
+  "globalDependencies": {
+    "node": "registry:env/node#6.0.0+20161019193037"
+  }
+}

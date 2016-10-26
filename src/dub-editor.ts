@@ -98,7 +98,7 @@ function setPath(content: any, path: string, value: JSON) {
 export class DubEditor implements vscode.TextDocumentContentProvider {
 	private editorTemplate: string;
 	private editorPath: string;
-	private asyncTimeout: number;
+	private asyncTimeout: NodeJS.Timer;
 	private asyncBuffer: JSON;
 	private asyncStarted: boolean;
 

@@ -875,7 +875,7 @@ export class WorkspaceD extends EventEmitter implements
 		return false;
 	}
 
-	public runCheckTimeout = -1;
+	public runCheckTimeout: NodeJS.Timer;
 	public workspaced: boolean = true;
 	public dubReady: boolean = false;
 	public dcdReady: boolean = false;
