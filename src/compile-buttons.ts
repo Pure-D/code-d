@@ -2,7 +2,7 @@ import * as vscode from "vscode"
 import * as ChildProcess from "child_process"
 import * as path from "path"
 import { WorkspaceD } from "./workspace-d"
-import { getDubPath } from "./extension"
+import { config } from "./extension"
 
 export class CompileButtons implements vscode.Disposable {
 	buildButton: vscode.StatusBarItem;
@@ -102,7 +102,7 @@ export class CompileButtons implements vscode.Disposable {
 				this.debugValuesCache = values;
 				let args = [cmd, "--config=" + values[0], "--arch=" + values[1], "--build=" + values[2], "--compiler=" + values[3]];
 				this.output.appendLine("> dub " + args.join(" "));
-				this.child = ChildProcess.spawn(getDubPath(), args, { cwd: vscode.workspace.rootPath, detached: true });
+				this.child = ChildProcess.spawn(config().get("dubPath", "dub"), args, { cwd: vscode.workspace.rootPath, detached: true });
 				this.child.stderr.on("data", this.handleData.bind(this));
 				this.child.stdout.on("data", this.handleData.bind(this));
 				this.child.once("close", (code) => {
@@ -129,7 +129,7 @@ export class CompileButtons implements vscode.Disposable {
 		this.debugButton.show();
 		if (this.isDebug && code == 0) {
 			this.isDebug = false;
-			var proc = ChildProcess.spawn(getDubPath(),
+			var proc = ChildProcess.spawn(config().get("dubPath", "dub"),
 				[
 					"describe",
 					"--config=" + this.debugValuesCache[0],

@@ -9,6 +9,10 @@ var async = require('async');
 
 var extensionContext: vscode.ExtensionContext;
 
+export function config() {
+	return vscode.workspace.getConfiguration("d");
+}
+
 export function setContext(context: vscode.ExtensionContext) {
 	extensionContext = context;
 }
@@ -46,7 +50,7 @@ export function installWorkspaceD() {
 			output.appendLine("Extracting workspace-d");
 			if (ext == ".zip") {
 				fs.createReadStream(outputPath).pipe(unzip.Extract({ path: outputFolder })).on("finish", () => {
-					extensionContext.globalState.update("workspace-d_path", finalDestination);
+					config().update("workspacedPath", finalDestination, true);
 					output.appendLine("Deleting " + outputPath);
 					fs.unlink(outputPath);
 					vscode.window.showInformationMessage("workspace-d successfully installed", "Reload").then((r) => {
@@ -65,7 +69,7 @@ export function installWorkspaceD() {
 							if (r == "Compile from source")
 								compileWorkspaceD();
 						});
-					extensionContext.globalState.update("workspace-d_path", finalDestination);
+					config().update("workspacedPath", finalDestination, true);
 					output.appendLine("Deleting " + outputPath);
 					fs.unlink(outputPath);
 					vscode.window.showInformationMessage("workspace-d successfully installed", "Reload").then((r) => {
@@ -120,7 +124,7 @@ export function downloadDub() {
 			output.appendLine("Extracting dub");
 			if (ext == ".zip") {
 				fs.createReadStream(outputPath).pipe(unzip.Extract({ path: outputFolder })).on("finish", () => {
-					extensionContext.globalState.update("dub_path", finalDestination);
+					config().update("dubPath", finalDestination, true);
 					output.appendLine("Deleting " + outputPath);
 					fs.unlink(outputPath);
 					vscode.window.showInformationMessage("dub successfully installed", "Reload").then((r) => {
@@ -136,7 +140,7 @@ export function downloadDub() {
 				}).on("exit", function (code) {
 					if (code != 0)
 						return vscode.window.showErrorMessage("Failed to extract .tar.gz release");
-					extensionContext.globalState.update("dub_path", finalDestination);
+					config().update("dubPath", finalDestination, true);
 					output.appendLine("Deleting " + outputPath);
 					fs.unlink(outputPath);
 					vscode.window.showInformationMessage("dub successfully installed", "Reload").then((r) => {
@@ -163,7 +167,7 @@ export function compileWorkspaceD() {
 		], function () {
 			var finalDestination = path.join(outputFolder, "workspace-d", "workspace-d" + (process.platform == "win32" ? ".exe" : ""));
 
-			extensionContext.globalState.update("workspace-d_path", finalDestination);
+			config().update("workspacedPath", finalDestination, true);
 			vscode.window.showInformationMessage("workspace-d successfully installed", "Reload").then((r) => {
 				if (r == "Reload")
 					vscode.commands.executeCommand("workbench.action.reloadWindow");
@@ -183,7 +187,7 @@ export function compileDScanner() {
 		], function () {
 			var finalDestination = path.join(outputFolder, "Dscanner", "bin", "dscanner" + (process.platform == "win32" ? ".exe" : ""));
 
-			extensionContext.globalState.update("dscanner_path", finalDestination);
+			config().update("dscannerPath", finalDestination, true);
 			vscode.window.showInformationMessage("Dscanner successfully installed", "Reload").then((r) => {
 				if (r == "Reload")
 					vscode.commands.executeCommand("workbench.action.reloadWindow");
@@ -203,7 +207,7 @@ export function compileDfmt() {
 		], function () {
 			var finalDestination = path.join(outputFolder, "dfmt", "bin", "dfmt" + (process.platform == "win32" ? ".exe" : ""));
 
-			extensionContext.globalState.update("dfmt_path", finalDestination);
+			config().update("dfmtPath", finalDestination, true);
 			vscode.window.showInformationMessage("dfmt successfully installed", "Reload").then((r) => {
 				if (r == "Reload")
 					vscode.commands.executeCommand("workbench.action.reloadWindow");
@@ -224,8 +228,8 @@ export function compileDCD() {
 			var finalDestinationClient = path.join(outputFolder, "DCD", "bin", "dcd-client" + (process.platform == "win32" ? ".exe" : ""));
 			var finalDestinationServer = path.join(outputFolder, "DCD", "bin", "dcd-server" + (process.platform == "win32" ? ".exe" : ""));
 
-			extensionContext.globalState.update("dcdClient_path", finalDestinationClient);
-			extensionContext.globalState.update("dcdServer_path", finalDestinationServer);
+			config().update("dcdClientPath", finalDestinationClient, true);
+			config().update("dcdServerPath", finalDestinationServer, true);
 			vscode.window.showInformationMessage("DCD successfully installed", "Reload").then((r) => {
 				if (r == "Reload")
 					vscode.commands.executeCommand("workbench.action.reloadWindow");
@@ -272,21 +276,5 @@ export function compileDependency(cwd, name, gitPath, commands, callback) {
 			output.appendLine("Done compiling");
 			callback();
 		});
-	});
-}
-
-export function fixConfigExePaths(cb) {
-	var checks = ["workspace-d_path", "dub_path", "dscanner_path", "dfmt_path", "dcdClient_path", "dcdServer_path"];
-	async.each(checks, function (path, cb) {
-		var val = <string>extensionContext.globalState.get(path);
-		if (val) {
-			fs.exists(val, function (exists) {
-				if (!exists)
-					extensionContext.globalState.update(path, undefined).then(() => { cb(); });
-			});
-		}
-		else cb();
-	}, function (err) {
-		cb();
 	});
 }

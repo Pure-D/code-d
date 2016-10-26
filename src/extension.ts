@@ -14,7 +14,7 @@ import { addJSONProviders } from "./json-contributions"
 import { addSDLProviders } from "./sdl/sdl-contributions"
 import { DubEditor } from "./dub-editor"
 import * as ChildProcess from "child_process"
-import { setContext, compileDScanner, compileDfmt, compileDCD, downloadDub, fixConfigExePaths } from "./installer"
+import { setContext, compileDScanner, compileDfmt, compileDCD, downloadDub } from "./installer"
 import { showProjectCreator, performTemplateCopy, openFolderWithExtension } from "./project-creator"
 
 let diagnosticCollection: vscode.DiagnosticCollection;
@@ -24,30 +24,6 @@ var extensionContext: vscode.ExtensionContext;
 
 export function config() {
 	return vscode.workspace.getConfiguration("d");
-}
-
-export function getWorkspaceDPath() {
-	return extensionContext.globalState.get("workspace-d_path", config().get("workspacedPath", "workspace-d"));
-}
-
-export function getDCDClientPath() {
-	return extensionContext.globalState.get("dcdClient_path", config().get("dcdClientPath", "dcd-client"));
-}
-
-export function getDCDServerPath() {
-	return extensionContext.globalState.get("dcdServer_path", config().get("dcdServerPath", "dcd-server"));
-}
-
-export function getDfmtPath() {
-	return extensionContext.globalState.get("dfmt_path", config().get("dfmtPath", "dfmt"));
-}
-
-export function getDscannerPath() {
-	return extensionContext.globalState.get("dscanner_path", config().get("dscannerPath", "dscanner"));
-}
-
-export function getDubPath() {
-	return extensionContext.globalState.get("dub_path", config().get("dubPath", "dub"));
 }
 
 export function activate(context: vscode.ExtensionContext) {
@@ -142,48 +118,73 @@ export function activate(context: vscode.ExtensionContext) {
 		context.subscriptions.push(vscode.languages.registerWorkspaceSymbolProvider(workspaced));
 
 		{
-			fixConfigExePaths(function () {
-				ChildProcess.spawn(getDscannerPath(), ["--version"], { cwd: vscode.workspace.rootPath, env: env }).on("error", function (err) {
-					if (err && (<any>err).code == "ENOENT") {
-						vscode.window.showErrorMessage("dscanner is not installed or points to a folder", "Compile dscanner", "Open User Settings").then(s => {
-							if (s == "Open User Settings")
-								vscode.commands.executeCommand("workbench.action.openGlobalSettings");
-							else if (s == "Compile dscanner")
-								compileDScanner();
-						});
-					}
-				});
-				ChildProcess.spawn(getDfmtPath(), ["--version"], { cwd: vscode.workspace.rootPath, env: env }).on("error", function (err) {
-					if (err && (<any>err).code == "ENOENT") {
-						vscode.window.showErrorMessage("dfmt is not installed or points to a folder", "Compile dfmt", "Open User Settings").then(s => {
-							if (s == "Open User Settings")
-								vscode.commands.executeCommand("workbench.action.openGlobalSettings");
-							else if (s == "Compile dfmt")
-								compileDfmt();
-						});
-					}
-				});
-				// client is good enough
-				ChildProcess.spawn(getDCDClientPath(), ["--version"], { cwd: vscode.workspace.rootPath, env: env }).on("error", function (err) {
-					if (err && (<any>err).code == "ENOENT") {
-						vscode.window.showErrorMessage("DCD is not installed or points to a folder", "Compile DCD", "Open User Settings").then(s => {
-							if (s == "Open User Settings")
-								vscode.commands.executeCommand("workbench.action.openGlobalSettings");
-							else if (s == "Compile DCD")
-								compileDCD();
-						});
-					}
-				});
-				ChildProcess.spawn(getDubPath(), ["--version"], { cwd: vscode.workspace.rootPath, env: env }).on("error", function (err) {
-					if (err && (<any>err).code == "ENOENT") {
-						vscode.window.showErrorMessage("dub is not installed or points to a folder", "Download dub", "Open User Settings").then(s => {
-							if (s == "Open User Settings")
-								vscode.commands.executeCommand("workbench.action.openGlobalSettings");
-							else if (s == "Download dub")
-								downloadDub();
-						});
-					}
-				});
+			var oldPath;
+			/* Upgrade from old version */
+			if ((oldPath = extensionContext.globalState.get("workspace-d_path", ""))) {
+				config().update("workspacedPath", oldPath);
+				extensionContext.globalState.update("workspace-d_path", "");
+			}
+			if ((oldPath = extensionContext.globalState.get("dcdClient_path", ""))) {
+				config().update("dcdClientPath", oldPath);
+				extensionContext.globalState.update("dcdClient_path", "");
+			}
+			if ((oldPath = extensionContext.globalState.get("dcdServer_path", ""))) {
+				config().update("dcdServerPath", oldPath);
+				extensionContext.globalState.update("dcdServer_path", "");
+			}
+			if ((oldPath = extensionContext.globalState.get("dfmt_path", ""))) {
+				config().update("dfmtPath", oldPath);
+				extensionContext.globalState.update("dfmt_path", "");
+			}
+			if ((oldPath = extensionContext.globalState.get("dscanner_path", ""))) {
+				config().update("dscannerPath", oldPath);
+				extensionContext.globalState.update("dscanner_path", "");
+			}
+			if ((oldPath = extensionContext.globalState.get("dub_path", ""))) {
+				config().update("dubPath", oldPath);
+				extensionContext.globalState.update("dub_path", "");
+			}
+
+			ChildProcess.spawn(config().get("dscannerPath", "dscanner"), ["--version"], { cwd: vscode.workspace.rootPath, env: env }).on("error", function (err) {
+				if (err && (<any>err).code == "ENOENT") {
+					vscode.window.showErrorMessage("dscanner is not installed or points to a folder", "Compile dscanner", "Open User Settings").then(s => {
+						if (s == "Open User Settings")
+							vscode.commands.executeCommand("workbench.action.openGlobalSettings");
+						else if (s == "Compile dscanner")
+							compileDScanner();
+					});
+				}
+			});
+			ChildProcess.spawn(config().get("dfmtPath", "dfmt"), ["--version"], { cwd: vscode.workspace.rootPath, env: env }).on("error", function (err) {
+				if (err && (<any>err).code == "ENOENT") {
+					vscode.window.showErrorMessage("dfmt is not installed or points to a folder", "Compile dfmt", "Open User Settings").then(s => {
+						if (s == "Open User Settings")
+							vscode.commands.executeCommand("workbench.action.openGlobalSettings");
+						else if (s == "Compile dfmt")
+							compileDfmt();
+					});
+				}
+			});
+			// client is good enough
+			ChildProcess.spawn(config().get("dcdClientPath", "dcd-client"), ["--version"], { cwd: vscode.workspace.rootPath, env: env }).on("error", function (err) {
+				if (err && (<any>err).code == "ENOENT") {
+					vscode.window.showErrorMessage("DCD is not installed or points to a folder", "Compile DCD", "Open User Settings").then(s => {
+						if (s == "Open User Settings")
+							vscode.commands.executeCommand("workbench.action.openGlobalSettings");
+						else if (s == "Compile DCD")
+							compileDCD();
+					});
+				}
+			});
+			ChildProcess.spawn(config().get("dubPath", "dub"), ["--version"], { cwd: vscode.workspace.rootPath, env: env }).on("error", function (err) {
+				if (err && (<any>err).code == "ENOENT") {
+					vscode.window.showErrorMessage("dub is not installed or points to a folder", "Download dub", "Open User Settings").then(s => {
+						if (s == "Open User Settings")
+							vscode.commands.executeCommand("workbench.action.openGlobalSettings");
+						else if (s == "Download dub")
+							downloadDub();
+					});
+				}
 			});
 		}
 

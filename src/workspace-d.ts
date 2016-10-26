@@ -5,7 +5,7 @@ import * as fs from "fs"
 import { EventEmitter } from "events"
 import { DlangUIHandler } from "./dlangui"
 import { installWorkspaceD } from "./installer"
-import { config, getDCDClientPath, getDCDServerPath, getDfmtPath, getDscannerPath, getWorkspaceDPath } from "./extension"
+import { config } from "./extension"
 
 function byteOffsetAt(editor: vscode.TextDocument, pos: vscode.Position): number {
 	return Buffer.byteLength(editor.getText(new vscode.Range(new vscode.Position(0, 0), pos)), "utf8");
@@ -49,7 +49,7 @@ export class WorkspaceD extends EventEmitter implements
 			return;
 		let self = this;
 		this.workspaced = true;
-		let path = getWorkspaceDPath();
+		let path = config().get("workspacedPath", "workspace-d");
 		this.instance = ChildProcess.spawn(path, [], { cwd: this.projectRoot, env: this.processEnv });
 		this.totalData = new Buffer(0);
 		this.instance.stderr.on("data", function (chunk) {
@@ -743,7 +743,7 @@ export class WorkspaceD extends EventEmitter implements
 	}
 
 	public setupDScanner() {
-		this.request({ cmd: "load", components: ["dscanner"], dir: this.projectRoot, dscannerPath: getDscannerPath() }).then((data) => {
+		this.request({ cmd: "load", components: ["dscanner"], dir: this.projectRoot, dscannerPath: config().get("dscannerPath", "dscanner") }).then((data) => {
 			console.log("DScanner is ready");
 			this.emit("dscanner-ready");
 			this.dscannerReady = true;
@@ -757,8 +757,8 @@ export class WorkspaceD extends EventEmitter implements
 				components: ["dcd"],
 				dir: this.projectRoot,
 				autoStart: false,
-				clientPath: getDCDClientPath(),
-				serverPath: getDCDServerPath()
+				clientPath: config().get("dcdClientPath", "dcd-client"),
+				serverPath: config().get("dcdServerPath", "dcd-server")
 			}).then((data) => {
 				this.startDCD();
 			}, (err) => {
@@ -767,7 +767,7 @@ export class WorkspaceD extends EventEmitter implements
 	}
 
 	public setupDfmt() {
-		this.request({ cmd: "load", components: ["dfmt"], dir: this.projectRoot, dfmtPath: getDfmtPath() }).then((data) => {
+		this.request({ cmd: "load", components: ["dfmt"], dir: this.projectRoot, dfmtPath: config().get("dfmtPath", "dfmt") }).then((data) => {
 			console.log("Dfmt is ready");
 			this.emit("dfmt-ready");
 			this.dfmtReady = true;
