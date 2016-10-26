@@ -17,6 +17,7 @@
 		"Languages",
 		"Snippets",
 		"Linters",
+		"Formatters",
 		"Other"
 	],
 	"activationEvents": [
