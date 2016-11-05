@@ -23,7 +23,7 @@ function fixMixinPath(path: string): string {
 	return path.slice(0, -match[0].length);
 }
 
-const TARGET_VERSION = [2, 8, 0];
+export const TARGET_VERSION = [2, 8, 0];
 
 export class WorkspaceD extends EventEmitter implements
 	vscode.CompletionItemProvider,
@@ -657,13 +657,23 @@ export class WorkspaceD extends EventEmitter implements
 	}
 
 	public checkVersion() {
-		this.request({ cmd: "version" }).then(version => {
+		this.request({ cmd: "version" }).then((version) => {
+			let callback = (r) => {
+				if (r == "Install newest version")
+					installWorkspaceD();
+			};
 			if (version.major < TARGET_VERSION[0])
-				return vscode.window.showErrorMessage("workspace-d is outdated! Please update to continue using this plugin. (target=" + formatVersion(TARGET_VERSION) + ", workspaced=" + formatVersion([version.major, version.minor, version.patch]) + ")");
+				return vscode.window.showErrorMessage("workspace-d is outdated! Please update to continue using this plugin. (target="
+					+ formatVersion(TARGET_VERSION) + ", workspaced=" + formatVersion([version.major, version.minor, version.patch]) + ")",
+					"Install newest version").then(callback);
 			if (version.major == TARGET_VERSION[0] && version.minor < TARGET_VERSION[1])
-				vscode.window.showWarningMessage("workspace-d might be outdated! Please update if things are not working as expected. (target=" + formatVersion(TARGET_VERSION) + ", workspaced=" + formatVersion([version.major, version.minor, version.patch]) + ")");
+				vscode.window.showWarningMessage("workspace-d might be outdated! Please update if things are not working as expected. (target="
+					+ formatVersion(TARGET_VERSION) + ", workspaced=" + formatVersion([version.major, version.minor, version.patch]) + ")",
+					"Install newest version").then(callback);
 			if (version.major == TARGET_VERSION[0] && version.minor == TARGET_VERSION[1] && version.patch < TARGET_VERSION[2])
-				vscode.window.showInformationMessage("workspace-d has a new optional update! Please update before submitting a bug report. (target=" + formatVersion(TARGET_VERSION) + ", workspaced=" + formatVersion([version.major, version.minor, version.patch]) + ")");
+				vscode.window.showInformationMessage("workspace-d has a new optional update! Please update before submitting a bug report. (target="
+					+ formatVersion(TARGET_VERSION) + ", workspaced=" + formatVersion([version.major, version.minor, version.patch]) + ")",
+					"Install newest version").then(callback);
 			this.setupDub();
 		}, () => {
 			vscode.window.showErrorMessage("Could not identify workspace-d version. Please update workspace-d!");
