@@ -418,7 +418,8 @@
 		"jsonc-parser": "^0.2.3",
 		"unzip": "^0.1.11",
 		"async": "^2.1.2",
-		"ncp": "^2.0.0"
+		"ncp": "^2.0.0",
+		"rmdir": "^1.2.0"
 	},
 	"devDependencies": {
 		"typescript": "^2.0.6",

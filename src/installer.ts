@@ -2,10 +2,12 @@ import * as ChildProcess from "child_process"
 import * as vscode from "vscode"
 import * as path from "path"
 import * as fs from "fs"
+import { TARGET_VERSION } from "./workspace-d"
 var request = require("request");
 var unzip = require("unzip");
-var progress = require('request-progress');
-var async = require('async');
+var progress = require("request-progress");
+var async = require("async");
+var rmdir = require("rmdir");
 
 var extensionContext: vscode.ExtensionContext;
 
@@ -21,11 +23,11 @@ export function installWorkspaceD() {
 	var url = "";
 	var ext = "";
 	if (process.platform == "linux" && process.arch == "x64") {
-		url = "https://github.com/Pure-D/workspace-d/releases/download/v2.7.2/workspace-d_2.7.2-linux-x86_64.tar.xz";
+		url = "https://github.com/Pure-D/workspace-d/releases/download/v" + TARGET_VERSION.join(".") + "/workspace-d_" + TARGET_VERSION.join(".") + "-linux-x86_64.tar.xz";
 		ext = ".tar.xz";
 	}
 	else if (process.platform == "win32") {
-		url = "https://github.com/Pure-D/workspace-d/releases/download/v2.7.2/workspace-d-2.7.2-windows.zip";
+		url = "https://github.com/Pure-D/workspace-d/releases/download/v" + TARGET_VERSION.join(".") + "/workspace-d-" + TARGET_VERSION.join(".") + "-windows.zip";
 		ext = ".zip";
 	}
 	else
@@ -42,6 +44,8 @@ export function installWorkspaceD() {
 	fs.exists(outputFolder, function (exists) {
 		if (!exists)
 			fs.mkdirSync(outputFolder);
+		if (fs.existsSync(finalDestination))
+			fs.unlinkSync(finalDestination);
 		output.appendLine("Downloading from " + url + " into " + outputFolder);
 		var outputPath = path.join(outputFolder, "workspace-d" + ext);
 		progress(request(url)).on("progress", (state) => {
@@ -260,21 +264,33 @@ export function compileDependency(cwd, name, gitPath, commands, callback) {
 	var error = function (err) {
 		output.appendLine("Failed to install " + name + " (Error code " + err + ")");
 	};
-	spawnCommand(output, "git", ["clone", gitPath, name], { cwd: cwd }, (err) => {
-		if (err !== 0)
-			return error(err);
-		var newCwd = path.join(cwd, name);
-		async.eachSeries(commands, function (command, cb) {
-			spawnCommand(output, command[0], command[1], {
-				cwd: newCwd
-			}, function (err) {
-				cb(err);
-			});
-		}, function (err) {
-			if (err)
+	var newCwd = path.join(cwd, name);
+	var startCompile = () => {
+		spawnCommand(output, "git", ["clone", gitPath, name], { cwd: cwd }, (err) => {
+			if (err !== 0)
 				return error(err);
-			output.appendLine("Done compiling");
-			callback();
+			async.eachSeries(commands, function (command, cb) {
+				spawnCommand(output, command[0], command[1], {
+					cwd: newCwd
+				}, function (err) {
+					cb(err);
+				});
+			}, function (err) {
+				if (err)
+					return error(err);
+				output.appendLine("Done compiling");
+				callback();
+			});
 		});
-	});
+	};
+	if (fs.existsSync(newCwd)) {
+		output.appendLine("Removing old version");
+		rmdir(newCwd, function (err: Error, dirs, files) {
+			if (err)
+				output.appendLine(err.toString());
+			output.appendLine("Removed old version");
+			startCompile();
+		});
+	}
+	else startCompile();
 }
