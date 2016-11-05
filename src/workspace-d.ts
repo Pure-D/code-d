@@ -23,7 +23,7 @@ function fixMixinPath(path: string): string {
 	return path.slice(0, -match[0].length);
 }
 
-const TARGET_VERSION = [2, 7, 2];
+const TARGET_VERSION = [2, 8, 0];
 
 export class WorkspaceD extends EventEmitter implements
 	vscode.CompletionItemProvider,
@@ -343,7 +343,41 @@ export class WorkspaceD extends EventEmitter implements
 		return new Promise((resolve, reject) => {
 			if (!self.dfmtReady)
 				return resolve([]);
-			self.request({ cmd: "dfmt", code: document.getText() }).then((formatted) => {
+			var request: { cmd: string, code: string, arguments?: string[] } = {
+				cmd: "dfmt",
+				code: document.getText()
+			};
+			if (config().get("overrideDfmtEditorconfig", true)) {
+				var dfmt = vscode.workspace.getConfiguration("dfmt");
+				var maxLineLength = 120;
+				var softMaxLineLength = 80;
+				var rulers = vscode.workspace.getConfiguration("editor").get<number[]>("rulers", []);
+				if (rulers.length == 1) {
+					maxLineLength = rulers[0];
+					softMaxLineLength = maxLineLength - 40;
+				}
+				else if (rulers.length >= 2) {
+					maxLineLength = rulers[rulers.length - 1];
+					softMaxLineLength = rulers[rulers.length - 2];
+				}
+				request.arguments = [
+					"--align_switch_statements", dfmt.get("alignSwitchStatements", true).toString(),
+					"--brace_style", dfmt.get("braceStyle", "allman"),
+					"--end_of_line", document.getText(document.lineAt(0).rangeIncludingLineBreak).endsWith("\r\n") ? "crlf" : "lf",
+					"--indent_size", options.tabSize.toString(),
+					"--indent_style", options.insertSpaces ? "space" : "tab",
+					"--max_line_length", maxLineLength.toString(),
+					"--soft_max_line_length", softMaxLineLength.toString(),
+					"--outdent_attributes", dfmt.get("outdentAttributes", true).toString(),
+					"--space_after_cast", dfmt.get("spaceAfterCast", true).toString(),
+					"--split_operator_at_line_end", dfmt.get("splitOperatorAtLineEnd", false).toString(),
+					"--tab_width", options.tabSize.toString(),
+					"--selective_import_space", dfmt.get("selectiveImportSpace", true).toString(),
+					"--compact_labeled_statements", dfmt.get("compactLabeledStatements", true).toString(),
+					"--template_constraint_style", dfmt.get("templateConstraintStyle", "conditional_newline_indent")
+				];
+			}
+			self.request(request).then((formatted) => {
 				let lastLine = document.lineCount;
 				let lastLineLastCol = document.lineAt(lastLine - 1).range.end.character;
 				let range = new vscode.Range(0, 0, lastLine - 1, lastLineLastCol);

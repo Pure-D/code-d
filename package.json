@@ -234,6 +234,62 @@
 					"type": "boolean",
 					"default": false,
 					"description": "Disables most code-d features. Intended for debugging/working on new features with lots of vscode restarts"
+				},
+				"d.overrideDfmtEditorconfig": {
+					"type": "boolean",
+					"default": true,
+					"description": "Uses dfmt config options & vscode editor config instead of .editorconfig because dfmt seems to be quite buggy with them."
+				},
+				"dfmt.alignSwitchStatements": {
+					"type": "boolean",
+					"default": true,
+					"description": "Not yet implemented (on dfmt side)"
+				},
+				"dfmt.braceStyle": {
+					"type": "string",
+					"enum": [
+						"allman",
+						"otbs",
+						"stroustrup"
+					],
+					"default": "allman",
+					"description": "See Wikipedia https://en.wikipedia.org/wiki/Brace_style"
+				},
+				"dfmt.outdentAttributes": {
+					"type": "boolean",
+					"default": true,
+					"description": "Not yet implemented (on dfmt side)"
+				},
+				"dfmt.spaceAfterCast": {
+					"type": "boolean",
+					"default": true,
+					"description": "Insert space after the closing paren of a cast expression."
+				},
+				"dfmt.splitOperatorAtLineEnd": {
+					"type": "boolean",
+					"default": false,
+					"description": "Place operators on the end of the previous line when splitting lines."
+				},
+				"dfmt.selectiveImportSpace": {
+					"type": "boolean",
+					"default": true,
+					"description": "Insert space after the module name and before the : for selective imports."
+				},
+				"dfmt.compactLabeledStatements": {
+					"type": "boolean",
+					"default": true,
+					"description": "Place labels on the same line as the labeled switch, for, foreach, or while statement."
+				},
+				"dfmt.templateConstraintStyle": {
+					"type": "string",
+					"enum": [
+						"conditional_newline_indent",
+						"conditional_newline",
+						"always_newline",
+						"always_newline_indent"
+					],
+					"default": "conditional_newline_indent",
+					"description": "Control the formatting of template constraints."
 				}
 			}
 		},
