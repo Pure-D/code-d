@@ -247,24 +247,27 @@ export function activate(context: vscode.ExtensionContext) {
 		}, null, context.subscriptions);
 
 		vscode.workspace.onDidSaveTextDocument(document => {
-			if (document.languageId != "d")
-				return;
-			version = document.version;
+			if (document.languageId == "d" || document.languageId == "diet")
+				version = document.version;
 			let target = version;
-			if (config().get("enableLinting", true))
-				workspaced.lint(document).then((errors: [vscode.Uri, vscode.Diagnostic[]][]) => {
-					if (target == version) {
-						oldLint[0] = errors;
-						buildErrors();
-					}
-				});
-			if (config().get("enableDubLinting", true))
-				workspaced.dubBuild(document).then((errors: [vscode.Uri, vscode.Diagnostic[]][]) => {
-					if (target == version) {
-						oldLint[1] = errors;
-						buildErrors();
-					}
-				});
+			if (document.languageId == "d") {
+				if (config().get("enableLinting", true))
+					workspaced.lint(document).then((errors: [vscode.Uri, vscode.Diagnostic[]][]) => {
+						if (target == version) {
+							oldLint[0] = errors;
+							buildErrors();
+						}
+					});
+			}
+			if (document.languageId == "d" || document.languageId == "diet") {
+				if (config().get("enableDubLinting", true))
+					workspaced.dubBuild(document).then((errors: [vscode.Uri, vscode.Diagnostic[]][]) => {
+						if (target == version) {
+							oldLint[1] = errors;
+							buildErrors();
+						}
+					});
+			}
 		}, null, context.subscriptions);
 		context.subscriptions.push(vscode.commands.registerCommand("code-d.switchConfiguration", () => {
 			vscode.window.showQuickPick(workspaced.listConfigurations()).then((config) => {
