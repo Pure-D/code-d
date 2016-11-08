@@ -16,11 +16,32 @@ function positionFromByteOffset(editor: vscode.TextDocument, byteOff: number): v
 }
 
 var mixinRegex = /-mixin-\d+$/;
-function fixMixinPath(path: string): string {
-	var match = mixinRegex.exec(path);
-	if (!match)
-		return path;
-	return path.slice(0, -match[0].length);
+function fixPath(pathStr: string, projectRoot: string, stringImportPaths: string[]): string {
+	var match = mixinRegex.exec(pathStr);
+	if (match)
+		pathStr = pathStr.slice(0, -match[0].length);
+	var absPath = path.isAbsolute(pathStr) ? pathStr : path.join(projectRoot, pathStr);
+	if (pathStr.endsWith(".d"))
+		pathStr = absPath;
+	else if (!path.isAbsolute(pathStr)) {
+		var found = false;
+		for (var i = 0; i < stringImportPaths.length; i++) {
+			var importPath = stringImportPaths[i];
+			if (!path.isAbsolute(importPath))
+				importPath = path.join(projectRoot, importPath);
+			var modPath = path.join(importPath, pathStr);
+			if (fs.existsSync(modPath)) {
+				pathStr = modPath;
+				found = true;
+				break;
+			}
+		}
+		if (!found)
+			pathStr = absPath;
+	}
+	else
+		pathStr = absPath;
+	return pathStr;
 }
 
 export const TARGET_VERSION = [2, 8, 0];
@@ -418,26 +439,28 @@ export class WorkspaceD extends EventEmitter implements
 		return new Promise((resolve, reject) => {
 			if (!this.dubReady)
 				return resolve([]);
-			this.request({ cmd: "dub", subcmd: "build" }).then((issues: { line: number, column: number, file: string, type: number, text: string }[]) => {
-				let diagnostics: [vscode.Uri, vscode.Diagnostic[]][] = [];
-				if (issues && issues.length)
-					issues.forEach(element => {
-						let range = new vscode.Range(Math.max(0, element.line - 1), element.column - 1, Math.max(0, element.line - 1), element.column + 500);
-						let uri = vscode.Uri.file(fixMixinPath(path.isAbsolute(element.file) ? element.file : path.join(this.projectRoot, element.file)));
-						let error = new vscode.Diagnostic(range, element.text, this.mapDubLintType(element.type));
-						let found = false;
-						diagnostics.forEach(element => {
-							if (element[0].fsPath == uri.fsPath) {
-								found = true;
-								element[1].push(error);
-							}
+			this.listStringImports().then((stringImportPaths) => {
+				this.request({ cmd: "dub", subcmd: "build" }).then((issues: { line: number, column: number, file: string, type: number, text: string }[]) => {
+					let diagnostics: [vscode.Uri, vscode.Diagnostic[]][] = [];
+					if (issues && issues.length)
+						issues.forEach(element => {
+							let range = new vscode.Range(Math.max(0, element.line - 1), element.column - 1, Math.max(0, element.line - 1), element.column + 500);
+							let uri = vscode.Uri.file(fixPath(element.file, this.projectRoot, stringImportPaths));
+							let error = new vscode.Diagnostic(range, element.text, this.mapDubLintType(element.type));
+							let found = false;
+							diagnostics.forEach(element => {
+								if (element[0].fsPath == uri.fsPath) {
+									found = true;
+									element[1].push(error);
+								}
+							});
+							if (!found)
+								diagnostics.push([uri, [error]]);
 						});
-						if (!found)
-							diagnostics.push([uri, [error]]);
-					});
-				console.log("Resolve");
-				console.log(diagnostics);
-				resolve(diagnostics);
+					console.log("Resolve");
+					console.log(diagnostics);
+					resolve(diagnostics);
+				});
 			});
 		});
 	}
@@ -600,6 +623,12 @@ export class WorkspaceD extends EventEmitter implements
 		if (!this.dubReady)
 			return new Promise((resolve, reject) => { resolve([]); });
 		return this.request({ cmd: "dub", subcmd: "list:import" });
+	}
+
+	listStringImports(): Thenable<string[]> {
+		if (!this.dubReady)
+			return new Promise((resolve, reject) => { resolve([]); });
+		return this.request({ cmd: "dub", subcmd: "list:string-import" });
 	}
 
 	getDlangUI(subs: vscode.Disposable[]): DlangUIHandler {
