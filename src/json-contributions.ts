@@ -1,7 +1,6 @@
 import { Location, getLocation, createScanner, SyntaxKind } from 'jsonc-parser';
 import { DubJSONContribution } from './dub-json';
 import * as vscode from 'vscode';
-var request = require("request");
 
 export interface ISuggestionsCollector {
 	add(suggestion: vscode.CompletionItem): void;

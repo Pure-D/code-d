@@ -91,7 +91,7 @@ export class WorkspaceD extends EventEmitter implements
 					else if (s == "Open User Settings")
 						vscode.commands.executeCommand("workbench.action.openGlobalSettings");
 					else if (s == "Install workspace-d")
-						installWorkspaceD();
+						installWorkspaceD(self.processEnv);
 				});
 				self.workspaced = false;
 			}
@@ -689,7 +689,7 @@ export class WorkspaceD extends EventEmitter implements
 		this.request({ cmd: "version" }).then((version) => {
 			let callback = (r) => {
 				if (r == "Install newest version")
-					installWorkspaceD();
+					installWorkspaceD(this.processEnv);
 			};
 			if (version.major < TARGET_VERSION[0])
 				return vscode.window.showErrorMessage("workspace-d is outdated! Please update to continue using this plugin. (target="

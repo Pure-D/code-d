@@ -3,7 +3,7 @@ import * as vscode from "vscode"
 import * as path from "path"
 import * as fs from "fs"
 import { TARGET_VERSION } from "./workspace-d"
-var request = require("request");
+import { req } from "./util"
 var unzip = require("unzip");
 var progress = require("request-progress");
 var async = require("async");
@@ -19,7 +19,7 @@ export function setContext(context: vscode.ExtensionContext) {
 	extensionContext = context;
 }
 
-export function installWorkspaceD() {
+export function installWorkspaceD(env) {
 	var url = "";
 	var ext = "";
 	if (process.platform == "linux" && process.arch == "x64") {
@@ -33,7 +33,7 @@ export function installWorkspaceD() {
 	else
 		return vscode.window.showErrorMessage("No precompiled workspace-d binary for this platform/architecture", "Compile from source").then((r) => {
 			if (r == "Compile from source")
-				compileWorkspaceD();
+				compileWorkspaceD(env);
 		});
 	var output = vscode.window.createOutputChannel("workspace-d installation progress");
 	extensionContext.subscriptions.push(output);
@@ -48,7 +48,7 @@ export function installWorkspaceD() {
 			fs.unlinkSync(finalDestination);
 		output.appendLine("Downloading from " + url + " into " + outputFolder);
 		var outputPath = path.join(outputFolder, "workspace-d" + ext);
-		progress(request(url)).on("progress", (state) => {
+		progress(req()(url)).on("progress", (state) => {
 			output.appendLine("Downloaded " + (state.percentage * 100).toFixed(2) + "%" + (state.time.remaining ? " (ETA " + state.time.remaining.toFixed(1) + "s)" : ""));
 		}).pipe(fs.createWriteStream(outputPath)).on("finish", () => {
 			output.appendLine("Extracting workspace-d");
@@ -71,7 +71,7 @@ export function installWorkspaceD() {
 					if (code != 0)
 						return vscode.window.showErrorMessage("Failed to extract .tar.xz release", "Compile from source").then((r) => {
 							if (r == "Compile from source")
-								compileWorkspaceD();
+								compileWorkspaceD(env);
 						});
 					config().update("workspacedPath", finalDestination, true);
 					output.appendLine("Deleting " + outputPath);
@@ -86,7 +86,7 @@ export function installWorkspaceD() {
 	});
 }
 
-export function downloadDub() {
+export function downloadDub(env) {
 	var url = "";
 	var ext = "";
 	if (process.platform == "linux" && process.arch == "x64") {
@@ -122,7 +122,7 @@ export function downloadDub() {
 			fs.mkdirSync(outputFolder);
 		output.appendLine("Downloading from " + url + " into " + outputFolder);
 		var outputPath = path.join(outputFolder, "dub" + ext);
-		progress(request(url)).on("progress", (state) => {
+		progress(req()(url)).on("progress", (state) => {
 			output.appendLine("Downloaded " + (state.percentage * 100).toFixed(2) + "%" + (state.time.remaining ? " (ETA " + state.time.remaining.toFixed(1) + "s)" : ""));
 		}).pipe(fs.createWriteStream(outputPath)).on("finish", () => {
 			output.appendLine("Extracting dub");
@@ -157,7 +157,7 @@ export function downloadDub() {
 	});
 }
 
-export function compileWorkspaceD() {
+export function compileWorkspaceD(env) {
 	var outputFolder = path.join(extensionContext.extensionPath, "bin");
 	fs.exists(outputFolder, function (exists) {
 		if (!exists)
@@ -176,11 +176,11 @@ export function compileWorkspaceD() {
 				if (r == "Reload")
 					vscode.commands.executeCommand("workbench.action.reloadWindow");
 			});
-		});
+		}, env);
 	});
 }
 
-export function compileDScanner() {
+export function compileDScanner(env) {
 	var outputFolder = path.join(extensionContext.extensionPath, "bin");
 	fs.exists(outputFolder, function (exists) {
 		if (!exists)
@@ -196,11 +196,11 @@ export function compileDScanner() {
 				if (r == "Reload")
 					vscode.commands.executeCommand("workbench.action.reloadWindow");
 			});
-		});
+		}, env);
 	});
 }
 
-export function compileDfmt() {
+export function compileDfmt(env) {
 	var outputFolder = path.join(extensionContext.extensionPath, "bin");
 	fs.exists(outputFolder, function (exists) {
 		if (!exists)
@@ -216,11 +216,11 @@ export function compileDfmt() {
 				if (r == "Reload")
 					vscode.commands.executeCommand("workbench.action.reloadWindow");
 			});
-		});
+		}, env);
 	});
 }
 
-export function compileDCD() {
+export function compileDCD(env) {
 	var outputFolder = path.join(extensionContext.extensionPath, "bin");
 	fs.exists(outputFolder, function (exists) {
 		if (!exists)
@@ -238,7 +238,7 @@ export function compileDCD() {
 				if (r == "Reload")
 					vscode.commands.executeCommand("workbench.action.reloadWindow");
 			});
-		});
+		}, env);
 	});
 }
 
@@ -256,7 +256,7 @@ function spawnCommand(output: vscode.OutputChannel, cmd: string, args: string[],
 	});
 }
 
-export function compileDependency(cwd, name, gitPath, commands, callback) {
+export function compileDependency(cwd, name, gitPath, commands, callback, env) {
 	var output = vscode.window.createOutputChannel(name + " installation progress");
 	extensionContext.subscriptions.push(output);
 	output.show(true);
@@ -266,7 +266,7 @@ export function compileDependency(cwd, name, gitPath, commands, callback) {
 	};
 	var newCwd = path.join(cwd, name);
 	var startCompile = () => {
-		spawnCommand(output, "git", ["clone", gitPath, name], { cwd: cwd }, (err) => {
+		spawnCommand(output, "git", ["clone", gitPath, name], { cwd: cwd, env: env }, (err) => {
 			if (err !== 0)
 				return error(err);
 			async.eachSeries(commands, function (command, cb) {

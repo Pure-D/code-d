@@ -151,7 +151,7 @@ export function activate(context: vscode.ExtensionContext) {
 						if (s == "Open User Settings")
 							vscode.commands.executeCommand("workbench.action.openGlobalSettings");
 						else if (s == "Compile dscanner")
-							compileDScanner();
+							compileDScanner(env);
 					});
 				}
 			});
@@ -161,7 +161,7 @@ export function activate(context: vscode.ExtensionContext) {
 						if (s == "Open User Settings")
 							vscode.commands.executeCommand("workbench.action.openGlobalSettings");
 						else if (s == "Compile dfmt")
-							compileDfmt();
+							compileDfmt(env);
 					});
 				}
 			});
@@ -172,7 +172,7 @@ export function activate(context: vscode.ExtensionContext) {
 						if (s == "Open User Settings")
 							vscode.commands.executeCommand("workbench.action.openGlobalSettings");
 						else if (s == "Compile DCD")
-							compileDCD();
+							compileDCD(env);
 					});
 				}
 			});
@@ -182,7 +182,7 @@ export function activate(context: vscode.ExtensionContext) {
 						if (s == "Open User Settings")
 							vscode.commands.executeCommand("workbench.action.openGlobalSettings");
 						else if (s == "Download dub")
-							downloadDub();
+							downloadDub(env);
 					});
 				}
 			});
