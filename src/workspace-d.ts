@@ -420,7 +420,12 @@ export class WorkspaceD extends EventEmitter implements
 				let diagnostics: vscode.Diagnostic[] = [];
 				if (issues && issues.length)
 					issues.forEach(element => {
-						let range = document.getWordRangeAtPosition(new vscode.Position(Math.max(0, element.line - 1), element.column));
+						let range: vscode.Range;
+						var match;
+						if (match = /^Line is longer than (\d+) characters$/.exec(element.description)) {
+							range = new vscode.Range(Math.max(0, element.line - 1), parseInt(match[1]), Math.max(0, element.line - 1), 1000);
+						} else
+							range = document.getWordRangeAtPosition(new vscode.Position(Math.max(0, element.line - 1), element.column));
 						if (!range || !range.start)
 							range = new vscode.Range(Math.max(0, element.line - 1), element.column, Math.max(0, element.line - 1), element.column + 1);
 						console.log(range);
