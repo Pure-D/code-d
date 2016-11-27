@@ -691,6 +691,7 @@ export class WorkspaceD extends EventEmitter implements
 				if (r == "Install newest version")
 					installWorkspaceD(this.processEnv);
 			};
+			console.log("workspace-d version: " + formatVersion([version.major, version.minor, version.patch]));
 			if (version.major < TARGET_VERSION[0])
 				return vscode.window.showErrorMessage("workspace-d is outdated! Please update to continue using this plugin. (target="
 					+ formatVersion(TARGET_VERSION) + ", workspaced=" + formatVersion([version.major, version.minor, version.patch]) + ")",
