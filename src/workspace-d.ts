@@ -6,6 +6,8 @@ import { EventEmitter } from "events"
 import { DlangUIHandler } from "./dlangui"
 import { installWorkspaceD } from "./installer"
 import { config } from "./extension"
+var async = require("async");
+var LineByLineReader = require('line-by-line');
 
 function byteOffsetAt(editor: vscode.TextDocument, pos: vscode.Position): number {
 	return Buffer.byteLength(editor.getText(new vscode.Range(new vscode.Position(0, 0), pos)), "utf8");
@@ -15,8 +17,11 @@ function positionFromByteOffset(editor: vscode.TextDocument, byteOff: number): v
 	return editor.positionAt(new Buffer(editor.getText()).slice(0, byteOff).toString("utf8").length);
 }
 
-var mixinRegex = /-mixin-\d+$/;
-var importRegex = /import ([a-zA-Z_]\w*(?:\.[a-zA-Z_]\w*)*)?/;
+const mixinRegex = /-mixin-\d+$/;
+const importRegex = /import ([a-zA-Z_]\w*(?:\.[a-zA-Z_]\w*)*)?/;
+const undefinedIdentifier = /^undefined identifier '(\w+)'(?:, did you mean .*? '(\w+)'\?)?$/;
+const undefinedTemplate = /template '(\w+)' is not defined/;
+const moduleRegex = /module\s+([a-zA-Z_]\w*\s*(?:\s*\.\s*[a-zA-Z_]\w*)*)\s*;/;
 function fixPath(pathStr: string, projectRoot: string, stringImportPaths: string[]): string {
 	var match = mixinRegex.exec(pathStr);
 	if (match)
@@ -45,7 +50,7 @@ function fixPath(pathStr: string, projectRoot: string, stringImportPaths: string
 	return pathStr;
 }
 
-export const TARGET_VERSION = [2, 9, 0];
+export const TARGET_VERSION = [2, 9, 1];
 
 export class WorkspaceD extends EventEmitter implements
 	vscode.CompletionItemProvider,
@@ -137,20 +142,74 @@ export class WorkspaceD extends EventEmitter implements
 		});
 	}
 
-	provideCodeActions(document: vscode.TextDocument, range: vscode.Range, context: vscode.CodeActionContext, token: vscode.CancellationToken): vscode.Command[] {
+	provideCodeActions(document: vscode.TextDocument, range: vscode.Range, context: vscode.CodeActionContext, token: vscode.CancellationToken): Thenable<vscode.Command[]> {
+		var match;
 		for (var i = context.diagnostics.length - 1; i >= 0; i--) {
 			if (context.diagnostics[i].message.indexOf("import ") != -1) {
-				var match = importRegex.exec(context.diagnostics[i].message);
+				match = importRegex.exec(context.diagnostics[i].message);
 				if (!match)
 					continue;
-				return [{
+				return Promise.resolve([{
 					title: "Import " + match[1],
 					command: "code-d.addImport",
 					arguments: [match[1], document.offsetAt(range.start)]
-				}];
+				}]);
+			}
+			else if ((match = undefinedIdentifier.exec(context.diagnostics[i].message))
+				|| (match = undefinedTemplate.exec(context.diagnostics[i].message))) {
+				if (!this.dscannerReady)
+					return;
+				var rets: vscode.Command[] = [];
+				// Soon™
+				/*if (match[2])
+					rets.push({
+						title: "Change to " + match[2],
+						command: "code-d.renameSymbol",
+						arguments: [match[2], document.offsetAt(range.start), document.offsetAt(range.end)]
+					});*/
+				return new Promise((resolve) => {
+					var file = document.fileName;
+					if (!path.isAbsolute(file))
+						file = path.normalize(path.join(this.projectRoot, file));
+					this.request({ cmd: "dscanner", subcmd: "find-symbol", symbol: match[1] }).then((data) => {
+						var modules = [];
+						async.eachSeries(data, (item, callback) => {
+							if (!path.isAbsolute(item.file))
+								item.file = path.normalize(path.join(this.projectRoot, item.file));
+							if (item.file == file)
+								return callback(null);
+							var lr = new LineByLineReader(item.file);
+							var line = 0;
+							lr.on("line", function (line) {
+								var match = moduleRegex.exec(line);
+								if (match) {
+									modules.push(match[1].replace(/\s+/g, ""));
+									callback(null);
+									lr.close();
+								}
+								else {
+									line++;
+									if (line > 100) {
+										lr.close();
+										callback(null);
+									}
+								}
+							});
+						}, () => {
+							for (var i = 0; i < modules.length; i++) {
+								rets.push({
+									title: "Import " + modules[i],
+									command: "code-d.addImport",
+									arguments: [modules[i], document.offsetAt(range.start)]
+								});
+							}
+							resolve(rets);
+						});
+					});
+				});
 			}
 		}
-		return [];
+		return Promise.resolve([]);
 	}
 
 	extractFunctionParameters(sig: string) {
@@ -952,6 +1011,8 @@ export class WorkspaceD extends EventEmitter implements
 		this.instance.stdin.write(buf);
 		return new Promise((resolve, reject) => {
 			this.once("res-" + reqID, function (error, data) {
+				if (debug)
+					console.log(error, data);
 				if (error)
 					reject(error);
 				else
