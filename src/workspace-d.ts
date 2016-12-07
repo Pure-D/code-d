@@ -16,6 +16,7 @@ function positionFromByteOffset(editor: vscode.TextDocument, byteOff: number): v
 }
 
 var mixinRegex = /-mixin-\d+$/;
+var importRegex = /import ([a-zA-Z_]\w*(?:\.[a-zA-Z_]\w*)*)?/;
 function fixPath(pathStr: string, projectRoot: string, stringImportPaths: string[]): string {
 	var match = mixinRegex.exec(pathStr);
 	if (match)
@@ -44,7 +45,7 @@ function fixPath(pathStr: string, projectRoot: string, stringImportPaths: string
 	return pathStr;
 }
 
-export const TARGET_VERSION = [2, 8, 0];
+export const TARGET_VERSION = [2, 9, 0];
 
 export class WorkspaceD extends EventEmitter implements
 	vscode.CompletionItemProvider,
@@ -53,6 +54,7 @@ export class WorkspaceD extends EventEmitter implements
 	vscode.DocumentSymbolProvider,
 	vscode.DefinitionProvider,
 	vscode.DocumentFormattingEditProvider,
+	vscode.CodeActionProvider,
 	vscode.HoverProvider {
 	constructor(public projectRoot: string, public processEnv: any) {
 		super();
@@ -135,6 +137,21 @@ export class WorkspaceD extends EventEmitter implements
 		});
 	}
 
+	provideCodeActions(document: vscode.TextDocument, range: vscode.Range, context: vscode.CodeActionContext, token: vscode.CancellationToken): vscode.Command[] {
+		for (var i = context.diagnostics.length - 1; i >= 0; i--) {
+			if (context.diagnostics[i].message.indexOf("import ") != -1) {
+				var match = importRegex.exec(context.diagnostics[i].message);
+				if (!match)
+					continue;
+				return [{
+					title: "Import " + match[1],
+					command: "code-d.addImport",
+					arguments: [match[1], document.offsetAt(range.start)]
+				}];
+			}
+		}
+		return [];
+	}
 
 	extractFunctionParameters(sig: string) {
 		let params = [];
@@ -416,7 +433,8 @@ export class WorkspaceD extends EventEmitter implements
 			if (!self.dscannerReady)
 				return resolve([]);
 			let useProjectIni = fs.existsSync(path.join(self.projectRoot, "dscanner.ini"));
-			self.request({ cmd: "dscanner", subcmd: "lint", file: document.uri.fsPath, ini: useProjectIni ? path.join(self.projectRoot, "dscanner.ini") : "" }).then(issues => {
+			let ini = useProjectIni ? path.join(self.projectRoot, "dscanner.ini") : "";
+			self.request({ cmd: "dscanner", subcmd: "lint", file: document.uri.fsPath, ini: ini }).then((issues) => {
 				let diagnostics: vscode.Diagnostic[] = [];
 				if (issues && issues.length)
 					issues.forEach(element => {
@@ -483,6 +501,10 @@ export class WorkspaceD extends EventEmitter implements
 
 	upgrade() {
 		return this.request({ cmd: "dub", subcmd: "upgrade" });
+	}
+
+	addImport(code: string, name: string, location: number): Thenable<any> {
+		return this.request({ cmd: "importer", subcmd: "add", "importName": name, "code": code, "pos": location });
 	}
 
 	listConfigurations(): Thenable<string[]> {
@@ -735,6 +757,7 @@ export class WorkspaceD extends EventEmitter implements
 				this.setupDScanner();
 				this.setupDfmt();
 				this.setupDlangUI();
+				this.setupImporter();
 				this.listConfigurations().then((configs) => {
 					if (configs.length == 0) {
 						vscode.window.showInformationMessage("No configurations available for this project. Autocompletion could be broken!");
@@ -816,6 +839,7 @@ export class WorkspaceD extends EventEmitter implements
 			this.setupDScanner();
 			this.setupDfmt();
 			this.setupDlangUI();
+			this.setupImporter();
 		}, (err) => {
 			vscode.window.showErrorMessage("Could not initialize fsworkspace. See console for details!");
 		});
@@ -858,6 +882,14 @@ export class WorkspaceD extends EventEmitter implements
 			console.log("DlangUI is ready");
 			this.emit("dlangui-ready");
 			this.dlanguiReady = true;
+		});
+	}
+
+	public setupImporter() {
+		this.request({ cmd: "load", components: ["importer"] }).then((data) => {
+			console.log("Importer is ready");
+			this.emit("importer-ready");
+			this.importerReady = true;
 		});
 	}
 
@@ -907,9 +939,11 @@ export class WorkspaceD extends EventEmitter implements
 		});
 	}
 
-	public request(data): Thenable<any> {
+	public request(data, debug: boolean = false): Thenable<any> {
 		let lengthBuffer = new Buffer(4);
 		let idBuffer = new Buffer(4);
+		if (debug)
+			console.log(data);
 		let dataStr = JSON.stringify(data);
 		lengthBuffer.writeInt32BE(Buffer.byteLength(dataStr, "utf8") + 4, 0);
 		let reqID = this.requestNum++;
@@ -960,6 +994,7 @@ export class WorkspaceD extends EventEmitter implements
 	public dcdReady: boolean = false;
 	public dfmtReady: boolean = false;
 	public dlanguiReady: boolean = false;
+	public importerReady: boolean = false;
 	public dscannerReady: boolean = false;
 	public shouldRestart: boolean = true;
 	public totalData: Buffer;

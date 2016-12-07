@@ -100,6 +100,7 @@ export function activate(context: vscode.ExtensionContext) {
 		context.subscriptions.push(vscode.languages.registerHoverProvider(D_MODE, workspaced));
 		context.subscriptions.push(vscode.languages.registerDefinitionProvider(D_MODE, workspaced));
 		context.subscriptions.push(vscode.languages.registerDocumentFormattingEditProvider(D_MODE, workspaced));
+		context.subscriptions.push(vscode.languages.registerCodeActionsProvider(D_MODE, workspaced));
 
 		context.subscriptions.push(workspaced);
 		function checkUnresponsive() {
@@ -163,9 +164,9 @@ export function activate(context: vscode.ExtensionContext) {
 							});
 						}
 					}
-				}).stdout.on("data", function(chunk) {
+				}).stdout.on("data", function (chunk) {
 					version += chunk;
-				}).on("end", function() {
+				}).on("end", function () {
 					console.log(name + " version: " + version);
 				});
 			}
@@ -328,6 +329,31 @@ export function activate(context: vscode.ExtensionContext) {
 					vscode.window.showWarningMessage("Import paths are empty!");
 			}, (err) => {
 				vscode.window.showErrorMessage("Could not update imports. dub might not be initialized yet!");
+			});
+		}));
+
+		context.subscriptions.push(vscode.commands.registerTextEditorCommand("code-d.addImport", (editor, edit, name, location) => {
+			workspaced.addImport(editor.document.getText(), name, location).then((change) => {
+				if (!workspaced.importerReady)
+					return vscode.window.showWarningMessage("workspace-d not ready yet");
+				console.log("Importer resolve: " + JSON.stringify(change));
+				if (change.rename) // no renames from addImport command
+					return;
+				editor.edit((edit) => {
+					for (var i = change.replacements.length - 1; i >= 0; i--) {
+						var r = change.replacements[i];
+						if (r.range[0] == r.range[1])
+							edit.insert(editor.document.positionAt(r.range[0]), r.content);
+						else if (r.content == "")
+							edit.delete(new vscode.Range(editor.document.positionAt(r.range[0]), editor.document.positionAt(r.range[1])));
+						else
+							edit.replace(new vscode.Range(editor.document.positionAt(r.range[0]), editor.document.positionAt(r.range[1])), r.content);
+					}
+					console.log("Done");
+				});
+			}, (err) => {
+				vscode.window.showErrorMessage("Could not add import");
+				console.error(err);
 			});
 		}));
 	}

@@ -43,7 +43,8 @@
 		"onCommand:code-d.showGCCalls",
 		"onCommand:dub.openSettingsEditor",
 		"onCommand:dub.closeSettingsEditor",
-		"onCommand:code-d.createProject"
+		"onCommand:code-d.createProject",
+		"onCommand:code-d.addImport"
 	],
 	"main": "./out/src/extension",
 	"extensionDependencies": [
