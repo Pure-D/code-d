@@ -15,6 +15,10 @@ export function config() {
 	return vscode.workspace.getConfiguration("d");
 }
 
+function gitPath() {
+	return vscode.workspace.getConfiguration("git").get("path", "git") || "git";
+}
+
 export function setContext(context: vscode.ExtensionContext) {
 	extensionContext = context;
 }
@@ -186,7 +190,7 @@ export function compileDScanner(env) {
 		if (!exists)
 			fs.mkdirSync(outputFolder);
 		compileDependency(outputFolder, "Dscanner", "https://github.com/Hackerpilot/Dscanner.git", [
-			["git", ["submodule", "update", "--init", "--recursive"]],
+			[gitPath(), ["submodule", "update", "--init", "--recursive"]],
 			process.platform == "win32" ? ["cmd.exe", ["/c", "build.bat"]] : ["make", []]
 		], function () {
 			var finalDestination = path.join(outputFolder, "Dscanner", "bin", "dscanner" + (process.platform == "win32" ? ".exe" : ""));
@@ -206,7 +210,7 @@ export function compileDfmt(env) {
 		if (!exists)
 			fs.mkdirSync(outputFolder);
 		compileDependency(outputFolder, "dfmt", "https://github.com/Hackerpilot/dfmt.git", [
-			["git", ["submodule", "update", "--init", "--recursive"]],
+			[gitPath(), ["submodule", "update", "--init", "--recursive"]],
 			process.platform == "win32" ? ["cmd.exe", ["/c", "build.bat"]] : ["make", []]
 		], function () {
 			var finalDestination = path.join(outputFolder, "dfmt", "bin", "dfmt" + (process.platform == "win32" ? ".exe" : ""));
@@ -226,7 +230,7 @@ export function compileDCD(env) {
 		if (!exists)
 			fs.mkdirSync(outputFolder);
 		compileDependency(outputFolder, "DCD", "https://github.com/Hackerpilot/DCD.git", [
-			["git", ["submodule", "update", "--init", "--recursive"]],
+			[gitPath(), ["submodule", "update", "--init", "--recursive"]],
 			process.platform == "win32" ? ["cmd.exe", ["/c", "build.bat"]] : ["make", []]
 		], function () {
 			var finalDestinationClient = path.join(outputFolder, "DCD", "bin", "dcd-client" + (process.platform == "win32" ? ".exe" : ""));
@@ -266,7 +270,7 @@ export function compileDependency(cwd, name, gitPath, commands, callback, env) {
 	};
 	var newCwd = path.join(cwd, name);
 	var startCompile = () => {
-		spawnCommand(output, "git", ["clone", gitPath, name], { cwd: cwd, env: env }, (err) => {
+		spawnCommand(output, gitPath(), ["clone", gitPath, name], { cwd: cwd, env: env }, (err) => {
 			if (err !== 0)
 				return error(err);
 			async.eachSeries(commands, function (command, cb) {
