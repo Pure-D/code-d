@@ -150,7 +150,11 @@ export function activate(context: vscode.ExtensionContext) {
 				var version = "";
 				ChildProcess.spawn(config().get(configName, defaultPath), ["--version"], { cwd: vscode.workspace.rootPath, env: env }).on("error", function (err) {
 					if (err && (<any>err).code == "ENOENT") {
-						if (fs.statSync(config().get(configName, "")).isDirectory()) {
+						var isDirectory = false;
+						try {
+							isDirectory = fs.statSync(config().get(configName, "")).isDirectory();
+						} catch (e) {}
+						if (isDirectory) {
 							vscode.window.showErrorMessage(name + " points to a directory", "Open User Settings").then(s => {
 								if (s == "Open User Settings")
 									vscode.commands.executeCommand("workbench.action.openGlobalSettings");
