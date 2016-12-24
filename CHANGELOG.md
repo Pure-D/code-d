@@ -1,3 +1,7 @@
+# 0.15.1
+
+* Fixed installation on macOS
+
 # 0.15.0
 
 * Installer uses the http.proxy settings now
