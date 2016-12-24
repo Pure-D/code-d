@@ -6,6 +6,7 @@ import { uploadCode } from "./util"
 import * as statusbar from "./statusbar"
 import * as path from "path"
 import * as fs from "fs"
+import * as nls from "vscode-nls"
 import { DlangUIHandler } from "./dlangui"
 import { lintDfmt } from "./dfmt-check"
 import { GCProfiler } from "./gcprofiler"
@@ -22,6 +23,8 @@ let oldLint: [vscode.Uri, vscode.Diagnostic[]][][] = [[], [], []];
 
 var extensionContext: vscode.ExtensionContext;
 
+export var localize: nls.LocalizeFunc = (key, fallback) => { return fallback; };
+
 export function config() {
 	return vscode.workspace.getConfiguration("d");
 }
@@ -29,6 +32,9 @@ export function config() {
 export function activate(context: vscode.ExtensionContext) {
 	extensionContext = context;
 	setContext(context);
+	console.log(vscode.env.language);
+	console.log(context.asAbsolutePath("package"));
+	localize = nls.config({ locale: vscode.env.language })(context.asAbsolutePath("package"));
 
 	if (context.globalState.get("restorePackageBackup", false)) {
 		context.globalState.update("restorePackageBackup", false);

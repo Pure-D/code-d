@@ -5,7 +5,7 @@ import * as fs from "fs"
 import { EventEmitter } from "events"
 import { DlangUIHandler } from "./dlangui"
 import { installWorkspaceD } from "./installer"
-import { config } from "./extension"
+import { config, localize } from "./extension"
 var async = require("async");
 var LineByLineReader = require('line-by-line');
 
@@ -92,21 +92,25 @@ export class WorkspaceD extends EventEmitter implements
 			console.log("WorkspaceD ended with an error:");
 			console.log(err);
 			if (err && (<any>err).code == "ENOENT") {
-				vscode.window.showErrorMessage("workspace-d is not installed or points to a folder", "Install workspace-d", "Open User Settings", "Retry").then(s => {
-					if (s == "Retry")
-						self.startWorkspaceD.call(self);
-					else if (s == "Open User Settings")
-						vscode.commands.executeCommand("workbench.action.openGlobalSettings");
-					else if (s == "Install workspace-d")
-						installWorkspaceD(self.processEnv);
-				});
+				vscode.window.showErrorMessage(
+					localize("d.ext.workspacedENOENT", "workspace-d is not installed or points to a folder"),
+					localize("d.ext.workspacedENOENT.install", "Install workspace-d"),
+					localize("d.ext.openUserSettings", "Open User Settings"),
+					localize("d.ext.workspacedENOENT.retry", "Retry")).then(s => {
+						if (s == localize("d.ext.workspacedENOENT.retry", "Retry"))
+							self.startWorkspaceD.call(self);
+						else if (s == localize("d.ext.openUserSettings", "Open User Settings"))
+							vscode.commands.executeCommand("workbench.action.openGlobalSettings");
+						else if (s == localize("d.ext.workspacedENOENT.install", "Install workspace-d"))
+							installWorkspaceD(self.processEnv);
+					});
 				self.workspaced = false;
 			}
 		});
 		this.instance.on("exit", function (code) {
 			console.log("WorkspaceD ended with code " + code);
-			vscode.window.showWarningMessage("Workspace-D crashed. Please kill dcd-server if neccessary!", "Restart").then(s => {
-				if (s == "Restart")
+			vscode.window.showWarningMessage(localize("d.ext.workspacedCrash", "workspace-d crashed. Please kill dcd-server if neccessary!"), localize("d.ext.workspaced.restart", "Restart")).then(s => {
+				if (s == localize("d.ext.workspaced.restart", "Restart"))
 					self.startWorkspaceD.call(self);
 			});
 		});
@@ -150,7 +154,7 @@ export class WorkspaceD extends EventEmitter implements
 				if (!match)
 					continue;
 				return Promise.resolve([{
-					title: "Import " + match[1],
+					title: localize("d.ext.importModule", "Import {0}", match[1]),
 					command: "code-d.addImport",
 					arguments: [match[1], document.offsetAt(range.start)]
 				}]);
@@ -198,7 +202,7 @@ export class WorkspaceD extends EventEmitter implements
 						}, () => {
 							for (var i = 0; i < modules.length; i++) {
 								rets.push({
-									title: "Import " + modules[i],
+									title: localize("d.ext.importModule", "Import {0}", modules[i]),
 									command: "code-d.addImport",
 									arguments: [modules[i], document.offsetAt(range.start)]
 								});
@@ -586,8 +590,8 @@ export class WorkspaceD extends EventEmitter implements
 				}
 			}
 			else
-				vscode.window.showInformationMessage("No import paths available for this project. Autocompletion could be broken!", "Switch Configuration").then((s) => {
-					if (s == "Switch Configuration") {
+				vscode.window.showInformationMessage(localize("d.ext.noImportPaths.project", "No import paths available for this project. Autocompletion could be broken!"), localize("d.action.switchConfiguration", "Switch Configuration")).then((s) => {
+					if (s == localize("d.action.switchConfiguration", "Switch Configuration")) {
 						vscode.commands.executeCommand("code-d.switchConfiguration");
 					}
 				});
@@ -611,8 +615,8 @@ export class WorkspaceD extends EventEmitter implements
 				}
 			}
 			else
-				vscode.window.showErrorMessage("Could not switch compiler", "Switch Compiler").then((s) => {
-					if (s == "Switch Compiler") {
+				vscode.window.showErrorMessage(localize("d.ext.compilerFail", "Could not switch compiler"), localize("d.action.switchCompiler", "Switch Compiler")).then((s) => {
+					if (s == localize("d.action.switchCompiler", "Switch Compiler")) {
 						vscode.commands.executeCommand("code-d.switchCompiler");
 					}
 				});
@@ -634,19 +638,18 @@ export class WorkspaceD extends EventEmitter implements
 			if (success)
 				this.emit("arch-type-change", arch);
 			else
-				vscode.window.showInformationMessage("Could not switch arch type", "Switch Arch Type").then((s) => {
-					if (s == "Switch Arch Type") {
+				vscode.window.showInformationMessage(localize("d.ext.archFail", "Could not switch arch type"), localize("d.action.switchArchType", "Switch Arch Type")).then((s) => {
+					if (s == localize("d.action.switchArchType", "Switch Arch Type")) {
 						vscode.commands.executeCommand("code-d.switchArchType");
 					}
 				});
 
 			return success;
-		},
-			err => {
-				console.error(err);
-				vscode.window.showErrorMessage("Failed to switch arch type. See console for details.");
-				return false;
-			});
+		}, (err) => {
+			console.error(err);
+			vscode.window.showErrorMessage(localize("d.ext.ultimateArchFail", "Failed to switch arch type. See console for details."));
+			return false;
+		});
 	}
 
 	listBuildTypes(): Thenable<string[]> {
@@ -664,11 +667,13 @@ export class WorkspaceD extends EventEmitter implements
 				this.emit("build-type-change", config);
 			}
 			else
-				vscode.window.showInformationMessage("No import paths available for this build type. Autocompletion could be broken!", "Switch Build Type").then((s) => {
-					if (s == "Switch Build Type") {
-						vscode.commands.executeCommand("code-d.switchBuildType");
-					}
-				});
+				vscode.window.showInformationMessage(
+					localize("d.ext.noImportPaths.buildType", "No import paths available for this build type. Autocompletion could be broken!"),
+					localize("d.action.switchBuildType", "Switch Build Type")).then((s) => {
+						if (s == localize("d.action.switchBuildType", "Switch Build Type")) {
+							vscode.commands.executeCommand("code-d.switchBuildType");
+						}
+					});
 			return success;
 		});
 	}
@@ -698,7 +703,7 @@ export class WorkspaceD extends EventEmitter implements
 						this.listImports().then(console.log);
 					}, reject);
 				} else {
-					vscode.window.showWarningMessage("Could not update DCD. Please restart DCD if its not working properly");
+					vscode.window.showWarningMessage(localize("d.ext.dcdUpdateFail", "Could not update DCD. Please restart DCD if its not working properly"));
 					resolve(true);
 				}
 			}, reject);
@@ -750,18 +755,20 @@ export class WorkspaceD extends EventEmitter implements
 	public checkResponsiveness(): Thenable<boolean> {
 		return new Promise((resolve) => {
 			var unresponsiveTimeout = setTimeout(() => {
-				vscode.window.showWarningMessage("Workspace-D is unresponsive. Auto completion might not work", "Restart").then(s => {
-					if (s == "Restart") {
-						this.shouldRestart = true;
-						try {
-							process.kill(-this.instance.pid);
+				vscode.window.showWarningMessage(
+					localize("d.ext.workspacedUnresponsive", "workspace-d is unresponsive. Auto completion could be broken!"),
+					localize("d.ext.workspaced.restart", "Restart")).then(s => {
+						if (s == localize("d.ext.workspaced.restart", "Restart")) {
+							this.shouldRestart = true;
+							try {
+								process.kill(-this.instance.pid);
+							}
+							catch (e) {
+								vscode.window.showErrorMessage(localize("d.ext.workspacedUnkillable", "Could not kill workspace-d. Please manually kill it! PID: {0}", this.instance.pid));
+							}
+							this.startWorkspaceD();
 						}
-						catch (e) {
-							vscode.window.showErrorMessage("Could not kill workspace-d. Please manually kill it! PID: " + this.instance.pid);
-						}
-						this.startWorkspaceD();
-					}
-				});
+					});
 				resolve(false);
 			}, 10 * 1000);
 			this.request({ cmd: "version" }).then(version => {
@@ -772,27 +779,37 @@ export class WorkspaceD extends EventEmitter implements
 	}
 
 	public checkVersion() {
+		var installNewest = localize("d.ext.workspacedOutdated.install", "Install newest version");
+		let callback = (r) => {
+			if (r == installNewest)
+				installWorkspaceD(this.processEnv);
+		};
 		this.request({ cmd: "version" }).then((version) => {
-			let callback = (r) => {
-				if (r == "Install newest version")
-					installWorkspaceD(this.processEnv);
-			};
 			console.log("workspace-d version: " + formatVersion([version.major, version.minor, version.patch]));
 			if (version.major < TARGET_VERSION[0])
-				return vscode.window.showErrorMessage("workspace-d is outdated! Please update to continue using this plugin. (target="
-					+ formatVersion(TARGET_VERSION) + ", workspaced=" + formatVersion([version.major, version.minor, version.patch]) + ")",
-					"Install newest version").then(callback);
+				return vscode.window.showErrorMessage(
+					localize("d.ext.workspacedOutdated.major",
+						"workspace-d is outdated! Please update to continue using this plugin. (target={0}, workspaced={1})",
+						formatVersion(TARGET_VERSION),
+						formatVersion([version.major, version.minor, version.patch])),
+					installNewest).then(callback);
 			if (version.major == TARGET_VERSION[0] && version.minor < TARGET_VERSION[1])
-				vscode.window.showWarningMessage("workspace-d might be outdated! Please update if things are not working as expected. (target="
-					+ formatVersion(TARGET_VERSION) + ", workspaced=" + formatVersion([version.major, version.minor, version.patch]) + ")",
-					"Install newest version").then(callback);
+				vscode.window.showWarningMessage(
+					localize("d.ext.workspacedOutdated.minor",
+						"workspace-d might be outdated! Please update if things are not working as expected. (target={0}, workspaced={1})",
+						formatVersion(TARGET_VERSION),
+						formatVersion([version.major, version.minor, version.patch])),
+					installNewest).then(callback);
 			if (version.major == TARGET_VERSION[0] && version.minor == TARGET_VERSION[1] && version.patch < TARGET_VERSION[2])
-				vscode.window.showInformationMessage("workspace-d has a new optional update! Please update before submitting a bug report. (target="
-					+ formatVersion(TARGET_VERSION) + ", workspaced=" + formatVersion([version.major, version.minor, version.patch]) + ")",
-					"Install newest version").then(callback);
+				vscode.window.showInformationMessage(
+					localize("d.ext.workspacedOutdated.minor",
+						"workspace-d has a new optional update! Please update before submitting a bug report. (target={0}, workspaced={1})",
+						formatVersion(TARGET_VERSION),
+						formatVersion([version.major, version.minor, version.patch])),
+					installNewest).then(callback);
 			this.setupDub();
 		}, () => {
-			vscode.window.showErrorMessage("Could not identify workspace-d version. Please update workspace-d!");
+			vscode.window.showErrorMessage(localize("d.ext.workspacedOutdated.unknown", "Could not identify workspace-d version. Please update workspace-d!"), installNewest).then(callback);
 		});
 	}
 
@@ -819,12 +836,12 @@ export class WorkspaceD extends EventEmitter implements
 				this.setupImporter();
 				this.listConfigurations().then((configs) => {
 					if (configs.length == 0) {
-						vscode.window.showInformationMessage("No configurations available for this project. Autocompletion could be broken!");
+						vscode.window.showInformationMessage(localize("d.ext.noConfigurations.project", "No configurations available for this project. Autocompletion could be broken!"));
 					} else {
 						var defaultConfig = config().get("dubConfiguration", "");
 						if (defaultConfig) {
 							if (configs.indexOf(defaultConfig) == -1) {
-								vscode.window.showErrorMessage("Configuration '" + defaultConfig + "' which is specified in the config is not available!");
+								vscode.window.showErrorMessage(localize("d.ext.config.invalid.configuration", "Configuration '{0}' which is specified in the config is not available!", defaultConfig));
 								return this.setConfiguration(configs[0]);
 							}
 							else {
@@ -843,24 +860,24 @@ export class WorkspaceD extends EventEmitter implements
 					if (defaultArchType) {
 						this.setArchType(defaultArchType).then(success => {
 							if (!success)
-								vscode.window.showErrorMessage("Arch Type '" + defaultArchType + "' which is specified in the config is not available!");
+								vscode.window.showErrorMessage(localize("d.ext.config.invalid.archType", "Arch Type '{0}' which is specified in the config is not available!", defaultArchType));
 						});
 					}
 					if (defaultBuildType) {
 						this.setBuildType(defaultBuildType).then(success => {
 							if (!success)
-								vscode.window.showErrorMessage("Build Type '" + defaultBuildType + "' which is specified in the config is not available!");
+								vscode.window.showErrorMessage(localize("d.ext.config.invalid.buildType", "Build Type '{0}' which is specified in the config is not available!", defaultBuildType));
 						});
 					}
 					if (defaultCompiler) {
 						this.setCompiler(defaultCompiler).then(success => {
 							if (!success)
-								vscode.window.showErrorMessage("Compiler '" + defaultCompiler + "' which is specified in the config is not available!");
+								vscode.window.showErrorMessage(localize("d.ext.config.invalid.compiler", "Compiler '{0}' which is specified in the config is not available!", defaultCompiler));
 						});
 					}
 				});
 			}, (err) => {
-				vscode.window.showWarningMessage("Could not initialize dub. Falling back to limited functionality!");
+				vscode.window.showWarningMessage(localize("d.ext.dubFail", "Could not initialize dub. Falling back to limited functionality!"));
 				this.setupCustomWorkspace();
 			});
 		}
@@ -900,7 +917,7 @@ export class WorkspaceD extends EventEmitter implements
 			this.setupDlangUI();
 			this.setupImporter();
 		}, (err) => {
-			vscode.window.showErrorMessage("Could not initialize fsworkspace. See console for details!");
+			vscode.window.showErrorMessage(localize("d.ext.fsworkspaceFail", "Could not initialize fsworkspace. See console for details!"));
 		});
 	}
 
@@ -924,7 +941,7 @@ export class WorkspaceD extends EventEmitter implements
 			}).then((data) => {
 				this.startDCD();
 			}, (err) => {
-				vscode.window.showErrorMessage("Could not initialize DCD. See console for details!");
+				vscode.window.showErrorMessage(localize("d.ext.dcdFail", "Could not initialize DCD. See console for details!"));
 			});
 	}
 
@@ -988,13 +1005,13 @@ export class WorkspaceD extends EventEmitter implements
 						});
 					});
 				} else {
-					vscode.window.showWarningMessage("Could not update DCD. Please restart DCD if its not working properly");
+					vscode.window.showWarningMessage(localize("d.ext.dcdUpdateFail", "Could not update DCD. Please restart DCD if its not working properly"));
 				}
 			}, (err) => {
-				vscode.window.showErrorMessage("Could not initialize DCD. See console for details!");
+				vscode.window.showErrorMessage(localize("d.ext.dcdFail", "Could not initialize DCD. See console for details!"));
 			});
 		}, (err) => {
-			vscode.window.showErrorMessage("Could not initialize DCD. See console for details!");
+			vscode.window.showErrorMessage(localize("d.ext.dcdFail", "Could not initialize DCD. See console for details!"));
 		});
 	}
 
