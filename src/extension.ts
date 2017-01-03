@@ -32,8 +32,6 @@ export function config() {
 export function activate(context: vscode.ExtensionContext) {
 	extensionContext = context;
 	setContext(context);
-	console.log(vscode.env.language);
-	console.log(context.asAbsolutePath("package"));
 	localize = nls.config({ locale: vscode.env.language })(context.asAbsolutePath("package"));
 
 	if (context.globalState.get("restorePackageBackup", false)) {

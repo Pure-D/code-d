@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { D_MODE } from "./dmode"
 import { WorkspaceD } from "./workspace-d"
+import { localize } from "./extension"
 
 export function setup(workspaced: WorkspaceD): vscode.Disposable {
 	let subscriptions: vscode.Disposable[] = [];
@@ -24,7 +25,7 @@ class ConfigSelector implements vscode.Disposable {
 	private create() {
 		this.item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 0.92145);
 		this.item.command = "code-d.switchConfiguration";
-		this.item.tooltip = "Switch Configuration";
+		this.item.tooltip = localize("d.action.switchConfiguration", "Switch Configuration");
 		this.item.show();
 		this.workspaced.on("configuration-change", config => {
 			this.item.text = config;
@@ -50,7 +51,7 @@ class ArchSelector implements vscode.Disposable {
 	private create() {
 		this.item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 0.92144);
 		this.item.command = "code-d.switchArchType";
-		this.item.tooltip = "Switch Arch Type";
+		this.item.tooltip = localize("d.action.switchArchType", "Switch Arch Type");
 		this.item.show();
 		this.workspaced.on("arch-type-change", arch => {
 			this.item.text = arch;
@@ -76,7 +77,7 @@ class BuildSelector implements vscode.Disposable {
 	private create() {
 		this.item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 0.92143);
 		this.item.command = "code-d.switchBuildType";
-		this.item.tooltip = "Switch Build Type";
+		this.item.tooltip = localize("d.action.switchBuildType", "Switch Build Type");
 		this.item.show();
 		this.workspaced.on("build-type-change", config => {
 			this.item.text = config;
@@ -102,7 +103,7 @@ class CompilerSelector implements vscode.Disposable {
 	private create() {
 		this.item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 0.92142);
 		this.item.command = "code-d.switchCompiler";
-		this.item.tooltip = "Switch Compiler";
+		this.item.tooltip = localize("d.action.switchCompiler", "Switch Compiler");
 		this.item.show();
 		this.workspaced.on("compiler-change", config => {
 			this.item.text = config;

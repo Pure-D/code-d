@@ -19,6 +19,7 @@ export function lintDfmt(doc: vscode.TextDocument, code = doc.getText()) {
 		let match = validDfmt.exec(part);
 		if (!match) {
 			let pos = doc ? doc.positionAt(location) : new vscode.Position(0, 0);
+			// localizing code/"compiler" error messages? That goes too far.
 			issues.push(new vscode.Diagnostic(new vscode.Range(pos, pos.translate(0, 100)), "Not a valid dfmt command (try //dfmt off or //dfmt on instead)", vscode.DiagnosticSeverity.Warning));
 		} else {
 			if (match[1] == "off") {

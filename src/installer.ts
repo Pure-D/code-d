@@ -2,6 +2,7 @@ import * as ChildProcess from "child_process"
 import * as vscode from "vscode"
 import * as path from "path"
 import * as fs from "fs"
+import { localize } from "./extension"
 import { TARGET_VERSION } from "./workspace-d"
 import { req } from "./util"
 var unzip = require("unzip");
@@ -35,36 +36,40 @@ export function installWorkspaceD(env) {
 		ext = ".zip";
 	}
 	else
-		return vscode.window.showErrorMessage("No precompiled workspace-d binary for this platform/architecture", "Compile from source").then((r) => {
-			if (r == "Compile from source")
-				compileWorkspaceD(env);
-		});
-	var output = vscode.window.createOutputChannel("workspace-d installation progress");
+		return vscode.window.showErrorMessage(
+			localize("d.installer.noPrebuiltWorkspaced", "No precompiled workspace-d binary for this platform/architecture"),
+			localize("d.installer.compileFromSource", "Compile from source")).then((r) => {
+				if (r == localize("d.installer.compileFromSource", "Compile from source"))
+					compileWorkspaceD(env);
+			});
+	var output = vscode.window.createOutputChannel(localize("d.installer.title", "{0} installation progress", "workspace-d"));
 	extensionContext.subscriptions.push(output);
 	output.show(true);
 	var outputFolder = path.join(extensionContext.extensionPath, "bin");
 	var finalDestination = path.join(outputFolder, "workspace-d" + (process.platform == "win32" ? ".exe" : ""));
-	output.appendLine("Installing into " + outputFolder);
+	output.appendLine(localize("d.installer.installingInto", "Installing into {0}", outputFolder));
 	fs.exists(outputFolder, function (exists) {
 		if (!exists)
 			fs.mkdirSync(outputFolder);
 		if (fs.existsSync(finalDestination))
 			fs.unlinkSync(finalDestination);
-		output.appendLine("Downloading from " + url + " into " + outputFolder);
+		output.appendLine(localize("d.installer.downloadingFrom", "Downloading from {0} into {1}", url, outputFolder));
 		var outputPath = path.join(outputFolder, "workspace-d" + ext);
 		progress(req()(url)).on("progress", (state) => {
-			output.appendLine("Downloaded " + (state.percentage * 100).toFixed(2) + "%" + (state.time.remaining ? " (ETA " + state.time.remaining.toFixed(1) + "s)" : ""));
+			output.appendLine(localize("d.installer.downloadProgress", "Downloaded {0}% {1}", (state.percentage * 100).toFixed(2), state.time.remaining ? "(ETA " + state.time.remaining.toFixed(1) + "s)" : ""));
 		}).pipe(fs.createWriteStream(outputPath)).on("finish", () => {
-			output.appendLine("Extracting workspace-d");
+			output.appendLine(localize("d.installer.extracting", "Extracting {0}", "workspace-d"));
 			if (ext == ".zip") {
 				fs.createReadStream(outputPath).pipe(unzip.Extract({ path: outputFolder })).on("finish", () => {
 					config().update("workspacedPath", finalDestination, true);
-					output.appendLine("Deleting " + outputPath);
+					output.appendLine(localize("d.installer.deleting", "Deleting {0}", outputPath));
 					fs.unlink(outputPath);
-					vscode.window.showInformationMessage("workspace-d successfully installed", "Reload").then((r) => {
-						if (r == "Reload")
-							vscode.commands.executeCommand("workbench.action.reloadWindow");
-					});
+					vscode.window.showInformationMessage(
+						localize("d.installer.success", "{0} successfully installed", "workspace-d"),
+						localize("d.installer.reload", "Reload")).then((r) => {
+							if (r == localize("d.installer.reload", "Reload"))
+								vscode.commands.executeCommand("workbench.action.reloadWindow");
+						});
 				});
 			}
 			else if (ext == ".tar.xz") {
@@ -73,17 +78,21 @@ export function installWorkspaceD(env) {
 					cwd: outputFolder
 				}).on("exit", function (code) {
 					if (code != 0)
-						return vscode.window.showErrorMessage("Failed to extract .tar.xz release", "Compile from source").then((r) => {
-							if (r == "Compile from source")
-								compileWorkspaceD(env);
-						});
+						return vscode.window.showErrorMessage(
+							localize("d.installer.extractTarXzFail", "Failed to extract .tar.xz release"),
+							localize("d.installer.compileFromSource", "Compile from source")).then((r) => {
+								if (r == localize("d.installer.compileFromSource", "Compile from source"))
+									compileWorkspaceD(env);
+							});
 					config().update("workspacedPath", finalDestination, true);
-					output.appendLine("Deleting " + outputPath);
+					output.appendLine(localize("d.installer.deleting", "Deleting {0}", outputPath));
 					fs.unlink(outputPath);
-					vscode.window.showInformationMessage("workspace-d successfully installed", "Reload").then((r) => {
-						if (r == "Reload")
-							vscode.commands.executeCommand("workbench.action.reloadWindow");
-					});
+					vscode.window.showInformationMessage(
+						localize("d.installer.success", "{0} successfully installed", "workspace-d"),
+						localize("d.installer.reload", "Reload")).then((r) => {
+							if (r == localize("d.installer.reload", "Reload"))
+								vscode.commands.executeCommand("workbench.action.reloadWindow");
+						});
 				});
 			}
 		});
@@ -114,31 +123,33 @@ export function downloadDub(env) {
 		ext = ".tar.gz";
 	}
 	else
-		return vscode.window.showErrorMessage("dub is not available for your platform");
-	var output = vscode.window.createOutputChannel("dub installation progress");
+		return vscode.window.showErrorMessage(localize("d.installer.noPrebuiltDub", "dub is not available for your platform"));
+	var output = vscode.window.createOutputChannel(localize("d.installer.title", "{0} installation progress", "dub"));
 	extensionContext.subscriptions.push(output);
 	output.show(true);
 	var outputFolder = path.join(extensionContext.extensionPath, "bin");
 	var finalDestination = path.join(outputFolder, "dub" + (process.platform == "win32" ? ".exe" : ""));
-	output.appendLine("Installing into " + outputFolder);
+	output.appendLine(localize("d.installer.installingInto", "Installing into {0}", outputFolder));
 	fs.exists(outputFolder, function (exists) {
 		if (!exists)
 			fs.mkdirSync(outputFolder);
-		output.appendLine("Downloading from " + url + " into " + outputFolder);
+		output.appendLine(localize("d.installer.downloadingFrom", "Downloading from {0} into {1}", url, outputFolder));
 		var outputPath = path.join(outputFolder, "dub" + ext);
 		progress(req()(url)).on("progress", (state) => {
-			output.appendLine("Downloaded " + (state.percentage * 100).toFixed(2) + "%" + (state.time.remaining ? " (ETA " + state.time.remaining.toFixed(1) + "s)" : ""));
+			output.appendLine(localize("d.installer.downloadProgress", "Downloaded {0}% {1}", (state.percentage * 100).toFixed(2), state.time.remaining ? "(ETA " + state.time.remaining.toFixed(1) + "s)" : ""));
 		}).pipe(fs.createWriteStream(outputPath)).on("finish", () => {
-			output.appendLine("Extracting dub");
+			output.appendLine(localize("d.installer.extracting", "Extracting {0}", "dub"));
 			if (ext == ".zip") {
 				fs.createReadStream(outputPath).pipe(unzip.Extract({ path: outputFolder })).on("finish", () => {
 					config().update("dubPath", finalDestination, true);
-					output.appendLine("Deleting " + outputPath);
+					output.appendLine(localize("d.installer.deleting", "Deleting {0}", outputPath));
 					fs.unlink(outputPath);
-					vscode.window.showInformationMessage("dub successfully installed", "Reload").then((r) => {
-						if (r == "Reload")
-							vscode.commands.executeCommand("workbench.action.reloadWindow");
-					});
+					vscode.window.showInformationMessage(
+						localize("d.installer.success", "{0} successfully installed", "dub"),
+						localize("d.installer.reload", "Reload")).then((r) => {
+							if (r == localize("d.installer.reload", "Reload"))
+								vscode.commands.executeCommand("workbench.action.reloadWindow");
+						});
 				});
 			}
 			else if (ext == ".tar.gz") {
@@ -147,14 +158,16 @@ export function downloadDub(env) {
 					cwd: outputFolder
 				}).on("exit", function (code) {
 					if (code != 0)
-						return vscode.window.showErrorMessage("Failed to extract .tar.gz release");
+						return vscode.window.showErrorMessage(localize("d.installer.extractTarGzFail", "Failed to extract .tar.gz release"));
 					config().update("dubPath", finalDestination, true);
-					output.appendLine("Deleting " + outputPath);
+					output.appendLine(localize("d.installer.deleting", "Deleting {0}", outputPath));
 					fs.unlink(outputPath);
-					vscode.window.showInformationMessage("dub successfully installed", "Reload").then((r) => {
-						if (r == "Reload")
-							vscode.commands.executeCommand("workbench.action.reloadWindow");
-					});
+					vscode.window.showInformationMessage(
+						localize("d.installer.success", "{0} successfully installed", "dub"),
+						localize("d.installer.reload", "Reload")).then((r) => {
+							if (r == localize("d.installer.reload", "Reload"))
+								vscode.commands.executeCommand("workbench.action.reloadWindow");
+						});
 				});
 			}
 		});
@@ -176,10 +189,12 @@ export function compileWorkspaceD(env) {
 			var finalDestination = path.join(outputFolder, "workspace-d", "workspace-d" + (process.platform == "win32" ? ".exe" : ""));
 
 			config().update("workspacedPath", finalDestination, true);
-			vscode.window.showInformationMessage("workspace-d successfully installed", "Reload").then((r) => {
-				if (r == "Reload")
-					vscode.commands.executeCommand("workbench.action.reloadWindow");
-			});
+			vscode.window.showInformationMessage(
+				localize("d.installer.success", "{0} successfully installed", "workspace-d"),
+				localize("d.installer.reload", "Reload")).then((r) => {
+					if (r == localize("d.installer.reload", "Reload"))
+						vscode.commands.executeCommand("workbench.action.reloadWindow");
+				});
 		}, env);
 	});
 }
@@ -196,10 +211,12 @@ export function compileDScanner(env) {
 			var finalDestination = path.join(outputFolder, "Dscanner", "bin", "dscanner" + (process.platform == "win32" ? ".exe" : ""));
 
 			config().update("dscannerPath", finalDestination, true);
-			vscode.window.showInformationMessage("Dscanner successfully installed", "Reload").then((r) => {
-				if (r == "Reload")
-					vscode.commands.executeCommand("workbench.action.reloadWindow");
-			});
+			vscode.window.showInformationMessage(
+				localize("d.installer.success", "{0} successfully installed", "Dscanner"),
+				localize("d.installer.reload", "Reload")).then((r) => {
+					if (r == localize("d.installer.reload", "Reload"))
+						vscode.commands.executeCommand("workbench.action.reloadWindow");
+				});
 		}, env);
 	});
 }
@@ -216,10 +233,12 @@ export function compileDfmt(env) {
 			var finalDestination = path.join(outputFolder, "dfmt", "bin", "dfmt" + (process.platform == "win32" ? ".exe" : ""));
 
 			config().update("dfmtPath", finalDestination, true);
-			vscode.window.showInformationMessage("dfmt successfully installed", "Reload").then((r) => {
-				if (r == "Reload")
-					vscode.commands.executeCommand("workbench.action.reloadWindow");
-			});
+			vscode.window.showInformationMessage(
+				localize("d.installer.success", "{0} successfully installed", "dfmt"),
+				localize("d.installer.reload", "Reload")).then((r) => {
+					if (r == localize("d.installer.reload", "Reload"))
+						vscode.commands.executeCommand("workbench.action.reloadWindow");
+				});
 		}, env);
 	});
 }
@@ -238,10 +257,12 @@ export function compileDCD(env) {
 
 			config().update("dcdClientPath", finalDestinationClient, true);
 			config().update("dcdServerPath", finalDestinationServer, true);
-			vscode.window.showInformationMessage("DCD successfully installed", "Reload").then((r) => {
-				if (r == "Reload")
-					vscode.commands.executeCommand("workbench.action.reloadWindow");
-			});
+			vscode.window.showInformationMessage(
+				localize("d.installer.success", "{0} successfully installed", "DCD"),
+				localize("d.installer.reload", "Reload")).then((r) => {
+					if (r == localize("d.installer.reload", "Reload"))
+						vscode.commands.executeCommand("workbench.action.reloadWindow");
+				});
 		}, env);
 	});
 }
@@ -261,12 +282,12 @@ function spawnCommand(output: vscode.OutputChannel, cmd: string, args: string[],
 }
 
 export function compileDependency(cwd, name, gitPath, commands, callback, env) {
-	var output = vscode.window.createOutputChannel(name + " installation progress");
+	var output = vscode.window.createOutputChannel(localize("d.installer.title", "{0} installation progress", name));
 	extensionContext.subscriptions.push(output);
 	output.show(true);
-	output.appendLine("Installing into " + cwd);
+	output.appendLine(localize("d.installer.installingInto", "Installing into {0}", cwd));
 	var error = function (err) {
-		output.appendLine("Failed to install " + name + " (Error code " + err + ")");
+		output.appendLine(localize("d.installer.error", "Failed to install {0} (Error code {1})", name, err));
 	};
 	var newCwd = path.join(cwd, name);
 	var startCompile = () => {
@@ -282,17 +303,17 @@ export function compileDependency(cwd, name, gitPath, commands, callback, env) {
 			}, function (err) {
 				if (err)
 					return error(err);
-				output.appendLine("Done compiling");
+				output.appendLine(localize("d.installer.compileDone", "Done compiling"));
 				callback();
 			});
 		});
 	};
 	if (fs.existsSync(newCwd)) {
-		output.appendLine("Removing old version");
+		output.appendLine(localize("d.installer.removingOld", "Removing old version"));
 		rmdir(newCwd, function (err: Error, dirs, files) {
 			if (err)
 				output.appendLine(err.toString());
-			output.appendLine("Removed old version");
+			output.appendLine(localize("d.installer.removedOld", "Removed old version"));
 			startCompile();
 		});
 	}

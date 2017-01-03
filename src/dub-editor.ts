@@ -2,6 +2,7 @@ import * as vscode from "vscode"
 import * as path from "path"
 import * as fs from "fs"
 import * as os from "os"
+import { localize } from "./extension"
 
 function getEditorUrl(uri: vscode.Uri) {
 	return uri.with({
@@ -19,27 +20,27 @@ function isDubPackage(uri: vscode.Uri) {
 }
 
 function copyFile(source, target, cb) {
-  var cbCalled = false;
+	var cbCalled = false;
 
-  var rd = fs.createReadStream(source);
-  rd.on("error", function (err) {
-    done(err);
-  });
-  var wr = fs.createWriteStream(target);
-  wr.on("error", function (err) {
-    done(err);
-  });
-  wr.on("close", function (ex) {
-    done();
-  });
-  rd.pipe(wr);
+	var rd = fs.createReadStream(source);
+	rd.on("error", function (err) {
+		done(err);
+	});
+	var wr = fs.createWriteStream(target);
+	wr.on("error", function (err) {
+		done(err);
+	});
+	wr.on("close", function (ex) {
+		done();
+	});
+	rd.pipe(wr);
 
-  function done(err?) {
-    if (!cbCalled) {
-      cb(err);
-      cbCalled = true;
-    }
-  }
+	function done(err?) {
+		if (!cbCalled) {
+			cb(err);
+			cbCalled = true;
+		}
+	}
 }
 
 const pathSeparator = " >_> ";
@@ -110,7 +111,7 @@ export class DubEditor implements vscode.TextDocumentContentProvider {
 			let uri = vscode.Uri.parse(arg.file);
 			vscode.workspace.openTextDocument(uri).then(doc => {
 				if (doc.isDirty) {
-					vscode.window.showErrorMessage("Please save or close all instances of this dub.json file and try again");
+					vscode.window.showErrorMessage(localize("d.dub.docDirty", "Please save or close all instances of this dub.json file and try again"));
 					return;
 				}
 				var text = doc.getText();
@@ -121,7 +122,7 @@ export class DubEditor implements vscode.TextDocumentContentProvider {
 						jsonContent = JSON.parse(text.trim());
 					}
 					catch (e) {
-						vscode.window.showErrorMessage("dub.json is not a valid json file");
+						vscode.window.showErrorMessage(localize("d.dub.dubJsonFail", "dub.json is not a valid json file"));
 						console.error(e);
 						return;
 					}
@@ -140,20 +141,20 @@ export class DubEditor implements vscode.TextDocumentContentProvider {
 
 	updateDubJson(uri: vscode.Uri, content: JSON) {
 		if (!content || typeof content !== "object")
-			return vscode.window.showErrorMessage("Failed to generate dub.json");
+			return vscode.window.showErrorMessage(localize("d.dub.generateFail", "Failed to generate dub.json"));
 		fs.stat(uri.fsPath + ".bak", function (err, stats) {
 			var prepareWrite = function (err) {
 				var performWrite = function () {
 					fs.writeFile(uri.fsPath, JSON.stringify(content, null, "\t"), function (err) {
 						if (err) {
-							vscode.window.showErrorMessage("Failed to update dub.json");
+							vscode.window.showErrorMessage(localize("d.dub.updateFail", "Failed to update dub.json"));
 							console.error(err);
 						}
 					});
 				};
 				if (err)
-					vscode.window.showWarningMessage("Failed to backup dub.json", "Override without Backup").then(r => {
-						if (r == "Override without Backup")
+					vscode.window.showWarningMessage("Failed to backup dub.json", localize("d.dub.override", "Override without Backup")).then(r => {
+						if (r == localize("d.dub.override", "Override without Backup"))
 							performWrite();
 					});
 				else

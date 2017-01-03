@@ -422,7 +422,7 @@
 		"ncp": "^2.0.0",
 		"rmdir": "^1.2.0",
 		"line-by-line": "^0.1.5",
-		"vscode-nls": "^2.0.1"
+		"vscode-nls": "WebFreak001/vscode-nls#9954e54"
 	},
 	"devDependencies": {
 		"typescript": "^2.0.6",
