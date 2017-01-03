@@ -6,6 +6,7 @@ import { uploadCode } from "./util"
 import * as statusbar from "./statusbar"
 import * as path from "path"
 import * as fs from "fs"
+import * as nls from "vscode-nls"
 import { DlangUIHandler } from "./dlangui"
 import { lintDfmt } from "./dfmt-check"
 import { GCProfiler } from "./gcprofiler"
@@ -22,6 +23,8 @@ let oldLint: [vscode.Uri, vscode.Diagnostic[]][][] = [[], [], []];
 
 var extensionContext: vscode.ExtensionContext;
 
+export var localize: nls.LocalizeFunc = (key, fallback) => { return fallback; };
+
 export function config() {
 	return vscode.workspace.getConfiguration("d");
 }
@@ -29,16 +32,18 @@ export function config() {
 export function activate(context: vscode.ExtensionContext) {
 	extensionContext = context;
 	setContext(context);
+	localize = nls.config({ locale: vscode.env.language })(context.asAbsolutePath("package"));
 
 	if (context.globalState.get("restorePackageBackup", false)) {
 		context.globalState.update("restorePackageBackup", false);
 		var pkgPath = path.join(context.extensionPath, "package.json");
+		var restoreFail = localize("d.installer.restoreFail", "Failed to restore after reload! Please reinstall code-d if problems occur before reporting!");
 		fs.readFile(pkgPath + ".bak", function (err, data) {
 			if (err)
-				return vscode.window.showErrorMessage("Failed to restore after reload! Please reinstall code-d if problems occur before reporting!");
+				return vscode.window.showErrorMessage(restoreFail);
 			fs.writeFile(pkgPath, data, function (err) {
 				if (err)
-					return vscode.window.showErrorMessage("Failed to restore after reload! Please reinstall code-d if problems occur before reporting!");
+					return vscode.window.showErrorMessage(restoreFail);
 				fs.unlink(pkgPath + ".bak", function (err) {
 					console.error(err);
 				});
@@ -46,13 +51,14 @@ export function activate(context: vscode.ExtensionContext) {
 		});
 	}
 
+	var openUserSettings = localize("d.ext.openUserSettings", "Open User Settings");
 	{
 		var phobosPath = config().get("stdlibPath", ["/usr/include/dmd/druntime/import", "/usr/include/dmd/phobos"]);
 		var foundCore = false;
 		var foundStd = false;
 		var someError = false;
 		var userSettings = (r) => {
-			if (r == "Open User Settings")
+			if (r == openUserSettings)
 				vscode.commands.executeCommand("workbench.action.openGlobalSettings");
 		};
 		var i = 0;
@@ -69,16 +75,16 @@ export function activate(context: vscode.ExtensionContext) {
 								fn();
 							else {
 								if (!foundStd && !foundCore)
-									vscode.window.showWarningMessage("Your d.stdlibPath setting doesn't contain a path to phobos or druntime. Auto completion might lack some symbols!", "Open User Settings").then(userSettings);
+									vscode.window.showWarningMessage(localize("d.ext.stdlibNoPhobosNoDRuntime", "Your d.stdlibPath setting doesn't contain a path to phobos or druntime. Auto completion might lack some symbols!"), openUserSettings).then(userSettings);
 								else if (!foundStd)
-									vscode.window.showWarningMessage("Your d.stdlibPath setting doesn't contain a path to phobos. Auto completion might lack some symbols!", "Open User Settings").then(userSettings);
+									vscode.window.showWarningMessage(localize("d.ext.stdlibNoPhobos", "Your d.stdlibPath setting doesn't contain a path to phobos. Auto completion might lack some symbols!"), openUserSettings).then(userSettings);
 								else if (!foundCore)
-									vscode.window.showWarningMessage("Your d.stdlibPath setting doesn't contain a path to druntime. Auto completion might lack some symbols!", "Open User Settings").then(userSettings);
+									vscode.window.showWarningMessage(localize("d.ext.stdlibNoDRuntime", "Your d.stdlibPath setting doesn't contain a path to druntime. Auto completion might lack some symbols!"), openUserSettings).then(userSettings);
 							}
 						});
 					}
 					else
-						vscode.window.showWarningMessage("A path in your d.stdlibPath setting doesn't exist. Auto completion might lack some symbols!", "Open User Settings").then(userSettings);
+						vscode.window.showWarningMessage(localize("d.ext.stdlibInvalidPath", "A path in your d.stdlibPath setting doesn't exist. Auto completion might lack some symbols!"), openUserSettings).then(userSettings);
 				});
 		};
 		fn();
@@ -146,24 +152,25 @@ export function activate(context: vscode.ExtensionContext) {
 				extensionContext.globalState.update("dub_path", "");
 			}
 
-			function checkProgram(configName, defaultPath, name, installFunc, btn = "Compile") {
+			function checkProgram(configName, defaultPath, name, installFunc, action = "compile") {
 				var version = "";
 				ChildProcess.spawn(config().get(configName, defaultPath), ["--version"], { cwd: vscode.workspace.rootPath, env: env }).on("error", function (err) {
 					if (err && (<any>err).code == "ENOENT") {
 						var isDirectory = false;
 						try {
 							isDirectory = fs.statSync(config().get(configName, "")).isDirectory();
-						} catch (e) {}
+						} catch (e) { }
 						if (isDirectory) {
-							vscode.window.showErrorMessage(name + " points to a directory", "Open User Settings").then(s => {
-								if (s == "Open User Settings")
+							vscode.window.showErrorMessage(localize("d.ext.exeIsDir", "{0} points to a directory", name), openUserSettings).then(s => {
+								if (s == openUserSettings)
 									vscode.commands.executeCommand("workbench.action.openGlobalSettings");
 							});
 						} else {
-							vscode.window.showErrorMessage(name + " is not installed or couldn't be found", btn + " " + name, "Open User Settings").then(s => {
-								if (s == "Open User Settings")
+							var actionBtn = localize("d.ext." + action + "Program", action + " {0}", name);
+							vscode.window.showErrorMessage(localize("d.ext.exeENOENT", "{0} is not installed or couldn't be found", name), actionBtn, openUserSettings).then(s => {
+								if (s == openUserSettings)
 									vscode.commands.executeCommand("workbench.action.openGlobalSettings");
-								else if (s == btn + " " + name)
+								else if (s == actionBtn)
 									installFunc(env);
 							});
 						}
@@ -178,16 +185,16 @@ export function activate(context: vscode.ExtensionContext) {
 			checkProgram("dfmtPath", "dfmt", "dfmt", compileDfmt);
 			// client is good enough
 			checkProgram("dcdClientPath", "dcd-client", "DCD", compileDCD);
-			checkProgram("dubPath", "dub", "dub", downloadDub, "Download");
+			checkProgram("dubPath", "dub", "dub", downloadDub, "download");
 		}
 
 		function upgradeDubPackage(document: vscode.TextDocument) {
 			if (path.relative(vscode.workspace.rootPath, document.fileName) == "dub.json" || path.relative(vscode.workspace.rootPath, document.fileName) == "dub.sdl") {
 				workspaced.upgrade().then(() => { }, (err) => {
-					vscode.window.showWarningMessage("Could not upgrade dub project");
+					vscode.window.showWarningMessage(localize("d.ext.dubUpgradeFail", "Could not upgrade dub project"));
 				});
 				workspaced.updateImports().then(() => { }, (err) => {
-					vscode.window.showWarningMessage("Could not update import paths. Please check your build settings in the status bar.");
+					vscode.window.showWarningMessage(localize("d.ext.dubImportFail", "Could not update import paths. Please check your build settings in the status bar."));
 				});
 			}
 		}
@@ -269,7 +276,7 @@ export function activate(context: vscode.ExtensionContext) {
 			});
 		}, (err) => {
 			console.error(err);
-			vscode.window.showErrorMessage("Failed to switch configuration. See console for details.");
+			vscode.window.showErrorMessage(localize("d.ext.configSwitchFail", "Failed to switch configuration. See console for details."));
 		}));
 
 		context.subscriptions.push(vscode.commands.registerCommand("code-d.switchArchType", () => {
@@ -279,7 +286,7 @@ export function activate(context: vscode.ExtensionContext) {
 			});
 		}, (err) => {
 			console.error(err);
-			vscode.window.showErrorMessage("Failed to switch arch type. See console for details.");
+			vscode.window.showErrorMessage(localize("d.ext.archSwitchFail", "Failed to switch arch type. See console for details."));
 		}));
 
 		context.subscriptions.push(vscode.commands.registerCommand("code-d.switchBuildType", () => {
@@ -289,57 +296,57 @@ export function activate(context: vscode.ExtensionContext) {
 			});
 		}, (err) => {
 			console.error(err);
-			vscode.window.showErrorMessage("Failed to switch build type. See console for details.");
+			vscode.window.showErrorMessage(localize("d.ext.buildTypeSwitchFail", "Failed to switch build type. See console for details."));
 		}));
 
 		context.subscriptions.push(vscode.commands.registerCommand("code-d.switchCompiler", () => {
 			workspaced.getCompiler().then(compiler => {
-				vscode.window.showInputBox({ value: compiler, prompt: "Enter compiler identifier. (e.g. dmd, ldc2, gdc)" }).then(compiler => {
+				vscode.window.showInputBox({ value: compiler, prompt: localize("d.ext.compilerPrompt", "Enter compiler identifier. (e.g. dmd, ldc2, gdc)") }).then(compiler => {
 					if (compiler)
 						workspaced.setCompiler(compiler);
 				});
 			}, (err) => {
 				console.error(err);
-				vscode.window.showErrorMessage("Failed to switch compiler. See console for details.");
+				vscode.window.showErrorMessage(localize("d.ext.compilerSwitchFail", "Failed to switch compiler. See console for details."));
 			});
 		}));
 
 		context.subscriptions.push(vscode.commands.registerCommand("code-d.killServer", () => {
 			workspaced.killServer().then((res) => {
-				vscode.window.showInformationMessage("Killed DCD-Server", "Restart").then((pick) => {
-					if (pick == "Restart")
+				vscode.window.showInformationMessage("Killed DCD-Server", localize("d.ext.dcd.restart", "Restart")).then((pick) => {
+					if (pick == localize("d.ext.dcd.restart", "Restart"))
 						vscode.commands.executeCommand("code-d.restartServer");
 				});
 			}, (err) => {
 				console.error(err);
-				vscode.window.showErrorMessage("Failed to kill DCD-Server. See console for details.");
+				vscode.window.showErrorMessage(localize("d.ext.dcdKillFail", "Failed to kill DCD-Server. See console for details."));
 			});
 		}));
 
 		context.subscriptions.push(vscode.commands.registerCommand("code-d.restartServer", () => {
 			workspaced.restartServer().then((res) => {
-				vscode.window.showInformationMessage("Restarted DCD-Server");
+				vscode.window.showInformationMessage(localize("d.ext.dcdRestarted", "Restarted DCD-Server"));
 			}, (err) => {
 				console.error(err);
-				vscode.window.showErrorMessage("Failed to kill DCD-Server. See console for details.");
+				vscode.window.showErrorMessage(localize("d.ext.dcdKillFail", "Failed to kill DCD-Server. See console for details."));
 			});
 		}));
 
 		context.subscriptions.push(vscode.commands.registerCommand("code-d.reloadImports", () => {
 			workspaced.updateImports().then((success) => {
 				if (success)
-					vscode.window.showInformationMessage("Successfully reloaded import paths");
+					vscode.window.showInformationMessage(localize("d.ext.importsReloaded", "Successfully reloaded import paths"));
 				else
-					vscode.window.showWarningMessage("Import paths are empty!");
+					vscode.window.showWarningMessage(localize("d.ext.importsEmpty", "Import paths are empty!"));
 			}, (err) => {
-				vscode.window.showErrorMessage("Could not update imports. dub might not be initialized yet!");
+				vscode.window.showErrorMessage(localize("d.ext.manualReloadFail", "Could not update imports. dub might not be initialized yet!"));
 			});
 		}));
 
 		context.subscriptions.push(vscode.commands.registerTextEditorCommand("code-d.addImport", (editor, edit, name, location) => {
 			workspaced.addImport(editor.document.getText(), name, location).then((change) => {
 				if (!workspaced.importerReady)
-					return vscode.window.showWarningMessage("workspace-d not ready yet");
+					return vscode.window.showWarningMessage(localize("d.ext.workspacedNotReady", "workspace-d not ready yet"));
 				console.log("Importer resolve: " + JSON.stringify(change));
 				if (change.rename) // no renames from addImport command
 					return;
@@ -356,7 +363,7 @@ export function activate(context: vscode.ExtensionContext) {
 					console.log("Done");
 				});
 			}, (err) => {
-				vscode.window.showErrorMessage("Could not add import");
+				vscode.window.showErrorMessage(localize("d.ext.importAddFail", "Could not add import"));
 				console.error(err);
 			});
 		}));
@@ -425,7 +432,7 @@ export function activate(context: vscode.ExtensionContext) {
 			args = [vscode.window.activeTextEditor.document.fileName];
 
 		if (!rdmdTerminal)
-			rdmdTerminal = vscode.window.createTerminal("rdmd Output");
+			rdmdTerminal = vscode.window.createTerminal(localize("d.ext.rdmdTitle", "rdmd Output"));
 		rdmdTerminal.show();
 		rdmdTerminal.sendText("rdmd " + args.join(" "));
 	}));
@@ -439,7 +446,7 @@ export function activate(context: vscode.ExtensionContext) {
 		context.globalState.update("create-template", undefined);
 		fs.readFile(path.join(context.extensionPath, "templates", "info.json"), function (err, data) {
 			if (err)
-				return vscode.window.showErrorMessage("Failed to parse templates");
+				return vscode.window.showErrorMessage(localize("d.projects.readFail", "Failed to read template list"));
 			var templates = JSON.parse(data.toString());
 			for (var i = 0; i < templates.length; i++)
 				if (templates[i].path == id) {
@@ -449,16 +456,19 @@ export function activate(context: vscode.ExtensionContext) {
 								vscode.commands.executeCommand("workbench.action.reloadWindow");
 							});
 						else
-							vscode.window.showWarningMessage("The current workspace is not empty!", "Select other Folder", "Merge into Folder").then(r => {
-								if (r == "Select other Folder") {
-									context.globalState.update("create-template", id);
-									openFolderWithExtension(context);
-								} else if (r == "Merge into Folder") {
-									performTemplateCopy(context, id, templates[i].dub, vscode.workspace.rootPath, function () {
-										vscode.commands.executeCommand("workbench.action.reloadWindow");
-									});
-								}
-							});
+							vscode.window.showWarningMessage(
+								localize("d.projects.folderNotEmpty", "The current workspace is not empty!"),
+								localize("d.projects.selectOtherFolder", "Select other Folder"),
+								localize("d.projects.mergeFolder", "Merge into Folder")).then(r => {
+									if (r == localize("d.projects.selectOtherFolder", "Select other Folder")) {
+										context.globalState.update("create-template", id);
+										openFolderWithExtension(context);
+									} else if (r == localize("d.projects.mergeFolder", "Merge into Folder")) {
+										performTemplateCopy(context, id, templates[i].dub, vscode.workspace.rootPath, function () {
+											vscode.commands.executeCommand("workbench.action.reloadWindow");
+										});
+									}
+								});
 					});
 					return;
 				}
@@ -467,18 +477,18 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(vscode.commands.registerCommand("code-d.uploadSelection", () => {
 		if (vscode.window.activeTextEditor.selection.isEmpty)
-			vscode.window.showErrorMessage("No code selected");
+			vscode.window.showErrorMessage(localize("d.ext.uploader.noCode", "No code selected"));
 		else {
 			let code = vscode.window.activeTextEditor.document.getText(vscode.window.activeTextEditor.selection);
 			let name = path.basename(vscode.window.activeTextEditor.document.fileName);
 			let syntax = vscode.window.activeTextEditor.document.languageId;
 			uploadCode(name, syntax, code).then((url) => {
-				vscode.window.showInformationMessage("Code pasted on " + url);
+				vscode.window.showInformationMessage(localize("d.ext.uploader.success", "Code pasted on {0}", url));
 			});
 		}
 	}, (err) => {
 		console.error(err);
-		vscode.window.showErrorMessage("Failed to switch configuration. See console for details.");
+		vscode.window.showErrorMessage(localize("d.ext.uploader.fail", "Failed to upload selection. See console for details."));
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand("code-d.insertDscanner", () => {

@@ -1,6 +1,7 @@
 import * as vscode from "vscode"
 import * as path from "path"
 import * as fs from "fs"
+import { localize } from "./extension"
 
 interface CoverageLine {
 	hits: number;
@@ -37,8 +38,8 @@ export class CoverageAnalyzer implements vscode.TextDocumentContentProvider {
 			isWholeLine: true
 		});
 		this.coverageStat = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 0.72136);
-		this.coverageStat.text = "0.00% Coverage";
-		this.coverageStat.tooltip = "Coverage in this file generated from the according .lst file";
+		this.coverageStat.text = localize("d.coverage.statusText", "{0}% Coverage", "0.00");
+		this.coverageStat.tooltip = localize("d.coverage.tooltip", "Coverage in this file generated from the according .lst file");
 		this.coverageStat.command = "code-d.generateCoverageReport";
 	}
 
@@ -119,7 +120,7 @@ export class CoverageAnalyzer implements vscode.TextDocumentContentProvider {
 					}
 				}
 			}
-			this.coverageStat.text = info.totalCov + "% Coverage";
+			this.coverageStat.text = localize("d.coverage.statusText", "{0}% Coverage", info.totalCov);
 			this.coverageStat.show();
 		}
 		else

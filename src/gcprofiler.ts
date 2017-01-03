@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import * as fs from "fs";
 import * as path from "path";
+import { localize } from "./extension";
 
 var spaces = /[^\S\n]+/g;
 var filelineRegex = /(\S+):(\d+)$/;
@@ -18,7 +19,7 @@ export class GCProfiler implements vscode.CodeLensProvider {
 				lens.command = {
 					arguments: [],
 					command: "",
-					title: profile.bytesAllocated + " bytes allocated / " + profile.allocationCount + " allocations"
+					title: localize("d.ext.gcLens", "{0} bytes allocated / {1} allocations", profile.bytesAllocated, profile.allocationCount)
 				};
 				lenses.push(lens);
 			}
@@ -61,7 +62,7 @@ export class GCProfiler implements vscode.CodeLensProvider {
 		this.profiles.forEach(profile => {
 			items.push({
 				description: profile.type,
-				detail: profile.bytesAllocated + " bytes allocated / " + profile.allocationCount + " allocations",
+				detail: localize("d.ext.gcLens", "{0} bytes allocated / {1} allocations", profile.bytesAllocated, profile.allocationCount),
 				label: profile.displayFile + ":" + profile.line,
 				profile: profile
 			});

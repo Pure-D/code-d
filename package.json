@@ -144,7 +144,7 @@
 				"d.workspacedPath": {
 					"type": "string",
 					"default": "workspace-d",
-					"description": "Path of the workspace-d executable. Path can be omitted if in $PATH or installed using code-d"
+					"description": "%d.config.workspacedPath%"
 				},
 				"d.stdlibPath": {
 					"type": "array",
@@ -155,57 +155,57 @@
 						"/usr/include/dmd/druntime/import",
 						"/usr/include/dmd/phobos"
 					],
-					"description": "Array of paths to phobos and D runtime for automatic inclusion for auto completion"
+					"description": "%d.config.stdlibPath%"
 				},
 				"d.dcdClientPath": {
 					"type": "string",
 					"default": "dcd-client",
-					"description": "Path of the dcd-client executable. Path can be omitted if in $PATH or installed using code-d"
+					"description": "%d.config.dcdClientPath%"
 				},
 				"d.dcdServerPath": {
 					"type": "string",
 					"default": "dcd-server",
-					"description": "Path of the dcd-server executable. Path can be omitted if in $PATH or installed using code-d"
+					"description": "%d.config.dcdServerPath%"
 				},
 				"d.dscannerPath": {
 					"type": "string",
 					"default": "dscanner",
-					"description": "Path of the dscanner executable. Path can be omitted if in $PATH or installed using code-d"
+					"description": "%d.config.dscannerPath%"
 				},
 				"d.dfmtPath": {
 					"type": "string",
 					"default": "dfmt",
-					"description": "Path of the dfmt executable. Path can be omitted if in $PATH or installed using code-d"
+					"description": "%d.config.dfmtPath%"
 				},
 				"d.dubPath": {
 					"type": "string",
 					"default": "dub",
-					"description": "Path of the dub executable. Path can be omitted if in $PATH or installed using code-d"
+					"description": "%d.config.dubPath%"
 				},
 				"d.enableLinting": {
 					"type": "boolean",
 					"default": true,
-					"description": "If code-d should watch for file saves and report static analysis. Might interfere with other lint plugins or settings."
+					"description": "%d.config.enableLinting%"
 				},
 				"d.enableSDLLinting": {
 					"type": "boolean",
 					"default": true,
-					"description": "If code-d should report errors in your dub.sdl file."
+					"description": "%d.config.enableSDLLinting%"
 				},
 				"d.enableDubLinting": {
 					"type": "boolean",
 					"default": true,
-					"description": "If code-d should build on save to check for compile errors."
+					"description": "%d.config.enableDubLinting%"
 				},
 				"d.enableAutoComplete": {
 					"type": "boolean",
 					"default": true,
-					"description": "Start dcd-server at startup and complete using dcd-client."
+					"description": "%d.config.enableAutoComplete%"
 				},
 				"d.neverUseDub": {
 					"type": "boolean",
 					"default": false,
-					"description": "If this is true then a custom workspace where you manually provide the import paths will always be used instead of dub. See d.projectImportPaths for setting import paths then. This is discouraged as it will remove most features like packages, building & compiler linting. If this is a standalone project with no external dependencies with a custom build system then this should be true."
+					"description": "%d.config.neverUseDub%"
 				},
 				"d.projectImportPaths": {
 					"type": "array",
@@ -213,38 +213,38 @@
 						"type": "string"
 					},
 					"default": [],
-					"description": "Setting for import paths in your workspace if not using dub. This will replace other paths. Its recommended to set this in your workspace settings instead of your user settings to keep it separate for each project."
+					"description": "%d.config.projectImportPaths%"
 				},
 				"d.dubConfiguration": {
 					"type": "string",
-					"description": "Sets the default configuration to use when starting up"
+					"description": "%d.config.dubConfiguration%"
 				},
 				"d.dubArchType": {
 					"type": "string",
-					"description": "Sets the default arch type to use when starting up"
+					"description": "%d.config.dubArchType%"
 				},
 				"d.dubBuildType": {
 					"type": "string",
-					"description": "Sets the default build type to use when starting up"
+					"description": "%d.config.dubBuildType%"
 				},
 				"d.dubCompiler": {
 					"type": "string",
-					"description": "Sets the default compiler to use when starting up"
+					"description": "%d.config.dubCompiler%"
 				},
 				"d.disableWorkspaceD": {
 					"type": "boolean",
 					"default": false,
-					"description": "Disables most code-d features. Intended for debugging/working on new features with lots of vscode restarts"
+					"description": "%d.config.disableWorkspaceD%"
 				},
 				"d.overrideDfmtEditorconfig": {
 					"type": "boolean",
 					"default": true,
-					"description": "Uses dfmt config options & vscode editor config instead of .editorconfig because dfmt seems to be quite buggy with them."
+					"description": "%d.config.overrideDfmtEditorconfig%"
 				},
 				"dfmt.alignSwitchStatements": {
 					"type": "boolean",
 					"default": true,
-					"description": "Not yet implemented (on dfmt side)"
+					"description": "%d.config.dfmt.alignSwitchStatements%"
 				},
 				"dfmt.braceStyle": {
 					"type": "string",
@@ -254,32 +254,32 @@
 						"stroustrup"
 					],
 					"default": "allman",
-					"description": "See Wikipedia https://en.wikipedia.org/wiki/Brace_style"
+					"description": "%d.config.dfmt.braceStyle%"
 				},
 				"dfmt.outdentAttributes": {
 					"type": "boolean",
 					"default": true,
-					"description": "Not yet implemented (on dfmt side)"
+					"description": "%d.config.dfmt.outdentAttributes%"
 				},
 				"dfmt.spaceAfterCast": {
 					"type": "boolean",
 					"default": true,
-					"description": "Insert space after the closing paren of a cast expression."
+					"description": "%d.config.dfmt.spaceAfterCast%"
 				},
 				"dfmt.splitOperatorAtLineEnd": {
 					"type": "boolean",
 					"default": false,
-					"description": "Place operators on the end of the previous line when splitting lines."
+					"description": "%d.config.dfmt.splitOperatorAtLineEnd%"
 				},
 				"dfmt.selectiveImportSpace": {
 					"type": "boolean",
 					"default": true,
-					"description": "Insert space after the module name and before the : for selective imports."
+					"description": "%d.config.dfmt.selectiveImportSpace%"
 				},
 				"dfmt.compactLabeledStatements": {
 					"type": "boolean",
 					"default": true,
-					"description": "Place labels on the same line as the labeled switch, for, foreach, or while statement."
+					"description": "%d.config.dfmt.compactLabeledStatements%"
 				},
 				"dfmt.templateConstraintStyle": {
 					"type": "string",
@@ -290,7 +290,7 @@
 						"always_newline_indent"
 					],
 					"default": "conditional_newline_indent",
-					"description": "Control the formatting of template constraints."
+					"description": "%d.config.dfmt.templateConstraintStyle%"
 				}
 			}
 		},
@@ -318,71 +318,71 @@
 		"commands": [
 			{
 				"command": "code-d.switchConfiguration",
-				"title": "code-d: Switch Configuration"
+				"title": "%d.switchConfiguration%"
 			},
 			{
 				"command": "code-d.switchArchType",
-				"title": "code-d: Switch Arch Type"
+				"title": "%d.switchArchType%"
 			},
 			{
 				"command": "code-d.switchBuildType",
-				"title": "code-d: Switch Build Type"
+				"title": "%d.switchBuildType%"
 			},
 			{
 				"command": "code-d.switchCompiler",
-				"title": "code-d: Switch Compiler"
+				"title": "%d.switchCompiler%"
 			},
 			{
 				"command": "code-d.killServer",
-				"title": "code-d: Kill DCD Server"
+				"title": "%d.killServer%"
 			},
 			{
 				"command": "code-d.restartServer",
-				"title": "code-d: Restart DCD Server"
+				"title": "%d.restartServer%"
 			},
 			{
 				"command": "code-d.reloadImports",
-				"title": "code-d: Reload import paths"
+				"title": "%d.reloadImports%"
 			},
 			{
 				"command": "code-d.run",
-				"title": "code-d: Run project"
+				"title": "%d.run%"
 			},
 			{
 				"command": "code-d.build",
-				"title": "code-d: Build project"
+				"title": "%d.build%"
 			},
 			{
 				"command": "code-d.stop",
-				"title": "code-d: Stop project"
+				"title": "%d.stop%"
 			},
 			{
 				"command": "code-d.debug",
-				"title": "code-d: Debug project using code-debug"
+				"title": "%d.debug%"
 			},
 			{
 				"command": "code-d.uploadSelection",
-				"title": "code-d: Upload selection to dpaste.com"
+				"title": "%d.uploadSelection%"
 			},
 			{
 				"command": "code-d.insertDscanner",
-				"title": "code-d: Insert default dscanner.ini content"
+				"title": "%d.insertDscanner%"
 			},
 			{
 				"command": "code-d.rdmdCurrent",
-				"title": "Run document using rdmd"
+				"title": "%d.rdmdCurrent%"
 			},
 			{
 				"command": "code-d.generateCoverageReport",
-				"title": "code-d: Generate coverage report"
+				"title": "%d.generateCoverageReport%"
 			},
 			{
 				"command": "code-d.showGCCalls",
-				"title": "code-d: Show GC calls from profilegc.log"
+				"title": "%d.showGCCalls%"
 			},
 			{
 				"command": "dub.openSettingsEditor",
-				"title": "code-d/dub: Open project settings",
+				"title": "%dub.openSettingsEditor%",
 				"icon": {
 					"light": "./images/edit-dub-inverse.svg",
 					"dark": "./images/edit-dub.svg"
@@ -390,7 +390,7 @@
 			},
 			{
 				"command": "dub.closeSettingsEditor",
-				"title": "code-d/dub: Close project settings",
+				"title": "%dub.closeSettingsEditor%",
 				"icon": {
 					"light": "./images/edit-source-inverse.svg",
 					"dark": "./images/edit-source.svg"
@@ -398,7 +398,7 @@
 			},
 			{
 				"command": "code-d.createProject",
-				"title": "code-d: Create new Project"
+				"title": "%d.createProject%"
 			}
 		],
 		"jsonValidation": [
@@ -421,7 +421,8 @@
 		"async": "^2.1.2",
 		"ncp": "^2.0.0",
 		"rmdir": "^1.2.0",
-		"line-by-line": "^0.1.5"
+		"line-by-line": "^0.1.5",
+		"vscode-nls": "WebFreak001/vscode-nls#9954e54"
 	},
 	"devDependencies": {
 		"typescript": "^2.0.6",

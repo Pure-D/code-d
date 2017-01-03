@@ -2,7 +2,7 @@ import * as vscode from "vscode"
 import * as ChildProcess from "child_process"
 import * as path from "path"
 import { WorkspaceD } from "./workspace-d"
-import { config } from "./extension"
+import { config, localize } from "./extension"
 
 export class CompileButtons implements vscode.Disposable {
 	buildButton: vscode.StatusBarItem;
@@ -31,9 +31,9 @@ export class CompileButtons implements vscode.Disposable {
 		this.startButton.text = " $(triangle-right) ";
 		this.debugButton.text = "$(bug)";
 
-		this.buildButton.tooltip = "Build project";
-		this.startButton.tooltip = "Run project";
-		this.debugButton.tooltip = "Debug project";
+		this.buildButton.tooltip = localize("d.action.build", "Build project");
+		this.startButton.tooltip = localize("d.action.run", "Run project");
+		this.debugButton.tooltip = localize("d.action.debug", "Debug project");
 
 		this.buildButton.command = "code-d.build";
 		this.startButton.command = "code-d.run";
@@ -165,7 +165,7 @@ export class CompileButtons implements vscode.Disposable {
 				}, err => {
 					vscode.window.showErrorMessage("Couldn't start debugging. Make sure you have a GDB extension installed!", "Install Extensions").then(result => {
 						if (result == "Install Extensions") {
-							vscode.commands.executeCommand("workbench.extensions.action.installExtension");
+							vscode.commands.executeCommand("workbench.extensions.action.installExtensions");
 						}
 					});
 				});

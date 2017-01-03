@@ -1,6 +1,7 @@
 import { IJSONContribution, ISuggestionsCollector } from "./json-contributions";
 import * as vscode from "vscode";
 import { Location } from "jsonc-parser";
+import { localize } from "./extension";
 import { searchDubPackages, listPackages, getPackageInfo, getLatestPackageInfo } from "./dub-api"
 
 var semverRegex = /(\d+)\.(\d+)\.(\d+)/;
@@ -84,7 +85,7 @@ export class DubJSONContribution implements IJSONContribution {
 						});
 						resolve();
 					}, err => {
-						result.error("Package not found");
+						result.error(localize("d.dub.notFound", "Package not found"));
 						resolve();
 					});
 				}
@@ -126,12 +127,12 @@ export class DubJSONContribution implements IJSONContribution {
 				getPackageInfo(currentKey).then(json => {
 					var versions = json.versions;
 					if (!versions || !versions.length) {
-						result.error("No versions found");
+						result.error(localize("d.dub.noVersions", "No versions found"));
 						return resolve();
 					}
 					for (var i = versions.length - 1; i >= 0; i--) {
 						var item = new vscode.CompletionItem(versions[i].version);
-						item.detail = "Released on " + new Date(versions[i].date).toLocaleDateString();
+						item.detail = localize("d.dub.packageRelease", "Released on {0}", new Date(versions[i].date).toLocaleDateString());
 						item.kind = vscode.CompletionItemKind.Class;
 						item.insertText = JSON.stringify("{{}}" + versions[i].version);
 						var sortText = "999999999";
