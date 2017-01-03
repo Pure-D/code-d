@@ -281,7 +281,7 @@ function spawnCommand(output: vscode.OutputChannel, cmd: string, args: string[],
 	});
 }
 
-export function compileDependency(cwd, name, gitPath, commands, callback, env) {
+export function compileDependency(cwd, name, gitURI, commands, callback, env) {
 	var output = vscode.window.createOutputChannel(localize("d.installer.title", "{0} installation progress", name));
 	extensionContext.subscriptions.push(output);
 	output.show(true);
@@ -291,7 +291,7 @@ export function compileDependency(cwd, name, gitPath, commands, callback, env) {
 	};
 	var newCwd = path.join(cwd, name);
 	var startCompile = () => {
-		spawnCommand(output, gitPath(), ["clone", gitPath, name], { cwd: cwd, env: env }, (err) => {
+		spawnCommand(output, gitPath(), ["clone", "--recursive", gitURI, name], { cwd: cwd, env: env }, (err) => {
 			if (err !== 0)
 				return error(err);
 			async.eachSeries(commands, function (command, cb) {
