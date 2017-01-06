@@ -193,7 +193,11 @@ export function compileDScanner(env) {
 			[gitPath(), ["submodule", "update", "--init", "--recursive"]],
 			process.platform == "win32" ? ["cmd.exe", ["/c", "build.bat"]] : ["make", []]
 		], function () {
-			var finalDestination = path.join(outputFolder, "Dscanner", "bin", "dscanner" + (process.platform == "win32" ? ".exe" : ""));
+			var finalDestination: string;
+			if (process.platform == "win32")
+				finalDestination = path.join(outputFolder, "Dscanner", "dscanner.exe");
+			else
+				finalDestination = path.join(outputFolder, "Dscanner", "bin", "dscanner");
 
 			config().update("dscannerPath", finalDestination, true);
 			vscode.window.showInformationMessage("Dscanner successfully installed", "Reload").then((r) => {
