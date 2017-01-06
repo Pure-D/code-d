@@ -411,7 +411,7 @@ export class WorkspaceD extends EventEmitter implements
 					console.log("Resolve null");
 					return resolve(null);
 				}
-				let range = new vscode.Range(1, 1, 1, 1);
+				let range: vscode.Range;
 				let uri = document.uri;
 				if (declaration[0] != "stdin")
 					uri = vscode.Uri.file(declaration[0]);
@@ -425,11 +425,57 @@ export class WorkspaceD extends EventEmitter implements
 							range = new vscode.Range(pos, pos);
 					}
 				});
-				if (!range)
+				if (!range) {
 					range = new vscode.Range(1, 1, 1, 1);
-				console.log("resolve");
-				console.log(new vscode.Location(uri, range));
-				resolve(new vscode.Location(uri, range));
+
+					var lr = new LineByLineReader(uri.fsPath);
+					var line = 0;
+					var column = 0;
+					var totalLen = 0;
+					var found = false;
+					var lineEndingLength = 0;
+					var handle = fs.openSync(uri.fsPath, "r");
+					var buffer = new Buffer(1024 * 16); // there must be some line ending in the first 16kb of the file! Otherwise this code sucks
+					fs.readSync(handle, buffer, 0, 1024 * 16, 0);
+					fs.closeSync(handle);
+					var lineEnd = /\r\n|\r|\n/.exec(buffer.toString("utf8"));
+					if (!lineEnd)
+						lineEndingLength = 1;
+					else
+						lineEndingLength = lineEnd[0].length;
+					var byteOffset: number = declaration[1];
+					console.log(declaration);
+					lr.on("error", function (err) {
+						console.error(err);
+						reject(err);
+					});
+					lr.on("line", function (txt) {
+						var len = Buffer.byteLength(txt) + lineEndingLength;
+						totalLen += len;
+						if (totalLen >= byteOffset) {
+							found = true;
+							range = new vscode.Range(line, 0, line, 0);
+							console.log("resolve (manually read)");
+							console.log(new vscode.Location(uri, range));
+							resolve(new vscode.Location(uri, range));
+							lr.close();
+						} else
+							line++;
+					});
+					lr.on("end", function () {
+						if (!found) {
+							range = new vscode.Range(1e6, 0, 1e6, 0); // End of file (hopefully, unless it has over a million lines of code)
+							console.log("resolve (not found)");
+							console.log(new vscode.Location(uri, range));
+							resolve(new vscode.Location(uri, range));
+						}
+					});
+				}
+				else {
+					console.log("resolve (vscode api)");
+					console.log(new vscode.Location(uri, range));
+					resolve(new vscode.Location(uri, range));
+				}
 			}, reject);
 		});
 	}
