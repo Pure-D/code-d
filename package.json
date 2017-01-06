@@ -147,13 +147,49 @@
 					"description": "Path of the workspace-d executable. Path can be omitted if in $PATH or installed using code-d"
 				},
 				"d.stdlibPath": {
-					"type": "array",
-					"items": {
-						"type": "string"
-					},
-					"default": [
-						"/usr/include/dmd/druntime/import",
-						"/usr/include/dmd/phobos"
+					"oneOf": [
+						{
+							"type": "array",
+							"items": {
+								"type": "string"
+							}
+						},
+						{
+							"type": "string"
+						}
+					],
+					"defaultSnippets": [
+						{
+							"label": "Choose based on platform",
+							"body": "auto"
+						},
+						{
+							"label": "Linux Default",
+							"body": [
+								"/usr/include/dmd/druntime/import",
+								"/usr/include/dmd/phobos"
+							]
+						},
+						{
+							"label": "ArchLinux Default",
+							"body": [
+								"/usr/include/dlang/dmd"
+							]
+						},
+						{
+							"label": "Windows Default",
+							"body": [
+								"C:\\D\\dmd2\\src\\druntime\\import",
+								"C:\\D\\dmd2\\src\\phobos"
+							]
+						},
+						{
+							"label": "OSX Default",
+							"body": [
+								"/Library/D/dmd/src/druntime/import",
+								"/Library/D/dmd/src/phobos"
+							]
+						}
 					],
 					"description": "Array of paths to phobos and D runtime for automatic inclusion for auto completion"
 				},

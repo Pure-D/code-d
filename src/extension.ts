@@ -22,8 +22,49 @@ let oldLint: [vscode.Uri, vscode.Diagnostic[]][][] = [[], [], []];
 
 var extensionContext: vscode.ExtensionContext;
 
-export function config() {
-	return vscode.workspace.getConfiguration("d");
+interface CodeDConfiguration {
+	getStdlibPath(): string[];
+	get<T>(section: string, defaultValue?: T): T;
+	has(section: string): boolean;
+	update(section: string, value: any, global?: boolean): Thenable<void>;
+}
+
+export function config(): CodeDConfiguration {
+	var conf = vscode.workspace.getConfiguration("d");
+	var ret: CodeDConfiguration = {
+		get: (section, defaultValue) => {
+			return conf.get(section, defaultValue);
+		},
+		has: (section) => {
+			return conf.has(section);
+		},
+		update: (section, value, global) => {
+			return conf.update(section, value, global);
+		},
+		getStdlibPath: (): string[] => {
+			var paths = <string | string[]>conf.get("stdlibPath", "auto");
+			if (Array.isArray(paths))
+				return paths;
+			if (paths != "auto")
+				return [paths];
+			if (process.platform == "win32")
+				return [
+					"C:\\D\\dmd2\\src\\druntime\\import",
+					"C:\\D\\dmd2\\src\\phobos"
+				];
+			else if (process.platform == "darwin")
+				return [
+					"/Library/D/dmd/src/druntime/import",
+					"/Library/D/dmd/src/phobos"
+				];
+			else
+				return [
+					"/usr/include/dmd/druntime/import",
+					"/usr/include/dmd/phobos"
+				];
+		}
+	};
+	return ret;
 }
 
 export function activate(context: vscode.ExtensionContext) {
@@ -47,7 +88,7 @@ export function activate(context: vscode.ExtensionContext) {
 	}
 
 	{
-		var phobosPath = config().get("stdlibPath", ["/usr/include/dmd/druntime/import", "/usr/include/dmd/phobos"]);
+		var phobosPath = config().getStdlibPath();
 		var foundCore = false;
 		var foundStd = false;
 		var someError = false;
@@ -153,7 +194,7 @@ export function activate(context: vscode.ExtensionContext) {
 						var isDirectory = false;
 						try {
 							isDirectory = fs.statSync(config().get(configName, "")).isDirectory();
-						} catch (e) {}
+						} catch (e) { }
 						if (isDirectory) {
 							vscode.window.showErrorMessage(name + " points to a directory", "Open User Settings").then(s => {
 								if (s == "Open User Settings")

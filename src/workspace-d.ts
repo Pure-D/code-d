@@ -1023,7 +1023,7 @@ export class WorkspaceD extends EventEmitter implements
 			subcmd: "find-and-select-port",
 			port: 9166
 		}).then((data) => {
-			this.request({ cmd: "dcd", subcmd: "start-server", additionalImports: vscode.workspace.getConfiguration("d").get("stdlibPath", ["/usr/include/dmd/druntime/import", "/usr/include/dmd/phobos"]) }).then((data) => {
+			this.request({ cmd: "dcd", subcmd: "start-server", additionalImports: config().getStdlibPath() }).then((data) => {
 				console.log("DCD is ready");
 				this.emit("dcd-ready");
 				this.dcdReady = true;
