@@ -167,8 +167,10 @@ export function compileWorkspaceD(env) {
 		if (!exists)
 			fs.mkdirSync(outputFolder);
 		var buildArgs = ["build", "--build=release"];
-		if (process.platform == "win32")
+		if (process.platform == "win32") {
 			buildArgs.push("--compiler=ldc2");
+			buildArgs.push("--combined");
+		}
 		compileDependency(outputFolder, "workspace-d", "https://github.com/Pure-D/workspace-d.git", [
 			["dub", ["upgrade"]],
 			["dub", buildArgs]
