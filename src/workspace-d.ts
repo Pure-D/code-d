@@ -1084,12 +1084,13 @@ export class WorkspaceD extends EventEmitter implements
 			this.totalData.copy(newBuf, 0, 4 + len);
 			this.totalData = newBuf;
 			let obj = JSON.parse(buf.toString());
+			let channel = id == 0x7f000000 ? "res-broadcast" : "res-" + id;
 			if (typeof obj == "object" && obj && obj["error"]) {
 				this.emit("error", obj);
-				this.emit("res-" + id, obj);
+				this.emit(channel, obj);
 			}
 			else
-				this.emit("res-" + id, null, obj);
+				this.emit(channel, null, obj);
 			return true;
 		}
 		return false;
