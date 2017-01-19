@@ -37,7 +37,7 @@ This assumes [workspace-d](https://github.com/Pure-D/workspace-d) is already ins
     git clone https://github.com/Pure-D/code-d.git
     cd code-d
     npm install
-    node ./node_modules/vscode/bin/compile
+    tsc -p .
     ```
 
 ## License
