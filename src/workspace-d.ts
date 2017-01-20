@@ -171,7 +171,20 @@ export class WorkspaceD extends EventEmitter implements
 					var file = document.fileName;
 					if (!path.isAbsolute(file))
 						file = path.normalize(path.join(this.projectRoot, file));
-					this.request({ cmd: "dscanner", subcmd: "find-symbol", symbol: match[1] }).then((data) => {
+					Promise.all([
+						this.request({ cmd: "dscanner", subcmd: "find-symbol", symbol: match[1] }),
+						this.request({ cmd: "dcd", subcmd: "search-symbol", query: match[1] })
+					]).then((datas) => {
+						var dataDup = [];
+						dataDup.push.apply(dataDup, datas[0]);
+						dataDup.push.apply(dataDup, datas[1]);
+						dataDup = dataDup.sort();
+						if (!dataDup.length)
+							return resolve([]);
+						var data = [dataDup[0]];
+						for (var i = 1; i < dataDup.length; i++)
+							if (data[data.length - 1] != dataDup[i])
+								data.push(dataDup[i]);
 						var modules = [];
 						async.eachSeries(data, (item, callback) => {
 							if (!path.isAbsolute(item.file))
@@ -196,7 +209,11 @@ export class WorkspaceD extends EventEmitter implements
 								}
 							});
 						}, () => {
+							var suggested = [];
 							for (var i = 0; i < modules.length; i++) {
+								if (suggested.indexOf(modules[i]) != -1)
+									continue;
+								suggested.push(modules[i]);
 								rets.push({
 									title: "Import " + modules[i],
 									command: "code-d.addImport",
@@ -609,7 +626,7 @@ export class WorkspaceD extends EventEmitter implements
 	}
 
 	addImport(code: string, name: string, location: number): Thenable<any> {
-		return this.request({ cmd: "importer", subcmd: "add", "importName": name, "code": code, "pos": location });
+		return this.request({ cmd: "importer", subcmd: "add", "importName": name, "code": code, "pos": location }, true);
 	}
 
 	listConfigurations(): Thenable<string[]> {
