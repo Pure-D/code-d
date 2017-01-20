@@ -21,6 +21,7 @@ const mixinRegex = /-mixin-\d+$/;
 const importRegex = /import ([a-zA-Z_]\w*(?:\.[a-zA-Z_]\w*)*)?/;
 const undefinedIdentifier = /^undefined identifier '(\w+)'(?:, did you mean .*? '(\w+)'\?)?$/;
 const undefinedTemplate = /template '(\w+)' is not defined/;
+const noProperty = /^no property '(\w+)'(?: for type '.*?')?$/;
 const moduleRegex = /module\s+([a-zA-Z_]\w*\s*(?:\s*\.\s*[a-zA-Z_]\w*)*)\s*;/;
 function fixPath(pathStr: string, projectRoot: string, stringImportPaths: string[]): string {
 	var match = mixinRegex.exec(pathStr);
@@ -156,7 +157,8 @@ export class WorkspaceD extends EventEmitter implements
 				}]);
 			}
 			else if ((match = undefinedIdentifier.exec(context.diagnostics[i].message))
-				|| (match = undefinedTemplate.exec(context.diagnostics[i].message))) {
+				|| (match = undefinedTemplate.exec(context.diagnostics[i].message))
+				|| (match = noProperty.exec(context.diagnostics[i].message))) {
 				if (!this.dscannerReady)
 					return;
 				var rets: vscode.Command[] = [];
