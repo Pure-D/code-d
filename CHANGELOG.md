@@ -1,3 +1,13 @@
+# 0.16.0
+
+* Fixed windows dscanner exe path
+* Fixed goto definition in unopened files
+* Better default stdlibPath values (platform dependent) + snippets for it
+* Import fixer will suggest stdlib & works with UFCS
+* Bump to workspace-d 2.10.0
+	* Primarily makes importer better
+	* Finds outdated DCD/Dscanner/dfmt now (warnings/update not yet implemented in code-d)
+
 # 0.15.1
 
 * Fixed installation on macOS
