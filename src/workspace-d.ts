@@ -51,7 +51,7 @@ function fixPath(pathStr: string, projectRoot: string, stringImportPaths: string
 	return pathStr;
 }
 
-export const TARGET_VERSION = [2, 9, 1];
+export const TARGET_VERSION = [2, 10, 0];
 
 export class WorkspaceD extends EventEmitter implements
 	vscode.CompletionItemProvider,
