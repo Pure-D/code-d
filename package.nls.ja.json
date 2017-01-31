@@ -149,8 +149,8 @@
 	"d.installer.compileDone": "コンパイルが終了しました",
 	"d.installer.removingOld": "古いバージョンを削除中",
 	"d.installer.removedOld": "古いバージョンを削除しました",
-
 	"d.installer.restoreFail": "code-d のインストールに失敗しました 環境を変更し再度インストールを行ってください",
+
 	"d.dub.notFound": "dub パッケージが見つかりません",
 	"d.dub.noVersions": "dub 適切なバージョンが見つかりません",
 	"d.dub.packageRelease": "リリース {0}",
