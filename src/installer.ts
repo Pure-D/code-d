@@ -4,16 +4,13 @@ import * as path from "path"
 import * as fs from "fs"
 import { TARGET_VERSION } from "./workspace-d"
 import { req } from "./util"
+import { config } from "./extension"
 var unzip = require("unzip");
 var progress = require("request-progress");
 var async = require("async");
 var rmdir = require("rmdir");
 
 var extensionContext: vscode.ExtensionContext;
-
-export function config() {
-	return vscode.workspace.getConfiguration("d");
-}
 
 function gitPath() {
 	return vscode.workspace.getConfiguration("git").get("path", "git") || "git";
