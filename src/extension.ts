@@ -186,6 +186,19 @@ export function activate(context: vscode.ExtensionContext) {
 				config().update("dubPath", oldPath);
 				extensionContext.globalState.update("dub_path", "");
 			}
+			/* Erase paths for old version */
+			var invalid = /webfreak.code-d-(\d+\.\d+\.\d+)/;
+			var curVersion = vscode.extensions.getExtension("webfreak.code-d").packageJSON.version;
+			function fixOldCodeD(name: string) {
+				var path = config().get(name, "");
+				var m;
+				if (m = invalid.exec(path)) {
+					if (m[1] != curVersion) {
+						console.log("Erasing old code-d config value from " + name);
+						config().update(name, undefined, true)
+					}
+				}
+			}
 
 			function checkProgram(configName, defaultPath, name, installFunc, btn = "Compile") {
 				var version = "";
