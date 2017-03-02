@@ -258,7 +258,7 @@ function spawnCommand(output: vscode.OutputChannel, cmd: string, args: string[],
 	proc.stderr.on("data", function (chunk) {
 		output.append(chunk.toString() || "null");
 	});
-	proc.on("exit", function (d) {
+	proc.on("exit", function (d: any) {
 		return cb(typeof d == "number" ? d : (d.code || -1));
 	});
 }
