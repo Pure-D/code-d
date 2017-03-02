@@ -47,9 +47,6 @@
 		"onCommand:code-d.addImport"
 	],
 	"main": "./out/src/extension",
-	"extensionDependencies": [
-		"vscode.jade"
-	],
 	"contributes": {
 		"languages": [
 			{
