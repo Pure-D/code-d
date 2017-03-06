@@ -1,93 +1,31 @@
-import * as vscode from 'vscode';
-import { D_MODE, DML_MODE, DSCRIPT_MODE, SDL_MODE } from "./dmode"
-import { WorkspaceD } from "./workspace-d"
-import { CompileButtons } from "./compile-buttons"
-import { uploadCode } from "./util"
-import * as statusbar from "./statusbar"
-import * as path from "path"
-import * as fs from "fs"
-import { DlangUIHandler } from "./dlangui"
-import { lintDfmt } from "./dfmt-check"
-import { GCProfiler } from "./gcprofiler"
-import { CoverageAnalyzer } from "./coverage"
-import { addJSONProviders } from "./json-contributions"
-import { addSDLProviders } from "./sdl/sdl-contributions"
-import { DubEditor } from "./dub-editor"
+import * as vscode from "vscode";
+import * as path from "path";
+import * as fs from "fs";
+import { LanguageClient, LanguageClientOptions, ServerOptions } from "vscode-languageclient";
+import { setContext, compileDScanner, compileDfmt, compileDCD, downloadDub, compileServeD } from "./installer"
+import { EventEmitter } from "events"
 import * as ChildProcess from "child_process"
-import { setContext, compileDScanner, compileDfmt, compileDCD, downloadDub } from "./installer"
-import { showProjectCreator, performTemplateCopy, openFolderWithExtension } from "./project-creator"
 
-let diagnosticCollection: vscode.DiagnosticCollection;
-let oldLint: [vscode.Uri, vscode.Diagnostic[]][][] = [[], [], []];
+import * as mode from "./dmode";
+import * as statusbar from "./statusbar";
+import { CompileButtons } from "./compile-buttons";
+import { addSDLProviders } from "./sdl/sdl-contributions";
+import { addJSONProviders } from "./json-contributions";
+import { GCProfiler } from "./gcprofiler";
+import { CoverageAnalyzer } from "./coverage";
+import { DubEditor } from "./dub-editor";
+import { showProjectCreator, performTemplateCopy, openFolderWithExtension } from "./project-creator";
+import { uploadCode } from "./util";
 
-var extensionContext: vscode.ExtensionContext;
-
-interface CodeDConfiguration {
-	getStdlibPath(): string[];
-	get<T>(section: string, defaultValue?: T): T;
-	has(section: string): boolean;
-	update(section: string, value: any, global?: boolean): Thenable<void>;
-}
-
-export function config(): CodeDConfiguration {
-	var conf = vscode.workspace.getConfiguration("d");
-	var ret: CodeDConfiguration = {
-		get: (section, defaultValue) => {
-			return conf.get(section, defaultValue);
-		},
-		has: (section) => {
-			return conf.has(section);
-		},
-		update: (section, value, global) => {
-			return conf.update(section, value, global);
-		},
-		getStdlibPath: (): string[] => {
-			var paths = <string | string[]>conf.get("stdlibPath", "auto");
-			if (Array.isArray(paths))
-				return paths;
-			if (paths != "auto")
-				return [paths];
-			if (process.platform == "win32")
-				return [
-					"C:\\D\\dmd2\\src\\druntime\\import",
-					"C:\\D\\dmd2\\src\\phobos"
-				];
-			else if (process.platform == "darwin")
-				return [
-					"/Library/D/dmd/src/druntime/import",
-					"/Library/D/dmd/src/phobos"
-				];
-			else
-				return [
-					"/usr/include/dmd/druntime/import",
-					"/usr/include/dmd/phobos"
-				];
-		}
-	};
-	return ret;
+export class ServeD extends EventEmitter {
+	constructor(public client: LanguageClient) {
+		super();
+	}
 }
 
 export function activate(context: vscode.ExtensionContext) {
-	extensionContext = context;
-	setContext(context);
-
-	if (context.globalState.get("restorePackageBackup", false)) {
-		context.globalState.update("restorePackageBackup", false);
-		var pkgPath = path.join(context.extensionPath, "package.json");
-		fs.readFile(pkgPath + ".bak", function (err, data) {
-			if (err)
-				return vscode.window.showErrorMessage("Failed to restore after reload! Please reinstall code-d if problems occur before reporting!");
-			fs.writeFile(pkgPath, data, function (err) {
-				if (err)
-					return vscode.window.showErrorMessage("Failed to restore after reload! Please reinstall code-d if problems occur before reporting!");
-				fs.unlink(pkgPath + ".bak", function (err) {
-					console.error(err);
-				});
-			});
-		});
-	}
-
-	{
+	// TODO: Port to serve-d
+	/*{
 		var phobosPath = config().getStdlibPath();
 		var foundCore = false;
 		var foundStd = false;
@@ -123,306 +61,158 @@ export function activate(context: vscode.ExtensionContext) {
 				});
 		};
 		fn();
-	}
+	}*/
 
-	if (!vscode.workspace.rootPath)
-		console.warn("No folder open, disabling workspace-d");
-	if (!config().get("disableWorkspaceD", false) && vscode.workspace.rootPath) {
-		let env = process.env;
-		let proxy = vscode.workspace.getConfiguration("http").get("proxy", "");
-		if (proxy)
-			env["http_proxy"] = proxy;
-		let workspaced = new WorkspaceD(vscode.workspace.rootPath, env);
-		context.subscriptions.push(vscode.languages.registerCompletionItemProvider(DML_MODE, workspaced.getDlangUI(context.subscriptions), ":", ";"));
-
-		context.subscriptions.push(vscode.languages.registerCompletionItemProvider(D_MODE, workspaced, "."));
-		context.subscriptions.push(vscode.languages.registerSignatureHelpProvider(D_MODE, workspaced, "(", ","));
-		context.subscriptions.push(vscode.languages.registerDocumentSymbolProvider(D_MODE, workspaced));
-		context.subscriptions.push(vscode.languages.registerHoverProvider(D_MODE, workspaced));
-		context.subscriptions.push(vscode.languages.registerDefinitionProvider(D_MODE, workspaced));
-		context.subscriptions.push(vscode.languages.registerDocumentFormattingEditProvider(D_MODE, workspaced));
-		context.subscriptions.push(vscode.languages.registerCodeActionsProvider(D_MODE, workspaced));
-
-		context.subscriptions.push(workspaced);
-		function checkUnresponsive() {
-			setTimeout(() => {
-				workspaced.checkResponsiveness().then(responsive => {
-					if (responsive)
-						checkUnresponsive();
-				});
-			}, 10 * 1000);
-		}
-		workspaced.on("workspace-d-start", checkUnresponsive);
-
-		context.subscriptions.push(statusbar.setup(workspaced));
-		context.subscriptions.push(new CompileButtons(workspaced));
-
-		context.subscriptions.push(vscode.languages.registerWorkspaceSymbolProvider(workspaced));
-
-		{
-			var oldPath;
-			/* Upgrade from old version */
-			if ((oldPath = extensionContext.globalState.get("workspace-d_path", ""))) {
-				config().update("workspacedPath", oldPath);
-				extensionContext.globalState.update("workspace-d_path", "");
+	let servedPath = config().get("servedPath", "serve-d");
+	let executable: ServerOptions = {
+		run: {
+			command: servedPath,
+			args: ["--require", "D"],
+			options: {
+				cwd: context.asAbsolutePath("bin")
 			}
-			if ((oldPath = extensionContext.globalState.get("dcdClient_path", ""))) {
-				config().update("dcdClientPath", oldPath);
-				extensionContext.globalState.update("dcdClient_path", "");
-			}
-			if ((oldPath = extensionContext.globalState.get("dcdServer_path", ""))) {
-				config().update("dcdServerPath", oldPath);
-				extensionContext.globalState.update("dcdServer_path", "");
-			}
-			if ((oldPath = extensionContext.globalState.get("dfmt_path", ""))) {
-				config().update("dfmtPath", oldPath);
-				extensionContext.globalState.update("dfmt_path", "");
-			}
-			if ((oldPath = extensionContext.globalState.get("dscanner_path", ""))) {
-				config().update("dscannerPath", oldPath);
-				extensionContext.globalState.update("dscanner_path", "");
-			}
-			if ((oldPath = extensionContext.globalState.get("dub_path", ""))) {
-				config().update("dubPath", oldPath);
-				extensionContext.globalState.update("dub_path", "");
-			}
-			/* Erase paths for old version */
-			var invalid = /webfreak.code-d-(\d+\.\d+\.\d+)/;
-			var curVersion = vscode.extensions.getExtension("webfreak.code-d").packageJSON.version;
-			function fixOldCodeD(name: string) {
-				var path = config().get(name, "");
-				var m;
-				if (m = invalid.exec(path)) {
-					if (m[1] != curVersion) {
-						console.log("Erasing old code-d config value from " + name);
-						config().update(name, undefined, true)
-					}
-				}
-			}
-
-			function checkProgram(configName, defaultPath, name, installFunc, btn = "Compile") {
-				var version = "";
-				ChildProcess.spawn(config().get(configName, defaultPath), ["--version"], { cwd: vscode.workspace.rootPath, env: env }).on("error", function (err) {
-					if (err && (<any>err).code == "ENOENT") {
-						var isDirectory = false;
-						try {
-							isDirectory = fs.statSync(config().get(configName, "")).isDirectory();
-						} catch (e) { }
-						if (isDirectory) {
-							vscode.window.showErrorMessage(name + " points to a directory", "Open User Settings").then(s => {
-								if (s == "Open User Settings")
-									vscode.commands.executeCommand("workbench.action.openGlobalSettings");
-							});
-						} else {
-							vscode.window.showErrorMessage(name + " is not installed or couldn't be found", btn + " " + name, "Open User Settings").then(s => {
-								if (s == "Open User Settings")
-									vscode.commands.executeCommand("workbench.action.openGlobalSettings");
-								else if (s == btn + " " + name)
-									installFunc(env);
-							});
-						}
-					}
-				}).stdout.on("data", function (chunk) {
-					version += chunk;
-				}).on("end", function () {
-					console.log(name + " version: " + version);
-				});
-			}
-			checkProgram("dscannerPath", "dscanner", "dscanner", compileDScanner);
-			checkProgram("dfmtPath", "dfmt", "dfmt", compileDfmt);
-			// client is good enough
-			checkProgram("dcdClientPath", "dcd-client", "DCD", compileDCD);
-			checkProgram("dubPath", "dub", "dub", downloadDub, "Download");
-		}
-
-		function upgradeDubPackage(document: vscode.TextDocument) {
-			if (path.relative(vscode.workspace.rootPath, document.fileName) == "dub.json" || path.relative(vscode.workspace.rootPath, document.fileName) == "dub.sdl") {
-				workspaced.upgrade().then(() => { }, (err) => {
-					vscode.window.showWarningMessage("Could not upgrade dub project");
-				});
-				workspaced.updateImports().then(() => { }, (err) => {
-					vscode.window.showWarningMessage("Could not update import paths. Please check your build settings in the status bar.");
-				});
+		},
+		debug: {
+			command: "gdbserver",
+			args: ["--once", ":2345", servedPath, "--require", "D"],
+			options: {
+				cwd: context.asAbsolutePath("bin")
 			}
 		}
+	};
+	let clientOptions: LanguageClientOptions = {
+		documentSelector: [mode.D_MODE, mode.DUB_MODE, mode.DIET_MODE, { pattern: "test.txt", scheme: "file" }],
+		synchronize: {
+			configurationSection: ["d", "dfmt", "editor"]
+		}
+	};
+	let client = new LanguageClient("serve-d", "code-d & serve-d", executable, clientOptions);
+	preStartup(client, context);
+	context.subscriptions.push(client.start());
+	var served = new ServeD(client);
 
-		vscode.workspace.onDidSaveTextDocument(upgradeDubPackage, null, context.subscriptions);
-
-		diagnosticCollection = vscode.languages.createDiagnosticCollection("d");
-		context.subscriptions.push(diagnosticCollection);
-		let version;
-		let writeTimeout;
-		let buildErrors = () => {
-			diagnosticCollection.clear();
-			let allErrors: [vscode.Uri, vscode.Diagnostic[]][] = [];
-			oldLint.forEach(errors => {
-				errors.forEach(error => {
-					for (var i = 0; i < allErrors.length; i++) {
-						if (allErrors[i][0] == error[0]) {
-							var arr = allErrors[i][1];
-							if (!arr)
-								arr = [];
-							arr.push.apply(arr, error[1]);
-							allErrors[i][1] = arr;
-							return;
-						}
-					}
-					var dup: [vscode.Uri, vscode.Diagnostic[]] = [error[0], []];
-					error[1].forEach(errElem => {
-						dup[1].push(errElem);
-					});
-					allErrors.push(dup);
-				});
-			});
-			diagnosticCollection.set(allErrors);
-		};
-		vscode.workspace.onDidChangeTextDocument(event => {
-			let document = event.document;
-			if (document.languageId != "d")
-				return;
-			clearTimeout(writeTimeout);
-			writeTimeout = setTimeout(function () {
-				if (config().get("enableLinting", true)) {
-					let issues = lintDfmt(document);
-					if (issues)
-						oldLint[2] = [[document.uri, issues]];
-					else
-						oldLint[2] = [];
-					buildErrors();
-				}
-			}, 200);
-		}, null, context.subscriptions);
-
-		vscode.workspace.onDidSaveTextDocument(document => {
-			if (document.languageId == "d" || document.languageId == "diet")
-				version = document.version;
-			let target = version;
-			if (document.languageId == "d") {
-				if (config().get("enableLinting", true))
-					workspaced.lint(document).then((errors: [vscode.Uri, vscode.Diagnostic[]][]) => {
-						if (target == version) {
-							oldLint[0] = errors;
-							buildErrors();
-						}
-					});
-			}
-			if (document.languageId == "d" || document.languageId == "diet") {
-				if (config().get("enableDubLinting", true))
-					workspaced.dubBuild(document).then((errors: [vscode.Uri, vscode.Diagnostic[]][]) => {
-						if (target == version) {
-							oldLint[1] = errors;
-							buildErrors();
-						}
-					});
-			}
-		}, null, context.subscriptions);
-		context.subscriptions.push(vscode.commands.registerCommand("code-d.switchConfiguration", () => {
-			vscode.window.showQuickPick(workspaced.listConfigurations()).then((config) => {
-				if (config)
-					workspaced.setConfiguration(config);
-			});
-		}, (err) => {
-			console.error(err);
-			vscode.window.showErrorMessage("Failed to switch configuration. See console for details.");
-		}));
-
-		context.subscriptions.push(vscode.commands.registerCommand("code-d.switchArchType", () => {
-			vscode.window.showQuickPick(workspaced.listArchTypes()).then((arch) => {
-				if (arch)
-					workspaced.setArchType(arch);
-			});
-		}, (err) => {
-			console.error(err);
-			vscode.window.showErrorMessage("Failed to switch arch type. See console for details.");
-		}));
-
-		context.subscriptions.push(vscode.commands.registerCommand("code-d.switchBuildType", () => {
-			vscode.window.showQuickPick(workspaced.listBuildTypes()).then((config) => {
-				if (config)
-					workspaced.setBuildType(config);
-			});
-		}, (err) => {
-			console.error(err);
-			vscode.window.showErrorMessage("Failed to switch build type. See console for details.");
-		}));
-
-		context.subscriptions.push(vscode.commands.registerCommand("code-d.switchCompiler", () => {
-			workspaced.getCompiler().then(compiler => {
-				vscode.window.showInputBox({ value: compiler, prompt: "Enter compiler identifier. (e.g. dmd, ldc2, gdc)" }).then(compiler => {
-					if (compiler)
-						workspaced.setCompiler(compiler);
-				});
-			}, (err) => {
-				console.error(err);
-				vscode.window.showErrorMessage("Failed to switch compiler. See console for details.");
-			});
-		}));
-
-		context.subscriptions.push(vscode.commands.registerCommand("code-d.killServer", () => {
-			workspaced.killServer().then((res) => {
-				vscode.window.showInformationMessage("Killed DCD-Server", "Restart").then((pick) => {
-					if (pick == "Restart")
-						vscode.commands.executeCommand("code-d.restartServer");
-				});
-			}, (err) => {
-				console.error(err);
-				vscode.window.showErrorMessage("Failed to kill DCD-Server. See console for details.");
-			});
-		}));
-
-		context.subscriptions.push(vscode.commands.registerCommand("code-d.restartServer", () => {
-			workspaced.restartServer().then((res) => {
-				vscode.window.showInformationMessage("Restarted DCD-Server");
-			}, (err) => {
-				console.error(err);
-				vscode.window.showErrorMessage("Failed to kill DCD-Server. See console for details.");
-			});
-		}));
-
-		context.subscriptions.push(vscode.commands.registerCommand("code-d.reloadImports", () => {
-			workspaced.updateImports().then((success) => {
-				if (success)
-					vscode.window.showInformationMessage("Successfully reloaded import paths");
-				else
-					vscode.window.showWarningMessage("Import paths are empty!");
-			}, (err) => {
-				vscode.window.showErrorMessage("Could not update imports. dub might not be initialized yet!");
-			});
-		}));
-
-		context.subscriptions.push(vscode.commands.registerTextEditorCommand("code-d.addImport", (editor, edit, name, location) => {
-			workspaced.addImport(editor.document.getText(), name, location).then((change) => {
-				if (!workspaced.importerReady)
-					return vscode.window.showWarningMessage("workspace-d not ready yet");
-				console.log("Importer resolve: " + JSON.stringify(change));
-				if (change.rename) // no renames from addImport command
-					return;
-				editor.edit((edit) => {
-					for (var i = change.replacements.length - 1; i >= 0; i--) {
-						var r = change.replacements[i];
-						if (r.range[0] == r.range[1])
-							edit.insert(editor.document.positionAt(r.range[0]), r.content);
-						else if (r.content == "")
-							edit.delete(new vscode.Range(editor.document.positionAt(r.range[0]), editor.document.positionAt(r.range[1])));
-						else
-							edit.replace(new vscode.Range(editor.document.positionAt(r.range[0]), editor.document.positionAt(r.range[1])), r.content);
-					}
-					console.log("Done");
-				});
-			}, (err) => {
-				vscode.window.showErrorMessage("Could not add import");
-				console.error(err);
-			});
-		}));
-	}
+	context.subscriptions.push(statusbar.setup(served));
+	context.subscriptions.push(new CompileButtons(served));
 
 	context.subscriptions.push(addSDLProviders());
 	context.subscriptions.push(addJSONProviders());
 
+	context.subscriptions.push(vscode.commands.registerCommand("code-d.switchConfiguration", () => {
+		vscode.window.showQuickPick(client.sendRequest<string[]>("served/listConfigurations")).then((config) => {
+			if (config)
+				client.sendRequest<boolean>("served/switchConfig", config).then(success => {
+					if (success)
+						served.emit("config-change", config);
+				});
+		});
+	}, (err) => {
+		client.outputChannel.appendLine(err.toString());
+		vscode.window.showErrorMessage("Failed to switch configuration. See extension output for details.");
+	}));
+
+	context.subscriptions.push(vscode.commands.registerCommand("code-d.switchArchType", () => {
+		vscode.window.showQuickPick(client.sendRequest<string[]>("served/listArchTypes")).then((arch) => {
+			if (arch)
+				client.sendRequest<boolean>("served/switchArchType", arch).then(success => {
+					if (success)
+						served.emit("arch-type-change", arch);
+				});
+		});
+	}, (err) => {
+		client.outputChannel.appendLine(err.toString());
+		vscode.window.showErrorMessage("Failed to switch arch type. See extension output for details.");
+	}));
+
+	context.subscriptions.push(vscode.commands.registerCommand("code-d.switchBuildType", () => {
+		vscode.window.showQuickPick(client.sendRequest<string[]>("served/listBuildTypes")).then((type) => {
+			if (type)
+				client.sendRequest<boolean>("served/switchBuildType", type).then(success => {
+					if (success)
+						served.emit("build-type-change", type);
+				});
+		});
+	}, (err) => {
+		client.outputChannel.appendLine(err.toString());
+		vscode.window.showErrorMessage("Failed to switch build type. See extension output for details.");
+	}));
+
+	context.subscriptions.push(vscode.commands.registerCommand("code-d.switchCompiler", () => {
+		client.sendRequest<string>("served/getCompiler").then(compiler => {
+			vscode.window.showInputBox({ value: compiler, prompt: "Enter compiler identifier. (e.g. dmd, ldc2, gdc)" }).then(compiler => {
+				if (compiler)
+					client.sendRequest<boolean>("served/switchCompiler", compiler).then(success => {
+						if (success)
+							served.emit("compiler-change", compiler);
+					});
+			});
+		}, (err) => {
+			client.outputChannel.appendLine(err.toString());
+			vscode.window.showErrorMessage("Failed to switch compiler. See extension output for details.");
+		});
+	}));
+
+	context.subscriptions.push(vscode.commands.registerTextEditorCommand("code-d.addImport", (editor, edit, name, location) => {
+		client.sendRequest<any>("served/addImport", {
+			textDocument: {
+				uri: editor.document.uri.toString()
+			},
+			name: name,
+			location: location
+		}).then((change) => {
+			client.outputChannel.appendLine("Importer resolve: " + JSON.stringify(change));
+			if (change.rename) // no renames from addImport command
+				return;
+			editor.edit((edit) => {
+				for (var i = change.replacements.length - 1; i >= 0; i--) {
+					var r = change.replacements[i];
+					if (r.range[0] == r.range[1])
+						edit.insert(editor.document.positionAt(r.range[0]), r.content);
+					else if (r.content == "")
+						edit.delete(new vscode.Range(editor.document.positionAt(r.range[0]), editor.document.positionAt(r.range[1])));
+					else
+						edit.replace(new vscode.Range(editor.document.positionAt(r.range[0]), editor.document.positionAt(r.range[1])), r.content);
+				}
+				client.outputChannel.appendLine("Done");
+			});
+		}, (err) => {
+			vscode.window.showErrorMessage("Could not add import");
+			client.outputChannel.appendLine(err.toString());
+		});
+	}));
+
+	context.subscriptions.push(vscode.commands.registerCommand("code-d.killServer", () => {
+		client.sendNotification("served/killServer");
+		vscode.window.showInformationMessage("Killed DCD-Server", "Restart").then((pick) => {
+			if (pick == "Restart")
+				vscode.commands.executeCommand("code-d.restartServer");
+		});
+	}));
+
+	context.subscriptions.push(vscode.commands.registerCommand("code-d.restartServer", () => {
+		client.sendRequest<boolean>("served/restartServer").then((success) => {
+			if (success)
+				vscode.window.showInformationMessage("Restarted DCD-Server");
+			else
+				vscode.window.showErrorMessage("Failed to restart DCD-Server");
+		});
+	}));
+
+	context.subscriptions.push(vscode.commands.registerCommand("code-d.reloadImports", () => {
+		client.sendRequest<boolean>("served/updateImports").then((success) => {
+			if (success)
+				vscode.window.showInformationMessage("Successfully reloaded import paths");
+			else
+				vscode.window.showWarningMessage("Import paths are empty!");
+		}, (err) => {
+			client.outputChannel.appendLine(err.toString());
+			vscode.window.showErrorMessage("Could not update imports. dub might not be initialized yet!");
+		});
+	}));
+
 	if (vscode.workspace.rootPath) {
 		{
 			let gcprofiler = new GCProfiler();
-			vscode.languages.registerCodeLensProvider(D_MODE, gcprofiler);
+			vscode.languages.registerCodeLensProvider(mode.D_MODE, gcprofiler);
 
 			let watcher = vscode.workspace.createFileSystemWatcher("**/profilegc.log", false, false, false);
 
@@ -531,8 +321,8 @@ export function activate(context: vscode.ExtensionContext) {
 			});
 		}
 	}, (err) => {
-		console.error(err);
-		vscode.window.showErrorMessage("Failed to switch configuration. See console for details.");
+		client.outputChannel.appendLine(err);
+		vscode.window.showErrorMessage("Failed to switch configuration. See extension output for details.");
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand("code-d.insertDscanner", () => {
@@ -609,6 +399,94 @@ static_if_else_check="enabled"
 lambda_return_check="enabled"`);
 		});
 	}));
+}
 
-	console.log("Initialized code-d");
+export function config(): vscode.WorkspaceConfiguration {
+	return vscode.workspace.getConfiguration("d");
+}
+
+function preStartup(client: any, context: vscode.ExtensionContext) {
+	var manualOutput = false, outputChannel: vscode.OutputChannel;
+	if (!client.outputChannel) {
+		client.outputChannel = outputChannel = vscode.window.createOutputChannel("code-d startup log");
+		manualOutput = true;
+	}
+	setContext(context);
+	let env = process.env;
+	let proxy = vscode.workspace.getConfiguration("http").get("proxy", "");
+	if (proxy)
+		env["http_proxy"] = proxy;
+
+	if (context.globalState.get("restorePackageBackup", false)) {
+		context.globalState.update("restorePackageBackup", false);
+		var pkgPath = path.join(context.extensionPath, "package.json");
+		fs.readFile(pkgPath + ".bak", function (err, data) {
+			if (err)
+				return vscode.window.showErrorMessage("Failed to restore after reload! Please reinstall code-d if problems occur before reporting!");
+			fs.writeFile(pkgPath, data, function (err) {
+				if (err)
+					return vscode.window.showErrorMessage("Failed to restore after reload! Please reinstall code-d if problems occur before reporting!");
+				fs.unlink(pkgPath + ".bak", function (err) {
+					client.outputChannel.appendLine(err.toString());
+				});
+			});
+		});
+	}
+	{
+		/* Erase paths for old version */
+		var invalid = /webfreak.code-d-(\d+\.\d+\.\d+)/;
+		var curVersion = vscode.extensions.getExtension("webfreak.code-d").packageJSON.version;
+		function fixOldCodeD(name: string) {
+			var path = config().get(name, "");
+			var m;
+			if (m = invalid.exec(path)) {
+				if (m[1] != curVersion) {
+					client.outputChannel.appendLine("Erasing old code-d config value from " + name);
+					config().update(name, undefined, true)
+				}
+			}
+		}
+
+		function checkProgram(configName, defaultPath, name, installFunc, btn = "Compile") {
+			var version = "";
+			ChildProcess.spawn(config().get(configName, defaultPath), ["--version"], { cwd: vscode.workspace.rootPath, env: env }).on("error", function (err) {
+				if (err && (<any>err).code == "ENOENT") {
+					var isDirectory = false;
+					try {
+						isDirectory = fs.statSync(config().get(configName, "")).isDirectory();
+					} catch (e) { }
+					if (isDirectory) {
+						vscode.window.showErrorMessage(name + " points to a directory", "Open User Settings").then(s => {
+							if (s == "Open User Settings")
+								vscode.commands.executeCommand("workbench.action.openGlobalSettings");
+						});
+					} else {
+						vscode.window.showErrorMessage(name + " is not installed or couldn't be found", btn + " " + name, "Open User Settings").then(s => {
+							if (s == "Open User Settings")
+								vscode.commands.executeCommand("workbench.action.openGlobalSettings");
+							else if (s == btn + " " + name)
+								installFunc(env);
+						});
+					}
+				}
+			}).stdout.on("data", function (chunk) {
+				version += chunk;
+			}).on("end", function () {
+				client.outputChannel.appendLine(name + " version: " + version);
+			});
+		}
+		checkProgram("dscannerPath", "dscanner", "dscanner", compileDScanner);
+		checkProgram("dfmtPath", "dfmt", "dfmt", compileDfmt);
+		// client is good enough
+		checkProgram("dcdClientPath", "dcd-client", "DCD", compileDCD);
+		checkProgram("dubPath", "dub", "dub", downloadDub, "Download");
+		checkProgram("servedPath", "serve-d", "serve-d", compileServeD);
+	}
+	if (manualOutput) {
+		setTimeout(() => {
+			outputChannel.clear();
+			outputChannel.hide();
+			outputChannel.dispose();
+		}, 1000);
+	}
 }

@@ -15,13 +15,13 @@ Also [available for Atom](https://github.com/Vild/atomize-d)!
 
 ### Dependencies:
 
-code-d will install [workspace-d](https://github.com/Pure-D/workspace-d),
+code-d will install [serve-d](https://github.com/Pure-D/serve-d),
 [dcd](https://github.com/Hackerpilot/DCD), [dfmt](https://github.com/Hackerpilot/dfmt),
 [dscanner](https://github.com/Hackerpilot/Dscanner) if they are not already installed.
 
 ### code-d installation
 
-This assumes [workspace-d](https://github.com/Pure-D/workspace-d) is already installed.
+This assumes [serve-d](https://github.com/Pure-D/serve-d) is already installed.
 
 * Automatic:
   Open Visual Studio Code and install _code-d_ extension the normal way:

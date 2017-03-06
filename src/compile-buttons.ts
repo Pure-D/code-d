@@ -1,23 +1,22 @@
 import * as vscode from "vscode"
 import * as ChildProcess from "child_process"
 import * as path from "path"
-import { WorkspaceD } from "./workspace-d"
-import { config } from "./extension"
+import { ServeD, config } from "./extension"
 
 export class CompileButtons implements vscode.Disposable {
 	buildButton: vscode.StatusBarItem;
 	startButton: vscode.StatusBarItem;
 	debugButton: vscode.StatusBarItem;
 	child: ChildProcess.ChildProcess;
-	workspaced: WorkspaceD;
+	served: ServeD;
 	output: vscode.OutputChannel;
 	isDebug: boolean = false;
 	debugValuesCache: any = null;
 	terminal: vscode.Terminal;
 
-	constructor(workspaced: WorkspaceD) {
-		this.workspaced = workspaced;
-		workspaced.once("dub-ready", this.create.bind(this));
+	constructor(served: ServeD) {
+		this.served = served;
+		served.client.onReady().then(this.create.bind(this));
 	}
 
 	private create() {
@@ -80,7 +79,12 @@ export class CompileButtons implements vscode.Disposable {
 			this.buildButton.hide();
 			this.startButton.hide();
 			this.debugButton.hide();
-			Promise.all([this.workspaced.getConfiguration(), this.workspaced.getArchType(), this.workspaced.getBuildType(), this.workspaced.getCompiler()]).then(values => {
+			Promise.all([
+				this.served.client.sendRequest<string>("served/getConfig"),
+				this.served.client.sendRequest<string>("served/getArchType"),
+				this.served.client.sendRequest<string>("served/getBuildType"),
+				this.served.client.sendRequest<string>("served/getCompiler")
+			]).then(values => {
 				this.terminal.show(true);
 				this.terminal.sendText(`cd "${vscode.workspace.rootPath}"`);
 				if (cmd == "run" && (values[2].toString() == "unittest" || values[2].toString() == "unittest-cov"))
@@ -98,7 +102,12 @@ export class CompileButtons implements vscode.Disposable {
 			this.buildButton.hide();
 			this.startButton.hide();
 			this.debugButton.hide();
-			Promise.all([this.workspaced.getConfiguration(), this.workspaced.getArchType(), this.workspaced.getBuildType(), this.workspaced.getCompiler()]).then(values => {
+			Promise.all([
+				this.served.client.sendRequest<string>("served/getConfig"),
+				this.served.client.sendRequest<string>("served/getArchType"),
+				this.served.client.sendRequest<string>("served/getBuildType"),
+				this.served.client.sendRequest<string>("served/getCompiler")
+			]).then(values => {
 				this.debugValuesCache = values;
 				let args = [cmd, "--config=" + values[0], "--arch=" + values[1], "--build=" + values[2], "--compiler=" + values[3]];
 				this.output.appendLine("> dub " + args.join(" "));

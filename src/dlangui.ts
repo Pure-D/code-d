@@ -1,14 +1,15 @@
 import * as vscode from "vscode"
-import { WorkspaceD } from "./workspace-d"
+import { LanguageClient } from "vscode-languageclient";
 
 const colorRegex = /(color:\s*\")(.*)\"/gi;
 export class DlangUIHandler implements vscode.CompletionItemProvider {
-	constructor(public workspaced: WorkspaceD, private colorDecorationBase: vscode.TextEditorDecorationType) {
+	constructor(public served: LanguageClient, private colorDecorationBase: vscode.TextEditorDecorationType) {
 		vscode.workspace.onDidChangeTextDocument(this.fileUpdate);
 	}
 
 	provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken): Thenable<vscode.CompletionItem[]> {
-		let self = this.workspaced;
+		// TODO: Port to serve-d
+		/*let self = this.served;
 		console.log("provideCompletionItems(DlangUI)");
 		return new Promise((resolve, reject) => {
 			if (!self.dlanguiReady)
@@ -38,7 +39,8 @@ export class DlangUIHandler implements vscode.CompletionItemProvider {
 				console.log(items);
 				resolve(items);
 			}, reject);
-		});
+		});*/
+		return Promise.resolve([]);
 	}
 
 	fileUpdate(e: vscode.TextDocumentChangeEvent) {
