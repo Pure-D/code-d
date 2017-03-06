@@ -1,118 +1,53 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<svg
-   xmlns:dc="http://purl.org/dc/elements/1.1/"
-   xmlns:cc="http://creativecommons.org/ns#"
-   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-   xmlns:svg="http://www.w3.org/2000/svg"
-   xmlns="http://www.w3.org/2000/svg"
-   width="184"
-   id="svg2"
-   viewBox="0 0 184 178"
-   height="76"
-   version="1.0">
-  <metadata
-     id="metadata25">
-    <rdf:RDF>
-      <cc:Work
-         rdf:about="">
-        <dc:format>image/svg+xml</dc:format>
-        <dc:type
-           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
-      </cc:Work>
-    </rdf:RDF>
-  </metadata>
-  <defs
-     id="defs4">
-    <linearGradient
-       gradientUnits="userSpaceOnUse"
-       id="gradient"
-       y2="99"
-       x2="60"
-       y1="50"
-       x1="66">
-      <stop
-         id="stop7"
-         offset="0"
-         style="stop-color: white; stop-opacity: 1" />
-      <stop
-         id="stop9"
-         offset="1"
-         style="stop-color: white; stop-opacity: 0" />
-    </linearGradient>
-    <clipPath
-       id="clipPath4175"
-       clipPathUnits="userSpaceOnUse">
-      <rect
-         ry="7"
-         y="0"
-         x="-61.118423"
-         height="89.000015"
-         width="215.47368"
-         id="rect4177"
-         style="opacity:1;fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.75;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
-    </clipPath>
-    <clipPath
-       id="clipPath4179"
-       clipPathUnits="userSpaceOnUse">
-      <rect
-         ry="7"
-         y="0"
-         x="119.88158"
-         height="89.000015"
-         width="215.47368"
-         id="rect4181"
-         style="opacity:1;fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.75;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
-    </clipPath>
-  </defs>
-  <!-- background -->
-  <g
-     transform="matrix(1.9999997,0,0,1.9999997,-363.2368,0)"
-     id="g4183">
-    <rect
-       y="0"
-       x="0"
-       width="481"
-       height="89"
-       style="fill:#b03931"
-       id="rect11"
-       clip-path="url(#clipPath4179)" />
-    <g
-       transform="translate(181,0)"
-       id="g13"
-       clip-path="url(#clipPath4175)">
-      <!-- planet (originally a shiny effect, I guess) -->
-      <ellipse
-         cx="-4.5"
-         cy="308"
-         rx="310"
-         ry="266"
-         style="opacity:0.3;fill:url(#gradient)"
-         id="ellipse15" />
-      <!-- bigger moon -->
-      <ellipse
-         cy="0"
-         cx="0"
-         style="fill:#ffffff"
-         rx="12"
-         ry="11"
-         transform="matrix(1.4307812,0,0,1.4307812,83.217726,32.792769)"
-         id="ellipse17" />
-      <!-- smaller moon -->
-      <ellipse
-         cy="0"
-         cx="0"
-         style="fill:#ffffff"
-         rx="12"
-         ry="11"
-         transform="matrix(0.45972758,0,0,0.45972758,102.78233,15.497389)"
-         id="ellipse19" />
-      <!-- D -->
-      <path
-         style="fill:#ffffff"
-         transform="matrix(1.475092,0,0,1.475092,-34.36508,-45.63879)"
-         d="m 32.333318,39.18804 c -0.810423,0.100191 -1.445546,0.747081 -1.448237,1.530008 l 0.05115,39.976517 c 0,0.605435 0.16377,1.853949 1.86691,1.853949 l 15.309845,-0.06107 c 4.376235,-0.0078 7.307373,-0.08265 9.052976,-0.303342 0.01019,7.1e-5 0.03125,4.2e-5 0.04143,-6.2e-5 1.670518,-0.232037 3.440036,-0.65958 5.36408,-1.284309 3.344758,-1.045783 6.310742,-2.590914 8.860956,-4.65465 2.496912,-1.999262 4.431819,-4.366287 5.791789,-7.029031 1.359852,-2.662676 2.045357,-5.47805 2.040248,-8.396714 -0.0072,-4.062678 -1.236199,-7.866897 -3.702086,-11.289377 -2.466138,-3.422627 -5.83233,-6.043726 -9.974869,-7.779593 -4.211418,-1.785447 -9.702531,-2.598978 -16.514823,-2.586807 l -16.532201,0.02417 c -0.07107,3.95e-4 -0.138489,-0.0082 -0.207171,3.03e-4 z m 8.898154,8.225996 7.126664,-0.01042 c 3.330616,-0.0059 5.700107,0.09523 7.044164,0.279807 1.362489,0.187177 2.854705,0.582181 4.434981,1.192619 1.56625,0.596782 2.931614,1.327683 4.104845,2.237482 3.227723,2.509501 4.74927,5.479515 4.756254,9.411818 0.0071,4.02642 -1.463298,7.162711 -4.607379,9.792976 -0.967178,0.798314 -2.042682,1.475215 -3.22926,2.035463 -1.121501,0.522301 -2.58442,0.97246 -4.431715,1.360307 -1.742195,0.348503 -4.387131,0.54682 -7.83035,0.552979 l -7.333833,0.01072 -0.03437,-26.863756 z"
-         id="path21" />
-    </g>
-  </g>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="600" height="600" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1">
+	<defs>
+		<linearGradient id="g0" x1="0%" y1="0%" x2="0%" y2="100%">
+			<stop offset="0%" stop-color="#380c17" />
+			<stop offset="60%" stop-color="#d84a4a" />
+			<stop offset="100%" stop-color="#db8f57" />
+		</linearGradient>
+		<linearGradient id="g1" x1="0%" y1="0%" x2="0%" y2="100%">
+			<stop offset="0%" stop-color="#c26060" />
+			<stop offset="30%" stop-color="#a83024" />
+			<stop offset="100%" stop-color="#d32d2d" />
+		</linearGradient>
+		<linearGradient id="g2" x1="0%" y1="0%" x2="0%" y2="100%">
+			<stop offset="0%" stop-color="#cc5522" />
+			<stop offset="33%" stop-color="#ae6240" />
+			<stop offset="66%" stop-color="#b9354b" />
+			<stop offset="100%" stop-color="#380c17" />
+		</linearGradient>
+		<pattern id="pattern0" x="0" y="0" patternUnits="userSpaceOnUse" width="50" height="50">
+			<g transform="rotate(45)">
+				<rect width="70" height="22" fill="#490d18" />
+				<rect y="-50" width="99" height="37" fill="#490d18" />
+			</g>
+		</pattern>
+		<filter id="shadow0" x="-50%" y="-50%" width="200%" height="200%">
+			<feOffset result="offOut" in="SourceGraphic" dx="25" dy="40" />
+			<feColorMatrix result="matrixOut" in="offOut" type="matrix" values="0.05 0 0 0 0 0 0.1 0 0 0 0 0 0.1 0.005 0 0 0 0 0.15 0.0" />
+			<feGaussianBlur result="blurOut" in="matrixOut" stdDeviation="10" />
+			<feBlend in="SourceGraphic" in2="blurOut" mode="normal" />
+		</filter>
+		<filter id="shadow1" x="-50%" y="-50%" width="200%" height="200%">
+			<feOffset result="offOut" in="SourceGraphic" dx="0" dy="0" />
+			<feColorMatrix result="matrixOut" in="offOut" type="matrix" values="0.05 0 0 0 0 0 0.05 0 0 0 0 0 0.05 0 0 0 0 0 0.2 0.0" />
+			<feGaussianBlur result="blurOut" in="matrixOut" stdDeviation="7" />
+			<feBlend in="SourceGraphic" in2="blurOut" mode="normal" />
+		</filter>
+	</defs>
+	<!--
+	VSCode marketplace background
+	<rect width="700" height="700" fill="#263238" />
+	-->
+	<g transform="translate(40,30)">
+		<polygon points="28,373 73,432 483,122 373,18" fill="url(#pattern0)" filter="url(#shadow1) url(#shadow0)" opacity="0.5" />
+		<polygon points="16,152 19,383 76,436 73,212" fill="url(#g0)" filter="url(#shadow1) url(#shadow0)" />
+		<polygon points="16,152 76,436 73,212" fill="rgb(64,0,16)" opacity="0.4" />
+		<polygon points="483,62 373,18 368,341 405,370 373,498  485,450" fill="url(#g2)" filter="url(#shadow1) url(#shadow0)" />
+		<polygon points="483,62 373,498 485,450" fill="rgb(64,0,16)" opacity="0.3" />
+		<polygon points="16,142 60,118 485,450 373,498" fill="url(#g1)" filter="url(#shadow1) url(#shadow0)" />
+		<polygon points="16,142 60,118 373,498" fill="rgb(64,18,36)" opacity="0.7" />
+		<polygon points="220,272 430,437 378,458" fill="rgb(64,18,25)" opacity="0.2" />
+	</g>
 </svg>
