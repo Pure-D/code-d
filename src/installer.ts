@@ -101,8 +101,8 @@ export function compileServeD(env) {
 			buildArgs.push("--combined");
 		}
 		compileDependency(outputFolder, "serve-d", "https://github.com/Pure-D/serve-d.git", [
-			["dub", ["upgrade"]],
-			["dub", buildArgs]
+			[config().get("dubPath", "dub"), ["upgrade"]],
+			[config().get("dubPath", "dub"), buildArgs]
 		], function () {
 			var finalDestination = path.join(outputFolder, "serve-d", "serve-d" + (process.platform == "win32" ? ".exe" : ""));
 
