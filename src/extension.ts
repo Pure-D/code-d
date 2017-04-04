@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
-import { LanguageClient, LanguageClientOptions, ServerOptions } from "vscode-languageclient";
+import { LanguageClient, LanguageClientOptions, ServerOptions, DocumentFilter } from "vscode-languageclient";
 import { setContext, compileDScanner, compileDfmt, compileDCD, downloadDub, compileServeD } from "./installer"
 import { EventEmitter } from "events"
 import * as ChildProcess from "child_process"
@@ -81,7 +81,7 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	};
 	let clientOptions: LanguageClientOptions = {
-		documentSelector: [mode.D_MODE, mode.DUB_MODE, mode.DIET_MODE, { pattern: "test.txt", scheme: "file" }],
+		documentSelector: <DocumentFilter[]>[mode.D_MODE, mode.DUB_MODE, mode.DIET_MODE, { pattern: "test.txt", scheme: "file" }],
 		synchronize: {
 			configurationSection: ["d", "dfmt", "editor"]
 		}
