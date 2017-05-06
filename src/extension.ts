@@ -67,14 +67,14 @@ export function activate(context: vscode.ExtensionContext) {
 	let executable: ServerOptions = {
 		run: {
 			command: servedPath,
-			args: ["--require", "D"],
+			args: ["--require", "D", "--lang", vscode.env.language],
 			options: {
 				cwd: context.asAbsolutePath("bin")
 			}
 		},
 		debug: {
 			command: "gdbserver",
-			args: ["--once", ":2345", servedPath, "--require", "D"],
+			args: ["--once", ":2345", servedPath, "--require", "D", "--lang", vscode.env.language],
 			options: {
 				cwd: context.asAbsolutePath("bin")
 			}
