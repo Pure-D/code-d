@@ -83,7 +83,8 @@ export function activate(context: vscode.ExtensionContext) {
 	let clientOptions: LanguageClientOptions = {
 		documentSelector: <DocumentFilter[]>[mode.D_MODE, mode.DUB_MODE, mode.DIET_MODE, { pattern: "test.txt", scheme: "file" }],
 		synchronize: {
-			configurationSection: ["d", "dfmt", "editor"]
+			configurationSection: ["d", "dfmt", "editor"],
+			fileEvents: vscode.workspace.createFileSystemWatcher("**/*.d")
 		}
 	};
 	let client = new LanguageClient("serve-d", "code-d & serve-d", executable, clientOptions);
