@@ -7,6 +7,10 @@
             "type": "string",
             "pattern": "^[-a-z0-9_]+$"
         },
+        "configurationName": {
+            "type": "string",
+            "pattern": "^[-a-zA-Z0-9_]+$"
+        },
         "stringArray": {
             "type": "array",
             "items": {
@@ -300,8 +304,8 @@
                             {
                                 "properties": {
                                     "name": {
-                                        "$ref": "#/definitions/packageName",
-                                        "description": "Name of the package, used to uniquely identify the package. Must be comprised of only lower case ASCII alpha-numeric characters, \"-\" or \"_\"."
+                                        "$ref": "#/definitions/configurationName",
+                                        "description": "Name of the configuration, used to uniquely identify the configuration. Must be comprised of ASCII alpha-numeric characters, \"-\" or \"_\"."
                                     }
                                 }
                             },
