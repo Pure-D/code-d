@@ -447,20 +447,20 @@
 		"postinstall": "node ./node_modules/vscode/bin/install"
 	},
 	"dependencies": {
-		"request": "^2.76.0",
-		"request-progress": "^2.0.1",
+		"request": "^2.81.0",
+		"request-progress": "^3.0.0",
 		"jsonc-parser": "^0.2.3",
 		"unzip": "^0.1.11",
-		"async": "^2.1.2",
+		"async": "^2.5.0",
 		"ncp": "^2.0.0",
 		"rmdir": "^1.2.0",
 		"line-by-line": "^0.1.5"
 	},
 	"devDependencies": {
-		"typescript": "^2.0.6",
+		"typescript": "^2.4.1",
 		"vscode": "^1.1.1",
-		"mocha": "^3.1.2",
-		"@types/node": "^6.0.40",
-		"@types/mocha": "^2.2.32"
+		"mocha": "^3.4.2",
+		"@types/node": "^8.0.7",
+		"@types/mocha": "^2.2.41"
 	}
 }
