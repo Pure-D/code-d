@@ -87,7 +87,7 @@ export class JSONProvider implements vscode.HoverProvider, vscode.CompletionItem
 				if (!proposed[suggestion.label]) {
 					proposed[suggestion.label] = true;
 					if (overwriteRange) {
-						suggestion.textEdit = vscode.TextEdit.replace(overwriteRange, suggestion.insertText);
+						suggestion.range = overwriteRange;
 					}
 
 					items.push(suggestion);

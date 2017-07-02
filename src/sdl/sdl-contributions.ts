@@ -52,7 +52,7 @@ function completeDubVersion(info): any {
 				var item = new vscode.CompletionItem(versions[i].version);
 				item.detail = "Released on " + new Date(versions[i].date).toLocaleDateString();
 				item.kind = vscode.CompletionItemKind.Class;
-				item.insertText = "{{}}" + versions[i].version;
+				item.insertText = new vscode.SnippetString().appendPlaceholder("").appendText(versions[i].version);
 				var sortText = "999999999";
 				var semverMatch = semverRegex.exec(versions[i].version);
 				if (semverMatch) {
@@ -80,7 +80,7 @@ function completeDubPackageName(info) {
 				info.subPackages.forEach(subPkgName => {
 					var item = new vscode.CompletionItem(pkgName + ":" + subPkgName);
 					var insertText = subPkgName;
-					item.insertText = insertText;
+					item.insertText = new vscode.SnippetString().appendText(insertText);
 					item.kind = vscode.CompletionItemKind.Property;
 					item.documentation = info.description;
 					results.push(item);
@@ -99,7 +99,7 @@ function completeDubPackageName(info) {
 					var item = new vscode.CompletionItem(element);
 					item.kind = vscode.CompletionItemKind.Property;
 					var insertText = element;
-					item.insertText = insertText;
+					item.insertText = new vscode.SnippetString().appendText(insertText);
 					results.push(item);
 				});
 				resolve(results);
@@ -567,9 +567,9 @@ export class SDLContributions implements vscode.CompletionItemProvider {
 					item.documentation = obj.tags[key].description;
 					item.kind = vscode.CompletionItemKind.Field;
 					if (obj.tags[key].namespace)
-						item.insertText = obj.tags[key].namespace + ":" + key;
+						item.insertText = new vscode.SnippetString().appendText(obj.tags[key].namespace + ":" + key);
 					else
-						item.insertText = key;
+						item.insertText = new vscode.SnippetString().appendText(key);
 					completions.push(item);
 				});
 			}
@@ -590,7 +590,7 @@ export class SDLContributions implements vscode.CompletionItemProvider {
 											let item = new vscode.CompletionItem(value);
 											item.detail = obj.values.type;
 											item.kind = vscode.CompletionItemKind.Value;
-											item.insertText = value;
+											item.insertText = new vscode.SnippetString().appendText(value);
 											completions.push(item);
 										}
 									});
@@ -604,7 +604,7 @@ export class SDLContributions implements vscode.CompletionItemProvider {
 							let item = new vscode.CompletionItem(value);
 							item.detail = obj.values.type;
 							item.kind = vscode.CompletionItemKind.Value;
-							item.insertText = value;
+							item.insertText = new vscode.SnippetString().appendText(value);
 							completions.push(item);
 						});
 					}
@@ -627,12 +627,13 @@ export class SDLContributions implements vscode.CompletionItemProvider {
 						let item = new vscode.CompletionItem(attribute);
 						item.documentation = obj.attributes[attribute].description;
 						item.kind = vscode.CompletionItemKind.Variable;
-						item.insertText = attribute + "=";
+						var insertText = new vscode.SnippetString().appendText(attribute + "=");
 						if (obj.attributes[attribute].values) {
 							item.detail = obj.attributes[attribute].values.type;
 							if (item.detail == "string")
-								item.insertText += "\"{{}}\"";
+								insertText.appendText('"').appendPlaceholder("").appendText('"');
 						}
+						item.insertText = insertText;
 						completions.push(item);
 					});
 				}

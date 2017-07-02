@@ -48,11 +48,11 @@ export class DubJSONContribution implements IJSONContribution {
 					searchDubPackages(currentWord).then(json => {
 						json.forEach(element => {
 							var item = new vscode.CompletionItem(element.name);
-							var insertText = JSON.stringify(element.name);
+							var insertText = new vscode.SnippetString().appendText(JSON.stringify(element.name));
 							if (addValue) {
-								insertText += ': "{{' + element.version + '}}"';
+								insertText.appendText(': "').appendPlaceholder(element.version);
 								if (!isLast)
-									insertText += ",";
+									insertText.appendText(",");
 							}
 							item.insertText = insertText;
 							item.kind = vscode.CompletionItemKind.Property;
@@ -71,11 +71,11 @@ export class DubJSONContribution implements IJSONContribution {
 						info.subPackages.forEach(subPkgName => {
 							var completionName = pkgName + ":" + subPkgName;
 							var item = new vscode.CompletionItem(completionName);
-							var insertText = JSON.stringify(completionName);
+							var insertText = new vscode.SnippetString().appendText(JSON.stringify(completionName));
 							if (addValue) {
-								insertText += ': "{{' + info.version + '}}"';
+								insertText.appendText(': "').appendPlaceholder(info.version);
 								if (!isLast)
-									insertText += ",";
+									insertText.appendText(",");
 							}
 							item.insertText = insertText;
 							item.kind = vscode.CompletionItemKind.Property;
@@ -94,11 +94,11 @@ export class DubJSONContribution implements IJSONContribution {
 					json.forEach(element => {
 						var item = new vscode.CompletionItem(element);
 						item.kind = vscode.CompletionItemKind.Property;
-						var insertText = JSON.stringify(element);
+						var insertText = new vscode.SnippetString().appendText(JSON.stringify(element));
 						if (addValue) {
-							insertText += ': "{{}}"';
+							insertText.appendText(': "').appendPlaceholder("");
 							if (!isLast)
-								insertText += ",";
+								insertText.appendText(",");
 						}
 						item.insertText = insertText;
 						result.add(item);
@@ -133,7 +133,7 @@ export class DubJSONContribution implements IJSONContribution {
 						var item = new vscode.CompletionItem(versions[i].version);
 						item.detail = "Released on " + new Date(versions[i].date).toLocaleDateString();
 						item.kind = vscode.CompletionItemKind.Class;
-						item.insertText = JSON.stringify("{{}}" + versions[i].version);
+						item.insertText = new vscode.SnippetString().appendPlaceholder("").appendText(versions[i].version);
 						var sortText = "999999999";
 						var semverMatch = semverRegex.exec(versions[i].version);
 						if (semverMatch) {
@@ -161,7 +161,7 @@ export class DubJSONContribution implements IJSONContribution {
 				}
 				if (info.version) {
 					item.detail = info.version;
-					item.insertText = item.insertText.replace(/\{\{\}\}/, "{{" + info.version + "}}");
+					item.insertText = new vscode.SnippetString((<vscode.SnippetString>item.insertText).value.replace(/\{\{\}\}/, "{{" + info.version + "}}"));
 				}
 				return item;
 			}, err => {
