@@ -1,3 +1,11 @@
+# 0.16.2
+
+* Fix dub.json/dub.sdl snippets on vscode 1.13.0 and above
+
+# 0.16.1
+
+* Auto-fix broken tool paths when upgrading code-d
+
 # 0.16.0
 
 * Fixed windows dscanner exe path
