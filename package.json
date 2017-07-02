@@ -11,7 +11,7 @@
 	"icon": "images/dlogo-square.svg",
 	"license": "MIT",
 	"engines": {
-		"vscode": "^1.6.0"
+		"vscode": "^1.13.0"
 	},
 	"categories": [
 		"Languages",
@@ -450,11 +450,11 @@
 		"ncp": "^2.0.0",
 		"rmdir": "^1.2.0",
 		"line-by-line": "^0.1.5",
-		"vscode-languageclient": "^3.2.2"
+		"vscode-languageclient": "^3.3.0"
 	},
 	"devDependencies": {
 		"typescript": "^2.3.2",
-		"vscode": "^1.0.3",
+		"vscode": "^1.1.1",
 		"mocha": "^3.3.0",
 		"@types/node": "^6.0.73",
 		"@types/mocha": "^2.2.41"
