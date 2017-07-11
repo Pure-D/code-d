@@ -8,7 +8,7 @@
 		"type": "git",
 		"url": "https://github.com/Pure-D/code-d.git"
 	},
-	"icon": "images/dlogo-square.svg",
+	"icon": "images/dlogo-square.png",
 	"license": "MIT",
 	"engines": {
 		"vscode": "^1.13.0"
