@@ -230,10 +230,20 @@
 					"default": true,
 					"description": "If code-d should build on save to check for compile errors."
 				},
+				"d.enableStaticLinting": {
+					"type": "boolean",
+					"default": true,
+					"description": "If code-d should use DScanner to statically lint files."
+				},
 				"d.enableAutoComplete": {
 					"type": "boolean",
 					"default": true,
 					"description": "Start dcd-server at startup and complete using dcd-client."
+				},
+				"d.enableFormatting": {
+					"type": "boolean",
+					"default": true,
+					"description": "If the default formatting keybind should call dfmt on D files."
 				},
 				"d.neverUseDub": {
 					"type": "boolean",

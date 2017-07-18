@@ -476,11 +476,15 @@ function preStartup(client: any, context: vscode.ExtensionContext) {
 				client.outputChannel.appendLine(name + " version: " + version);
 			});
 		}
-		checkProgram("dscannerPath", "dscanner", "dscanner", compileDScanner);
-		checkProgram("dfmtPath", "dfmt", "dfmt", compileDfmt);
+		if (config().get("d.enableStaticLinting", true))
+			checkProgram("dscannerPath", "dscanner", "dscanner", compileDScanner);
+		if (config().get("d.enableFormatting", true))
+			checkProgram("dfmtPath", "dfmt", "dfmt", compileDfmt);
 		// client is good enough
-		checkProgram("dcdClientPath", "dcd-client", "DCD", compileDCD);
-		checkProgram("dubPath", "dub", "dub", downloadDub, "Download");
+		if (config().get("d.enableAutoComplete", true))
+			checkProgram("dcdClientPath", "dcd-client", "DCD", compileDCD);
+		if (!config().get("d.neverUseDub", false))
+			checkProgram("dubPath", "dub", "dub", downloadDub, "Download");
 		checkProgram("servedPath", "serve-d", "serve-d", compileServeD);
 	}
 	if (manualOutput) {
