@@ -38,6 +38,15 @@ function determineOutputFolder() {
 var installationLog: vscode.OutputChannel;
 const installationTitle = "code-d installation progress";
 
+export function getInstallOutput() {
+	if (!installationLog) {
+		installationLog = vscode.window.createOutputChannel(installationTitle);
+		extensionContext.subscriptions.push(installationLog);
+		installationLog.show(true);
+	}
+	return installationLog;
+}
+
 export function downloadDub(env, done: Function) {
 	var url = "";
 	var ext = "";

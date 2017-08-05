@@ -1,8 +1,8 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
-import { LanguageClient, LanguageClientOptions, ServerOptions, DocumentFilter } from "vscode-languageclient";
-import { setContext, downloadDub, compileServeD } from "./installer"
+import { LanguageClient, LanguageClientOptions, ServerOptions, DocumentFilter, NotificationType } from "vscode-languageclient";
+import { setContext, downloadDub, compileServeD, getInstallOutput } from "./installer"
 import { EventEmitter } from "events"
 import * as ChildProcess from "child_process"
 
@@ -83,7 +83,7 @@ export function activate(context: vscode.ExtensionContext) {
 	let clientOptions: LanguageClientOptions = {
 		documentSelector: <DocumentFilter[]>[mode.D_MODE, mode.DUB_MODE, mode.DIET_MODE],
 		synchronize: {
-			configurationSection: ["d", "dfmt", "editor"],
+			configurationSection: ["d", "dfmt", "editor", "git"],
 			fileEvents: vscode.workspace.createFileSystemWatcher("**/*.d")
 		}
 	};
@@ -96,6 +96,19 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(addSDLProviders());
 	context.subscriptions.push(addJSONProviders());
+
+	client.onReady().then(() => {
+		var updateSetting = new NotificationType<{ section: string, value: any, global: boolean }, void>("coded/updateSetting");
+		client.onNotification(updateSetting, (arg: { section: string, value: any, global: boolean }) => {
+			console.log("Updating config", arg.section, arg.value, arg.global);
+			config().update(arg.section, arg.value, arg.global);
+		});
+
+		var logInstall = new NotificationType<string, void>("coded/logInstall");
+		client.onNotification(logInstall, (message: string) => {
+			getInstallOutput().appendLine(message);
+		});
+	});
 
 	context.subscriptions.push(vscode.commands.registerCommand("code-d.switchConfiguration", () => {
 		vscode.window.showQuickPick(client.sendRequest<string[]>("served/listConfigurations")).then((config) => {
