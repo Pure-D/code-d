@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
 import { LanguageClient, LanguageClientOptions, ServerOptions, DocumentFilter } from "vscode-languageclient";
-import { setContext, compileDScanner, compileDfmt, compileDCD, downloadDub, compileServeD } from "./installer"
+import { setContext, downloadDub, compileServeD } from "./installer"
 import { EventEmitter } from "events"
 import * as ChildProcess from "child_process"
 
@@ -81,7 +81,7 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	};
 	let clientOptions: LanguageClientOptions = {
-		documentSelector: <DocumentFilter[]>[mode.D_MODE, mode.DUB_MODE, mode.DIET_MODE, { pattern: "test.txt", scheme: "file" }],
+		documentSelector: <DocumentFilter[]>[mode.D_MODE, mode.DUB_MODE, mode.DIET_MODE],
 		synchronize: {
 			configurationSection: ["d", "dfmt", "editor"],
 			fileEvents: vscode.workspace.createFileSystemWatcher("**/*.d")
@@ -89,7 +89,6 @@ export function activate(context: vscode.ExtensionContext) {
 	};
 	let client = new LanguageClient("serve-d", "code-d & serve-d", executable, clientOptions);
 	preStartup(client, context);
-	context.subscriptions.push(client.start());
 	var served = new ServeD(client);
 
 	context.subscriptions.push(statusbar.setup(served));
@@ -406,12 +405,13 @@ export function config(): vscode.WorkspaceConfiguration {
 	return vscode.workspace.getConfiguration("d");
 }
 
-function preStartup(client: any, context: vscode.ExtensionContext) {
+function preStartup(client: LanguageClient, context: vscode.ExtensionContext) {
 	var manualOutput = false, outputChannel: vscode.OutputChannel;
 	if (!client.outputChannel) {
-		client.outputChannel = outputChannel = vscode.window.createOutputChannel("code-d startup log");
+		outputChannel = vscode.window.createOutputChannel("code-d startup log");
 		manualOutput = true;
 	}
+	else outputChannel = client.outputChannel;
 	setContext(context);
 	let env = process.env;
 	let proxy = vscode.workspace.getConfiguration("http").get("proxy", "");
@@ -428,70 +428,60 @@ function preStartup(client: any, context: vscode.ExtensionContext) {
 				if (err)
 					return vscode.window.showErrorMessage("Failed to restore after reload! Please reinstall code-d if problems occur before reporting!");
 				fs.unlink(pkgPath + ".bak", function (err) {
-					client.outputChannel.appendLine(err.toString());
+					outputChannel.appendLine(err.toString());
 				});
 			});
 		});
 	}
 	{
-		/* Erase paths for old version */
-		var invalid = /webfreak.code-d-(\d+\.\d+\.\d+)/;
-		var curVersion = vscode.extensions.getExtension("webfreak.code-d").packageJSON.version;
-		function fixOldCodeD(name: string) {
-			var path = config().get(name, "");
-			var m;
-			if (m = invalid.exec(path)) {
-				if (m[1] != curVersion) {
-					client.outputChannel.appendLine("Erasing old code-d config value from " + name);
-					config().update(name, undefined, true)
-				}
-			}
-		}
-
-		function checkProgram(configName, defaultPath, name, installFunc, btn = "Compile") {
+		function checkProgram(configName: string, defaultPath: string, name: string, installFunc: Function, btn: string, done: Function = undefined) {
 			var version = "";
+			var errored = false;
 			ChildProcess.spawn(config().get(configName, defaultPath), ["--version"], { cwd: vscode.workspace.rootPath, env: env }).on("error", function (err) {
 				if (err && (<any>err).code == "ENOENT") {
-					var isDirectory = false;
-					try {
-						isDirectory = fs.statSync(config().get(configName, "")).isDirectory();
-					} catch (e) { }
-					if (isDirectory) {
-						vscode.window.showErrorMessage(name + " points to a directory", "Open User Settings").then(s => {
-							if (s == "Open User Settings")
-								vscode.commands.executeCommand("workbench.action.openGlobalSettings");
-						});
-					} else {
-						vscode.window.showErrorMessage(name + " is not installed or couldn't be found", btn + " " + name, "Open User Settings").then(s => {
-							if (s == "Open User Settings")
-								vscode.commands.executeCommand("workbench.action.openGlobalSettings");
-							else if (s == btn + " " + name)
-								installFunc(env);
-						});
+					errored = true;
+					if (config().get("aggressiveUpdate", true)) {
+						installFunc(env, done);
+					}
+					else {
+						var isDirectory = false;
+						try {
+							isDirectory = fs.statSync(config().get(configName, "")).isDirectory();
+						} catch (e) { }
+						if (isDirectory) {
+							vscode.window.showErrorMessage(name + " points to a directory", "Open User Settings").then(s => {
+								if (s == "Open User Settings")
+									vscode.commands.executeCommand("workbench.action.openGlobalSettings");
+							});
+						} else {
+							vscode.window.showErrorMessage(name + " is not installed or couldn't be found", btn + " " + name, "Open User Settings").then(s => {
+								if (s == "Open User Settings")
+									vscode.commands.executeCommand("workbench.action.openGlobalSettings");
+								else if (s == btn + " " + name)
+									installFunc(env, done);
+							});
+						}
 					}
 				}
 			}).stdout.on("data", function (chunk) {
 				version += chunk;
 			}).on("end", function () {
-				client.outputChannel.appendLine(name + " version: " + version);
+				outputChannel.appendLine(name + " version: " + version);
+				if (!errored && done)
+					done(false);
 			});
 		}
-		if (config().get("d.enableStaticLinting", true))
-			checkProgram("dscannerPath", "dscanner", "dscanner", compileDScanner);
-		if (config().get("d.enableFormatting", true))
-			checkProgram("dfmtPath", "dfmt", "dfmt", compileDfmt);
-		// client is good enough
-		if (config().get("d.enableAutoComplete", true))
-			checkProgram("dcdClientPath", "dcd-client", "DCD", compileDCD);
-		if (!config().get("d.neverUseDub", false))
-			checkProgram("dubPath", "dub", "dub", downloadDub, "Download");
-		checkProgram("servedPath", "serve-d", "serve-d", compileServeD);
-	}
-	if (manualOutput) {
-		setTimeout(() => {
-			outputChannel.clear();
-			outputChannel.hide();
-			outputChannel.dispose();
-		}, 1000);
+		checkProgram("dubPath", "dub", "dub", downloadDub, "Download", () => {
+			checkProgram("servedPath", "serve-d", "serve-d", compileServeD, "Compile", () => {
+				context.subscriptions.push(client.start());
+				if (manualOutput) {
+					setTimeout(() => {
+						outputChannel.clear();
+						outputChannel.hide();
+						outputChannel.dispose();
+					}, 1000);
+				}
+			});
+		});
 	}
 }

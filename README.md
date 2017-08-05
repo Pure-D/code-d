@@ -2,7 +2,7 @@
 
 Adds D language support for visual studio code.
 
-Also [available for Atom](https://github.com/Vild/atomize-d)!
+Also [available for Atom](https://github.com/Pure-D/atomize-d)!
 
 ## Features
 
@@ -10,21 +10,22 @@ Also [available for Atom](https://github.com/Vild/atomize-d)!
 * Code formatting
 * Static linting
 * Outlining and searching for symbols
+* and [much more](https://github.com/Pure-D/code-d/wiki)
 
 ## Installation
 
 ### Dependencies:
 
 code-d will install [serve-d](https://github.com/Pure-D/serve-d),
-[dcd](https://github.com/Hackerpilot/DCD), [dfmt](https://github.com/Hackerpilot/dfmt),
-[dscanner](https://github.com/Hackerpilot/Dscanner) if they are not already installed.
+[dcd](https://github.com/Hackerpilot/DCD), [dscanner](https://github.com/Hackerpilot/Dscanner)
+and [dub](https://code.dlang.org/download) if they are not already installed.
 
 ### code-d installation
 
 This assumes [serve-d](https://github.com/Pure-D/serve-d) is already installed.
 
 * Automatic:
-  Open Visual Studio Code and install _code-d_ extension the normal way:
+  Open Visual Studio Code and install the _code-d_ extension the normal way:
 
   ```
   ext install webfreak.code-d
