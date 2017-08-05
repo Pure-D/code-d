@@ -22,13 +22,13 @@ export function setContext(context: vscode.ExtensionContext) {
 
 function determineOutputFolder() {
 	if (process.platform == "linux") {
-		if (fs.existsSync(path.join(process.env.HOME, ".local", "share")))
-			return path.join(process.env.HOME, ".local", "share", "code-d", "bin");
+		if (fs.existsSync(path.join((<any>process.env).HOME, ".local", "share")))
+			return path.join((<any>process.env).HOME, ".local", "share", "code-d", "bin");
 		else
-			return path.join(process.env.HOME, ".code-d", "bin");
+			return path.join((<any>process.env).HOME, ".code-d", "bin");
 	}
 	else if (process.platform == "win32") {
-		return path.join(process.env.APPDATA, "code-d", "bin");
+		return path.join((<any>process.env).APPDATA, "code-d", "bin");
 	}
 	else {
 		return path.join(extensionContext.extensionPath, "bin");
@@ -95,7 +95,10 @@ export function downloadDub(env, done: Function) {
 				fs.createReadStream(outputPath).pipe(unzip.Extract({ path: outputFolder })).on("finish", () => {
 					config().update("dubPath", finalDestination, true);
 					installationLog.appendLine("Deleting " + outputPath);
-					fs.unlink(outputPath);
+					fs.unlink(outputPath, (err) => {
+						if (err)
+							installationLog.appendLine("Failed to delete " + outputPath);
+					});
 					done(true);
 				});
 			}
@@ -108,7 +111,10 @@ export function downloadDub(env, done: Function) {
 						return vscode.window.showErrorMessage("Failed to extract .tar.gz release");
 					config().update("dubPath", finalDestination, true);
 					installationLog.appendLine("Deleting " + outputPath);
-					fs.unlink(outputPath);
+					fs.unlink(outputPath, (err) => {
+						if (err)
+							installationLog.appendLine("Failed to delete " + outputPath);
+					});
 					done(true);
 				});
 			}
