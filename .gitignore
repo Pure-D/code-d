@@ -2,3 +2,4 @@ out
 node_modules
 *.vsix
 bin
+package-lock.json
