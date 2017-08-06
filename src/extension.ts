@@ -14,10 +14,54 @@ import { addJSONProviders } from "./json-contributions";
 import { GCProfiler } from "./gcprofiler";
 import { CoverageAnalyzer } from "./coverage";
 import { registerCommands } from "./commands";
+import { DubDependency, DubDependencyInfo } from "./dub-view";
 
-export class ServeD extends EventEmitter {
+export class ServeD extends EventEmitter implements vscode.TreeDataProvider<DubDependency> {
 	constructor(public client: LanguageClient) {
 		super();
+	}
+
+	private _onDidChangeTreeData: vscode.EventEmitter<DubDependency | undefined> = new vscode.EventEmitter<DubDependency | undefined>();
+	readonly onDidChangeTreeData: vscode.Event<DubDependency | undefined> = this._onDidChangeTreeData.event;
+
+	refreshDependencies(): void {
+		this._onDidChangeTreeData.fire();
+	}
+
+	getTreeItem(element: DubDependency): vscode.TreeItem {
+		return element;
+	}
+
+	getChildren(element?: DubDependency): Thenable<DubDependency[]> {
+		return new Promise(resolve => {
+			var req = (element && element.info) ? element.info.name : "";
+			var items: DubDependency[] = [];
+			if (element) {
+				if (element.info.description)
+					items.push(new DubDependency(element.info.description, undefined, "description"));
+				if (element.info.homepage)
+					items.push(new DubDependency(element.info.homepage, {
+						command: "open",
+						title: "Open",
+						arguments: [vscode.Uri.parse(element.info.homepage)]
+					}, "web"));
+				if (element.info.authors && element.info.authors.join("").trim())
+					items.push(new DubDependency("Authors: " + element.info.authors.join(), undefined, "authors"));
+				if (element.info.license)
+					items.push(new DubDependency("License: " + element.info.license, undefined, "license"));
+				if (element.info.copyright)
+					items.push(new DubDependency(element.info.copyright));
+			}
+			if (!element || req)
+				this.client.sendRequest<DubDependencyInfo[]>("served/listDependencies", req).then((deps) => {
+					deps.forEach(dep => {
+						items.push(new DubDependency(dep));
+					});
+					resolve(items);
+				});
+			else
+				resolve(items);
+		});
 	}
 }
 
@@ -98,13 +142,20 @@ export function activate(context: vscode.ExtensionContext) {
 	client.onReady().then(() => {
 		var updateSetting = new NotificationType<{ section: string, value: any, global: boolean }, void>("coded/updateSetting");
 		client.onNotification(updateSetting, (arg: { section: string, value: any, global: boolean }) => {
-			console.log("Updating config", arg.section, arg.value, arg.global);
 			config().update(arg.section, arg.value, arg.global);
 		});
 
 		var logInstall = new NotificationType<string, void>("coded/logInstall");
 		client.onNotification(logInstall, (message: string) => {
 			getInstallOutput().appendLine(message);
+		});
+
+		client.onNotification("coded/initDubTree", function () {
+			context.subscriptions.push(vscode.window.registerTreeDataProvider<DubDependency>("dubDependencies", served));
+		});
+
+		client.onNotification("coded/updateDubTree", function () {
+			served.refreshDependencies();
 		});
 	});
 

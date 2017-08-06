@@ -31,6 +31,31 @@ export function listPackages(): Thenable<any[]> {
 	});
 }
 
+var packageCache;
+var packageCacheDate = new Date(0);
+export function listPackageOptions(): Thenable<vscode.QuickPickItem[]> {
+	if (new Date().getTime() - packageCacheDate.getTime() < 15 * 60 * 1000)
+		return Promise.resolve(packageCache);
+	return new Promise((resolve, reject) => {
+		req()("https://code.dlang.org/api/packages/search", function (error, response, body) {
+			if (error || response.statusCode != 200)
+				return reject(error || "No packages found");
+			var json: { name: string, description: string, version: string }[] = JSON.parse(body);
+			var ret: vscode.QuickPickItem[] = [];
+			json.forEach(element => {
+				ret.push({
+					label: element.name,
+					description: element.version,
+					detail: element.description
+				})
+			});
+			packageCache = ret;
+			packageCacheDate = new Date();
+			resolve(ret);
+		});
+	});
+}
+
 export function getPackageInfo(pkg: string): Thenable<any> {
 	return new Promise((resolve, reject) => {
 		req()("https://code.dlang.org/api/packages/" + encodeURIComponent(pkg) + "/info", function (error, response, body) {

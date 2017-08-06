@@ -6,6 +6,8 @@ import { LanguageClient, LanguageClientOptions, ServerOptions, DocumentFilter, N
 import { ServeD } from "./extension";
 import { showProjectCreator, performTemplateCopy, openFolderWithExtension } from "./project-creator";
 import { uploadCode } from "./util";
+import { listPackageOptions, getLatestPackageInfo } from "./dub-api"
+import { DubDependency } from "./dub-view";
 
 export function registerCommands(context: vscode.ExtensionContext, client: LanguageClient, served: ServeD) {
 	var subscriptions = context.subscriptions;
@@ -148,6 +150,32 @@ export function registerCommands(context: vscode.ExtensionContext, client: Langu
 		showProjectCreator(context);
 	}));
 
+	subscriptions.push(vscode.commands.registerCommand("code-d.viewDubPackage", (root: string) => {
+		if (root) {
+			fs.readdir(root, (err, files) => {
+				if (err)
+					return;
+				var mostLikely = "";
+				files.forEach(file => {
+					if (file.toLowerCase().startsWith("readme")) {
+						mostLikely = file;
+					}
+				});
+				if (!mostLikely)
+					return;
+				var readme = path.join(root, mostLikely);
+				var uri = vscode.Uri.file(readme);
+				var extension = path.extname(readme).toLowerCase();
+				if (extension == ".md" || extension == ".markdown")
+					vscode.commands.executeCommand("markdown.showPreview", uri);
+				else if (extension == ".html" || extension == ".htm")
+					vscode.commands.executeCommand("vscode.previewHtml", uri);
+				else
+					vscode.commands.executeCommand("vscode.open", uri);
+			});
+		}
+	}));
+
 	if (context.globalState.get("create-template", "")) {
 		var id = context.globalState.get("create-template", "");
 		context.globalState.update("create-template", undefined);
@@ -178,6 +206,36 @@ export function registerCommands(context: vscode.ExtensionContext, client: Langu
 				}
 		});
 	}
+
+	subscriptions.push(vscode.commands.registerCommand("code-d.addDependency", () => {
+		vscode.window.showQuickPick(listPackageOptions(), {
+			matchOnDescription: false,
+			matchOnDetail: true,
+			placeHolder: "Dependency Name"
+		}).then(pkg => {
+			if (pkg) {
+				client.sendNotification("served/installDependency", {
+					name: pkg.label,
+					version: pkg.description
+				});
+			}
+		});
+	}));
+
+	subscriptions.push(vscode.commands.registerCommand("code-d.updateDependency", (node: DubDependency) => {
+		getLatestPackageInfo(node.info.name).then((info) => {
+			client.sendNotification("served/updateDependency", {
+				name: node.info.name,
+				version: info.version
+			});
+		});
+	}));
+
+	subscriptions.push(vscode.commands.registerCommand("code-d.removeDependency", (node: DubDependency) => {
+		client.sendNotification("served/uninstallDependency", {
+			name: node.info.name
+		});
+	}));
 
 	subscriptions.push(vscode.commands.registerCommand("code-d.uploadSelection", () => {
 		if (vscode.window.activeTextEditor.selection.isEmpty)

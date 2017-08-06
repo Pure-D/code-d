@@ -356,76 +356,173 @@
 					"command": "dub.closeSettingsEditor",
 					"group": "navigation"
 				}
+			],
+			"view/title": [
+				{
+					"command": "code-d.reloadImports",
+					"when": "view == dubDependencies",
+					"group": "navigation"
+				},
+				{
+					"command": "code-d.addDependency",
+					"when": "view == dubDependencies",
+					"group": "navigation"
+				}
+			],
+			"view/item/context": [
+				{
+					"command": "code-d.removeDependency",
+					"when": "view == dubDependencies && viewItem == root"
+				},
+				{
+					"command": "code-d.updateDependency",
+					"when": "view == dubDependencies && viewItem == root"
+				}
+			],
+			"commandPalette": [
+				{
+					"command": "code-d.addDependency",
+					"when": "false"
+				},
+				{
+					"command": "code-d.removeDependency",
+					"when": "false"
+				},
+				{
+					"command": "code-d.updateDependency",
+					"when": "false"
+				},
+				{
+					"command": "code-d.viewDubPackage",
+					"when": "false"
+				},
+				{
+					"command": "code-d.uploadSelection",
+					"when": "editorHasSelection"
+				}
+			]
+		},
+		"views": {
+			"explorer": [
+				{
+					"id": "dubDependencies",
+					"name": "Dub Dependencies"
+				}
 			]
 		},
 		"commands": [
 			{
+				"command": "code-d.addDependency",
+				"title": "Add Dependency",
+				"category": "code-d",
+				"icon": {
+					"light": "images/adddep-light.svg",
+					"dark": "images/adddep-dark.svg"
+				}
+			},
+			{
+				"command": "code-d.removeDependency",
+				"title": "Remove",
+				"category": "code-d"
+			},
+			{
+				"command": "code-d.updateDependency",
+				"title": "Update to latest version",
+				"category": "code-d"
+			},
+			{
+				"command": "code-d.viewDubPackage",
+				"title": "View Dub Package",
+				"category": "code-d"
+			},
+			{
 				"command": "code-d.switchConfiguration",
-				"title": "code-d: Switch Configuration"
+				"title": "Switch Configuration",
+				"category": "code-d"
 			},
 			{
 				"command": "code-d.switchArchType",
-				"title": "code-d: Switch Arch Type"
+				"title": "Switch Arch Type",
+				"category": "code-d"
 			},
 			{
 				"command": "code-d.switchBuildType",
-				"title": "code-d: Switch Build Type"
+				"title": "Switch Build Type",
+				"category": "code-d"
 			},
 			{
 				"command": "code-d.switchCompiler",
-				"title": "code-d: Switch Compiler"
+				"title": "Switch Compiler",
+				"category": "code-d"
 			},
 			{
 				"command": "code-d.killServer",
-				"title": "code-d: Kill DCD Server"
+				"title": "Kill DCD Server",
+				"category": "code-d"
 			},
 			{
 				"command": "code-d.restartServer",
-				"title": "code-d: Restart DCD Server"
+				"title": "Restart DCD Server",
+				"category": "code-d"
 			},
 			{
 				"command": "code-d.reloadImports",
-				"title": "code-d: Reload import paths"
+				"title": "Reload import paths",
+				"category": "code-d",
+				"icon": {
+					"light": "images/refresh-light.svg",
+					"dark": "images/refresh-dark.svg"
+				}
 			},
 			{
 				"command": "code-d.run",
-				"title": "code-d: Run project"
+				"title": "Run project",
+				"category": "code-d"
 			},
 			{
 				"command": "code-d.build",
-				"title": "code-d: Build project"
+				"title": "Build project",
+				"category": "code-d"
 			},
 			{
 				"command": "code-d.stop",
-				"title": "code-d: Stop project"
+				"title": "Stop project",
+				"category": "code-d"
 			},
 			{
 				"command": "code-d.debug",
-				"title": "code-d: Debug project using code-debug"
+				"title": "Debug project using code-debug",
+				"category": "code-d"
 			},
 			{
 				"command": "code-d.uploadSelection",
-				"title": "code-d: Upload selection to dpaste.com"
+				"title": "Upload selection to dpaste.com",
+				"category": "code-d"
 			},
 			{
 				"command": "code-d.insertDscanner",
-				"title": "code-d: Insert default dscanner.ini content"
+				"title": "Insert default dscanner.ini content",
+				"category": "code-d"
 			},
 			{
 				"command": "code-d.rdmdCurrent",
-				"title": "Run document using rdmd"
+				"title": "Run document using rdmd",
+				"category": "code-d"
 			},
 			{
 				"command": "code-d.generateCoverageReport",
-				"title": "code-d: Generate coverage report"
+				"title": "Generate coverage report",
+				"category": "code-d"
 			},
 			{
 				"command": "code-d.showGCCalls",
-				"title": "code-d: Show GC calls from profilegc.log"
+				"title": "Show GC calls from profilegc.log",
+				"category": "code-d"
 			},
 			{
 				"command": "dub.openSettingsEditor",
-				"title": "code-d/dub: Open project settings",
+				"title": "Open project settings",
+				"category": "code-d",
 				"icon": {
 					"light": "./images/edit-dub-inverse.svg",
 					"dark": "./images/edit-dub.svg"
@@ -433,7 +530,8 @@
 			},
 			{
 				"command": "dub.closeSettingsEditor",
-				"title": "code-d/dub: Close project settings",
+				"title": "Close project settings",
+				"category": "code-d",
 				"icon": {
 					"light": "./images/edit-source-inverse.svg",
 					"dark": "./images/edit-source.svg"
@@ -441,7 +539,8 @@
 			},
 			{
 				"command": "code-d.createProject",
-				"title": "code-d: Create new Project"
+				"title": "Create new Project",
+				"category": "code-d"
 			}
 		],
 		"jsonValidation": [
