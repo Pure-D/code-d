@@ -13,7 +13,7 @@ import { addSDLProviders } from "./sdl/sdl-contributions";
 import { addJSONProviders } from "./json-contributions";
 import { GCProfiler } from "./gcprofiler";
 import { CoverageAnalyzer } from "./coverage";
-import { registerCommands } from "./commands";
+import { registerCommands, registerClientCommands } from "./commands";
 import { DubDependency, DubDependencyInfo } from "./dub-view";
 
 export class ServeD extends EventEmitter implements vscode.TreeDataProvider<DubDependency> {
@@ -65,6 +65,61 @@ export class ServeD extends EventEmitter implements vscode.TreeDataProvider<DubD
 	}
 }
 
+function startClient(context: vscode.ExtensionContext) {
+	let servedPath = config().get("servedPath", "serve-d");
+	let executable: ServerOptions = {
+		run: {
+			command: servedPath,
+			args: ["--require", "D", "--lang", vscode.env.language],
+			options: {
+				cwd: context.asAbsolutePath("bin")
+			}
+		},
+		debug: {
+			command: "gdbserver",
+			args: ["--once", ":2345", servedPath, "--require", "D", "--lang", vscode.env.language],
+			options: {
+				cwd: context.asAbsolutePath("bin")
+			}
+		}
+	};
+	let clientOptions: LanguageClientOptions = {
+		documentSelector: <DocumentFilter[]>[mode.D_MODE, mode.DUB_MODE, mode.DIET_MODE],
+		synchronize: {
+			configurationSection: ["d", "dfmt", "editor", "git"],
+			fileEvents: vscode.workspace.createFileSystemWatcher("**/*.d")
+		}
+	};
+	let client = new LanguageClient("serve-d", "code-d & serve-d", executable, clientOptions);
+	client.start();
+	var served = new ServeD(client);
+
+	context.subscriptions.push(statusbar.setup(served));
+	context.subscriptions.push(new CompileButtons(served));
+
+	client.onReady().then(() => {
+		var updateSetting = new NotificationType<{ section: string, value: any, global: boolean }, void>("coded/updateSetting");
+		client.onNotification(updateSetting, (arg: { section: string, value: any, global: boolean }) => {
+			config().update(arg.section, arg.value, arg.global);
+		});
+
+		var logInstall = new NotificationType<string, void>("coded/logInstall");
+		client.onNotification(logInstall, (message: string) => {
+			getInstallOutput().appendLine(message);
+		});
+
+		client.onNotification("coded/initDubTree", function () {
+			context.subscriptions.push(vscode.window.registerTreeDataProvider<DubDependency>("dubDependencies", served));
+		});
+
+		client.onNotification("coded/updateDubTree", function () {
+			served.refreshDependencies();
+		});
+	});
+
+	registerClientCommands(context, client, served);
+}
+
 export function activate(context: vscode.ExtensionContext) {
 	// TODO: Port to serve-d
 	/*{
@@ -104,62 +159,13 @@ export function activate(context: vscode.ExtensionContext) {
 		};
 		fn();
 	}*/
-
-	let servedPath = config().get("servedPath", "serve-d");
-	let executable: ServerOptions = {
-		run: {
-			command: servedPath,
-			args: ["--require", "D", "--lang", vscode.env.language],
-			options: {
-				cwd: context.asAbsolutePath("bin")
-			}
-		},
-		debug: {
-			command: "gdbserver",
-			args: ["--once", ":2345", servedPath, "--require", "D", "--lang", vscode.env.language],
-			options: {
-				cwd: context.asAbsolutePath("bin")
-			}
-		}
-	};
-	let clientOptions: LanguageClientOptions = {
-		documentSelector: <DocumentFilter[]>[mode.D_MODE, mode.DUB_MODE, mode.DIET_MODE],
-		synchronize: {
-			configurationSection: ["d", "dfmt", "editor", "git"],
-			fileEvents: vscode.workspace.createFileSystemWatcher("**/*.d")
-		}
-	};
-	let client = new LanguageClient("serve-d", "code-d & serve-d", executable, clientOptions);
-	preStartup(client, context);
-	var served = new ServeD(client);
-
-	context.subscriptions.push(statusbar.setup(served));
-	context.subscriptions.push(new CompileButtons(served));
+	
+	preStartup(context);
 
 	context.subscriptions.push(addSDLProviders());
 	context.subscriptions.push(addJSONProviders());
 
-	client.onReady().then(() => {
-		var updateSetting = new NotificationType<{ section: string, value: any, global: boolean }, void>("coded/updateSetting");
-		client.onNotification(updateSetting, (arg: { section: string, value: any, global: boolean }) => {
-			config().update(arg.section, arg.value, arg.global);
-		});
-
-		var logInstall = new NotificationType<string, void>("coded/logInstall");
-		client.onNotification(logInstall, (message: string) => {
-			getInstallOutput().appendLine(message);
-		});
-
-		client.onNotification("coded/initDubTree", function () {
-			context.subscriptions.push(vscode.window.registerTreeDataProvider<DubDependency>("dubDependencies", served));
-		});
-
-		client.onNotification("coded/updateDubTree", function () {
-			served.refreshDependencies();
-		});
-	});
-
-	registerCommands(context, client, served);
+	registerCommands(context);
 
 	if (vscode.workspace.rootPath) {
 		{
@@ -209,13 +215,7 @@ export function config(): vscode.WorkspaceConfiguration {
 	return vscode.workspace.getConfiguration("d");
 }
 
-function preStartup(client: LanguageClient, context: vscode.ExtensionContext) {
-	var manualOutput = false, outputChannel: vscode.OutputChannel;
-	if (!client.outputChannel) {
-		outputChannel = vscode.window.createOutputChannel("code-d startup log");
-		manualOutput = true;
-	}
-	else outputChannel = client.outputChannel;
+function preStartup(context: vscode.ExtensionContext) {
 	setContext(context);
 	let env = process.env;
 	let proxy = vscode.workspace.getConfiguration("http").get("proxy", "");
@@ -232,7 +232,7 @@ function preStartup(client: LanguageClient, context: vscode.ExtensionContext) {
 				if (err)
 					return vscode.window.showErrorMessage("Failed to restore after reload! Please reinstall code-d if problems occur before reporting!");
 				fs.unlink(pkgPath + ".bak", function (err) {
-					outputChannel.appendLine(err.toString());
+					console.error(err.toString());
 				});
 			});
 		});
@@ -270,21 +270,13 @@ function preStartup(client: LanguageClient, context: vscode.ExtensionContext) {
 			}).stdout.on("data", function (chunk) {
 				version += chunk;
 			}).on("end", function () {
-				outputChannel.appendLine(name + " version: " + version);
 				if (!errored && done)
 					done(false);
 			});
 		}
 		checkProgram("dubPath", "dub", "dub", downloadDub, "Download", () => {
 			checkProgram("servedPath", "serve-d", "serve-d", compileServeD, "Compile", () => {
-				context.subscriptions.push(client.start());
-				if (manualOutput) {
-					setTimeout(() => {
-						outputChannel.clear();
-						outputChannel.hide();
-						outputChannel.dispose();
-					}, 1000);
-				}
+				startClient(context);
 			});
 		});
 	}

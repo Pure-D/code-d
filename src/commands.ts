@@ -9,8 +9,13 @@ import { uploadCode } from "./util";
 import { listPackageOptions, getLatestPackageInfo } from "./dub-api"
 import { DubDependency } from "./dub-view";
 
-export function registerCommands(context: vscode.ExtensionContext, client: LanguageClient, served: ServeD) {
+var gClient;
+
+export function registerClientCommands(context: vscode.ExtensionContext, client: LanguageClient, served: ServeD) {
 	var subscriptions = context.subscriptions;
+
+	gClient = client;
+
 	subscriptions.push(vscode.commands.registerCommand("code-d.switchConfiguration", () => {
 		vscode.window.showQuickPick(client.sendRequest<string[]>("served/listConfigurations")).then((config) => {
 			if (config)
@@ -123,6 +128,40 @@ export function registerCommands(context: vscode.ExtensionContext, client: Langu
 		});
 	}));
 
+	subscriptions.push(vscode.commands.registerCommand("code-d.addDependency", () => {
+		vscode.window.showQuickPick(listPackageOptions(), {
+			matchOnDescription: false,
+			matchOnDetail: true,
+			placeHolder: "Dependency Name"
+		}).then(pkg => {
+			if (pkg) {
+				client.sendNotification("served/installDependency", {
+					name: pkg.label,
+					version: pkg.description
+				});
+			}
+		});
+	}));
+
+	subscriptions.push(vscode.commands.registerCommand("code-d.updateDependency", (node: DubDependency) => {
+		getLatestPackageInfo(node.info.name).then((info) => {
+			client.sendNotification("served/updateDependency", {
+				name: node.info.name,
+				version: info.version
+			});
+		});
+	}));
+
+	subscriptions.push(vscode.commands.registerCommand("code-d.removeDependency", (node: DubDependency) => {
+		client.sendNotification("served/uninstallDependency", {
+			name: node.info.name
+		});
+	}));
+}
+
+export function registerCommands(context: vscode.ExtensionContext) {
+	var subscriptions = context.subscriptions;
+
 	{
 		let editor = new DubEditor(context);
 		subscriptions.push(vscode.workspace.registerTextDocumentContentProvider("dubsettings", editor));
@@ -207,36 +246,6 @@ export function registerCommands(context: vscode.ExtensionContext, client: Langu
 		});
 	}
 
-	subscriptions.push(vscode.commands.registerCommand("code-d.addDependency", () => {
-		vscode.window.showQuickPick(listPackageOptions(), {
-			matchOnDescription: false,
-			matchOnDetail: true,
-			placeHolder: "Dependency Name"
-		}).then(pkg => {
-			if (pkg) {
-				client.sendNotification("served/installDependency", {
-					name: pkg.label,
-					version: pkg.description
-				});
-			}
-		});
-	}));
-
-	subscriptions.push(vscode.commands.registerCommand("code-d.updateDependency", (node: DubDependency) => {
-		getLatestPackageInfo(node.info.name).then((info) => {
-			client.sendNotification("served/updateDependency", {
-				name: node.info.name,
-				version: info.version
-			});
-		});
-	}));
-
-	subscriptions.push(vscode.commands.registerCommand("code-d.removeDependency", (node: DubDependency) => {
-		client.sendNotification("served/uninstallDependency", {
-			name: node.info.name
-		});
-	}));
-
 	subscriptions.push(vscode.commands.registerCommand("code-d.uploadSelection", () => {
 		if (vscode.window.activeTextEditor.selection.isEmpty)
 			vscode.window.showErrorMessage("No code selected");
@@ -249,7 +258,10 @@ export function registerCommands(context: vscode.ExtensionContext, client: Langu
 			});
 		}
 	}, (err) => {
-		client.outputChannel.appendLine(err);
+		if (gClient)
+			gClient.outputChannel.appendLine(err);
+		else
+			console.error(err);
 		vscode.window.showErrorMessage("Failed to switch configuration. See extension output for details.");
 	}));
 
