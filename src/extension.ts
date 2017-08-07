@@ -16,6 +16,8 @@ import { CoverageAnalyzer } from "./coverage";
 import { registerCommands, registerClientCommands } from "./commands";
 import { DubDependency, DubDependencyInfo } from "./dub-view";
 
+const opn = require('opn');
+
 export class ServeD extends EventEmitter implements vscode.TreeDataProvider<DubDependency> {
 	constructor(public client: LanguageClient) {
 		super();
@@ -159,7 +161,7 @@ export function activate(context: vscode.ExtensionContext) {
 		};
 		fn();
 	}*/
-	
+
 	preStartup(context);
 
 	context.subscriptions.push(addSDLProviders());
@@ -279,5 +281,47 @@ function preStartup(context: vscode.ExtensionContext) {
 				startClient(context);
 			});
 		});
+		function checkCompiler(compiler, callback) {
+			ChildProcess.spawn(compiler, ["--version"]).on("error", function (err) {
+				if (err && (<any>err).code == "ENOENT") {
+					if (callback)
+						callback(false);
+					callback = undefined;
+				}
+				else console.error(err);
+			}).on("exit", function () {
+				if (callback)
+					callback(true);
+				callback = undefined;
+			});
+		}
+		if (!context.globalState.get("checkedCompiler", false)) {
+			function gotCompiler(compiler) {
+				context.globalState.update("checkedCompiler", true);
+				if (!compiler)
+					opn("https://dlang.org/download.html").then(() => {
+						vscode.window.showInformationMessage("Please install a D compiler from dlang.org and reload the window once done.");
+					});
+			}
+			console.log("Checking if compiler is present");
+			checkCompiler("dmd", (has) => {
+				if (has)
+					return gotCompiler("dmd");
+				checkCompiler("ldc", (has) => {
+					if (has)
+						return gotCompiler("ldc");
+					checkCompiler("ldc2", (has) => {
+						if (has)
+							return gotCompiler("ldc2");
+						checkCompiler("gdc", (has) => {
+							if (has)
+								return gotCompiler("gdc");
+							else
+								return gotCompiler(false);
+						});
+					});
+				});
+			});
+		}
 	}
 }

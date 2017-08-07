@@ -565,7 +565,8 @@
 		"rmdir": "^1.2.0",
 		"line-by-line": "^0.1.5",
 		"vscode-languageclient": "^3.3.0",
-		"mkdirp": "^0.5.1"
+		"mkdirp": "^0.5.1",
+		"opn": "^5.1.0"
 	},
 	"devDependencies": {
 		"typescript": "^2.4.1",
