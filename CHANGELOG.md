@@ -17,7 +17,7 @@ Minor changes:
 * Dub installer upgraded to 1.4.0
 * Dependent programs are now installed without user confirmation by default
   * Use `"d.aggressiveUpdate": false` to disable this behaviour.
-	* On linux files are installed into `~/.local/share/code-d` or as fallback (and also on mac) into `~/.code-d`. On Windows files are installed into `%APPDATA%/code-d`
+  * On linux files are installed into `~/.local/share/code-d` or as fallback (and also on mac) into `~/.code-d`. On Windows files are installed into `%APPDATA%/code-d`
 * Will now install dub before trying to compile dependencies
 * If no D compiler is present the browser will be opened on the D download page
 * Dedicated output channel in the output tab for error messages & alike
