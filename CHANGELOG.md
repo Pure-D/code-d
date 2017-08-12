@@ -1,3 +1,37 @@
+# 0.17.x
+
+The switch to serve-d / Microsoft Language Server Protocol!
+
+* Added dub dependencies view in the UI that shows a dependency tree in the currently opened project
+* New syntax highlighting using [ysgard/d-struct](https://github.com/ysgard/d-struct) grammar
+* automatic module naming: when you rename a file you are currently in or create a new file a module statement will be added/changed
+* the English, German and Japanese translations are finally used! Thanks to @SeijiFujita for the Japanese translation
+* dfmt and dscanner are now included in serve-d and workspace-d and no longer need to be installed
+* Fancy new ddoc renderer when hovering over symbols
+* Live DScanner linting: you get errors from dscanner while you type now
+
+Minor changes:
+* Installing dependencies uses the dubPath setting now for dub
+* dub.json auto completion was broken in an vscode update, should work again now
+* Added `d.enableStaticLinting` & `d.enableFormatting`
+* Dub installer upgraded to 1.4.0
+* Dependent programs are now installed without user confirmation by default
+  * Use `"d.aggressiveUpdate": false` to disable this behaviour.
+	* On linux files are installed into `~/.local/share/code-d` or as fallback (and also on mac) into `~/.code-d`. On Windows files are installed into `%APPDATA%/code-d`
+* Will now install dub before trying to compile dependencies
+* If no D compiler is present the browser will be opened on the D download page
+* Dedicated output channel in the output tab for error messages & alike
+* Current parameter in calltips is more exact now
+* Goto definition got more efficient
+
+# 0.16.2
+
+* Fix dub.json/dub.sdl snippets on vscode 1.13.0 and above
+
+# 0.16.1
+
+* Auto-fix broken tool paths when upgrading code-d
+
 # 0.16.0
 
 * Fixed windows dscanner exe path

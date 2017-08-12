@@ -17,8 +17,8 @@ Also [available for Atom](https://github.com/Pure-D/atomize-d)!
 ### Dependencies:
 
 code-d will install [serve-d](https://github.com/Pure-D/serve-d),
-[dcd](https://github.com/Hackerpilot/DCD), [dscanner](https://github.com/Hackerpilot/Dscanner)
-and [dub](https://code.dlang.org/download) if they are not already installed.
+[dcd](https://github.com/Hackerpilot/DCD) and [dub](https://code.dlang.org/download)
+if they are not already installed.
 
 ### code-d installation
 
