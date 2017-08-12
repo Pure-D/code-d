@@ -105,12 +105,12 @@
 			{
 				"language": "d",
 				"scopeName": "source.d",
-				"path": "./syntaxes/d.tmLanguage"
+				"path": "./syntaxes/d.json"
 			},
 			{
 				"language": "dscript",
 				"scopeName": "source.dscript",
-				"path": "./syntaxes/arsd.dscript.tmLanguage"
+				"path": "./syntaxes/arsd.dscript.json"
 			},
 			{
 				"language": "dml",
