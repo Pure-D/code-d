@@ -18,6 +18,8 @@ import { DubDependency, DubDependencyInfo } from "./dub-view";
 
 const opn = require('opn');
 
+const isBeta = true;
+
 export class ServeD extends EventEmitter implements vscode.TreeDataProvider<DubDependency> {
 	constructor(public client: LanguageClient) {
 		super();
@@ -277,9 +279,17 @@ function preStartup(context: vscode.ExtensionContext) {
 			});
 		}
 		checkProgram("dubPath", "dub", "dub", downloadDub, "Download", () => {
-			checkProgram("servedPath", "serve-d", "serve-d", compileServeD, "Compile", () => {
-				startClient(context);
-			});
+			if (isBeta && !context.globalState.get("newestServed", false)) {
+				context.globalState.update("newestServed", true);
+				compileServeD(env, () => {
+					startClient(context);
+				});
+			}
+			else {
+				checkProgram("servedPath", "serve-d", "serve-d", compileServeD, "Compile", () => {
+					startClient(context);
+				});
+			}
 		});
 		function checkCompiler(compiler, callback) {
 			ChildProcess.spawn(compiler, ["--version"]).on("error", function (err) {
