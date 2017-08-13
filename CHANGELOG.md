@@ -9,6 +9,8 @@ The switch to serve-d / Microsoft Language Server Protocol!
 * dfmt and dscanner are now included in serve-d and workspace-d and no longer need to be installed
 * Fancy new ddoc renderer when hovering over symbols
 * Live DScanner linting: you get errors from dscanner while you type now
+* dscanner.ini auto completion of sections, fields & values
+* ddoc auto completion: press ctrl-space before a function definition and select the /// or the /** completion option to get a documentation template with arguments and sections
 
 Minor changes:
 * Installing dependencies uses the dubPath setting now for dub
