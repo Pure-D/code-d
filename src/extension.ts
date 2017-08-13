@@ -280,9 +280,10 @@ function preStartup(context: vscode.ExtensionContext) {
 		}
 		checkProgram("dubPath", "dub", "dub", downloadDub, "Download", () => {
 			if (isBeta && !context.globalState.get("newestServed", false)) {
-				context.globalState.update("newestServed", true);
-				compileServeD(env, () => {
-					startClient(context);
+				context.globalState.update("newestServed", true).then(() => {
+					compileServeD(env, () => {
+						startClient(context);
+					});
 				});
 			}
 			else {
