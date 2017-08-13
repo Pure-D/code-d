@@ -541,6 +541,11 @@
 				"command": "code-d.createProject",
 				"title": "Create new Project",
 				"category": "code-d"
+			},
+			{
+				"command": "code-d.sortImports",
+				"title": "Sort Active Import Block",
+				"category": "code-d"
 			}
 		],
 		"jsonValidation": [

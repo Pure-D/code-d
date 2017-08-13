@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
 import { DubEditor } from "./dub-editor";
-import { LanguageClient, LanguageClientOptions, ServerOptions, DocumentFilter, NotificationType } from "vscode-languageclient";
+import { LanguageClient, LanguageClientOptions, ServerOptions, DocumentFilter, NotificationType, TextEdit } from "vscode-languageclient";
 import { ServeD } from "./extension";
 import { showProjectCreator, performTemplateCopy, openFolderWithExtension } from "./project-creator";
 import { uploadCode } from "./util";
@@ -67,6 +67,30 @@ export function registerClientCommands(context: vscode.ExtensionContext, client:
 		}, (err) => {
 			client.outputChannel.appendLine(err.toString());
 			vscode.window.showErrorMessage("Failed to switch compiler. See extension output for details.");
+		});
+	}));
+
+	subscriptions.push(vscode.commands.registerTextEditorCommand("code-d.sortImports", (editor, edit, location) => {
+		if (typeof location !== "number")
+			location = editor.document.offsetAt(editor.selection.start);
+		client.sendRequest<any>("served/sortImports", {
+			textDocument: {
+				uri: editor.document.uri.toString()
+			},
+			location: location
+		}).then((change: TextEdit[]) => {
+			if (!change.length)
+				return;
+			editor.edit((edit) => {
+				var s = change[0].range.start;
+				var e = change[0].range.end;
+				var start = new vscode.Position(s.line, s.character);
+				var end = new vscode.Position(e.line, e.character);
+				edit.replace(new vscode.Range(start, end), change[0].newText);
+			});
+		}, (err) => {
+			vscode.window.showErrorMessage("Could not sort imports");
+			client.outputChannel.appendLine(err.toString());
 		});
 	}));
 
