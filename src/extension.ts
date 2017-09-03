@@ -76,14 +76,14 @@ function startClient(context: vscode.ExtensionContext) {
 			command: servedPath,
 			args: ["--require", "D", "--lang", vscode.env.language],
 			options: {
-				cwd: context.asAbsolutePath("bin")
+				cwd: context.extensionPath
 			}
 		},
 		debug: {
 			command: "gdbserver",
 			args: ["--once", ":2345", servedPath, "--require", "D", "--lang", vscode.env.language],
 			options: {
-				cwd: context.asAbsolutePath("bin")
+				cwd: context.extensionPath
 			}
 		}
 	};
