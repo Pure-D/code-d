@@ -273,7 +273,7 @@ export function compileDependency(cwd, name, gitURI, commands, callback, env) {
 	};
 	var newCwd = path.join(cwd, name);
 	var startCompile = () => {
-		spawnCommand(output, gitPath(), ["clone", "--recursive", gitURI, name], { cwd: cwd, env: env }, (err) => {
+		spawnCommand(output, gitPath(), ["clone", "--recursive", "--depth=1", gitURI, name], { cwd: cwd, env: env }, (err) => {
 			if (err !== 0)
 				return error(err);
 			async.eachSeries(commands, function (command, cb) {
