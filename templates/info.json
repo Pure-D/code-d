@@ -94,5 +94,33 @@
 				"x11": "~>1.0.15"
 			}
 		}
+	},
+	{
+		"name": "Empty Diamond Website",
+		"detail": "An empty website using Diamond.",
+		"path": "EmptyDiamondWebsite",
+		"dub": {
+			"dependencies": {
+				"vibe-d": "~>0.8.1",
+				"diamond": "~>2.4.3"
+			},
+			"versions": ["VibeDefaultMain", "Diamond_Debug", "Diamond_WebServer"],
+	    "sourcePaths": ["core", "models", "controllers"],
+	    "stringImportPaths": ["config", "views"]
+		}
+	},
+	{
+		"name": "Empty Diamond Web-api",
+		"detail": "An empty web-api using Diamond.",
+		"path": "EmptyDiamondWebsite",
+		"dub": {
+			"dependencies": {
+				"vibe-d": "~>0.8.1",
+				"diamond": "~>2.4.3"
+			},
+			"versions": ["VibeDefaultMain", "Diamond_Debug", "Diamond_WebApi"],
+	    "sourcePaths": ["core", "models", "controllers"],
+	    "stringImportPaths": ["config"]
+		}
 	}
 ]
