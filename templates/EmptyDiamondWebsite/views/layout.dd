@@ -1,0 +1,9 @@
+@<doctype>
+<html>
+<head>
+  <title>@<title></title>
+</head>
+<body>
+  @<view>
+</body>
+</html>

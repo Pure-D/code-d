@@ -1,0 +1,17 @@
+@[
+  layout:
+    layout
+---
+  route:
+    home
+---
+  controller:
+    HomeController
+---
+  placeHolders:
+  [
+	  "title": "Home"
+	]
+]
+
+<p>Hello Diamond!</p>

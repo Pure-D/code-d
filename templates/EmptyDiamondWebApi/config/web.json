@@ -1,0 +1,31 @@
+{
+  "name": "Diamond WebApi",
+  "staticFileRoutes": [],
+  "homeRoute": "home",
+  "allowFileRoute": false,
+  "accessLogToConsole": false,
+  "addresses": [{
+    "ipAddresses": ["::1", "127.0.0.1"],
+    "port": 8181
+  }, {
+    "ipAddresses": ["::1", "127.0.0.1"],
+    "port": 8080
+  }],
+  "defaultHeaders": {
+    "general": {
+      "Content-Type": "text/html; charset=UTF-8",
+      "Server": "vibe.d - Diamond MVC/Template Framework"
+    },
+    "staticFiles": {
+      "Server": "vibe.d - Diamond MVC/Template Framework"
+    },
+    "notFound": {
+      "Content-Type": "text/html; charset=UTF-8",
+      "Server": "vibe.d - Diamond MVC/Template Framework"
+    },
+    "error": {
+      "Content-Type": "text/html; charset=UTF-8",
+      "Server": "vibe.d - Diamond MVC/Template Framework"
+    }
+  }
+}
