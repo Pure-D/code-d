@@ -97,7 +97,7 @@
 	},
 	{
 		"name": "Empty Diamond Website",
-		"detail": "An empty website using Diamond.",
+		"detail": "A basic website using Diamond MVC",
 		"path": "EmptyDiamondWebsite",
 		"dub": {
 			"dependencies": {
@@ -105,22 +105,22 @@
 				"diamond": "~>2.4.3"
 			},
 			"versions": ["VibeDefaultMain", "Diamond_Debug", "Diamond_WebServer"],
-	    "sourcePaths": ["core", "models", "controllers"],
-	    "stringImportPaths": ["config", "views"]
+			"sourcePaths": ["core", "models", "controllers"],
+			"stringImportPaths": ["config", "views"]
 		}
 	},
 	{
-		"name": "Empty Diamond Web-api",
-		"detail": "An empty web-api using Diamond.",
-		"path": "EmptyDiamondWebsite",
+		"name": "Empty Diamond Web-API",
+		"detail": "A basic web-api using Diamond MVC",
+		"path": "EmptyDiamondWebApi",
 		"dub": {
 			"dependencies": {
 				"vibe-d": "~>0.8.1",
 				"diamond": "~>2.4.3"
 			},
 			"versions": ["VibeDefaultMain", "Diamond_Debug", "Diamond_WebApi"],
-	    "sourcePaths": ["core", "models", "controllers"],
-	    "stringImportPaths": ["config"]
+			"sourcePaths": ["core", "models", "controllers"],
+			"stringImportPaths": ["config"]
 		}
 	}
 ]
