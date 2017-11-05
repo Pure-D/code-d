@@ -102,7 +102,7 @@
 		"dub": {
 			"dependencies": {
 				"vibe-d": "~>0.8.1",
-				"diamond": "~>2.4.4",
+				"diamond": "~>2.4.5",
 				"mysql-native": "~>1.1.2"
 			},
 			"versions": ["VibeDefaultMain", "Diamond_Debug", "Diamond_WebServer"],
@@ -117,7 +117,7 @@
 		"dub": {
 			"dependencies": {
 				"vibe-d": "~>0.8.1",
-				"diamond": "~>2.4.4",
+				"diamond": "~>2.4.5",
 				"mysql-native": "~>1.1.2"
 			},
 			"versions": ["VibeDefaultMain", "Diamond_Debug", "Diamond_WebApi"],
