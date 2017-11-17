@@ -163,14 +163,15 @@ export class CompileButtons implements vscode.Disposable {
 				var exeName = strings[1].trim();
 				var cwd = strings[2].trim();
 
-				let launchConfig = {
+				let launchConfig: vscode.DebugConfiguration = {
+					name: "code-d inline debug",
 					type: "gdb",
 					request: "launch",
 					target: path.join(exePath, exeName),
 					cwd: cwd
 				};
 
-				vscode.commands.executeCommand('vscode.startDebug', launchConfig).then(() => {
+				vscode.debug.startDebugging(vscode.workspace.workspaceFolders[0], launchConfig).then(() => {
 				}, err => {
 					vscode.window.showErrorMessage("Couldn't start debugging. Make sure you have a GDB extension installed!", "Install Extensions").then(result => {
 						if (result == "Install Extensions") {

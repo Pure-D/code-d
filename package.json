@@ -11,7 +11,7 @@
 	"icon": "images/dlogo-square.png",
 	"license": "MIT",
 	"engines": {
-		"vscode": "^1.13.0"
+		"vscode": "^1.17.0"
 	},
 	"categories": [
 		"Languages",
@@ -575,7 +575,7 @@
 	},
 	"devDependencies": {
 		"typescript": "^2.4.1",
-		"vscode": "^1.1.1",
+		"vscode": "^1.1.7",
 		"mocha": "^3.4.2",
 		"@types/node": "^8.0.7",
 		"@types/mocha": "^2.2.41"
