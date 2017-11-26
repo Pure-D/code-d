@@ -284,6 +284,11 @@
 					"default": true,
 					"description": "Update/install outdated & missing tools without confirmation"
 				},
+				"d.argumentSnippets": {
+					"type": "boolean",
+					"default": true,
+					"description": "When autocompleting functions automatically insert the signature as snippet which can be navigated using tab."
+				},
 				"dfmt.alignSwitchStatements": {
 					"type": "boolean",
 					"default": true,
