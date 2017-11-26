@@ -94,6 +94,28 @@ export function registerClientCommands(context: vscode.ExtensionContext, client:
 		});
 	}));
 
+	subscriptions.push(vscode.commands.registerTextEditorCommand("code-d.implementMethods", (editor, edit, location) => {
+		if (typeof location !== "number")
+			location = editor.document.offsetAt(editor.selection.start);
+		client.sendRequest<any>("served/implementMethods", {
+			textDocument: {
+				uri: editor.document.uri.toString()
+			},
+			location: location
+		}).then((change: TextEdit[]) => {
+			if (!change.length)
+				return;
+			editor.edit((edit) => {
+				var s = change[0].range.start;
+				var start = new vscode.Position(s.line, s.character);
+				edit.insert(start, change[0].newText);
+			});
+		}, (err) => {
+			vscode.window.showErrorMessage("Could not implement methods");
+			client.outputChannel.appendLine(err.toString());
+		});
+	}));
+
 	subscriptions.push(vscode.commands.registerTextEditorCommand("code-d.addImport", (editor, edit, name, location) => {
 		client.sendRequest<any>("served/addImport", {
 			textDocument: {

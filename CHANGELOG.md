@@ -13,6 +13,7 @@ The switch to serve-d / Microsoft Language Server Protocol!
 * ddoc auto completion: press ctrl-space before a function definition and select the /// or the /** completion option to get a documentation template with arguments and sections
 * added sort imports command only sorting the "block" (separated by whitespaces) and not all imports in the file for more user control (but not compatible with the dscanner sortedness linting)
 * When autocompleting functions automatically insert the signature as snippet which can be navigated using tab. (configuration d.argumentSnippets)
+* Automatically implement classes and interfaces using the new `Implement selected interface/base class` command or by using the code actions
 
 Minor changes:
 * Installing dependencies uses the dubPath setting now for dub

@@ -551,6 +551,11 @@
 				"command": "code-d.sortImports",
 				"title": "Sort Active Import Block",
 				"category": "code-d"
+			},
+			{
+				"command": "code-d.implementMethods",
+				"title": "Implement selected interface/base class",
+				"category": "code-d"
 			}
 		],
 		"jsonValidation": [
