@@ -194,7 +194,7 @@ export function compileDScanner(env) {
 		], function () {
 			var finalDestination: string;
 			if (process.platform == "win32")
-				finalDestination = path.join(outputFolder, "Dscanner", "dscanner.exe");
+				finalDestination = path.join(outputFolder, "Dscanner", "bin", "dscanner.exe");
 			else
 				finalDestination = path.join(outputFolder, "Dscanner", "bin", "dscanner");
 
