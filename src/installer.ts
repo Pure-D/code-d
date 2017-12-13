@@ -193,7 +193,10 @@ export function compileDScanner(env) {
 			process.platform == "win32" ? ["cmd.exe", ["/c", "build.bat"]] : ["make", []]
 		], function () {
 			var finalDestination: string;
-			finalDestination = path.join(outputFolder, "Dscanner", "bin", "dscanner");
+			if (process.platform == "win32")
+				finalDestination = path.join(outputFolder, "Dscanner", "bin", "dscanner.exe");
+			else
+				finalDestination = path.join(outputFolder, "Dscanner", "bin", "dscanner");
 
 			config().update("dscannerPath", finalDestination, true);
 			vscode.window.showInformationMessage("Dscanner successfully installed", "Reload").then((r) => {
