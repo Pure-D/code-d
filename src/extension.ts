@@ -98,6 +98,12 @@ function startClient(context: vscode.ExtensionContext) {
 	client.start();
 	var served = new ServeD(client);
 
+	context.subscriptions.push({
+		dispose() {
+			client.stop();
+		}
+	});
+
 	context.subscriptions.push(statusbar.setup(served));
 	context.subscriptions.push(new CompileButtons(served));
 
