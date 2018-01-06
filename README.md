@@ -13,6 +13,9 @@ Also [available for Atom](https://github.com/Vild/atomize-d)!
 
 ## Installation
 
+### Prerequirements:
+D compiler with environment varibles set. Downloads [here](https://dlang.org/download.html), details [here](https://wiki.dlang.org/Compilers)
+
 ### Dependencies:
 
 code-d will install [workspace-d](https://github.com/Pure-D/workspace-d),
