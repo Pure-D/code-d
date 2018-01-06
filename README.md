@@ -14,7 +14,7 @@ Also [available for Atom](https://github.com/Vild/atomize-d)!
 ## Installation
 
 ### Prerequirements:
-DMC with environment variables set. Var-setting DMC Installer for Windows can be found [here](http://ftp.digitalmars.com/).
+D compiler with environment varibles set. details [here](https://wiki.dlang.org/Compilers)
 
 ### Dependencies:
 
