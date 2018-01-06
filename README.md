@@ -14,7 +14,7 @@ Also [available for Atom](https://github.com/Vild/atomize-d)!
 ## Installation
 
 ### Prerequirements:
-D compiler with environment varibles set. details [here](https://wiki.dlang.org/Compilers)
+D compiler with environment varibles set. Downloads [here](https://dlang.org/download.html), details [here](https://wiki.dlang.org/Compilers)
 
 ### Dependencies:
 
