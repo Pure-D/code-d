@@ -13,6 +13,9 @@ Also [available for Atom](https://github.com/Vild/atomize-d)!
 
 ## Installation
 
+### Prerequirements:
+DMC with environment variables set. Var-setting DMC Installer for Windows can be found [here](http://ftp.digitalmars.com/).
+
 ### Dependencies:
 
 code-d will install [workspace-d](https://github.com/Pure-D/workspace-d),
