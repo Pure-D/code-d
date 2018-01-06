@@ -571,23 +571,28 @@
 		"postinstall": "node ./node_modules/vscode/bin/install"
 	},
 	"dependencies": {
-		"request": "^2.81.0",
+		"request": "^2.83.0",
 		"request-progress": "^3.0.0",
 		"jsonc-parser": "^1.0.0",
 		"unzip": "^0.1.11",
-		"async": "^2.5.0",
+		"async": "^2.6.0",
 		"ncp": "^2.0.0",
 		"rmdir": "^1.2.0",
-		"line-by-line": "^0.1.5",
-		"vscode-languageclient": "^3.3.0",
+		"line-by-line": "^0.1.6",
+		"vscode-languageclient": "^3.5.0",
 		"mkdirp": "^0.5.1",
 		"opn": "^5.1.0"
 	},
 	"devDependencies": {
-		"typescript": "^2.4.1",
-		"vscode": "^1.1.7",
-		"mocha": "^3.4.2",
-		"@types/node": "^8.0.7",
-		"@types/mocha": "^2.2.41"
+		"typescript": "^2.6.2",
+		"vscode": "^1.1.10",
+		"mocha": "^4.1.0",
+		"@types/node": "^8.5.7",
+		"@types/mocha": "^2.2.46"
+	},
+	"__metadata": {
+		"id": "b187ad4b-573c-4245-b1aa-dbbc066e117d",
+		"publisherDisplayName": "webfreak",
+		"publisherId": "e054f80a-50f9-4d80-85c8-6ff87eef6c35"
 	}
 }
