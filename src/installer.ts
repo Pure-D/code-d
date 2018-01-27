@@ -130,8 +130,8 @@ export function compileServeD(env, done) {
 			fs.mkdirSync(outputFolder);
 		var buildArgs = ["build", "--build=release"];
 		if (process.platform == "win32") {
-			buildArgs.push("--compiler=ldc2");
-			buildArgs.push("--combined");
+			buildArgs.pop(); // remove release
+			buildArgs.push("--arch=x86_mscoff");
 		}
 		compileDependency(outputFolder, "serve-d", "https://github.com/Pure-D/serve-d.git", [
 			[config().get("dubPath", "dub"), ["upgrade"]],
