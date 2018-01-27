@@ -57,7 +57,10 @@ export function installWorkspaceD(env) {
 				fs.createReadStream(outputPath).pipe(unzip.Extract({ path: outputFolder })).on("finish", () => {
 					config().update("workspacedPath", finalDestination, true);
 					output.appendLine("Deleting " + outputPath);
-					fs.unlink(outputPath);
+					fs.unlink(outputPath, (err) => {
+						if (err)
+							output.appendLine("Failed to delete " + outputPath);
+					});
 					vscode.window.showInformationMessage("workspace-d successfully installed", "Reload").then((r) => {
 						if (r == "Reload")
 							vscode.commands.executeCommand("workbench.action.reloadWindow");
@@ -76,7 +79,10 @@ export function installWorkspaceD(env) {
 						});
 					config().update("workspacedPath", finalDestination, true);
 					output.appendLine("Deleting " + outputPath);
-					fs.unlink(outputPath);
+					fs.unlink(outputPath, (err) => {
+						if (err)
+							output.appendLine("Failed to delete " + outputPath);
+					});
 					vscode.window.showInformationMessage("workspace-d successfully installed", "Reload").then((r) => {
 						if (r == "Reload")
 							vscode.commands.executeCommand("workbench.action.reloadWindow");
@@ -131,7 +137,10 @@ export function downloadDub(env) {
 				fs.createReadStream(outputPath).pipe(unzip.Extract({ path: outputFolder })).on("finish", () => {
 					config().update("dubPath", finalDestination, true);
 					output.appendLine("Deleting " + outputPath);
-					fs.unlink(outputPath);
+					fs.unlink(outputPath, (err) => {
+						if (err)
+							output.appendLine("Failed to delete " + outputPath);
+					});
 					vscode.window.showInformationMessage("dub successfully installed", "Reload").then((r) => {
 						if (r == "Reload")
 							vscode.commands.executeCommand("workbench.action.reloadWindow");
@@ -147,7 +156,10 @@ export function downloadDub(env) {
 						return vscode.window.showErrorMessage("Failed to extract .tar.gz release");
 					config().update("dubPath", finalDestination, true);
 					output.appendLine("Deleting " + outputPath);
-					fs.unlink(outputPath);
+					fs.unlink(outputPath, (err) => {
+						if (err)
+							output.appendLine("Failed to delete " + outputPath);
+					});
 					vscode.window.showInformationMessage("dub successfully installed", "Reload").then((r) => {
 						if (r == "Reload")
 							vscode.commands.executeCommand("workbench.action.reloadWindow");
@@ -232,10 +244,15 @@ export function compileDCD(env) {
 	fs.exists(outputFolder, function (exists) {
 		if (!exists)
 			fs.mkdirSync(outputFolder);
-		compileDependency(outputFolder, "DCD", "https://github.com/Hackerpilot/DCD.git", [
-			[gitPath(), ["submodule", "update", "--init", "--recursive"]],
-			process.platform == "win32" ? ["cmd.exe", ["/c", "build.bat"]] : ["make", []]
-		], function () {
+		var commands = [
+			[gitPath(), ["submodule", "update", "--init", "--recursive"]]
+		];
+		if (process.platform == "win32") {
+			commands.push(["dub", ["build", "--config=client", "--arch=x86_mscoff"]], ["dub", ["build", "--config=server", "--arch=x86_mscoff"]]);
+		} else {
+			commands.push(["make", []]);
+		}
+		compileDependency(outputFolder, "DCD", "https://github.com/Hackerpilot/DCD.git", commands, function () {
 			var finalDestinationClient = path.join(outputFolder, "DCD", "bin", "dcd-client" + (process.platform == "win32" ? ".exe" : ""));
 			var finalDestinationServer = path.join(outputFolder, "DCD", "bin", "dcd-server" + (process.platform == "win32" ? ".exe" : ""));
 
