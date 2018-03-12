@@ -215,6 +215,11 @@
 					"default": "dub",
 					"description": "Path of the dub executable. Path can be omitted if in $PATH or installed using code-d"
 				},
+				"d.dmdPath": {
+					"type": "string",
+					"default": "dmd",
+					"description": "Path of the dmd executable. Path can be omitted if in $PATH"
+				},
 				"d.enableLinting": {
 					"type": "boolean",
 					"default": true,
@@ -244,6 +249,11 @@
 					"type": "boolean",
 					"default": true,
 					"description": "If the default formatting keybind should call dfmt on D files."
+				},
+				"d.enableDMDImportTiming": {
+					"type": "boolean",
+					"default": true,
+					"description": "Add code lenses on import statements executing a dmd instance trying to compile that import statement to get the impact on compilation time by this import."
 				},
 				"d.neverUseDub": {
 					"type": "boolean",
