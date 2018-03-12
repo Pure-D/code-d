@@ -20,7 +20,7 @@ const opn = require('opn');
 
 const isBeta = true;
 
-export class ServeD extends EventEmitter implements vscode.TreeDataProvider<DubDependency>, vscode.TaskProvider {
+export class ServeD extends EventEmitter implements vscode.TreeDataProvider<DubDependency> {
 	constructor(public client: LanguageClient) {
 		super();
 	}
@@ -74,34 +74,6 @@ export class ServeD extends EventEmitter implements vscode.TreeDataProvider<DubD
 		vscode.TaskGroup.Rebuild,
 		vscode.TaskGroup.Test,
 	];
-
-	provideTasks(token?: vscode.CancellationToken): vscode.Task[] {
-		return [new vscode.Task({
-			type: "dub"
-		}, vscode.TaskScope.Global, "Test Dub", "dub", new vscode.ShellExecution("dub"), [])]
-		/*return new Promise(resolve => {
-			this.client.sendRequest<vscode.Task[]>("served/provideTasks").then((tasks) => {
-				var items: vscode.Task[] = [];
-				tasks.forEach(task => {
-					var item = new vscode.Task(task.definition, vscode.TaskScope.Global, task.name, task.source);
-					item.group = ServeD.taskGroups[<number>task.group];
-					item.execution = undefined;
-					items.push(item);
-				});
-				resolve(items);
-			});
-		});*/
-	}
-
-	resolveTask(task: vscode.Task, token?: vscode.CancellationToken): Thenable<vscode.Task> {
-		return new Promise(resolve => {
-			this.client.sendRequest<vscode.Task>("served/resolveTask").then((ret) => {
-				if (typeof ret.execution == "object" && (<any>ret.execution).commandLine)
-					task.execution = new vscode.ShellExecution((<any>ret.execution).commandLine, ret.execution.options);
-				resolve(task);
-			});
-		});
-	}
 }
 
 function startClient(context: vscode.ExtensionContext) {
@@ -140,8 +112,6 @@ function startClient(context: vscode.ExtensionContext) {
 			client.stop();
 		}
 	});
-
-	context.subscriptions.push(vscode.workspace.registerTaskProvider("dub", served));
 
 	context.subscriptions.push(statusbar.setup(served));
 	context.subscriptions.push(new CompileButtons(served));
