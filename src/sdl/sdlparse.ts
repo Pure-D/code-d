@@ -12,7 +12,7 @@ export interface Tag {
 	namespaces: { [index: string]: Tag; };
 	values: Value[];
 	attributes: { [index: string]: Value[]; };
-	parent: Tag;
+	parent: Tag | null;
 	isNamespace?: boolean;
 	range?: [number, number];
 	attributesRange?: [number, number];
@@ -196,11 +196,11 @@ export function tokenizeSDL(sdl: string) {
 		}*/
 		if (startLen == sdl.length)
 			break;
-		if (isAttribute) {
+		if (isAttribute && attributeRange) {
 			if (tokens[tokens.length - 1].type == "value")
 				tokens[tokens.length - 1] = { type: "attribute", range: attributeRange, name: attributeName, value: tokens[tokens.length - 1] }
 			else {
-				var lastTok = tokens[tokens.length - 1];
+				var lastTok: any = tokens[tokens.length - 1];
 				tokens.pop();
 				tokens.push({ type: "attribute", range: [attributeRange[0], attributeRange[1] + 1], name: attributeName, value: undefined });
 				tokens.push(lastTok);
@@ -225,9 +225,10 @@ export function parseSDL(sdl: string): Tag {
 		tags: {},
 		values: [],
 		parent: null,
-		errors: []
+		errors: [],
+		range: undefined
 	}
-	var currTag = root;
+	var currTag : Tag | null = root;
 	var currNamespace = "";
 	var anon = true;
 	var lastWasEnd = true;
@@ -237,6 +238,9 @@ export function parseSDL(sdl: string): Tag {
 		var token = tokens[i];
 		if (token.type != "end")
 			lastWasEnd = false;
+
+		if (!currTag)
+			break;
 
 		if (token.type == "value") {
 			if (anon) {

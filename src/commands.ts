@@ -9,7 +9,7 @@ import { uploadCode } from "./util";
 import { listPackageOptions, getLatestPackageInfo } from "./dub-api"
 import { DubDependency } from "./dub-view";
 
-var gClient;
+var gClient: LanguageClient;
 
 export function registerClientCommands(context: vscode.ExtensionContext, client: LanguageClient, served: ServeD) {
 	var subscriptions = context.subscriptions;
@@ -24,7 +24,7 @@ export function registerClientCommands(context: vscode.ExtensionContext, client:
 						served.emit("config-change", config);
 				});
 		});
-	}, (err) => {
+	}, (err: any) => {
 		client.outputChannel.appendLine(err.toString());
 		vscode.window.showErrorMessage("Failed to switch configuration. See extension output for details.");
 	}));
@@ -37,7 +37,7 @@ export function registerClientCommands(context: vscode.ExtensionContext, client:
 						served.emit("arch-type-change", arch);
 				});
 		});
-	}, (err) => {
+	}, (err: any) => {
 		client.outputChannel.appendLine(err.toString());
 		vscode.window.showErrorMessage("Failed to switch arch type. See extension output for details.");
 	}));
@@ -50,7 +50,7 @@ export function registerClientCommands(context: vscode.ExtensionContext, client:
 						served.emit("build-type-change", type);
 				});
 		});
-	}, (err) => {
+	}, (err: any) => {
 		client.outputChannel.appendLine(err.toString());
 		vscode.window.showErrorMessage("Failed to switch build type. See extension output for details.");
 	}));
@@ -190,18 +190,21 @@ export function registerClientCommands(context: vscode.ExtensionContext, client:
 	}));
 
 	subscriptions.push(vscode.commands.registerCommand("code-d.updateDependency", (node: DubDependency) => {
-		getLatestPackageInfo(node.info.name).then((info) => {
-			client.sendNotification("served/updateDependency", {
-				name: node.info.name,
-				version: info.version
+		if (node.info)
+			getLatestPackageInfo(node.info.name).then((info) => {
+				if (node.info)
+					client.sendNotification("served/updateDependency", {
+						name: node.info.name,
+						version: info.version
+					});
 			});
-		});
 	}));
 
 	subscriptions.push(vscode.commands.registerCommand("code-d.removeDependency", (node: DubDependency) => {
-		client.sendNotification("served/uninstallDependency", {
-			name: node.info.name
-		});
+		if (node.info)
+			client.sendNotification("served/uninstallDependency", {
+				name: node.info.name
+			});
 	}));
 }
 
@@ -218,6 +221,8 @@ export function registerCommands(context: vscode.ExtensionContext) {
 	let rdmdTerminal: vscode.Terminal;
 	subscriptions.push(vscode.commands.registerCommand("code-d.rdmdCurrent", (file: vscode.Uri) => {
 		var args = [];
+		if (!vscode.window.activeTextEditor)
+			return vscode.window.showErrorMessage("No text editor active");
 		if (file)
 			args = [file.fsPath];
 		else if (!vscode.window.activeTextEditor.document.fileName)
@@ -270,9 +275,13 @@ export function registerCommands(context: vscode.ExtensionContext) {
 			var templates = JSON.parse(data.toString());
 			for (var i = 0; i < templates.length; i++)
 				if (templates[i].path == id) {
-					fs.readdir(vscode.workspace.rootPath, function (err, files) {
+					var path = "";
+					if (!vscode.workspace.workspaceFolders)
+						return vscode.window.showErrorMessage("No workspace folder open");
+					path = vscode.workspace.workspaceFolders[0].uri.path;
+					fs.readdir(path, function (err: any, files: any) {
 						if (files.length == 0)
-							performTemplateCopy(context, id, templates[i].dub, vscode.workspace.rootPath, function () {
+							performTemplateCopy(context, id, templates[i].dub, path, function () {
 								vscode.commands.executeCommand("workbench.action.reloadWindow");
 							});
 						else
@@ -281,19 +290,20 @@ export function registerCommands(context: vscode.ExtensionContext) {
 									context.globalState.update("create-template", id);
 									openFolderWithExtension(context);
 								} else if (r == "Merge into Folder") {
-									performTemplateCopy(context, id, templates[i].dub, vscode.workspace.rootPath, function () {
+									performTemplateCopy(context, id, templates[i].dub, path, function () {
 										vscode.commands.executeCommand("workbench.action.reloadWindow");
 									});
 								}
 							});
 					});
-					return;
+					return undefined;
 				}
+			return undefined;
 		});
 	}
 
 	subscriptions.push(vscode.commands.registerCommand("code-d.uploadSelection", () => {
-		if (vscode.window.activeTextEditor.selection.isEmpty)
+		if (!vscode.window.activeTextEditor || vscode.window.activeTextEditor.selection.isEmpty)
 			vscode.window.showErrorMessage("No code selected");
 		else {
 			let code = vscode.window.activeTextEditor.document.getText(vscode.window.activeTextEditor.selection);
@@ -303,7 +313,7 @@ export function registerCommands(context: vscode.ExtensionContext) {
 				vscode.window.showInformationMessage("Code pasted on " + url);
 			});
 		}
-	}, (err) => {
+	}, (err: any) => {
 		if (gClient)
 			gClient.outputChannel.appendLine(err);
 		else
@@ -312,7 +322,11 @@ export function registerCommands(context: vscode.ExtensionContext) {
 	}));
 
 	subscriptions.push(vscode.commands.registerCommand("code-d.insertDscanner", () => {
+		if (!vscode.window.activeTextEditor)
+			return vscode.window.showErrorMessage("No text editor active");
 		vscode.window.activeTextEditor.edit((bld) => {
+			if (!vscode.window.activeTextEditor)
+				return;
 			bld.insert(vscode.window.activeTextEditor.selection.start, `; Configure which static analysis checks are enabled
 [analysis.config.StaticAnalysisConfig]
 ; Check variable, class, struct, interface, union, and function names against the Phobos style guide

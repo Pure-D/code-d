@@ -20,7 +20,7 @@ const opn = require('opn');
 
 const isBeta = true;
 
-export class ServeD extends EventEmitter implements vscode.TreeDataProvider<DubDependency> {
+export class ServeD extends EventEmitter implements vscode.TreeDataProvider<DubDependency>, vscode.TaskProvider {
 	constructor(public client: LanguageClient) {
 		super();
 	}
@@ -40,7 +40,7 @@ export class ServeD extends EventEmitter implements vscode.TreeDataProvider<DubD
 		return new Promise(resolve => {
 			var req = (element && element.info) ? element.info.name : "";
 			var items: DubDependency[] = [];
-			if (element) {
+			if (element && element.info) {
 				if (element.info.description)
 					items.push(new DubDependency(element.info.description, undefined, "description"));
 				if (element.info.homepage)
@@ -67,6 +67,41 @@ export class ServeD extends EventEmitter implements vscode.TreeDataProvider<DubD
 				resolve(items);
 		});
 	}
+
+	private static taskGroups: vscode.TaskGroup[] = [
+		vscode.TaskGroup.Build,
+		vscode.TaskGroup.Clean,
+		vscode.TaskGroup.Rebuild,
+		vscode.TaskGroup.Test,
+	];
+
+	provideTasks(token?: vscode.CancellationToken): vscode.Task[] {
+		return [new vscode.Task({
+			type: "dub"
+		}, vscode.TaskScope.Global, "Test Dub", "dub", new vscode.ShellExecution("dub"), [])]
+		/*return new Promise(resolve => {
+			this.client.sendRequest<vscode.Task[]>("served/provideTasks").then((tasks) => {
+				var items: vscode.Task[] = [];
+				tasks.forEach(task => {
+					var item = new vscode.Task(task.definition, vscode.TaskScope.Global, task.name, task.source);
+					item.group = ServeD.taskGroups[<number>task.group];
+					item.execution = undefined;
+					items.push(item);
+				});
+				resolve(items);
+			});
+		});*/
+	}
+
+	resolveTask(task: vscode.Task, token?: vscode.CancellationToken): Thenable<vscode.Task> {
+		return new Promise(resolve => {
+			this.client.sendRequest<vscode.Task>("served/resolveTask").then((ret) => {
+				if (typeof ret.execution == "object" && (<any>ret.execution).commandLine)
+					task.execution = new vscode.ShellExecution((<any>ret.execution).commandLine, ret.execution.options);
+				resolve(task);
+			});
+		});
+	}
 }
 
 function startClient(context: vscode.ExtensionContext) {
@@ -80,8 +115,10 @@ function startClient(context: vscode.ExtensionContext) {
 			}
 		},
 		debug: {
-			command: "gdbserver",
-			args: ["--once", ":2345", servedPath, "--require", "D", "--lang", vscode.env.language],
+			//command: "gdbserver",
+			//args: ["--once", ":2345", servedPath, "--require", "D", "--lang", vscode.env.language],
+			command: servedPath,
+			args: ["--require", "D", "--lang", vscode.env.language],
 			options: {
 				cwd: context.extensionPath
 			}
@@ -103,6 +140,8 @@ function startClient(context: vscode.ExtensionContext) {
 			client.stop();
 		}
 	});
+
+	context.subscriptions.push(vscode.workspace.registerTaskProvider("dub", served));
 
 	context.subscriptions.push(statusbar.setup(served));
 	context.subscriptions.push(new CompileButtons(served));
@@ -238,17 +277,17 @@ function preStartup(context: vscode.ExtensionContext) {
 		fs.readFile(pkgPath + ".bak", function (err, data) {
 			if (err)
 				return vscode.window.showErrorMessage("Failed to restore after reload! Please reinstall code-d if problems occur before reporting!");
-			fs.writeFile(pkgPath, data, function (err) {
+			return fs.writeFile(pkgPath, data, function (err) {
 				if (err)
 					return vscode.window.showErrorMessage("Failed to restore after reload! Please reinstall code-d if problems occur before reporting!");
-				fs.unlink(pkgPath + ".bak", function (err) {
+				return fs.unlink(pkgPath + ".bak", function (err) {
 					console.error(err.toString());
 				});
 			});
 		});
 	}
 	{
-		function checkProgram(configName: string, defaultPath: string, name: string, installFunc: Function, btn: string, done: Function = undefined) {
+		function checkProgram(configName: string, defaultPath: string, name: string, installFunc: Function, btn: string, done: Function | undefined = undefined) {
 			var version = "";
 			var errored = false;
 			ChildProcess.spawn(config().get(configName, defaultPath), ["--version"], { cwd: vscode.workspace.rootPath, env: env }).on("error", function (err) {
@@ -298,7 +337,7 @@ function preStartup(context: vscode.ExtensionContext) {
 				});
 			}
 		});
-		function checkCompiler(compiler, callback) {
+		function checkCompiler(compiler: string, callback: Function | undefined) {
 			ChildProcess.spawn(compiler, ["--version"]).on("error", function (err) {
 				if (err && (<any>err).code == "ENOENT") {
 					if (callback)
@@ -313,7 +352,7 @@ function preStartup(context: vscode.ExtensionContext) {
 			});
 		}
 		if (!context.globalState.get("checkedCompiler", false)) {
-			function gotCompiler(compiler) {
+			function gotCompiler(compiler: string | false) {
 				context.globalState.update("checkedCompiler", true);
 				if (!compiler)
 					opn("https://dlang.org/download.html").then(() => {
@@ -321,16 +360,16 @@ function preStartup(context: vscode.ExtensionContext) {
 					});
 			}
 			console.log("Checking if compiler is present");
-			checkCompiler("dmd", (has) => {
+			checkCompiler("dmd", (has: boolean) => {
 				if (has)
 					return gotCompiler("dmd");
-				checkCompiler("ldc", (has) => {
+				checkCompiler("ldc", (has: boolean) => {
 					if (has)
 						return gotCompiler("ldc");
-					checkCompiler("ldc2", (has) => {
+					checkCompiler("ldc2", (has: boolean) => {
 						if (has)
 							return gotCompiler("ldc2");
-						checkCompiler("gdc", (has) => {
+						checkCompiler("gdc", (has: boolean) => {
 							if (has)
 								return gotCompiler("gdc");
 							else

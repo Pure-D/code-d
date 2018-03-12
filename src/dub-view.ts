@@ -44,6 +44,6 @@ export class DubDependency extends vscode.TreeItem {
 			};
 	}
 
-	info: DubDependencyInfo;
-	command: vscode.Command;
+	info?: DubDependencyInfo;
+	command?: vscode.Command;
 }

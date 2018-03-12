@@ -15,7 +15,7 @@ export function setup(served: ServeD): vscode.Disposable {
 
 class ConfigSelector implements vscode.Disposable {
 	subscriptions: vscode.Disposable[] = [];
-	private item: vscode.StatusBarItem;
+	private item?: vscode.StatusBarItem;
 
 	constructor(private served: ServeD) {
 		served.client.onReady().then(this.create.bind(this));
@@ -27,10 +27,12 @@ class ConfigSelector implements vscode.Disposable {
 		this.item.tooltip = "Switch Configuration";
 		this.item.show();
 		this.served.on("config-change", config => {
-			this.item.text = config;
+			if (this.item)
+				this.item.text = config;
 		});
 		this.served.client.sendRequest<string>("served/getConfig").then(config => {
-			this.item.text = config;
+			if (this.item)
+				this.item.text = config;
 		});
 	}
 
@@ -41,7 +43,7 @@ class ConfigSelector implements vscode.Disposable {
 
 class ArchSelector implements vscode.Disposable {
 	subscriptions: vscode.Disposable[] = [];
-	private item: vscode.StatusBarItem;
+	private item?: vscode.StatusBarItem;
 
 	constructor(private served: ServeD) {
 		served.client.onReady().then(this.create.bind(this));
@@ -53,10 +55,12 @@ class ArchSelector implements vscode.Disposable {
 		this.item.tooltip = "Switch Arch Type";
 		this.item.show();
 		this.served.on("arch-type-change", arch => {
-			this.item.text = arch;
+			if (this.item)
+				this.item.text = arch;
 		});
 		this.served.client.sendRequest<string>("served/getArchType").then(arch => {
-			this.item.text = arch;
+			if (this.item)
+				this.item.text = arch;
 		});
 	}
 
@@ -67,7 +71,7 @@ class ArchSelector implements vscode.Disposable {
 
 class BuildSelector implements vscode.Disposable {
 	subscriptions: vscode.Disposable[] = [];
-	private item: vscode.StatusBarItem;
+	private item?: vscode.StatusBarItem;
 
 	constructor(private served: ServeD) {
 		served.client.onReady().then(this.create.bind(this));
@@ -79,10 +83,12 @@ class BuildSelector implements vscode.Disposable {
 		this.item.tooltip = "Switch Build Type";
 		this.item.show();
 		this.served.on("build-type-change", type => {
-			this.item.text = type;
+			if (this.item)
+				this.item.text = type;
 		});
 		this.served.client.sendRequest<string>("served/getBuildType").then(type => {
-			this.item.text = type;
+			if (this.item)
+				this.item.text = type;
 		});
 	}
 
@@ -93,7 +99,7 @@ class BuildSelector implements vscode.Disposable {
 
 class CompilerSelector implements vscode.Disposable {
 	subscriptions: vscode.Disposable[] = [];
-	private item: vscode.StatusBarItem;
+	private item?: vscode.StatusBarItem;
 
 	constructor(private served: ServeD) {
 		served.client.onReady().then(this.create.bind(this));
@@ -105,10 +111,12 @@ class CompilerSelector implements vscode.Disposable {
 		this.item.tooltip = "Switch Compiler";
 		this.item.show();
 		this.served.on("compiler-change", compiler => {
-			this.item.text = compiler;
+			if (this.item)
+				this.item.text = compiler;
 		});
 		this.served.client.sendRequest<string>("served/getCompiler").then(compiler => {
-			this.item.text = compiler;
+			if (this.item)
+				this.item.text = compiler;
 		});
 	}
 

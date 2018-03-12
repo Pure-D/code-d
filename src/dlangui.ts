@@ -51,10 +51,10 @@ export class DlangUIHandler implements vscode.CompletionItemProvider {
 				return;
 			console.log(typeof this);
 			var editor = vscode.window.activeTextEditor;
-			if (editor.document != e.document)
+			if (!editor || editor.document != e.document)
 				throw "Invalid Document!";
 			console.log(typeof this);
-			var match: RegExpExecArray;
+			var match: RegExpExecArray | null;
 			var options: vscode.DecorationOptions[] = [];
 			var text = e.document.getText();
 			console.log(typeof this);
@@ -75,7 +75,8 @@ export class DlangUIHandler implements vscode.CompletionItemProvider {
 				});
 			}
 			console.log(typeof this);
-			vscode.window.activeTextEditor.setDecorations(this.colorDecorationBase, options);
+			if (vscode.window.activeTextEditor)
+				vscode.window.activeTextEditor.setDecorations(this.colorDecorationBase, options);
 			console.log("Done");
 		}
 		catch (e) {

@@ -27,6 +27,10 @@ export class GCProfiler implements vscode.CodeLensProvider {
 	}
 
 	updateProfileCache(uri: vscode.Uri) {
+		var root = ".";
+		var workspace = vscode.workspace.getWorkspaceFolder(uri);
+		if (workspace)
+			root = workspace.uri.path;
 		fs.readFile(uri.fsPath, (err, data) => {
 			this.profiles = [];
 			var lines = data.toString("utf8").split("\n");
@@ -36,18 +40,20 @@ export class GCProfiler implements vscode.CodeLensProvider {
 					continue;
 				var fileLine = cols.slice(4, cols.length).join("");
 				var match = filelineRegex.exec(lines[i]);
-				var file = match[1];
-				var displayFile = file;
-				if (!path.isAbsolute(file))
-					file = path.join(vscode.workspace.rootPath, file);
-				this.profiles.push({
-					bytesAllocated: cols[0],
-					allocationCount: cols[1],
-					type: cols[2],
-					file: file,
-					displayFile: displayFile,
-					line: parseInt(match[2])
-				});
+				if (match) {
+					var file = match[1];
+					var displayFile = file;
+					if (!path.isAbsolute(file))
+						file = path.join(root, file);
+					this.profiles.push({
+						bytesAllocated: cols[0],
+						allocationCount: cols[1],
+						type: cols[2],
+						file: file,
+						displayFile: displayFile,
+						line: parseInt(match[2])
+					});
+				}
 			}
 		});
 	}
@@ -67,15 +73,16 @@ export class GCProfiler implements vscode.CodeLensProvider {
 			});
 		});
 		vscode.window.showQuickPick(items).then(item => {
-			vscode.workspace.openTextDocument(vscode.Uri.file(item.profile.file)).then(doc => {
-				vscode.window.showTextDocument(doc).then(editor => {
-					let line = doc.lineAt(item.profile.line - 1);
-					editor.revealRange(line.range, vscode.TextEditorRevealType.InCenterIfOutsideViewport);
-					editor.selection = new vscode.Selection(line.range.start, line.range.start);
+			if (item)
+				vscode.workspace.openTextDocument(vscode.Uri.file(item.profile.file)).then(doc => {
+					vscode.window.showTextDocument(doc).then(editor => {
+						let line = doc.lineAt(item.profile.line - 1);
+						editor.revealRange(line.range, vscode.TextEditorRevealType.InCenterIfOutsideViewport);
+						editor.selection = new vscode.Selection(line.range.start, line.range.start);
+					});
 				});
-			});
 		});
 	}
 
-	profiles = [];
+	profiles: any[] = [];
 }

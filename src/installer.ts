@@ -47,7 +47,7 @@ export function getInstallOutput() {
 	return installationLog;
 }
 
-export function downloadDub(env, done: Function) {
+export function downloadDub(env: any, done: Function) {
 	var url = "";
 	var ext = "";
 	if (process.platform == "linux" && process.arch == "x64") {
@@ -86,7 +86,7 @@ export function downloadDub(env, done: Function) {
 			fs.mkdirSync(outputFolder);
 		installationLog.appendLine("Downloading from " + url + " into " + outputFolder);
 		var outputPath = path.join(outputFolder, "dub" + ext);
-		progress(req()(url)).on("progress", (state) => {
+		progress(req()(url)).on("progress", (state: any) => {
 			if (!isNaN(state.percentage))
 				installationLog.appendLine("Downloaded " + (state.percentage * 100).toFixed(2) + "%" + (state.time.remaining ? " (ETA " + state.time.remaining.toFixed(1) + "s)" : ""));
 		}).pipe(fs.createWriteStream(outputPath)).on("finish", () => {
@@ -115,14 +115,15 @@ export function downloadDub(env, done: Function) {
 						if (err)
 							installationLog.appendLine("Failed to delete " + outputPath);
 					});
-					done(true);
+					return done(true);
 				});
 			}
 		});
 	});
+	return undefined;
 }
 
-export function compileServeD(env, done) {
+export function compileServeD(env: any, done: Function) {
 	var outputFolder = determineOutputFolder();
 	mkdirp.sync(outputFolder);
 	fs.exists(outputFolder, function (exists) {
@@ -145,7 +146,7 @@ export function compileServeD(env, done) {
 	});
 }
 
-function spawnCommand(cmd: string, args: string[], options: ChildProcess.SpawnOptions, cb) {
+function spawnCommand(cmd: string, args: string[], options: ChildProcess.SpawnOptions, cb: Function) {
 	installationLog.appendLine("> " + cmd + " " + args.join(" "));
 	var proc = ChildProcess.spawn(cmd, args, options);
 	proc.stdout.on("data", function (chunk) {
@@ -159,28 +160,28 @@ function spawnCommand(cmd: string, args: string[], options: ChildProcess.SpawnOp
 	});
 }
 
-export function compileDependency(cwd, name, gitURI, commands, callback, env) {
+export function compileDependency(cwd: string, name: string, gitURI: string, commands: [string, string[]][], callback: Function, env: any) {
 	if (!installationLog) {
 		installationLog = vscode.window.createOutputChannel(installationTitle);
 		extensionContext.subscriptions.push(installationLog);
 	}
 	installationLog.show(true);
 	installationLog.appendLine("Installing into " + cwd);
-	var error = function (err) {
+	var error = function (err: any) {
 		installationLog.appendLine("Failed to install " + name + " (Error code " + err + ")");
 	};
 	var newCwd = path.join(cwd, name);
 	var startCompile = () => {
-		spawnCommand(gitPath(), ["clone", "--recursive", gitURI, name], { cwd: cwd, env: env }, (err) => {
+		spawnCommand(gitPath(), ["clone", "--recursive", gitURI, name], { cwd: cwd, env: env }, (err: any) => {
 			if (err !== 0)
 				return error(err);
-			async.eachSeries(commands, function (command, cb) {
+			async.eachSeries(commands, function (command: [string, string[]], cb: Function) {
 				spawnCommand(command[0], command[1], {
 					cwd: newCwd
-				}, function (err) {
+				}, function (err: any) {
 					cb(err);
 				});
-			}, function (err) {
+			}, function (err: any) {
 				if (err)
 					return error(err);
 				installationLog.appendLine("Done compiling");
@@ -190,7 +191,7 @@ export function compileDependency(cwd, name, gitURI, commands, callback, env) {
 	};
 	if (fs.existsSync(newCwd)) {
 		installationLog.appendLine("Removing old version");
-		rmdir(newCwd, function (err: Error, dirs, files) {
+		rmdir(newCwd, function (err: Error, dirs: any, files: any) {
 			if (err)
 				installationLog.appendLine(err.toString());
 			installationLog.appendLine("Removed old version");
