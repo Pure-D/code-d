@@ -248,7 +248,7 @@ export function compileDCD(env) {
 			[gitPath(), ["submodule", "update", "--init", "--recursive"]]
 		];
 		if (process.platform == "win32") {
-			commands.push(["dub", ["build", "--config=client", "--arch=x86_mscoff"]], ["dub", ["build", "--config=server", "--arch=x86_mscoff"]]);
+			commands.push(["dub", ["build", "--config=client"]], ["dub", ["build", "--config=server"]]);
 		} else {
 			commands.push(["make", []]);
 		}
