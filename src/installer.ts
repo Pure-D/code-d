@@ -97,11 +97,11 @@ export function downloadDub(env) {
 	var url = "";
 	var ext = "";
 	if (process.platform == "linux" && process.arch == "x64") {
-		url = "https://code.dlang.org/files/dub-1.0.0-linux-x86_64.tar.gz";
+		url = "https://code.dlang.org/files/dub-1.8.0-linux-x86_64.tar.gz";
 		ext = ".tar.gz";
 	}
 	else if (process.platform == "linux" && process.arch == "ia32") {
-		url = "https://code.dlang.org/files/dub-1.0.0-linux-x86.tar.gz";
+		url = "https://code.dlang.org/files/dub-1.8.0-linux-x86.tar.gz";
 		ext = ".tar.gz";
 	}
 	else if (process.platform == "linux" && process.arch == "arm") {
@@ -109,11 +109,11 @@ export function downloadDub(env) {
 		ext = ".tar.gz";
 	}
 	else if (process.platform == "win32") {
-		url = "https://code.dlang.org/files/dub-1.0.0-windows-x86.zip";
+		url = "https://code.dlang.org/files/dub-1.8.0-windows-x86.zip";
 		ext = ".zip";
 	}
 	else if (process.platform == "darwin" && process.arch == "x64") {
-		url = "https://code.dlang.org/files/dub-1.0.0-osx-x86_64.tar.gz";
+		url = "https://code.dlang.org/files/dub-1.8.0-osx-x86_64.tar.gz";
 		ext = ".tar.gz";
 	}
 	else
