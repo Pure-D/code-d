@@ -200,7 +200,7 @@ export function compileDScanner(env) {
 	fs.exists(outputFolder, function (exists) {
 		if (!exists)
 			fs.mkdirSync(outputFolder);
-		compileDependency(outputFolder, "Dscanner", "https://github.com/Hackerpilot/Dscanner.git", [
+		compileDependency(outputFolder, "Dscanner", "https://github.com/dlang-community/Dscanner.git", [
 			[gitPath(), ["submodule", "update", "--init", "--recursive"]],
 			process.platform == "win32" ? ["cmd.exe", ["/c", "build.bat"]] : ["make", []]
 		], function () {
@@ -224,7 +224,7 @@ export function compileDfmt(env) {
 	fs.exists(outputFolder, function (exists) {
 		if (!exists)
 			fs.mkdirSync(outputFolder);
-		compileDependency(outputFolder, "dfmt", "https://github.com/Hackerpilot/dfmt.git", [
+		compileDependency(outputFolder, "dfmt", "https://github.com/dlang-community/dfmt.git", [
 			[gitPath(), ["submodule", "update", "--init", "--recursive"]],
 			process.platform == "win32" ? ["cmd.exe", ["/c", "build.bat"]] : ["make", []]
 		], function () {
@@ -252,7 +252,7 @@ export function compileDCD(env) {
 		} else {
 			commands.push(["make", []]);
 		}
-		compileDependency(outputFolder, "DCD", "https://github.com/Hackerpilot/DCD.git", commands, function () {
+		compileDependency(outputFolder, "DCD", "https://github.com/dlang-community/DCD.git", commands, function () {
 			var finalDestinationClient = path.join(outputFolder, "DCD", "bin", "dcd-client" + (process.platform == "win32" ? ".exe" : ""));
 			var finalDestinationServer = path.join(outputFolder, "DCD", "bin", "dcd-server" + (process.platform == "win32" ? ".exe" : ""));
 
