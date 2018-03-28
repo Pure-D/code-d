@@ -19,8 +19,8 @@ D compiler with environment variables set. Downloads [here](https://dlang.org/do
 ### Dependencies:
 
 code-d will install [workspace-d](https://github.com/Pure-D/workspace-d),
-[dcd](https://github.com/Hackerpilot/DCD), [dfmt](https://github.com/Hackerpilot/dfmt),
-[dscanner](https://github.com/Hackerpilot/Dscanner) if they are not already installed.
+[dcd](https://github.com/dlang-community/DCD), [dfmt](https://github.com/dlang-community/dfmt),
+[dscanner](https://github.com/dlang-community/Dscanner) if they are not already installed.
 
 ### code-d installation
 
