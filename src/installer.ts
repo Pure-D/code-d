@@ -105,7 +105,7 @@ export function downloadDub(env) {
 		ext = ".tar.gz";
 	}
 	else if (process.platform == "linux" && process.arch == "arm") {
-		url = "http://code.dlang.org/files/dub-1.1.0-linux-arm.tar.gz";
+		url = "https://code.dlang.org/files/dub-1.1.0-linux-arm.tar.gz";
 		ext = ".tar.gz";
 	}
 	else if (process.platform == "win32") {
