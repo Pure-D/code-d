@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
 import { LanguageClient, LanguageClientOptions, ServerOptions, DocumentFilter, NotificationType } from "vscode-languageclient";
-import { setContext, downloadDub, installServeD, getInstallOutput } from "./installer"
+import { setContext, downloadDub, installServeD, compileServeD, getInstallOutput } from "./installer"
 import { EventEmitter } from "events"
 import * as ChildProcess from "child_process"
 
@@ -18,7 +18,7 @@ import { DubDependency, DubDependencyInfo } from "./dub-view";
 
 const opn = require('opn');
 
-const isBeta = false;
+const isBeta = true;
 
 export class ServeD extends EventEmitter implements vscode.TreeDataProvider<DubDependency> {
 	constructor(public client: LanguageClient) {
@@ -296,7 +296,7 @@ function preStartup(context: vscode.ExtensionContext) {
 		checkProgram("dubPath", "dub", "dub", downloadDub, "Download", () => {
 			if (isBeta && !context.globalState.get("newestServed", false)) {
 				context.globalState.update("newestServed", true).then(() => {
-					installServeD(env, () => {
+					compileServeD(env, () => {
 						setTimeout(() => {
 							// make sure settings get updated
 							startClient(context);
