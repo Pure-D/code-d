@@ -18,28 +18,28 @@ function isDubPackage(uri: vscode.Uri) {
 	return file == "dub.json" || file == "dub.sdl";
 }
 
-function copyFile(source, target, cb) {
-  var cbCalled = false;
+function copyFile(source: string, target: string, cb: Function) {
+	var cbCalled = false;
 
-  var rd = fs.createReadStream(source);
-  rd.on("error", function (err) {
-    done(err);
-  });
-  var wr = fs.createWriteStream(target);
-  wr.on("error", function (err) {
-    done(err);
-  });
-  wr.on("close", function (ex) {
-    done();
-  });
-  rd.pipe(wr);
+	var rd = fs.createReadStream(source);
+	rd.on("error", function (err) {
+		done(err);
+	});
+	var wr = fs.createWriteStream(target);
+	wr.on("error", function (err) {
+		done(err);
+	});
+	wr.on("close", function (ex: any) {
+		done();
+	});
+	rd.pipe(wr);
 
-  function done(err?) {
-    if (!cbCalled) {
-      cb(err);
-      cbCalled = true;
-    }
-  }
+	function done(err?: any) {
+		if (!cbCalled) {
+			cb(err);
+			cbCalled = true;
+		}
+	}
 }
 
 const pathSeparator = " >_> ";
@@ -98,9 +98,9 @@ function setPath(content: any, path: string, value: JSON) {
 export class DubEditor implements vscode.TextDocumentContentProvider {
 	private editorTemplate: string;
 	private editorPath: string;
-	private asyncTimeout: NodeJS.Timer;
-	private asyncBuffer: JSON;
-	private asyncStarted: boolean;
+	private asyncTimeout: NodeJS.Timer = <NodeJS.Timer><any>undefined;
+	private asyncBuffer: any;
+	private asyncStarted: boolean = false;
 
 	constructor(context: vscode.ExtensionContext) {
 		this.editorPath = context.asAbsolutePath("html/dubeditor.html");
@@ -141,8 +141,8 @@ export class DubEditor implements vscode.TextDocumentContentProvider {
 	updateDubJson(uri: vscode.Uri, content: JSON) {
 		if (!content || typeof content !== "object")
 			return vscode.window.showErrorMessage("Failed to generate dub.json");
-		fs.stat(uri.fsPath + ".bak", function (err, stats) {
-			var prepareWrite = function (err) {
+		return fs.stat(uri.fsPath + ".bak", function (err, stats) {
+			var prepareWrite = function (err: any) {
 				var performWrite = function () {
 					fs.writeFile(uri.fsPath, JSON.stringify(content, null, "\t"), function (err) {
 						if (err) {
@@ -182,12 +182,15 @@ export class DubEditor implements vscode.TextDocumentContentProvider {
 		if (!(file instanceof vscode.Uri)) {
 			if (vscode.window.activeTextEditor) {
 				file = vscode.window.activeTextEditor.document.uri;
-				if (!isDubPackage(file))
-					file = vscode.Uri.file(path.join(vscode.workspace.rootPath, "dub.json"));
+				if (!isDubPackage(file)) {
+					var workspace = vscode.workspace.getWorkspaceFolder(vscode.window.activeTextEditor.document.uri);
+					if (workspace)
+						file = vscode.Uri.file(path.join(workspace.uri.path, "dub.json"));
+				}
 			}
 		}
 		if (!(file instanceof vscode.Uri) || !isDubPackage(file))
-			return;
+			return undefined;
 
 		return vscode.commands.executeCommand('vscode.previewHtml',
 			getEditorUrl(file),

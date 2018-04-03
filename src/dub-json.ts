@@ -5,7 +5,7 @@ import { searchDubPackages, listPackages, getPackageInfo, getLatestPackageInfo }
 
 var semverRegex = /(\d+)\.(\d+)\.(\d+)/;
 
-function pad3(n) {
+function pad3(n: number) {
 	if (n >= 100)
 		return n.toString();
 	if (n >= 10)
@@ -20,7 +20,7 @@ export class DubJSONContribution implements IJSONContribution {
 
 	public getInfoContribution(fileName: string, location: Location): Thenable<vscode.MarkedString[]> {
 		if (location.path.length < 2 || location.path[location.path.length - 2] != "dependencies")
-			return null;
+			return Promise.resolve([]);
 		let pack = location.path[location.path.length - 1];
 		if (typeof pack === "string") {
 			return getLatestPackageInfo(pack).then(info => {
@@ -35,12 +35,12 @@ export class DubJSONContribution implements IJSONContribution {
 				return htmlContent;
 			});
 		}
-		return null;
+		return Promise.resolve([]);
 	}
 
 	public collectPropertySuggestions(fileName: string, location: Location, currentWord: string, addValue: boolean, isLast: boolean, result: ISuggestionsCollector): Thenable<any> {
 		if (location.path[location.path.length - 1] != "dependencies" && location.path[location.path.length - 2] != "dependencies")
-			return null;
+			return Promise.resolve(null);
 		return new Promise((resolve, reject) => {
 			if (currentWord.length > 0) {
 				var colonIdx = currentWord.indexOf(":");
@@ -68,20 +68,21 @@ export class DubJSONContribution implements IJSONContribution {
 				} else {
 					var pkgName = currentWord.substr(0, colonIdx);
 					getLatestPackageInfo(pkgName).then(info => {
-						info.subPackages.forEach(subPkgName => {
-							var completionName = pkgName + ":" + subPkgName;
-							var item = new vscode.CompletionItem(completionName);
-							var insertText = new vscode.SnippetString().appendText(JSON.stringify(completionName));
-							if (addValue) {
-								insertText.appendText(': "').appendPlaceholder(info.version);
-								if (!isLast)
-									insertText.appendText(",");
-							}
-							item.insertText = insertText;
-							item.kind = vscode.CompletionItemKind.Property;
-							item.documentation = info.description;
-							result.add(item);
-						});
+						if (info.subPackages)
+							info.subPackages.forEach(subPkgName => {
+								var completionName = pkgName + ":" + subPkgName;
+								var item = new vscode.CompletionItem(completionName);
+								var insertText = new vscode.SnippetString().appendText(JSON.stringify(completionName));
+								if (addValue) {
+									insertText.appendText(': "').appendPlaceholder(info.version || "");
+									if (!isLast)
+										insertText.appendText(",");
+								}
+								item.insertText = insertText;
+								item.kind = vscode.CompletionItemKind.Property;
+								item.documentation = info.description;
+								result.add(item);
+							});
 						resolve();
 					}, err => {
 						result.error("Package not found");
@@ -114,13 +115,13 @@ export class DubJSONContribution implements IJSONContribution {
 	}
 
 	public collectValueSuggestions(fileName: string, location: Location, result: ISuggestionsCollector): Thenable<any> {
-		let currentKey = undefined;
+		let currentKey: any = undefined;
 		if (location.path[location.path.length - 2] == "dependencies")
 			currentKey = location.path[location.path.length - 1];
 		else if (location.path[location.path.length - 3] == "dependencies" && location.path[location.path.length - 1] == "version")
 			currentKey = location.path[location.path.length - 2];
 		else
-			return null;
+			return Promise.resolve(null);
 		if (typeof currentKey === "string") {
 			return new Promise((resolve, reject) => {
 				getPackageInfo(currentKey).then(json => {
@@ -149,13 +150,13 @@ export class DubJSONContribution implements IJSONContribution {
 				});
 			});
 		}
-		return null;
+		return Promise.resolve(null);
 	}
 
 	public resolveSuggestion(item: vscode.CompletionItem): Thenable<vscode.CompletionItem> {
 		if (item.kind === vscode.CompletionItemKind.Property) {
 			let pack = item.label
-			return getLatestPackageInfo(pack).then(info => {
+			return getLatestPackageInfo(pack).then((info: any) => {
 				if (info.description) {
 					item.documentation = info.description;
 				}
@@ -165,9 +166,9 @@ export class DubJSONContribution implements IJSONContribution {
 				}
 				return item;
 			}, err => {
-				return null;
+				return <any>undefined;
 			});
 		}
-		return null;
+		return Promise.resolve(<any>undefined);
 	}
 }

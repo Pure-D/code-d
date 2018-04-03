@@ -1,24 +1,24 @@
 import * as vscode from 'vscode';
 import { D_MODE } from "./dmode"
-import { WorkspaceD } from "./workspace-d"
+import { ServeD } from "./extension";
 
-export function setup(workspaced: WorkspaceD): vscode.Disposable {
+export function setup(served: ServeD): vscode.Disposable {
 	let subscriptions: vscode.Disposable[] = [];
 
-	subscriptions.push(new ConfigSelector(workspaced));
-	subscriptions.push(new ArchSelector(workspaced));
-	subscriptions.push(new BuildSelector(workspaced));
-	subscriptions.push(new CompilerSelector(workspaced));
+	subscriptions.push(new ConfigSelector(served));
+	subscriptions.push(new ArchSelector(served));
+	subscriptions.push(new BuildSelector(served));
+	subscriptions.push(new CompilerSelector(served));
 
 	return vscode.Disposable.from(...subscriptions);
 }
 
 class ConfigSelector implements vscode.Disposable {
 	subscriptions: vscode.Disposable[] = [];
-	private item: vscode.StatusBarItem;
+	private item?: vscode.StatusBarItem;
 
-	constructor(private workspaced: WorkspaceD) {
-		workspaced.once("dub-ready", this.create.bind(this));
+	constructor(private served: ServeD) {
+		served.client.onReady().then(this.create.bind(this));
 	}
 
 	private create() {
@@ -26,11 +26,13 @@ class ConfigSelector implements vscode.Disposable {
 		this.item.command = "code-d.switchConfiguration";
 		this.item.tooltip = "Switch Configuration";
 		this.item.show();
-		this.workspaced.on("configuration-change", config => {
-			this.item.text = config;
+		this.served.on("config-change", config => {
+			if (this.item)
+				this.item.text = config;
 		});
-		this.workspaced.getConfiguration().then(config => {
-			this.item.text = config;
+		this.served.client.sendRequest<string>("served/getConfig").then(config => {
+			if (this.item)
+				this.item.text = config;
 		});
 	}
 
@@ -41,10 +43,10 @@ class ConfigSelector implements vscode.Disposable {
 
 class ArchSelector implements vscode.Disposable {
 	subscriptions: vscode.Disposable[] = [];
-	private item: vscode.StatusBarItem;
+	private item?: vscode.StatusBarItem;
 
-	constructor(private workspaced: WorkspaceD) {
-		workspaced.once("dub-ready", this.create.bind(this));
+	constructor(private served: ServeD) {
+		served.client.onReady().then(this.create.bind(this));
 	}
 
 	private create() {
@@ -52,11 +54,13 @@ class ArchSelector implements vscode.Disposable {
 		this.item.command = "code-d.switchArchType";
 		this.item.tooltip = "Switch Arch Type";
 		this.item.show();
-		this.workspaced.on("arch-type-change", arch => {
-			this.item.text = arch;
+		this.served.on("arch-type-change", arch => {
+			if (this.item)
+				this.item.text = arch;
 		});
-		this.workspaced.getArchType().then(arch => {
-			this.item.text = arch;
+		this.served.client.sendRequest<string>("served/getArchType").then(arch => {
+			if (this.item)
+				this.item.text = arch;
 		});
 	}
 
@@ -67,10 +71,10 @@ class ArchSelector implements vscode.Disposable {
 
 class BuildSelector implements vscode.Disposable {
 	subscriptions: vscode.Disposable[] = [];
-	private item: vscode.StatusBarItem;
+	private item?: vscode.StatusBarItem;
 
-	constructor(private workspaced: WorkspaceD) {
-		workspaced.once("dub-ready", this.create.bind(this));
+	constructor(private served: ServeD) {
+		served.client.onReady().then(this.create.bind(this));
 	}
 
 	private create() {
@@ -78,11 +82,13 @@ class BuildSelector implements vscode.Disposable {
 		this.item.command = "code-d.switchBuildType";
 		this.item.tooltip = "Switch Build Type";
 		this.item.show();
-		this.workspaced.on("build-type-change", config => {
-			this.item.text = config;
+		this.served.on("build-type-change", type => {
+			if (this.item)
+				this.item.text = type;
 		});
-		this.workspaced.getBuildType().then(config => {
-			this.item.text = config;
+		this.served.client.sendRequest<string>("served/getBuildType").then(type => {
+			if (this.item)
+				this.item.text = type;
 		});
 	}
 
@@ -93,10 +99,10 @@ class BuildSelector implements vscode.Disposable {
 
 class CompilerSelector implements vscode.Disposable {
 	subscriptions: vscode.Disposable[] = [];
-	private item: vscode.StatusBarItem;
+	private item?: vscode.StatusBarItem;
 
-	constructor(private workspaced: WorkspaceD) {
-		workspaced.once("dub-ready", this.create.bind(this));
+	constructor(private served: ServeD) {
+		served.client.onReady().then(this.create.bind(this));
 	}
 
 	private create() {
@@ -104,11 +110,13 @@ class CompilerSelector implements vscode.Disposable {
 		this.item.command = "code-d.switchCompiler";
 		this.item.tooltip = "Switch Compiler";
 		this.item.show();
-		this.workspaced.on("compiler-change", config => {
-			this.item.text = config;
+		this.served.on("compiler-change", compiler => {
+			if (this.item)
+				this.item.text = compiler;
 		});
-		this.workspaced.getCompiler().then(config => {
-			this.item.text = config;
+		this.served.client.sendRequest<string>("served/getCompiler").then(compiler => {
+			if (this.item)
+				this.item.text = compiler;
 		});
 	}
 

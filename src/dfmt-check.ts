@@ -2,7 +2,7 @@ import * as vscode from "vscode"
 
 function getMatchIndices(regex: RegExp, str: string) {
 	let result: number[] = [];
-	let match: RegExpExecArray;
+	let match: RegExpExecArray | null;
 	while (match = regex.exec(str))
 		result.push(match.index);
 	return result;
@@ -10,7 +10,7 @@ function getMatchIndices(regex: RegExp, str: string) {
 
 let validDfmt = /\/\/dfmt (off|on)(\n|\s+|$)/;
 
-export function lintDfmt(doc: vscode.TextDocument, code = doc.getText()) {
+export function lintDfmt(doc?: vscode.TextDocument, code = doc ? doc.getText() : "") {
 	let locations = getMatchIndices(/\/\/dfmt/g, code);
 	let issues: vscode.Diagnostic[] = [];
 	let isOn: boolean = true;

@@ -1,23 +1,22 @@
 import * as vscode from "vscode"
 import * as ChildProcess from "child_process"
 import * as path from "path"
-import { WorkspaceD } from "./workspace-d"
-import { config } from "./extension"
+import { ServeD, config } from "./extension"
 
 export class CompileButtons implements vscode.Disposable {
-	buildButton: vscode.StatusBarItem;
-	startButton: vscode.StatusBarItem;
-	debugButton: vscode.StatusBarItem;
-	child: ChildProcess.ChildProcess;
-	workspaced: WorkspaceD;
-	output: vscode.OutputChannel;
+	buildButton?: vscode.StatusBarItem;
+	startButton?: vscode.StatusBarItem;
+	debugButton?: vscode.StatusBarItem;
+	child?: ChildProcess.ChildProcess;
+	served: ServeD;
+	output?: vscode.OutputChannel;
 	isDebug: boolean = false;
 	debugValuesCache: any = null;
-	terminal: vscode.Terminal;
+	terminal?: vscode.Terminal;
 
-	constructor(workspaced: WorkspaceD) {
-		this.workspaced = workspaced;
-		workspaced.once("dub-ready", this.create.bind(this));
+	constructor(served: ServeD) {
+		this.served = served;
+		served.client.onReady().then(this.create.bind(this));
 	}
 
 	private create() {
@@ -49,7 +48,11 @@ export class CompileButtons implements vscode.Disposable {
 		vscode.commands.registerCommand("code-d.debug", this.debug, this);
 	}
 
-	handleData(data) {
+	handleData(data: any) {
+		if (!this.output) {
+			console.log(data);
+			return;
+		}
 		let lines = data.toString("utf8").split('\n');
 		for (var i = 0; i < lines.length - 1; i++) {
 			this.output.appendLine(lines[i]);
@@ -72,61 +75,92 @@ export class CompileButtons implements vscode.Disposable {
 		this.startProc("build");
 	}
 
-	startProc(cmd, inTerminal = false) {
+	startProc(cmd: string, inTerminal = false) {
 		if (inTerminal) {
 			if (!this.terminal)
 				this.terminal = vscode.window.createTerminal("Build Output");
 			vscode.workspace.saveAll(false);
-			this.buildButton.hide();
-			this.startButton.hide();
-			this.debugButton.hide();
-			Promise.all([this.workspaced.getConfiguration(), this.workspaced.getArchType(), this.workspaced.getBuildType(), this.workspaced.getCompiler()]).then(values => {
-				this.terminal.show(true);
-				this.terminal.sendText(`cd "${vscode.workspace.rootPath}"`);
-				if (cmd == "run" && (values[2].toString() == "unittest" || values[2].toString() == "unittest-cov"))
-					cmd = "test";
-				this.terminal.sendText(`dub ${cmd} --config=${values[0]} --arch=${values[1]} --build=${values[2]} --compiler=${values[3]}`);
-				this.buildButton.show();
-				this.startButton.show();
-				this.debugButton.show();
+			if (this.buildButton)
+				this.buildButton.hide();
+			if (this.startButton)
+				this.startButton.hide();
+			if (this.debugButton)
+				this.debugButton.hide();
+			Promise.all([
+				this.served.client.sendRequest<string>("served/getConfig"),
+				this.served.client.sendRequest<string>("served/getArchType"),
+				this.served.client.sendRequest<string>("served/getBuildType"),
+				this.served.client.sendRequest<string>("served/getCompiler")
+			]).then(values => {
+				if (this.terminal) {
+					this.terminal.show(true);
+					this.terminal.sendText(`cd "${vscode.workspace.rootPath}"`);
+					if (cmd == "run" && (values[2].toString() == "unittest" || values[2].toString() == "unittest-cov"))
+						cmd = "test";
+					this.terminal.sendText(`dub ${cmd} --config=${values[0]} --arch=${values[1]} --build=${values[2]} --compiler=${values[3]}`);
+				}
+				if (this.buildButton)
+					this.buildButton.show();
+				if (this.startButton)
+					this.startButton.show();
+				if (this.debugButton)
+					this.debugButton.show();
 			});
 		}
 		else if (!this.child) {
-			this.output.show(vscode.ViewColumn.Three);
-			this.output.clear();
+			if (this.output) {
+				this.output.show(vscode.ViewColumn.Three);
+				this.output.clear();
+			}
 			vscode.workspace.saveAll(false);
-			this.buildButton.hide();
-			this.startButton.hide();
-			this.debugButton.hide();
-			Promise.all([this.workspaced.getConfiguration(), this.workspaced.getArchType(), this.workspaced.getBuildType(), this.workspaced.getCompiler()]).then(values => {
+			if (this.buildButton)
+				this.buildButton.hide();
+			if (this.startButton)
+				this.startButton.hide();
+			if (this.debugButton)
+				this.debugButton.hide();
+			Promise.all([
+				this.served.client.sendRequest<string>("served/getConfig"),
+				this.served.client.sendRequest<string>("served/getArchType"),
+				this.served.client.sendRequest<string>("served/getBuildType"),
+				this.served.client.sendRequest<string>("served/getCompiler")
+			]).then(values => {
 				this.debugValuesCache = values;
 				let args = [cmd, "--config=" + values[0], "--arch=" + values[1], "--build=" + values[2], "--compiler=" + values[3]];
-				this.output.appendLine("> dub " + args.join(" "));
+				if (this.output)
+					this.output.appendLine("> dub " + args.join(" "));
 				this.child = ChildProcess.spawn(config().get("dubPath", "dub"), args, { cwd: vscode.workspace.rootPath, detached: true });
 				this.child.stderr.on("data", this.handleData.bind(this));
 				this.child.stdout.on("data", this.handleData.bind(this));
 				this.child.once("close", (code) => {
 					code = (code || 0);
-					if (code === 0)
-						this.output.appendLine(cmd + " succeeded");
-					else
-						this.output.appendLine("dub stopped with error code " + code);
+					if (this.output) {
+						if (code === 0)
+							this.output.appendLine(cmd + " succeeded");
+						else
+							this.output.appendLine("dub stopped with error code " + code);
+					}
 					this.handleStop(code);
 				});
 				this.child.once("error", (err) => {
-					this.output.appendLine("dub crashed:");
-					this.output.appendLine(err.toString());
+					if (this.output) {
+						this.output.appendLine("dub crashed:");
+						this.output.appendLine(err.toString());
+					}
 					this.handleStop(-1);
 				});
 			});
 		}
 	}
 
-	handleStop(code) {
-		this.child = null;
-		this.buildButton.show();
-		this.startButton.show();
-		this.debugButton.show();
+	handleStop(code: number) {
+		this.child = undefined;
+		if (this.buildButton)
+			this.buildButton.show();
+		if (this.startButton)
+			this.startButton.show();
+		if (this.debugButton)
+			this.debugButton.show();
 		if (this.isDebug && code == 0) {
 			this.isDebug = false;
 			var proc = ChildProcess.spawn(config().get("dubPath", "dub"),
@@ -154,21 +188,25 @@ export class CompileButtons implements vscode.Disposable {
 				var exeName = strings[1].trim();
 				var cwd = strings[2].trim();
 
-				let launchConfig = {
+				let launchConfig: vscode.DebugConfiguration = {
+					name: "code-d inline debug",
 					type: "gdb",
 					request: "launch",
 					target: path.join(exePath, exeName),
 					cwd: cwd
 				};
 
-				vscode.commands.executeCommand('vscode.startDebug', launchConfig).then(() => {
-				}, err => {
-					vscode.window.showErrorMessage("Couldn't start debugging. Make sure you have a GDB extension installed!", "Install Extensions").then(result => {
-						if (result == "Install Extensions") {
-							vscode.commands.executeCommand("workbench.extensions.action.installExtension");
-						}
+				if (vscode.workspace.workspaceFolders) {
+					var folder = vscode.workspace.workspaceFolders[0];
+					vscode.debug.startDebugging(folder, launchConfig).then(() => {
+					}, err => {
+						vscode.window.showErrorMessage("Couldn't start debugging. Make sure you have a GDB extension installed!", "Install Extensions").then(result => {
+							if (result == "Install Extensions") {
+								vscode.commands.executeCommand("workbench.extensions.action.installExtension");
+							}
+						});
 					});
-				});
+				}
 			});
 		}
 	}

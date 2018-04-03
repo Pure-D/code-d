@@ -77,12 +77,13 @@ export function getLocationInfo(document: vscode.TextDocument, position: vscode.
 			}
 		});
 	}
-	findInValues(current[current.length - 1].values);
-	Object.keys(current[current.length - 1].attributes).forEach(key => {
-		findInValues(current[current.length - 1].attributes[key], key);
+	var curr = current[current.length - 1];
+	findInValues(curr.values);
+	Object.keys(curr.attributes).forEach(key => {
+		findInValues(curr.attributes[key], key);
 	});
-	if (locationType == "block" && current[current.length - 1].attributesRange) {
-		if (pos >= current[current.length - 1].attributesRange[0] && pos < current[current.length - 1].attributesRange[1]) {
+	if (locationType == "block" && curr.attributesRange) {
+		if (pos >= curr.attributesRange[0] && pos < curr.attributesRange[1]) {
 			locationType = "attribute";
 			namespaceStack.push("");
 			nameStack.push("");
@@ -90,7 +91,7 @@ export function getLocationInfo(document: vscode.TextDocument, position: vscode.
 		}
 	}
 	return {
-		currentSDLObject: current[current.length - 1],
+		currentSDLObject: curr,
 		type: locationType,
 		namespace: namespaceStack,
 		name: nameStack,

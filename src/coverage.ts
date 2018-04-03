@@ -17,8 +17,8 @@ interface CoverageCache {
 const coveragePattern = /^\s*(\d*)\|(.*)/;
 const totalCoveragePattern = /^(.*?) is (.*?)% covered$/;
 
-function pathToName(fspath: string) {
-	var file = path.relative(vscode.workspace.rootPath, fspath).replace(/[\\/]/g, "-");
+function pathToName(root: string, fspath: string) {
+	var file = path.relative(root, fspath).replace(/[\\/]/g, "-");
 	if (!file.endsWith(".d"))
 		return undefined;
 	return file.substr(0, file.length - 2);
@@ -80,7 +80,8 @@ export class CoverageAnalyzer implements vscode.TextDocumentContentProvider {
 			console.log("Cache for " + source + " with " + totalCov + "% coverage");
 			if (source && totalCov)
 				this.cache.set(file, { lines: cache, totalCov: totalCov, source: source });
-			if (vscode.window.activeTextEditor && pathToName(vscode.window.activeTextEditor.document.fileName) == file)
+			var folder = vscode.workspace.getWorkspaceFolder(uri);
+			if (folder && vscode.window.activeTextEditor && pathToName(folder.uri.path, vscode.window.activeTextEditor.document.fileName) == file)
 				this.populateCurrent();
 		});
 	}
@@ -93,7 +94,10 @@ export class CoverageAnalyzer implements vscode.TextDocumentContentProvider {
 		var editor = vscode.window.activeTextEditor;
 		if (!editor || !editor.document)
 			return;
-		var name = pathToName(editor.document.fileName);
+		var folder = vscode.workspace.getWorkspaceFolder(editor.document.uri);
+		var name;
+		if (folder)
+			name = pathToName(folder.uri.path, editor.document.fileName);
 		if (!name)
 			return;
 		var info = this.cache.get(name);
@@ -119,7 +123,7 @@ export class CoverageAnalyzer implements vscode.TextDocumentContentProvider {
 					}
 				}
 			}
-			this.coverageStat.text = info.totalCov + "% Coverage";
+			this.coverageStat.text = (info ? info.totalCov : "unknown") + "% Coverage";
 			this.coverageStat.show();
 		}
 		else

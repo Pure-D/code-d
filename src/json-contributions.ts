@@ -36,7 +36,7 @@ export class JSONProvider implements vscode.HoverProvider, vscode.CompletionItem
 	constructor(private jsonContribution: IJSONContribution) {
 	}
 
-	public provideHover(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken): Thenable<vscode.Hover> {
+	public provideHover(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken): Thenable<vscode.Hover> | null {
 		let offset = document.offsetAt(position);
 		let location = getLocation(document.getText(), offset);
 		let node = location.previousNode;
@@ -44,7 +44,7 @@ export class JSONProvider implements vscode.HoverProvider, vscode.CompletionItem
 			let promise = this.jsonContribution.getInfoContribution(document.fileName, location);
 			if (promise) {
 				return promise.then(htmlContent => {
-					let range = new vscode.Range(document.positionAt(node.offset), document.positionAt(node.offset + node.length));
+					let range = new vscode.Range(document.positionAt((<any>node).offset), document.positionAt((<any>node).offset + (<any>node).length));
 					let result: vscode.Hover = {
 						contents: htmlContent,
 						range: range
@@ -66,9 +66,9 @@ export class JSONProvider implements vscode.HoverProvider, vscode.CompletionItem
 		return Promise.resolve(item);
 	}
 
-	public provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken): Thenable<vscode.CompletionList> {
+	public provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken): Thenable<vscode.CompletionList | null> | null {
 		let currentWord = this.getCurrentWord(document, position);
-		let overwriteRange = null;
+		let overwriteRange: vscode.Range | null = null;
 		let items: vscode.CompletionItem[] = [];
 
 		let offset = document.offsetAt(position);
@@ -97,7 +97,7 @@ export class JSONProvider implements vscode.HoverProvider, vscode.CompletionItem
 			log: (message: string) => console.log(message)
 		};
 
-		let collectPromise: Thenable<any> = null;
+		let collectPromise: Thenable<any> | null = null;
 
 		if (location.isAtPropertyKey) {
 			let addValue = !location.previousNode || !location.previousNode.columnOffset && (offset == (location.previousNode.offset + location.previousNode.length));
@@ -111,10 +111,10 @@ export class JSONProvider implements vscode.HoverProvider, vscode.CompletionItem
 
 		if (collectPromise) {
 			return collectPromise.then(() => {
-				if (items.length > 0) {
+				if (items.length > 0)
 					return new vscode.CompletionList(items);
-				}
-				return null;
+				else
+					return null;
 			});
 		}
 		return null;

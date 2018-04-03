@@ -2,7 +2,7 @@
 	"name": "code-d",
 	"displayName": "D Programming Language (code-d)",
 	"description": "auto-complete, snippets, linter and formatter for dlang",
-	"version": "0.16.3",
+	"version": "0.17.0",
 	"publisher": "webfreak",
 	"repository": {
 		"type": "git",
@@ -11,7 +11,7 @@
 	"icon": "images/dlogo-square.png",
 	"license": "MIT",
 	"engines": {
-		"vscode": "^1.13.0"
+		"vscode": "^1.17.0"
 	},
 	"categories": [
 		"Languages",
@@ -105,12 +105,12 @@
 			{
 				"language": "d",
 				"scopeName": "source.d",
-				"path": "./syntaxes/d.tmLanguage"
+				"path": "./syntaxes/d.json"
 			},
 			{
 				"language": "dscript",
 				"scopeName": "source.dscript",
-				"path": "./syntaxes/arsd.dscript.tmLanguage"
+				"path": "./syntaxes/arsd.dscript.json"
 			},
 			{
 				"language": "dml",
@@ -138,10 +138,10 @@
 			"title": "D configuration",
 			"type": "object",
 			"properties": {
-				"d.workspacedPath": {
+				"d.servedPath": {
 					"type": "string",
-					"default": "workspace-d",
-					"description": "Path of the workspace-d executable. Path can be omitted if in $PATH or installed using code-d"
+					"default": "serve-d",
+					"description": "Path of the serve-d executable. Path can be omitted if in $PATH or installed using code-d"
 				},
 				"d.stdlibPath": {
 					"oneOf": [
@@ -215,6 +215,11 @@
 					"default": "dub",
 					"description": "Path of the dub executable. Path can be omitted if in $PATH or installed using code-d"
 				},
+				"d.dmdPath": {
+					"type": "string",
+					"default": "dmd",
+					"description": "Path of the dmd executable. Path can be omitted if in $PATH"
+				},
 				"d.enableLinting": {
 					"type": "boolean",
 					"default": true,
@@ -230,10 +235,25 @@
 					"default": true,
 					"description": "If code-d should build on save to check for compile errors."
 				},
+				"d.enableStaticLinting": {
+					"type": "boolean",
+					"default": true,
+					"description": "If code-d should use DScanner to statically lint files."
+				},
 				"d.enableAutoComplete": {
 					"type": "boolean",
 					"default": true,
 					"description": "Start dcd-server at startup and complete using dcd-client."
+				},
+				"d.enableFormatting": {
+					"type": "boolean",
+					"default": true,
+					"description": "If the default formatting keybind should call dfmt on D files."
+				},
+				"d.enableDMDImportTiming": {
+					"type": "boolean",
+					"default": true,
+					"description": "Add code lenses on import statements executing a dmd instance trying to compile that import statement to get the impact on compilation time by this import."
 				},
 				"d.neverUseDub": {
 					"type": "boolean",
@@ -264,15 +284,20 @@
 					"type": "string",
 					"description": "Sets the default compiler to use when starting up"
 				},
-				"d.disableWorkspaceD": {
-					"type": "boolean",
-					"default": false,
-					"description": "Disables most code-d features. Intended for debugging/working on new features with lots of vscode restarts"
-				},
 				"d.overrideDfmtEditorconfig": {
 					"type": "boolean",
 					"default": true,
 					"description": "Uses dfmt config options & vscode editor config instead of .editorconfig because dfmt seems to be quite buggy with them."
+				},
+				"d.aggressiveUpdate": {
+					"type": "boolean",
+					"default": true,
+					"description": "Update/install outdated & missing tools without confirmation"
+				},
+				"d.argumentSnippets": {
+					"type": "boolean",
+					"default": false,
+					"description": "When autocompleting functions automatically insert the signature as snippet which can be navigated using tab."
 				},
 				"dfmt.alignSwitchStatements": {
 					"type": "boolean",
@@ -346,76 +371,173 @@
 					"command": "dub.closeSettingsEditor",
 					"group": "navigation"
 				}
+			],
+			"view/title": [
+				{
+					"command": "code-d.reloadImports",
+					"when": "view == dubDependencies",
+					"group": "navigation"
+				},
+				{
+					"command": "code-d.addDependency",
+					"when": "view == dubDependencies",
+					"group": "navigation"
+				}
+			],
+			"view/item/context": [
+				{
+					"command": "code-d.removeDependency",
+					"when": "view == dubDependencies && viewItem == root"
+				},
+				{
+					"command": "code-d.updateDependency",
+					"when": "view == dubDependencies && viewItem == root"
+				}
+			],
+			"commandPalette": [
+				{
+					"command": "code-d.addDependency",
+					"when": "false"
+				},
+				{
+					"command": "code-d.removeDependency",
+					"when": "false"
+				},
+				{
+					"command": "code-d.updateDependency",
+					"when": "false"
+				},
+				{
+					"command": "code-d.viewDubPackage",
+					"when": "false"
+				},
+				{
+					"command": "code-d.uploadSelection",
+					"when": "editorHasSelection"
+				}
+			]
+		},
+		"views": {
+			"explorer": [
+				{
+					"id": "dubDependencies",
+					"name": "Dub Dependencies"
+				}
 			]
 		},
 		"commands": [
 			{
+				"command": "code-d.addDependency",
+				"title": "Add Dependency",
+				"category": "code-d",
+				"icon": {
+					"light": "images/adddep-light.svg",
+					"dark": "images/adddep-dark.svg"
+				}
+			},
+			{
+				"command": "code-d.removeDependency",
+				"title": "Remove",
+				"category": "code-d"
+			},
+			{
+				"command": "code-d.updateDependency",
+				"title": "Update to latest version",
+				"category": "code-d"
+			},
+			{
+				"command": "code-d.viewDubPackage",
+				"title": "View Dub Package",
+				"category": "code-d"
+			},
+			{
 				"command": "code-d.switchConfiguration",
-				"title": "code-d: Switch Configuration"
+				"title": "Switch Configuration",
+				"category": "code-d"
 			},
 			{
 				"command": "code-d.switchArchType",
-				"title": "code-d: Switch Arch Type"
+				"title": "Switch Arch Type",
+				"category": "code-d"
 			},
 			{
 				"command": "code-d.switchBuildType",
-				"title": "code-d: Switch Build Type"
+				"title": "Switch Build Type",
+				"category": "code-d"
 			},
 			{
 				"command": "code-d.switchCompiler",
-				"title": "code-d: Switch Compiler"
+				"title": "Switch Compiler",
+				"category": "code-d"
 			},
 			{
 				"command": "code-d.killServer",
-				"title": "code-d: Kill DCD Server"
+				"title": "Kill DCD Server",
+				"category": "code-d"
 			},
 			{
 				"command": "code-d.restartServer",
-				"title": "code-d: Restart DCD Server"
+				"title": "Restart DCD Server",
+				"category": "code-d"
 			},
 			{
 				"command": "code-d.reloadImports",
-				"title": "code-d: Reload import paths"
+				"title": "Reload import paths",
+				"category": "code-d",
+				"icon": {
+					"light": "images/refresh-light.svg",
+					"dark": "images/refresh-dark.svg"
+				}
 			},
 			{
 				"command": "code-d.run",
-				"title": "code-d: Run project"
+				"title": "Run project",
+				"category": "code-d"
 			},
 			{
 				"command": "code-d.build",
-				"title": "code-d: Build project"
+				"title": "Build project",
+				"category": "code-d"
 			},
 			{
 				"command": "code-d.stop",
-				"title": "code-d: Stop project"
+				"title": "Stop project",
+				"category": "code-d"
 			},
 			{
 				"command": "code-d.debug",
-				"title": "code-d: Debug project using code-debug"
+				"title": "Debug project using code-debug",
+				"category": "code-d"
 			},
 			{
 				"command": "code-d.uploadSelection",
-				"title": "code-d: Upload selection to dpaste.com"
+				"title": "Upload selection to dpaste.com",
+				"category": "code-d"
 			},
 			{
 				"command": "code-d.insertDscanner",
-				"title": "code-d: Insert default dscanner.ini content"
+				"title": "Insert default dscanner.ini content",
+				"category": "code-d"
 			},
 			{
 				"command": "code-d.rdmdCurrent",
-				"title": "Run document using rdmd"
+				"title": "Run document using rdmd",
+				"category": "code-d"
 			},
 			{
 				"command": "code-d.generateCoverageReport",
-				"title": "code-d: Generate coverage report"
+				"title": "Generate coverage report",
+				"category": "code-d"
 			},
 			{
 				"command": "code-d.showGCCalls",
-				"title": "code-d: Show GC calls from profilegc.log"
+				"title": "Show GC calls from profilegc.log",
+				"category": "code-d"
 			},
 			{
 				"command": "dub.openSettingsEditor",
-				"title": "code-d/dub: Open project settings",
+				"title": "Open project settings",
+				"category": "code-d",
 				"icon": {
 					"light": "./images/edit-dub-inverse.svg",
 					"dark": "./images/edit-dub.svg"
@@ -423,7 +545,8 @@
 			},
 			{
 				"command": "dub.closeSettingsEditor",
-				"title": "code-d/dub: Close project settings",
+				"title": "Close project settings",
+				"category": "code-d",
 				"icon": {
 					"light": "./images/edit-source-inverse.svg",
 					"dark": "./images/edit-source.svg"
@@ -431,7 +554,18 @@
 			},
 			{
 				"command": "code-d.createProject",
-				"title": "code-d: Create new Project"
+				"title": "Create new Project",
+				"category": "code-d"
+			},
+			{
+				"command": "code-d.sortImports",
+				"title": "Sort Active Import Block",
+				"category": "code-d"
+			},
+			{
+				"command": "code-d.implementMethods",
+				"title": "Implement selected interface/base class",
+				"category": "code-d"
 			}
 		],
 		"jsonValidation": [
@@ -447,20 +581,23 @@
 		"postinstall": "node ./node_modules/vscode/bin/install"
 	},
 	"dependencies": {
-		"request": "^2.81.0",
+		"request": "^2.83.0",
 		"request-progress": "^3.0.0",
-		"jsonc-parser": "^0.2.3",
+		"jsonc-parser": "^1.0.0",
 		"unzip": "^0.1.11",
-		"async": "^2.5.0",
+		"async": "^2.6.0",
 		"ncp": "^2.0.0",
 		"rmdir": "^1.2.0",
-		"line-by-line": "^0.1.5"
+		"line-by-line": "^0.1.6",
+		"vscode-languageclient": "^3.5.0",
+		"mkdirp": "^0.5.1",
+		"opn": "^5.1.0"
 	},
 	"devDependencies": {
-		"typescript": "^2.4.1",
-		"vscode": "^1.1.1",
-		"mocha": "^3.4.2",
-		"@types/node": "^8.0.7",
-		"@types/mocha": "^2.2.41"
+		"typescript": "^2.6.2",
+		"vscode": "^1.1.10",
+		"mocha": "^4.1.0",
+		"@types/node": "^8.5.7",
+		"@types/mocha": "^2.2.46"
 	}
 }
