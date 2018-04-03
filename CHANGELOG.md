@@ -14,6 +14,8 @@ The switch to serve-d / Microsoft Language Server Protocol!
 * added sort imports command only sorting the "block" (separated by whitespaces) and not all imports in the file for more user control (but not compatible with the dscanner sortedness linting)
 * When autocompleting functions automatically insert the signature as snippet which can be navigated using tab. (configuration d.argumentSnippets)
 * Automatically implement classes and interfaces using the new `Implement selected interface/base class` command or by using the code actions
+* All imports are annotated with a code lens to show how long they need to import. For this just a dmd call using just the import is called multiple times (up to 500ms per import).
+* DCD Compilation is fixed (especially on windows)
 
 Minor changes:
 * Installing dependencies uses the dubPath setting now for dub
