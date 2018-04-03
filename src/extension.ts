@@ -297,13 +297,19 @@ function preStartup(context: vscode.ExtensionContext) {
 			if (isBeta && !context.globalState.get("newestServed", false)) {
 				context.globalState.update("newestServed", true).then(() => {
 					installServeD(env, () => {
-						startClient(context);
+						setTimeout(() => {
+							// make sure settings get updated
+							startClient(context);
+						}, 200);
 					});
 				});
 			}
 			else {
 				checkProgram("servedPath", "serve-d", "serve-d", installServeD, "Download", () => {
-					startClient(context);
+					// make sure settings get updated
+					setTimeout(() => {
+						startClient(context);
+					}, 200);
 				});
 			}
 		});

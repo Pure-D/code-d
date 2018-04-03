@@ -143,11 +143,12 @@ export function installServeD(env: any, done: Function) {
 			if (r == "Compile from source")
 				compileServeD(env, done);
 		});
-	var output = vscode.window.createOutputChannel("workspace-d installation progress");
+	var output = vscode.window.createOutputChannel("serve-d installation progress");
 	extensionContext.subscriptions.push(output);
 	output.show(true);
-	var outputFolder = path.join(extensionContext.extensionPath, "bin");
-	var finalDestination = path.join(outputFolder, "workspace-d" + (process.platform == "win32" ? ".exe" : ""));
+	var outputFolder = determineOutputFolder();
+	mkdirp.sync(outputFolder);
+	var finalDestination = path.join(outputFolder, "serve-d" + (process.platform == "win32" ? ".exe" : ""));
 	output.appendLine("Installing into " + outputFolder);
 	fs.exists(outputFolder, function (exists) {
 		if (!exists)
@@ -155,28 +156,31 @@ export function installServeD(env: any, done: Function) {
 		if (fs.existsSync(finalDestination))
 			fs.unlinkSync(finalDestination);
 		output.appendLine("Downloading from " + url + " into " + outputFolder);
-		var outputPath = path.join(outputFolder, "workspace-d" + ext);
+		var outputPath = path.join(outputFolder, "serve-d" + ext);
 		progress(req()(url)).on("progress", (state: any) => {
 			output.appendLine("Downloaded " + (state.percentage * 100).toFixed(2) + "%" + (state.time.remaining ? " (ETA " + state.time.remaining.toFixed(1) + "s)" : ""));
 		}).pipe(fs.createWriteStream(outputPath)).on("finish", () => {
-			output.appendLine("Extracting workspace-d");
+			output.appendLine("Extracting serve-d");
 			if (ext == ".zip") {
 				fs.createReadStream(outputPath).pipe(unzip.Extract({ path: outputFolder })).on("finish", () => {
-					config().update("workspacedPath", finalDestination, true);
-					output.appendLine("Deleting " + outputPath);
-					fs.unlink(outputPath, (err) => {
-						if (err)
-							output.appendLine("Failed to delete " + outputPath);
-					});
-					vscode.window.showInformationMessage("workspace-d successfully installed", "Reload").then((r?: string) => {
-						if (r == "Reload")
-							vscode.commands.executeCommand("workbench.action.reloadWindow");
-					});
+					try {
+						output.appendLine("Deleting " + outputPath);
+						fs.unlink(outputPath, (err) => {
+							if (err)
+								output.appendLine("Failed to delete " + outputPath);
+						});
+					}
+					catch (e) {
+						vscode.window.showErrorMessage("Failed to delete temporary file: " + outputPath);
+					}
+
+					config().update("servedPath", finalDestination, true);
+					done(true);
 				});
 			}
 			else if (ext == ".tar.xz") {
-				output.appendLine("> tar xvfJ workspace-d" + ext);
-				ChildProcess.spawn("tar", ["xvfJ", "workspace-d" + ext], {
+				output.appendLine("> tar xvfJ serve-d" + ext);
+				ChildProcess.spawn("tar", ["xvfJ", "serve-d" + ext], {
 					cwd: outputFolder
 				}).on("exit", function (code) {
 					if (code != 0)
@@ -184,16 +188,19 @@ export function installServeD(env: any, done: Function) {
 							if (r == "Compile from source")
 								compileServeD(env, done);
 						});
-					config().update("workspacedPath", finalDestination, true);
-					output.appendLine("Deleting " + outputPath);
-					fs.unlink(outputPath, (err) => {
-						if (err)
-							output.appendLine("Failed to delete " + outputPath);
-					});
-					vscode.window.showInformationMessage("workspace-d successfully installed", "Reload").then((r?: string) => {
-						if (r == "Reload")
-							vscode.commands.executeCommand("workbench.action.reloadWindow");
-					});
+					try {
+						output.appendLine("Deleting " + outputPath);
+						fs.unlink(outputPath, (err) => {
+							if (err)
+								output.appendLine("Failed to delete " + outputPath);
+						});
+					}
+					catch (e) {
+						vscode.window.showErrorMessage("Failed to delete temporary file: " + outputPath);
+					}
+
+					config().update("servedPath", finalDestination, true);
+					done(true);
 				});
 			}
 		});
