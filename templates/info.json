@@ -17,7 +17,7 @@
 		"path": "EmptyDlangUI",
 		"dub": {
 			"dependencies": {
-				"dlangui": "~>0.9.7"
+				"dlangui": "~>0.9.177"
 			}
 		}
 	},
@@ -27,7 +27,7 @@
 		"path": "EmptyGTKD",
 		"dub": {
 			"dependencies": {
-				"gtk-d:gtkd": "~>3.3.1"
+				"gtk-d:gtkd": "~>3.8.0"
 			}
 		}
 	},
@@ -37,7 +37,7 @@
 		"path": "EmptyVibeServer",
 		"dub": {
 			"dependencies": {
-				"vibe-d": "~>0.7.30-rc.1"
+				"vibe-d": "~>0.8.3"
 			},
 			"versions": [
 				"VibeDefaultMain"
@@ -50,7 +50,7 @@
 		"path": "BasicVibeServer",
 		"dub": {
 			"dependencies": {
-				"vibe-d": "~>0.7.30-rc.1"
+				"vibe-d": "~>0.8.3"
 			},
 			"versions": [
 				"VibeDefaultMain"
@@ -63,8 +63,8 @@
 		"path": "EmptyOpenGL_SDL",
 		"dub": {
 			"dependencies": {
-				"derelict-gl3": "~>1.0.19",
-				"derelict-sdl2": "~>1.9.7"
+				"derelict-gl3": "~>1.0.24",
+				"derelict-sdl2": "~>2.1.4"
 			}
 		}
 	},
@@ -74,8 +74,8 @@
 		"path": "EmptyLegacyOpenGL_SDL",
 		"dub": {
 			"dependencies": {
-				"derelict-gl3": "~>1.0.19",
-				"derelict-sdl2": "~>1.9.7"
+				"derelict-gl3": "~>1.0.24",
+				"derelict-sdl2": "~>2.1.4"
 			}
 		}
 	},
@@ -91,7 +91,7 @@
 		"path": "EmptyX11",
 		"dub": {
 			"dependencies": {
-				"x11": "~>1.0.15"
+				"x11": "~>1.0.20"
 			}
 		}
 	},
@@ -101,13 +101,24 @@
 		"path": "EmptyDiamondWebsite",
 		"dub": {
 			"dependencies": {
-				"vibe-d": "~>0.8.1",
-				"diamond": "~>2.4.5",
-				"mysql-native": "~>1.1.2"
+				"vibe-d": "~>0.8.3",
+				"diamond": "~>2.8.5",
+				"mysql-native": "~>2.2.1"
 			},
-			"versions": ["VibeDefaultMain", "Diamond_Debug", "Diamond_WebServer"],
-			"sourcePaths": ["core", "models", "controllers"],
-			"stringImportPaths": ["config", "views"]
+			"versions": [
+				"VibeDefaultMain",
+				"Diamond_Debug",
+				"Diamond_WebServer"
+			],
+			"sourcePaths": [
+				"core",
+				"models",
+				"controllers"
+			],
+			"stringImportPaths": [
+				"config",
+				"views"
+			]
 		}
 	},
 	{
@@ -116,13 +127,23 @@
 		"path": "EmptyDiamondWebApi",
 		"dub": {
 			"dependencies": {
-				"vibe-d": "~>0.8.1",
-				"diamond": "~>2.4.5",
-				"mysql-native": "~>1.1.2"
+				"vibe-d": "~>0.8.3",
+				"diamond": "~>2.8.5",
+				"mysql-native": "~>2.2.1"
 			},
-			"versions": ["VibeDefaultMain", "Diamond_Debug", "Diamond_WebApi"],
-			"sourcePaths": ["core", "models", "controllers"],
-			"stringImportPaths": ["config"]
+			"versions": [
+				"VibeDefaultMain",
+				"Diamond_Debug",
+				"Diamond_WebApi"
+			],
+			"sourcePaths": [
+				"core",
+				"models",
+				"controllers"
+			],
+			"stringImportPaths": [
+				"config"
+			]
 		}
 	}
 ]
