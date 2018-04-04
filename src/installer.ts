@@ -127,15 +127,18 @@ export function downloadDub(env: any, done: Function) {
 }
 
 export function installServeD(env: any, done: Function) {
-	var url: string;
+	var urls: string[];
 	var ext: string;
 	// TODO: platform checks here
 	if (process.platform == "linux" && process.arch == "x64") {
-		url = "https://github.com/Pure-D/serve-d/releases/download/v" + TARGET_SERVED_VERSION.join(".") + "/serve-d_" + TARGET_SERVED_VERSION.join(".") + "-linux-x86_64.tar.xz";
+		urls = ["https://github.com/Pure-D/serve-d/releases/download/v" + TARGET_SERVED_VERSION.join(".") + "/serve-d_" + TARGET_SERVED_VERSION.join(".") + "-linux-x86_64.tar.xz"];
 		ext = ".tar.xz";
 	}
 	else if (process.platform == "win32") {
-		url = "https://github.com/Pure-D/serve-d/releases/download/v" + TARGET_SERVED_VERSION.join(".") + "/serve-d_" + TARGET_SERVED_VERSION.join(".") + "-windows.zip";
+		urls = [
+			"https://github.com/Pure-D/serve-d/releases/download/v" + TARGET_SERVED_VERSION.join(".") + "/serve-d_" + TARGET_SERVED_VERSION.join(".") + "-windows.zip",
+			"https://github.com/Pure-D/serve-d/releases/download/v0.1.2/dcd_0.9.2-windows.zip"
+		];
 		ext = ".zip";
 	}
 	else
@@ -155,53 +158,66 @@ export function installServeD(env: any, done: Function) {
 			fs.mkdirSync(outputFolder);
 		if (fs.existsSync(finalDestination))
 			fs.unlinkSync(finalDestination);
-		output.appendLine("Downloading from " + url + " into " + outputFolder);
-		var outputPath = path.join(outputFolder, "serve-d" + ext);
-		progress(req()(url)).on("progress", (state: any) => {
-			output.appendLine("Downloaded " + (state.percentage * 100).toFixed(2) + "%" + (state.time.remaining ? " (ETA " + state.time.remaining.toFixed(1) + "s)" : ""));
-		}).pipe(fs.createWriteStream(outputPath)).on("finish", () => {
-			output.appendLine("Extracting serve-d");
-			if (ext == ".zip") {
-				fs.createReadStream(outputPath).pipe(unzip.Extract({ path: outputFolder })).on("finish", () => {
+		async.each(urls, function (url: string, cb: Function) {
+			output.appendLine("Downloading from " + url + " into " + outputFolder);
+			var fileName = path.basename(url, ext);
+			var outputPath = path.join(outputFolder, fileName);
+			progress(req()(url)).on("progress", (state: any) => {
+				output.appendLine("Downloaded " + (state.percentage * 100).toFixed(2) + "%" + (state.time.remaining ? " (ETA " + state.time.remaining.toFixed(1) + "s)" : ""));
+			}).pipe(fs.createWriteStream(outputPath)).on("finish", () => {
+				output.appendLine("Extracting " + fileName);
+				if (ext == ".zip") {
 					try {
-						output.appendLine("Deleting " + outputPath);
-						fs.unlink(outputPath, (err) => {
-							if (err)
-								output.appendLine("Failed to delete " + outputPath);
+						fs.createReadStream(outputPath).pipe(unzip.Extract({ path: outputFolder })).on("finish", () => {
+							try {
+								output.appendLine("Deleting " + outputPath);
+								fs.unlink(outputPath, (err) => {
+									if (err)
+										output.appendLine("Failed to delete " + outputPath);
+								});
+							}
+							catch (e) {
+								vscode.window.showErrorMessage("Failed to delete temporary file: " + outputPath);
+							}
+							cb();
 						});
 					}
 					catch (e) {
-						vscode.window.showErrorMessage("Failed to delete temporary file: " + outputPath);
+						return cb(e);
 					}
-
-					config().update("servedPath", finalDestination, true);
-					done(true);
+				}
+				else if (ext == ".tar.xz") {
+					output.appendLine("> tar xvfJ " + fileName);
+					ChildProcess.spawn("tar", ["xvfJ", fileName], {
+						cwd: outputFolder
+					}).on("exit", function (code) {
+						if (code != 0) {
+							return cb(code);
+						}
+						try {
+							output.appendLine("Deleting " + outputPath);
+							fs.unlink(outputPath, (err) => {
+								if (err)
+									output.appendLine("Failed to delete " + outputPath);
+							});
+						}
+						catch (e) {
+							vscode.window.showErrorMessage("Failed to delete temporary file: " + outputPath);
+						}
+						return cb();
+					});
+				}
+			});
+		}, function (err: any) {
+			if (err) {
+				vscode.window.showErrorMessage("Failed to download release", "Compile from source").then((r?: string) => {
+					if (r == "Compile from source")
+						compileServeD(env, done);
 				});
 			}
-			else if (ext == ".tar.xz") {
-				output.appendLine("> tar xvfJ serve-d" + ext);
-				ChildProcess.spawn("tar", ["xvfJ", "serve-d" + ext], {
-					cwd: outputFolder
-				}).on("exit", function (code) {
-					if (code != 0)
-						return vscode.window.showErrorMessage("Failed to extract .tar.xz release", "Compile from source").then((r?: string) => {
-							if (r == "Compile from source")
-								compileServeD(env, done);
-						});
-					try {
-						output.appendLine("Deleting " + outputPath);
-						fs.unlink(outputPath, (err) => {
-							if (err)
-								output.appendLine("Failed to delete " + outputPath);
-						});
-					}
-					catch (e) {
-						vscode.window.showErrorMessage("Failed to delete temporary file: " + outputPath);
-					}
-
-					config().update("servedPath", finalDestination, true);
-					done(true);
-				});
+			else {
+				config().update("servedPath", finalDestination, true);
+				done(true);
 			}
 		});
 	});

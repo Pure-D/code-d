@@ -300,7 +300,7 @@ function preStartup(context: vscode.ExtensionContext) {
 						setTimeout(() => {
 							// make sure settings get updated
 							startClient(context);
-						}, 200);
+						}, 500);
 					});
 				});
 			}
@@ -309,7 +309,7 @@ function preStartup(context: vscode.ExtensionContext) {
 					// make sure settings get updated
 					setTimeout(() => {
 						startClient(context);
-					}, 200);
+					}, 500);
 				});
 			}
 		});
