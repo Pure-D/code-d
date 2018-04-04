@@ -1,6 +1,6 @@
-import vibe.d;
+import vibe.vibe;
 
-shared static this()
+void main()
 {
 	auto settings = new HTTPServerSettings;
 	settings.port = 3000;
@@ -22,6 +22,8 @@ shared static this()
 	router.registerRestInterface(new MyAPIImplementation, "/api/");
 
 	listenHTTP(settings, router);
+
+	runApplication();
 }
 
 void index(HTTPServerRequest req, HTTPServerResponse res)
