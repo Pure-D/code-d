@@ -51,7 +51,7 @@ export function showProjectCreator(context: vscode.ExtensionContext) {
 					openFolderWithExtension(context);
 				}
 			});
-		var path = folders[0].uri.path;
+		var path = folders[0].uri.fsPath;
 		return fs.readdir(path, function (err, files) {
 			if (files.length == 0)
 				return performTemplateCopy(context, template.id, template.json, path, function () {
