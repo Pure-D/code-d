@@ -38,10 +38,7 @@
 		"dub": {
 			"dependencies": {
 				"vibe-d": "~>0.8.3"
-			},
-			"versions": [
-				"VibeDefaultMain"
-			]
+			}
 		}
 	},
 	{
@@ -51,10 +48,7 @@
 		"dub": {
 			"dependencies": {
 				"vibe-d": "~>0.8.3"
-			},
-			"versions": [
-				"VibeDefaultMain"
-			]
+			}
 		}
 	},
 	{
