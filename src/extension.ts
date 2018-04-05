@@ -140,6 +140,9 @@ function startClient(context: vscode.ExtensionContext) {
 }
 
 export function activate(context: vscode.ExtensionContext) {
+	config().update("betaStream", true);
+	vscode.window.showErrorMessage("code-d beta is being deprecated. Switch to webfreak.code-d and set the d.betaStream setting to receive all the latest features.");
+
 	// TODO: Port to serve-d
 	/*{
 		var phobosPath = config().getStdlibPath();
