@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
 import { LanguageClient, LanguageClientOptions, ServerOptions, DocumentFilter, NotificationType } from "vscode-languageclient";
-import { setContext, downloadDub, installServeD, getInstallOutput } from "./installer"
+import { setContext, downloadDub, installServeD, compileServeD, getInstallOutput, checkBetaServeD } from "./installer"
 import { EventEmitter } from "events"
 import * as ChildProcess from "child_process"
 
@@ -17,8 +17,6 @@ import { registerCommands, registerClientCommands } from "./commands";
 import { DubDependency, DubDependencyInfo } from "./dub-view";
 
 const opn = require('opn');
-
-const isBeta = false;
 
 export class ServeD extends EventEmitter implements vscode.TreeDataProvider<DubDependency> {
 	constructor(public client: LanguageClient) {
@@ -294,15 +292,19 @@ function preStartup(context: vscode.ExtensionContext) {
 			});
 		}
 		checkProgram("dubPath", "dub", "dub", downloadDub, "Download", () => {
-			if (isBeta && !context.globalState.get("newestServed", false)) {
-				context.globalState.update("newestServed", true).then(() => {
-					installServeD(env, () => {
-						setTimeout(() => {
-							// make sure settings get updated
-							startClient(context);
-						}, 500);
-					});
-				});
+			var isBeta = config().get("betaStream", false);
+			if (isBeta) {
+				checkBetaServeD((newest: boolean) => {
+					if (newest)
+						startClient(context);
+					else
+						compileServeD(env, () => {
+							setTimeout(() => {
+								// make sure settings get updated
+								startClient(context);
+							}, 500);
+						});
+				})
 			}
 			else {
 				checkProgram("servedPath", "serve-d", "serve-d", installServeD, "Download", () => {

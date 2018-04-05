@@ -299,6 +299,11 @@
 					"default": false,
 					"description": "When autocompleting functions automatically insert the signature as snippet which can be navigated using tab."
 				},
+				"d.betaStream": {
+					"type": "boolean",
+					"default": false,
+					"description": "Always get latest serve-d commit when starting vscode and an update is available."
+				},
 				"dfmt.alignSwitchStatements": {
 					"type": "boolean",
 					"default": true,

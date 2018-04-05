@@ -223,6 +223,59 @@ export function installServeD(env: any, done: Function) {
 	});
 }
 
+export function checkBetaServeD(callback: Function) {
+	var proc = ChildProcess.spawn(config().get("servedPath", "serve-d"), ["--version"]);
+	proc.on("error", () => {
+		callback(false);
+	});
+	var output = "";
+	proc.stdout.on('data', function (data) {
+		output += data;
+	});
+	proc.stderr.on('data', function (data) {
+		output += data;
+	});
+	proc.on("exit", (code) => {
+		if (code == 0) {
+			req().get({
+				url: "https://api.github.com/repos/Pure-D/serve-d/commits/master",
+				headers: {
+					"User-Agent": "https://github.com/Pure-D/code-d"
+				}
+			}, (err: any, httpResponse: any, body: any) => {
+				if (err)
+					return callback(true);
+				try {
+					if (typeof body == "string")
+						body = JSON.parse(body);
+				}
+				catch (e) {
+					return callback(true);
+				}
+				var latest = new Date(body.commit.author.date);
+				var parsed = /Built: \w+\s+(\w+)\s+(\d)+\s+(\d+:\d+:\d+)\s+(\d+)/.exec(output);
+				if (!parsed)
+					return callback(false);
+				var month = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"].indexOf(parsed[1].toLowerCase());
+				if (month < 0)
+					return callback(false);
+				var date = parseInt(parsed[2]);
+				var parts = parsed[3].split(':');
+				var year = parseInt(parsed[4]);
+				var hour = parseInt(parts[0]);
+				var minute = parseInt(parts[1]);
+				var second = parseInt(parts[2]);
+				if (isNaN(year) || isNaN(date) || isNaN(hour) || isNaN(minute) || isNaN(second))
+					return callback(false);
+				var current = new Date(year, month, date, hour, minute, second);
+				callback(current.getTime() >= latest.getTime());
+			});
+		}
+		else
+			callback(false);
+	});
+}
+
 export function compileServeD(env: any, done: Function) {
 	var outputFolder = determineOutputFolder();
 	mkdirp.sync(outputFolder);
