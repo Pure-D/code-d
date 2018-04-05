@@ -11,7 +11,7 @@ var async = require("async");
 var rmdir = require("rmdir");
 var mkdirp = require("mkdirp");
 
-const TARGET_SERVED_VERSION: [number, number, number] = [0, 1, 2];
+const TARGET_SERVED_VERSION: [number, number, number] = [0, 1, 3];
 
 var extensionContext: vscode.ExtensionContext;
 

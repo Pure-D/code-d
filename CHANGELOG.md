@@ -1,3 +1,7 @@
+# 0.17.1
+
+DCD Installation fixes, especially on windows.
+
 # 0.17.0
 
 The switch to serve-d / Microsoft Language Server Protocol!
