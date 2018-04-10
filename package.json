@@ -11,7 +11,7 @@
 	"icon": "images/dlogo-square.png",
 	"license": "MIT",
 	"engines": {
-		"vscode": "^1.17.0"
+		"vscode": "^1.18.0"
 	},
 	"categories": [
 		"Languages",
