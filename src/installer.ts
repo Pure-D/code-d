@@ -5,7 +5,8 @@ import * as fs from "fs"
 import { req } from "./util"
 import { config } from "./extension"
 import { platform } from "os";
-var unzip = require("unzip");
+var rimraf = require("rimraf");
+var AdmZip = require("adm-zip");
 var progress = require("request-progress");
 var async = require("async");
 var rmdir = require("rmdir");
@@ -95,15 +96,14 @@ export function downloadDub(env: any, done: Function) {
 		}).pipe(fs.createWriteStream(outputPath)).on("finish", () => {
 			installationLog.appendLine("Extracting dub");
 			if (ext == ".zip") {
-				fs.createReadStream(outputPath).pipe(unzip.Extract({ path: outputFolder })).on("finish", () => {
-					config().update("dubPath", finalDestination, true);
-					installationLog.appendLine("Deleting " + outputPath);
-					fs.unlink(outputPath, (err) => {
-						if (err)
-							installationLog.appendLine("Failed to delete " + outputPath);
-					});
-					done(true);
+				new AdmZip(outputPath).extractAllTo(outputFolder);
+				config().update("dubPath", finalDestination, true);
+				installationLog.appendLine("Deleting " + outputPath);
+				fs.unlink(outputPath, (err) => {
+					if (err)
+						installationLog.appendLine("Failed to delete " + outputPath);
 				});
+				done(true);
 			}
 			else if (ext == ".tar.gz") {
 				installationLog.appendLine("> tar -zxvf dub" + ext);
@@ -157,7 +157,7 @@ export function installServeD(env: any, done: Function) {
 		if (!exists)
 			fs.mkdirSync(outputFolder);
 		if (fs.existsSync(finalDestination))
-			fs.unlinkSync(finalDestination);
+			rimraf.sync(finalDestination);
 		async.each(urls, function (url: string, cb: Function) {
 			output.appendLine("Downloading from " + url + " into " + outputFolder);
 			var fileName = path.basename(url, ext);
@@ -168,19 +168,18 @@ export function installServeD(env: any, done: Function) {
 				output.appendLine("Extracting " + fileName);
 				if (ext == ".zip") {
 					try {
-						fs.createReadStream(outputPath).pipe(unzip.Extract({ path: outputFolder })).on("finish", () => {
-							try {
-								output.appendLine("Deleting " + outputPath);
-								fs.unlink(outputPath, (err) => {
-									if (err)
-										output.appendLine("Failed to delete " + outputPath);
-								});
-							}
-							catch (e) {
-								vscode.window.showErrorMessage("Failed to delete temporary file: " + outputPath);
-							}
-							cb();
-						});
+						new AdmZip(outputPath).extractAllTo(outputFolder);
+						try {
+							output.appendLine("Deleting " + outputPath);
+							fs.unlink(outputPath, (err) => {
+								if (err)
+									output.appendLine("Failed to delete " + outputPath);
+							});
+						}
+						catch (e) {
+							vscode.window.showErrorMessage("Failed to delete temporary file: " + outputPath);
+						}
+						cb();
 					}
 					catch (e) {
 						return cb(e);
