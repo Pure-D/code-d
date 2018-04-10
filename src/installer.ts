@@ -253,7 +253,7 @@ export function checkBetaServeD(callback: Function) {
 					return callback(true);
 				}
 				var latest = new Date(body.commit.author.date);
-				var parsed = /Built: \w+\s+(\w+)\s+(\d)+\s+(\d+:\d+:\d+)\s+(\d+)/.exec(output);
+				var parsed = /Built: \w+\s+(\w+)\s+(\d+)\s+(\d+:\d+:\d+)\s+(\d+)/.exec(output);
 				if (!parsed)
 					return callback(false);
 				var month = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"].indexOf(parsed[1].toLowerCase());
