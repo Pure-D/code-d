@@ -1,3 +1,9 @@
+# 0.17.2
+
+Fixed a bug where `d.betaStream` would have recloned serve-d on every startup if the latest commit has been made on a 10th of any month or later or if the last digit of the current compiled serve-d date was less than the commit date.
+
+Upgrade language client to 4.1.3
+
 # 0.17.1
 
 DCD Installation fixes, especially on windows.
