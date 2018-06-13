@@ -11,10 +11,10 @@
 	"icon": "images/dlogo-square.png",
 	"license": "MIT",
 	"engines": {
-		"vscode": "^1.18.0"
+		"vscode": "^1.20.0"
 	},
 	"categories": [
-		"Languages",
+		"Programming Languages",
 		"Snippets",
 		"Linters",
 		"Formatters",
@@ -303,6 +303,11 @@
 					"type": "boolean",
 					"default": false,
 					"description": "Always get latest serve-d commit when starting vscode and an update is available."
+				},
+				"d.scanAllFolders": {
+					"type": "boolean",
+					"default": true,
+					"description": "Initialize an instance for every dub.sdl and dub.json file in all folders."
 				},
 				"dfmt.alignSwitchStatements": {
 					"type": "boolean",
@@ -594,14 +599,14 @@
 		"ncp": "^2.0.0",
 		"rmdir": "^1.2.0",
 		"line-by-line": "^0.1.6",
-		"vscode-languageclient": "^4.1.3",
+		"vscode-languageclient": "^4.2.1",
 		"mkdirp": "^0.5.1",
 		"opn": "^5.3.0",
 		"rimraf": "^2.6.2"
 	},
 	"devDependencies": {
 		"typescript": "^2.8.1",
-		"vscode": "^1.1.10",
+		"vscode": "^1.1.18",
 		"mocha": "^5.0.5",
 		"@types/node": "^9.6.2",
 		"@types/mocha": "^5.0.0"
