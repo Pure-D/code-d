@@ -1,6 +1,6 @@
 # 0.18.1
 
-Fixed fsworkspace provider and `d.extraRoots` not working.
+Fixed fsworkspace provider and `d.extraRoots` not working. (serve-d update to 0.2.1)
 
 # 0.18.0
 
