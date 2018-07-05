@@ -88,7 +88,7 @@ function startClient(context: vscode.ExtensionContext) {
 			//command: "gdbserver",
 			//args: ["--once", ":2345", servedPath, "--require", "D", "--lang", vscode.env.language],
 			command: servedPath,
-			args: ["--require", "D", "--lang", vscode.env.language],
+			args: ["--require", "D", "--lang", vscode.env.language, "--wait"],
 			options: {
 				cwd: context.extensionPath
 			}
