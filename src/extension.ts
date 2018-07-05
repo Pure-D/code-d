@@ -132,6 +132,11 @@ function startClient(context: vscode.ExtensionContext) {
 		client.onNotification("coded/updateDubTree", function () {
 			served.refreshDependencies();
 		});
+
+		client.onNotification("coded/changedSelectedWorkspace", function () {
+			served.emit("workspace-change");
+			served.refreshDependencies();
+		});
 	});
 
 	registerClientCommands(context, client, served);

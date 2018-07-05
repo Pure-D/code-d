@@ -13,24 +13,43 @@ export function setup(served: ServeD): vscode.Disposable {
 	return vscode.Disposable.from(...subscriptions);
 }
 
-class ConfigSelector implements vscode.Disposable {
+class GenericSelector implements vscode.Disposable {
 	subscriptions: vscode.Disposable[] = [];
-	private item?: vscode.StatusBarItem;
+	item?: vscode.StatusBarItem;
+	served: ServeD;
+	x: number;
+	command: string;
+	tooltip: string;
+	event: string;
+	method: string;
 
-	constructor(private served: ServeD) {
+	constructor(served: ServeD, x: number, command: string, tooltip: string, event: string, method: string) {
+		this.served = served;
+		this.x = x;
+		this.command = command;
+		this.tooltip = tooltip;
+		this.event = event;
+		this.method = method;
 		served.client.onReady().then(this.create.bind(this));
 	}
 
-	private create() {
-		this.item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 0.92145);
-		this.item.command = "code-d.switchConfiguration";
-		this.item.tooltip = "Switch Configuration";
+	protected create() {
+		this.item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, this.x);
+		this.item.command = this.command;
+		this.item.tooltip = this.tooltip;
 		this.item.show();
-		this.served.on("config-change", config => {
+		this.served.on(this.event, config => {
 			if (this.item)
 				this.item.text = config;
 		});
-		this.served.client.sendRequest<string>("served/getConfig").then(config => {
+		this.served.on("workspace-change", () => {
+			this.update();
+		});
+		this.update();
+	}
+
+	update() {
+		this.served.client.sendRequest<string>(this.method).then(config => {
 			if (this.item)
 				this.item.text = config;
 		});
@@ -41,86 +60,25 @@ class ConfigSelector implements vscode.Disposable {
 	}
 }
 
-class ArchSelector implements vscode.Disposable {
-	subscriptions: vscode.Disposable[] = [];
-	private item?: vscode.StatusBarItem;
-
-	constructor(private served: ServeD) {
-		served.client.onReady().then(this.create.bind(this));
+class ConfigSelector extends GenericSelector {
+	constructor(served: ServeD) {
+		super(served, 0.92145, "code-d.switchConfiguration", "Switch Configuration", "config-change", "served/getConfig");
 	}
-
-	private create() {
-		this.item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 0.92144);
-		this.item.command = "code-d.switchArchType";
-		this.item.tooltip = "Switch Arch Type";
-		this.item.show();
-		this.served.on("arch-type-change", arch => {
-			if (this.item)
-				this.item.text = arch;
-		});
-		this.served.client.sendRequest<string>("served/getArchType").then(arch => {
-			if (this.item)
-				this.item.text = arch;
-		});
-	}
-
-	dispose() {
-		vscode.Disposable.from(...this.subscriptions).dispose();
+}
+class ArchSelector extends GenericSelector {
+	constructor(served: ServeD) {
+		super(served, 0.92144, "code-d.switchArchType", "Switch Arch Type", "arch-type-change", "served/getArchType");
 	}
 }
 
-class BuildSelector implements vscode.Disposable {
-	subscriptions: vscode.Disposable[] = [];
-	private item?: vscode.StatusBarItem;
-
-	constructor(private served: ServeD) {
-		served.client.onReady().then(this.create.bind(this));
-	}
-
-	private create() {
-		this.item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 0.92143);
-		this.item.command = "code-d.switchBuildType";
-		this.item.tooltip = "Switch Build Type";
-		this.item.show();
-		this.served.on("build-type-change", type => {
-			if (this.item)
-				this.item.text = type;
-		});
-		this.served.client.sendRequest<string>("served/getBuildType").then(type => {
-			if (this.item)
-				this.item.text = type;
-		});
-	}
-
-	dispose() {
-		vscode.Disposable.from(...this.subscriptions).dispose();
+class BuildSelector extends GenericSelector {
+	constructor(served: ServeD) {
+		super(served, 0.92143, "code-d.switchBuildType", "Switch Build Type", "build-type-change", "served/getBuildType");
 	}
 }
 
-class CompilerSelector implements vscode.Disposable {
-	subscriptions: vscode.Disposable[] = [];
-	private item?: vscode.StatusBarItem;
-
-	constructor(private served: ServeD) {
-		served.client.onReady().then(this.create.bind(this));
-	}
-
-	private create() {
-		this.item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 0.92142);
-		this.item.command = "code-d.switchCompiler";
-		this.item.tooltip = "Switch Compiler";
-		this.item.show();
-		this.served.on("compiler-change", compiler => {
-			if (this.item)
-				this.item.text = compiler;
-		});
-		this.served.client.sendRequest<string>("served/getCompiler").then(compiler => {
-			if (this.item)
-				this.item.text = compiler;
-		});
-	}
-
-	dispose() {
-		vscode.Disposable.from(...this.subscriptions).dispose();
+class CompilerSelector extends GenericSelector {
+	constructor(served: ServeD) {
+		super(served, 0.92142, "code-d.switchCompiler", "Switch Compiler", "compiler-change", "served/getCompiler");
 	}
 }
