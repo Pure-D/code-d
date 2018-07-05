@@ -1,3 +1,7 @@
+# 0.18.1
+
+Fixed fsworkspace provider and `d.extraRoots` not working.
+
 # 0.18.0
 
 ## Update to workspace-d v3!
