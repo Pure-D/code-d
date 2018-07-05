@@ -11,7 +11,7 @@
 	"icon": "images/dlogo-square.png",
 	"license": "MIT",
 	"engines": {
-		"vscode": "^1.20.0"
+		"vscode": "^1.22.0"
 	},
 	"categories": [
 		"Programming Languages",
@@ -140,10 +140,12 @@
 			"properties": {
 				"d.servedPath": {
 					"type": "string",
+					"scope": "window",
 					"default": "serve-d",
 					"description": "Path of the serve-d executable. Path can be omitted if in $PATH or installed using code-d"
 				},
 				"d.stdlibPath": {
+					"scope": "resource",
 					"oneOf": [
 						{
 							"type": "array",
@@ -192,76 +194,91 @@
 				},
 				"d.dcdClientPath": {
 					"type": "string",
+					"scope": "resource",
 					"default": "dcd-client",
 					"description": "Path of the dcd-client executable. Path can be omitted if in $PATH or installed using code-d"
 				},
 				"d.dcdServerPath": {
 					"type": "string",
+					"scope": "resource",
 					"default": "dcd-server",
 					"description": "Path of the dcd-server executable. Path can be omitted if in $PATH or installed using code-d"
 				},
 				"d.dscannerPath": {
 					"type": "string",
+					"scope": "resource",
 					"default": "dscanner",
 					"description": "Path of the dscanner executable. Path can be omitted if in $PATH or installed using code-d"
 				},
 				"d.dfmtPath": {
 					"type": "string",
+					"scope": "resource",
 					"default": "dfmt",
 					"description": "Path of the dfmt executable. Path can be omitted if in $PATH or installed using code-d"
 				},
 				"d.dubPath": {
 					"type": "string",
+					"scope": "resource",
 					"default": "dub",
 					"description": "Path of the dub executable. Path can be omitted if in $PATH or installed using code-d"
 				},
 				"d.dmdPath": {
 					"type": "string",
+					"scope": "resource",
 					"default": "dmd",
 					"description": "Path of the dmd executable. Path can be omitted if in $PATH"
 				},
 				"d.enableLinting": {
 					"type": "boolean",
+					"scope": "resource",
 					"default": true,
 					"description": "If code-d should watch for file saves and report static analysis. Might interfere with other lint plugins or settings."
 				},
 				"d.enableSDLLinting": {
 					"type": "boolean",
+					"scope": "resource",
 					"default": true,
 					"description": "If code-d should report errors in your dub.sdl file."
 				},
 				"d.enableDubLinting": {
 					"type": "boolean",
+					"scope": "resource",
 					"default": true,
 					"description": "If code-d should build on save to check for compile errors."
 				},
 				"d.enableStaticLinting": {
 					"type": "boolean",
+					"scope": "resource",
 					"default": true,
 					"description": "If code-d should use DScanner to statically lint files."
 				},
 				"d.enableAutoComplete": {
 					"type": "boolean",
+					"scope": "resource",
 					"default": true,
 					"description": "Start dcd-server at startup and complete using dcd-client."
 				},
 				"d.enableFormatting": {
 					"type": "boolean",
+					"scope": "resource",
 					"default": true,
 					"description": "If the default formatting keybind should call dfmt on D files."
 				},
 				"d.enableDMDImportTiming": {
 					"type": "boolean",
+					"scope": "resource",
 					"default": true,
 					"description": "Add code lenses on import statements executing a dmd instance trying to compile that import statement to get the impact on compilation time by this import."
 				},
 				"d.neverUseDub": {
 					"type": "boolean",
+					"scope": "resource",
 					"default": false,
 					"description": "If this is true then a custom workspace where you manually provide the import paths will always be used instead of dub. See d.projectImportPaths for setting import paths then. This is discouraged as it will remove most features like packages, building & compiler linting. If this is a standalone project with no external dependencies with a custom build system then this should be true."
 				},
 				"d.projectImportPaths": {
 					"type": "array",
+					"scope": "resource",
 					"items": {
 						"type": "string"
 					},
@@ -270,52 +287,81 @@
 				},
 				"d.dubConfiguration": {
 					"type": "string",
+					"scope": "resource",
 					"description": "Sets the default configuration to use when starting up"
 				},
 				"d.dubArchType": {
 					"type": "string",
+					"scope": "resource",
 					"description": "Sets the default arch type to use when starting up"
 				},
 				"d.dubBuildType": {
 					"type": "string",
+					"scope": "resource",
 					"description": "Sets the default build type to use when starting up"
 				},
 				"d.dubCompiler": {
 					"type": "string",
+					"scope": "resource",
 					"description": "Sets the default compiler to use when starting up"
 				},
 				"d.overrideDfmtEditorconfig": {
 					"type": "boolean",
+					"scope": "resource",
 					"default": true,
-					"description": "Uses dfmt config options & vscode editor config instead of .editorconfig because dfmt seems to be quite buggy with them."
+					"description": "Uses dfmt config options & vscode editor config instead of .editorconfig because of inconsistencies with the vscode editor settings."
 				},
 				"d.aggressiveUpdate": {
 					"type": "boolean",
+					"scope": "application",
 					"default": true,
 					"description": "Update/install outdated & missing tools without confirmation"
 				},
 				"d.argumentSnippets": {
 					"type": "boolean",
+					"scope": "resource",
 					"default": false,
 					"description": "When autocompleting functions automatically insert the signature as snippet which can be navigated using tab."
 				},
 				"d.betaStream": {
 					"type": "boolean",
+					"scope": "application",
 					"default": false,
 					"description": "Always get latest serve-d commit when starting vscode and an update is available."
 				},
 				"d.scanAllFolders": {
 					"type": "boolean",
+					"scope": "resource",
 					"default": true,
 					"description": "Initialize an instance for every dub.sdl and dub.json file in all folders."
 				},
+				"d.disabledRootGlobs": {
+					"type": "array",
+					"scope": "resource",
+					"items": {
+						"type": "string"
+					},
+					"default": [],
+					"description": "Array of globs for disabling/preventing project instances by the d.scanAllFolders setting."
+				},
+				"d.extraRoots": {
+					"type": "array",
+					"scope": "resource",
+					"items": {
+						"type": "string"
+					},
+					"default": [],
+					"description": "Array of workspace-relative (or absolute) folders to force start a project instance in."
+				},
 				"dfmt.alignSwitchStatements": {
 					"type": "boolean",
+					"scope": "resource",
 					"default": true,
 					"description": "Not yet implemented (on dfmt side)"
 				},
 				"dfmt.braceStyle": {
 					"type": "string",
+					"scope": "resource",
 					"enum": [
 						"allman",
 						"otbs",
@@ -326,31 +372,37 @@
 				},
 				"dfmt.outdentAttributes": {
 					"type": "boolean",
+					"scope": "resource",
 					"default": true,
 					"description": "Not yet implemented (on dfmt side)"
 				},
 				"dfmt.spaceAfterCast": {
 					"type": "boolean",
+					"scope": "resource",
 					"default": true,
 					"description": "Insert space after the closing paren of a cast expression."
 				},
 				"dfmt.splitOperatorAtLineEnd": {
 					"type": "boolean",
+					"scope": "resource",
 					"default": false,
 					"description": "Place operators on the end of the previous line when splitting lines."
 				},
 				"dfmt.selectiveImportSpace": {
 					"type": "boolean",
+					"scope": "resource",
 					"default": true,
 					"description": "Insert space after the module name and before the : for selective imports."
 				},
 				"dfmt.compactLabeledStatements": {
 					"type": "boolean",
+					"scope": "resource",
 					"default": true,
 					"description": "Place labels on the same line as the labeled switch, for, foreach, or while statement."
 				},
 				"dfmt.templateConstraintStyle": {
 					"type": "string",
+					"scope": "resource",
 					"enum": [
 						"conditional_newline_indent",
 						"conditional_newline",
