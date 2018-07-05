@@ -1,3 +1,22 @@
+# 0.18.0
+
+## Update to workspace-d v3!
+
+This release finally includes multi workspace support. You can manually add instances using the new `d.extraRoots` setting and prevent automatic instance detection partially using `d.disabledRootGlobs` or disable it fully using `"d.scanAllFolders": false` to get back to the old behaviour (but still with working multi-root workspaces).
+
+Some bugs may occur and some old ones may have been fixed during this transition. Please report issues to the [code-d github repository](https://github.com/Pure-D/code-d/issues).
+
+Project dependent settings such as the status bar buttons or the dub dependencies are linked to the project containing the file you are currently editing.
+
+Minor things:
+* Dependency upgrades (dub to 1.10.0, dfmt to 0.8.2, dscanner to 0.5.7)
+* Settings are now properly categorized for multi-workspace projects and some settings can be set in all cases and some only in user settings.
+* DCD is now fetched from the official github releases (0.9.9)
+* dub.json completion now properly inserts quotes
+* some dub startup errors were fixed
+* import timing takes into account possible second-run optimizations.
+* some requests in code-d were previously decoded wrong, causing silent ignoring of some configuration and parameters. This has been fixed with a single character.
+
 # 0.17.2
 
 Fixed a bug where `d.betaStream` would have recloned serve-d on every startup if the latest commit has been made on a 10th of any month or later or if the last digit of the current compiled serve-d date was less than the commit date.

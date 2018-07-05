@@ -75,7 +75,7 @@ export class ServeD extends EventEmitter implements vscode.TreeDataProvider<DubD
 }
 
 function startClient(context: vscode.ExtensionContext) {
-	let servedPath = config().get("servedPath", "serve-d");
+	let servedPath = config(null).get("servedPath", "serve-d");
 	let executable: ServerOptions = {
 		run: {
 			command: servedPath,
@@ -117,7 +117,7 @@ function startClient(context: vscode.ExtensionContext) {
 	client.onReady().then(() => {
 		var updateSetting = new NotificationType<{ section: string, value: any, global: boolean }, void>("coded/updateSetting");
 		client.onNotification(updateSetting, (arg: { section: string, value: any, global: boolean }) => {
-			config().update(arg.section, arg.value, arg.global);
+			config(null).update(arg.section, arg.value, arg.global);
 		});
 
 		var logInstall = new NotificationType<string, void>("coded/logInstall");
@@ -233,8 +233,8 @@ export function activate(context: vscode.ExtensionContext) {
 	}
 }
 
-export function config(): vscode.WorkspaceConfiguration {
-	return vscode.workspace.getConfiguration("d");
+export function config(resource: vscode.Uri | null): vscode.WorkspaceConfiguration {
+	return vscode.workspace.getConfiguration("d", resource);
 }
 
 function preStartup(context: vscode.ExtensionContext) {
@@ -263,16 +263,16 @@ function preStartup(context: vscode.ExtensionContext) {
 		function checkProgram(configName: string, defaultPath: string, name: string, installFunc: Function, btn: string, done: Function | undefined = undefined) {
 			var version = "";
 			var errored = false;
-			ChildProcess.spawn(config().get(configName, defaultPath), ["--version"], { cwd: vscode.workspace.rootPath, env: env }).on("error", function (err) {
+			ChildProcess.spawn(config(null).get(configName, defaultPath), ["--version"], { cwd: vscode.workspace.rootPath, env: env }).on("error", function (err) {
 				if (err && (<any>err).code == "ENOENT") {
 					errored = true;
-					if (config().get("aggressiveUpdate", true)) {
+					if (config(null).get("aggressiveUpdate", true)) {
 						installFunc(env, done);
 					}
 					else {
 						var isDirectory = false;
 						try {
-							isDirectory = fs.statSync(config().get(configName, "")).isDirectory();
+							isDirectory = fs.statSync(config(null).get(configName, "")).isDirectory();
 						} catch (e) { }
 						if (isDirectory) {
 							vscode.window.showErrorMessage(name + " points to a directory", "Open User Settings").then(s => {
@@ -297,7 +297,7 @@ function preStartup(context: vscode.ExtensionContext) {
 			});
 		}
 		checkProgram("dubPath", "dub", "dub", downloadDub, "Download", () => {
-			var isBeta = config().get("betaStream", false);
+			var isBeta = config(null).get("betaStream", false);
 			if (isBeta) {
 				checkBetaServeD((newest: boolean) => {
 					if (newest)

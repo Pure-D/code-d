@@ -15,7 +15,7 @@ function pad3(n: number) {
 
 export class DubJSONContribution implements IJSONContribution {
 	public getDocumentSelector(): vscode.DocumentSelector {
-		return [{ language: "json", pattern: "**/dub.json" }];
+		return [{ language: "json", pattern: "**/dub.json", scheme: "file" }];
 	}
 
 	public getInfoContribution(fileName: string, location: Location): Thenable<vscode.MarkedString[]> {
@@ -50,7 +50,7 @@ export class DubJSONContribution implements IJSONContribution {
 							var item = new vscode.CompletionItem(element.name);
 							var insertText = new vscode.SnippetString().appendText(JSON.stringify(element.name));
 							if (addValue) {
-								insertText.appendText(': "').appendPlaceholder(element.version);
+								insertText.appendText(': "').appendPlaceholder(element.version).appendText('"');
 								if (!isLast)
 									insertText.appendText(",");
 							}
@@ -74,7 +74,7 @@ export class DubJSONContribution implements IJSONContribution {
 								var item = new vscode.CompletionItem(completionName);
 								var insertText = new vscode.SnippetString().appendText(JSON.stringify(completionName));
 								if (addValue) {
-									insertText.appendText(': "').appendPlaceholder(info.version || "");
+									insertText.appendText(': "').appendPlaceholder(info.version || "").appendText('"');
 									if (!isLast)
 										insertText.appendText(",");
 								}
@@ -97,7 +97,7 @@ export class DubJSONContribution implements IJSONContribution {
 						item.kind = vscode.CompletionItemKind.Property;
 						var insertText = new vscode.SnippetString().appendText(JSON.stringify(element));
 						if (addValue) {
-							insertText.appendText(': "').appendPlaceholder("");
+							insertText.appendText(': "').appendPlaceholder("").appendText('"');
 							if (!isLast)
 								insertText.appendText(",");
 						}

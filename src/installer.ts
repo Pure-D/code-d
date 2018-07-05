@@ -12,7 +12,7 @@ var async = require("async");
 var rmdir = require("rmdir");
 var mkdirp = require("mkdirp");
 
-const TARGET_SERVED_VERSION: [number, number, number] = [0, 1, 3];
+const TARGET_SERVED_VERSION: [number, number, number] = [0, 2, 0];
 
 var extensionContext: vscode.ExtensionContext;
 
@@ -55,11 +55,11 @@ export function downloadDub(env: any, done: Function) {
 	var url = "";
 	var ext = "";
 	if (process.platform == "linux" && process.arch == "x64") {
-		url = "https://code.dlang.org/files/dub-1.8.0-linux-x86_64.tar.gz";
+		url = "https://code.dlang.org/files/dub-1.9.0-linux-x86_64.tar.gz";
 		ext = ".tar.gz";
 	}
 	else if (process.platform == "linux" && process.arch == "ia32") {
-		url = "https://code.dlang.org/files/dub-1.8.0-linux-x86.tar.gz";
+		url = "https://code.dlang.org/files/dub-1.9.0-linux-x86.tar.gz";
 		ext = ".tar.gz";
 	}
 	else if (process.platform == "linux" && process.arch == "arm") {
@@ -67,11 +67,11 @@ export function downloadDub(env: any, done: Function) {
 		ext = ".tar.gz";
 	}
 	else if (process.platform == "win32") {
-		url = "https://code.dlang.org/files/dub-1.8.0-windows-x86.zip";
+		url = "https://code.dlang.org/files/dub-1.9.0-windows-x86.zip";
 		ext = ".zip";
 	}
 	else if (process.platform == "darwin" && process.arch == "x64") {
-		url = "https://code.dlang.org/files/dub-1.8.0-osx-x86_64.tar.gz";
+		url = "https://code.dlang.org/files/dub-1.9.0-osx-x86_64.tar.gz";
 		ext = ".tar.gz";
 	}
 	else
@@ -97,7 +97,7 @@ export function downloadDub(env: any, done: Function) {
 			installationLog.appendLine("Extracting dub");
 			if (ext == ".zip") {
 				new AdmZip(outputPath).extractAllTo(outputFolder);
-				config().update("dubPath", finalDestination, true);
+				config(null).update("dubPath", finalDestination, true);
 				installationLog.appendLine("Deleting " + outputPath);
 				fs.unlink(outputPath, (err) => {
 					if (err)
@@ -112,7 +112,7 @@ export function downloadDub(env: any, done: Function) {
 				}).on("exit", function (code) {
 					if (code != 0)
 						return vscode.window.showErrorMessage("Failed to extract .tar.gz release");
-					config().update("dubPath", finalDestination, true);
+					config(null).update("dubPath", finalDestination, true);
 					installationLog.appendLine("Deleting " + outputPath);
 					fs.unlink(outputPath, (err) => {
 						if (err)
@@ -128,18 +128,21 @@ export function downloadDub(env: any, done: Function) {
 
 export function installServeD(env: any, done: Function) {
 	var urls: string[];
-	var ext: string;
 	// TODO: platform checks here
 	if (process.platform == "linux" && process.arch == "x64") {
-		urls = ["https://github.com/Pure-D/serve-d/releases/download/v" + TARGET_SERVED_VERSION.join(".") + "/serve-d_" + TARGET_SERVED_VERSION.join(".") + "-linux-x86_64.tar.xz"];
-		ext = ".tar.xz";
+		urls = [
+			"https://github.com/Pure-D/serve-d/releases/download/v" + TARGET_SERVED_VERSION.join(".") + "/serve-d_" + TARGET_SERVED_VERSION.join(".") + "-linux-x86_64.tar.xz",
+			"https://github.com/dlang-community/DCD/releases/download/v0.9.9/dcd-v0.9.9-linux-x86_64.tar.gz"
+		];
 	}
 	else if (process.platform == "win32") {
 		urls = [
-			"https://github.com/Pure-D/serve-d/releases/download/v" + TARGET_SERVED_VERSION.join(".") + "/serve-d_" + TARGET_SERVED_VERSION.join(".") + "-windows.zip",
-			"https://github.com/Pure-D/serve-d/releases/download/v0.1.2/dcd_0.9.2-windows.zip"
+			"https://github.com/Pure-D/serve-d/releases/download/v" + TARGET_SERVED_VERSION.join(".") + "/serve-d_" + TARGET_SERVED_VERSION.join(".") + "-windows.zip"
 		];
-		ext = ".zip";
+		if (process.arch == "x64")
+			urls.push("https://github.com/dlang-community/DCD/releases/download/v0.9.9/dcd-v0.9.9-windows-x86_64.zip");
+		else
+			urls.push("https://github.com/dlang-community/DCD/releases/download/v0.9.9/dcd-v0.9.9-windows-x86.zip");
 	}
 	else
 		return vscode.window.showErrorMessage("No precompiled serve-d binary for this platform/architecture", "Compile from source").then((r?: string) => {
@@ -160,6 +163,7 @@ export function installServeD(env: any, done: Function) {
 			rimraf.sync(finalDestination);
 		async.each(urls, function (url: string, cb: Function) {
 			output.appendLine("Downloading from " + url + " into " + outputFolder);
+			var ext = url.endsWith(".tar.xz") ? ".tar.xz" : url.endsWith(".tar.gz") ? ".tar.gz" : path.extname(url);
 			var fileName = path.basename(url, ext);
 			var outputPath = path.join(outputFolder, fileName);
 			progress(req()(url)).on("progress", (state: any) => {
@@ -185,9 +189,10 @@ export function installServeD(env: any, done: Function) {
 						return cb(e);
 					}
 				}
-				else if (ext == ".tar.xz") {
-					output.appendLine("> tar xvfJ " + fileName);
-					ChildProcess.spawn("tar", ["xvfJ", fileName], {
+				else if (ext == ".tar.xz" || ext == ".tar.gz") {
+					var mod = ext == ".tar.xz" ? "J" : "z";
+					output.appendLine("> tar xvf" + mod + " " + fileName);
+					ChildProcess.spawn("tar", ["xvf" + mod, fileName], {
 						cwd: outputFolder
 					}).on("exit", function (code) {
 						if (code != 0) {
@@ -215,7 +220,7 @@ export function installServeD(env: any, done: Function) {
 				});
 			}
 			else {
-				config().update("servedPath", finalDestination, true);
+				config(null).update("servedPath", finalDestination, true);
 				done(true);
 			}
 		});
@@ -223,7 +228,7 @@ export function installServeD(env: any, done: Function) {
 }
 
 export function checkBetaServeD(callback: Function) {
-	var proc = ChildProcess.spawn(config().get("servedPath", "serve-d"), ["--version"]);
+	var proc = ChildProcess.spawn(config(null).get("servedPath", "serve-d"), ["--version"]);
 	proc.on("error", () => {
 		callback(false);
 	});
@@ -287,12 +292,12 @@ export function compileServeD(env: any, done: Function) {
 			buildArgs.push("--arch=x86_mscoff");
 		}
 		compileDependency(outputFolder, "serve-d", "https://github.com/Pure-D/serve-d.git", [
-			[config().get("dubPath", "dub"), ["upgrade"]],
-			[config().get("dubPath", "dub"), buildArgs]
+			[config(null).get("dubPath", "dub"), ["upgrade"]],
+			[config(null).get("dubPath", "dub"), buildArgs]
 		], function () {
 			var finalDestination = path.join(outputFolder, "serve-d", "serve-d" + (process.platform == "win32" ? ".exe" : ""));
 
-			config().update("servedPath", finalDestination, true);
+			config(null).update("servedPath", finalDestination, true);
 			done(true);
 		}, env);
 	});

@@ -129,7 +129,7 @@ export class CompileButtons implements vscode.Disposable {
 				let args = [cmd, "--config=" + values[0], "--arch=" + values[1], "--build=" + values[2], "--compiler=" + values[3]];
 				if (this.output)
 					this.output.appendLine("> dub " + args.join(" "));
-				this.child = ChildProcess.spawn(config().get("dubPath", "dub"), args, { cwd: vscode.workspace.rootPath, detached: true });
+				this.child = ChildProcess.spawn(config(null).get("dubPath", "dub"), args, { cwd: vscode.workspace.rootPath, detached: true });
 				this.child.stderr.on("data", this.handleData.bind(this));
 				this.child.stdout.on("data", this.handleData.bind(this));
 				this.child.once("close", (code) => {
@@ -163,7 +163,7 @@ export class CompileButtons implements vscode.Disposable {
 			this.debugButton.show();
 		if (this.isDebug && code == 0) {
 			this.isDebug = false;
-			var proc = ChildProcess.spawn(config().get("dubPath", "dub"),
+			var proc = ChildProcess.spawn(config(null).get("dubPath", "dub"),
 				[
 					"describe",
 					"--config=" + this.debugValuesCache[0],
