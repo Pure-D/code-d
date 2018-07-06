@@ -8,7 +8,6 @@ import * as ChildProcess from "child_process"
 
 import * as mode from "./dmode";
 import * as statusbar from "./statusbar";
-import { CompileButtons } from "./compile-buttons";
 import { addSDLProviders } from "./sdl/sdl-contributions";
 import { addJSONProviders } from "./json-contributions";
 import { GCProfiler } from "./gcprofiler";
@@ -112,7 +111,6 @@ function startClient(context: vscode.ExtensionContext) {
 	});
 
 	context.subscriptions.push(statusbar.setup(served));
-	context.subscriptions.push(new CompileButtons(served));
 
 	client.onReady().then(() => {
 		var updateSetting = new NotificationType<{ section: string, value: any, global: boolean }, void>("coded/updateSetting");
@@ -189,7 +187,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	registerCommands(context);
 
-	if (vscode.workspace.rootPath) {
+	if (vscode.workspace.workspaceFolders) {
 		{
 			let gcprofiler = new GCProfiler();
 			vscode.languages.registerCodeLensProvider(mode.D_MODE, gcprofiler);
@@ -201,7 +199,7 @@ export function activate(context: vscode.ExtensionContext) {
 			watcher.onDidDelete(gcprofiler.clearProfileCache, gcprofiler, context.subscriptions);
 			context.subscriptions.push(watcher);
 
-			let profileGCPath = path.join(vscode.workspace.rootPath, "profilegc.log");
+			let profileGCPath = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, "profilegc.log");
 			if (fs.existsSync(profileGCPath))
 				gcprofiler.updateProfileCache(vscode.Uri.file(profileGCPath));
 

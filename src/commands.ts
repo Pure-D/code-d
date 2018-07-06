@@ -8,11 +8,14 @@ import { showProjectCreator, performTemplateCopy, openFolderWithExtension } from
 import { uploadCode } from "./util";
 import { listPackageOptions, getLatestPackageInfo } from "./dub-api"
 import { DubDependency } from "./dub-view";
+import { DubTasksProvider } from "./dub-tasks";
 
 var gClient: LanguageClient;
 
 export function registerClientCommands(context: vscode.ExtensionContext, client: LanguageClient, served: ServeD) {
 	var subscriptions = context.subscriptions;
+
+	subscriptions.push(vscode.tasks.registerTaskProvider("dub", new DubTasksProvider(client)));
 
 	gClient = client;
 

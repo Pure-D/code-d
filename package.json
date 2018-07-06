@@ -11,7 +11,7 @@
 	"icon": "images/dlogo-square.png",
 	"license": "MIT",
 	"engines": {
-		"vscode": "^1.22.0"
+		"vscode": "^1.24.0"
 	},
 	"categories": [
 		"Programming Languages",
@@ -634,6 +634,67 @@
 			{
 				"fileMatch": "dub.json",
 				"url": "./json-validation/dub.schema.json"
+			}
+		],
+		"taskDefinitions": [
+			{
+				"type": "dub",
+				"properties": {
+					"run": {
+						"type": "boolean",
+						"default": false,
+						"description": "Whether to run the executable when running the task or not."
+					},
+					"test": {
+						"type": "boolean",
+						"default": false,
+						"description": "Build and run a test build."
+					},
+					"root": {
+						"type": "string",
+						"description": "Path to an alternative root to not compile the workspace relative to cwd."
+					},
+					"cwd": {
+						"type": "string",
+						"description": "Working directory where dub should be run relative to the workspace."
+					},
+					"overrides": {
+						"type": "array",
+						"items": {
+							"type": "string",
+							"pattern": "^[-a-zA-Z0-9_.]+/.+$"
+						},
+						"description": "--override-config values in format <dependency>/<config> to override the configuration for a certain dependency. For example \"vibe-d:tls/openssl-1.1\""
+					},
+					"force": {
+						"type": "boolean",
+						"default": false,
+						"description": "Set to true to add the --force flag to dub."
+					},
+					"compiler": {
+						"type": "string",
+						"description": "Common name or path to compiler executable"
+					},
+					"archType": {
+						"type": "string",
+						"description": "Arch type to compile with"
+					},
+					"buildType": {
+						"type": "string",
+						"description": "Build type to compile with"
+					},
+					"configuration": {
+						"type": "string",
+						"description": "Configuration to run"
+					},
+					"args": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"description": "Extra arguments to pass to dub"
+					}
+				}
 			}
 		]
 	},
