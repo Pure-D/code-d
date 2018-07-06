@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
 import { LanguageClient, LanguageClientOptions, ServerOptions, DocumentFilter, NotificationType } from "vscode-languageclient";
-import { setContext, downloadDub, installServeD, compileServeD, getInstallOutput, checkBetaServeD } from "./installer"
+import { setContext, downloadDub, installServeD, compileServeD, getInstallOutput, checkBetaServeD, TARGET_SERVED_VERSION } from "./installer"
 import { EventEmitter } from "events"
 import * as ChildProcess from "child_process"
 
@@ -258,14 +258,21 @@ function preStartup(context: vscode.ExtensionContext) {
 		});
 	}
 	{
-		function checkProgram(configName: string, defaultPath: string, name: string, installFunc: Function, btn: string, done: Function | undefined = undefined) {
+		function checkProgram(configName: string, defaultPath: string, name: string, installFunc: (env: NodeJS.ProcessEnv, done: (installed: boolean) => void) => any, btn: string, done?: (installed: boolean) => void, outdatedCheck?: (log: string) => boolean) {
 			var version = "";
 			var errored = false;
-			ChildProcess.spawn(config(null).get(configName, defaultPath), ["--version"], { cwd: vscode.workspace.rootPath, env: env }).on("error", function (err) {
+			var proc = ChildProcess.spawn(config(null).get(configName, defaultPath), ["--version"], { cwd: vscode.workspace.rootPath, env: env });
+			proc.stderr.on("data", function (chunk) {
+				version += chunk;
+			});
+			proc.stdout.on("data", function (chunk) {
+				version += chunk;
+			});
+			proc.on("error", function (err) {
 				if (err && (<any>err).code == "ENOENT") {
 					errored = true;
 					if (config(null).get("aggressiveUpdate", true)) {
-						installFunc(env, done);
+						installFunc(env, done || (() => { }));
 					}
 					else {
 						var isDirectory = false;
@@ -282,14 +289,28 @@ function preStartup(context: vscode.ExtensionContext) {
 								if (s == "Open User Settings")
 									vscode.commands.executeCommand("workbench.action.openGlobalSettings");
 								else if (s == btn + " " + name)
-									installFunc(env, done);
+									installFunc(env, done || (() => { }));
 							});
 						}
 					}
 				}
-			}).stdout.on("data", function (chunk) {
-				version += chunk;
-			}).on("end", function () {
+			}).on("exit", function () {
+				if (outdatedCheck && outdatedCheck(version)) {
+					if (config(null).get("aggressiveUpdate", true)) {
+						installFunc(env, done || (() => { }));
+					}
+					else {
+						vscode.window.showErrorMessage(name + " is outdated.", btn + " " + name, "Continue Anyway").then(s => {
+							if (s == "Continue Anyway") {
+								if (done)
+									done(false);
+							}
+							else if (s == btn + " " + name)
+								installFunc(env, done || (() => { }));
+						});
+					}
+					return;
+				}
 				if (!errored && done)
 					done(false);
 			});
@@ -315,6 +336,20 @@ function preStartup(context: vscode.ExtensionContext) {
 					setTimeout(() => {
 						startClient(context);
 					}, 500);
+				}, (log) => {
+					var m = /serve-d v(\d+)\.(\d+)\.(\d+)/.exec(log);
+					if (m) {
+						var major = parseInt(m[1]);
+						var minor = parseInt(m[2]);
+						var patch = parseInt(m[3]);
+						if (major < TARGET_SERVED_VERSION[0])
+							return true;
+						if (major == TARGET_SERVED_VERSION[0] && minor < TARGET_SERVED_VERSION[1])
+							return true;
+						if (major == TARGET_SERVED_VERSION[0] && minor == TARGET_SERVED_VERSION[1] && patch < TARGET_SERVED_VERSION[2])
+							return true;
+					}
+					return false;
 				});
 			}
 		});

@@ -12,7 +12,7 @@ var async = require("async");
 var rmdir = require("rmdir");
 var mkdirp = require("mkdirp");
 
-const TARGET_SERVED_VERSION: [number, number, number] = [0, 2, 1];
+export const TARGET_SERVED_VERSION: [number, number, number] = [0, 2, 1];
 
 var extensionContext: vscode.ExtensionContext;
 
@@ -51,7 +51,7 @@ export function getInstallOutput() {
 	return installationLog;
 }
 
-export function downloadDub(env: any, done: Function) {
+export function downloadDub(env: any, done: (installed: boolean) => void) {
 	var url = "";
 	var ext = "";
 	if (process.platform == "linux" && process.arch == "x64") {
@@ -167,7 +167,8 @@ export function installServeD(env: any, done: Function) {
 			var fileName = path.basename(url, ext);
 			var outputPath = path.join(outputFolder, fileName);
 			progress(req()(url)).on("progress", (state: any) => {
-				output.appendLine("Downloaded " + (state.percentage * 100).toFixed(2) + "%" + (state.time.remaining ? " (ETA " + state.time.remaining.toFixed(1) + "s)" : ""));
+				if (!isNaN(state.percentage))
+					output.appendLine("Downloaded " + (state.percentage * 100).toFixed(2) + "%" + (state.time.remaining ? " (ETA " + state.time.remaining.toFixed(1) + "s)" : ""));
 			}).pipe(fs.createWriteStream(outputPath)).on("finish", () => {
 				output.appendLine("Extracting " + fileName);
 				if (ext == ".zip") {
@@ -221,6 +222,7 @@ export function installServeD(env: any, done: Function) {
 			}
 			else {
 				config(null).update("servedPath", finalDestination, true);
+				output.appendLine("Finished installing into " + finalDestination);
 				done(true);
 			}
 		});
