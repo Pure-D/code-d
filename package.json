@@ -267,7 +267,7 @@
 				"d.enableDMDImportTiming": {
 					"type": "boolean",
 					"scope": "resource",
-					"default": true,
+					"default": false,
 					"description": "Add code lenses on import statements executing a dmd instance trying to compile that import statement to get the impact on compilation time by this import."
 				},
 				"d.neverUseDub": {
