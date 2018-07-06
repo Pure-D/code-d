@@ -411,6 +411,67 @@
 					],
 					"default": "conditional_newline_indent",
 					"description": "Control the formatting of template constraints."
+				},
+				"dscanner.ignoredKeys": {
+					"type": "array",
+					"scope": "resource",
+					"items": {
+						"type": "string",
+						"enum": [
+							"dscanner.bugs.backwards_slices",
+							"dscanner.bugs.if_else_same",
+							"dscanner.bugs.logic_operator_operands",
+							"dscanner.bugs.self_assignment",
+							"dscanner.confusing.argument_parameter_mismatch",
+							"dscanner.confusing.brexp",
+							"dscanner.confusing.builtin_property_names",
+							"dscanner.confusing.constructor_args",
+							"dscanner.confusing.function_attributes",
+							"dscanner.confusing.lambda_returns_lambda",
+							"dscanner.confusing.logical_precedence",
+							"dscanner.confusing.struct_constructor_default_args",
+							"dscanner.deprecated.delete_keyword",
+							"dscanner.deprecated.floating_point_operators",
+							"dscanner.if_statement",
+							"dscanner.performance.enum_array_literal",
+							"dscanner.style.allman",
+							"dscanner.style.alias_syntax",
+							"dscanner.style.doc_missing_params",
+							"dscanner.style.doc_missing_returns",
+							"dscanner.style.doc_non_existing_params",
+							"dscanner.style.explicitly_annotated_unittest",
+							"dscanner.style.has_public_example",
+							"dscanner.style.imports_sortedness",
+							"dscanner.style.long_line",
+							"dscanner.style.number_literals",
+							"dscanner.style.phobos_naming_convention",
+							"dscanner.style.undocumented_declaration",
+							"dscanner.suspicious.auto_ref_assignment",
+							"dscanner.suspicious.catch_em_all",
+							"dscanner.suspicious.comma_expression",
+							"dscanner.suspicious.incomplete_operator_overloading",
+							"dscanner.suspicious.incorrect_infinite_range",
+							"dscanner.suspicious.label_var_same_name",
+							"dscanner.suspicious.length_subtraction",
+							"dscanner.suspicious.local_imports",
+							"dscanner.suspicious.missing_return",
+							"dscanner.suspicious.object_const",
+							"dscanner.suspicious.redundant_attributes",
+							"dscanner.suspicious.redundant_parens",
+							"dscanner.suspicious.static_if_else",
+							"dscanner.suspicious.unmodified",
+							"dscanner.suspicious.unused_label",
+							"dscanner.suspicious.unused_parameter",
+							"dscanner.suspicious.unused_variable",
+							"dscanner.suspicious.useless_assert",
+							"dscanner.unnecessary.duplicate_attribute",
+							"dscanner.useless.final",
+							"dscanner.useless-initializer",
+							"dscanner.vcall_ctor",
+							"dscanner.syntax"
+						]
+					},
+					"description": "DScanner warnings to ignore in this project."
 				}
 			}
 		},
@@ -627,6 +688,11 @@
 			{
 				"command": "code-d.implementMethods",
 				"title": "Implement selected interface/base class",
+				"category": "code-d"
+			},
+			{
+				"command": "code-d.ignoreDscannerKey",
+				"title": "Ignore DScanner warnings",
 				"category": "code-d"
 			}
 		],

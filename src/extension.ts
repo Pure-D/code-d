@@ -96,7 +96,7 @@ function startClient(context: vscode.ExtensionContext) {
 	let clientOptions: LanguageClientOptions = {
 		documentSelector: <DocumentFilter[]>[mode.D_MODE, mode.DUB_MODE, mode.DIET_MODE, mode.DSCANNER_INI_MODE],
 		synchronize: {
-			configurationSection: ["d", "dfmt", "editor", "git"],
+			configurationSection: ["d", "dfmt", "dscanner", "editor", "git"],
 			fileEvents: vscode.workspace.createFileSystemWatcher("**/*.d")
 		}
 	};
