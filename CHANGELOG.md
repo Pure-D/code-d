@@ -1,3 +1,11 @@
+# 0.19.0
+
+* Workspace symbol search now shows all symbols starting with the search query.
+* DScanner issues can now be disabled per workspace and per line of code (using `@suppress(all)`, `@suppress(dscanner.xxx)` or `@supress(xxx)` in the same line as the issue, a code fix helps removing it)
+* Build tasks replace the old compile buttons in the status bar (Ctrl-Shift-B)
+
+serve-d upgrade to 0.3.0
+
 # 0.18.1
 
 Fixed fsworkspace provider and `d.extraRoots` not working. (serve-d update to 0.2.1)
