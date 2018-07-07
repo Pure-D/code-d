@@ -119,21 +119,17 @@ export function registerClientCommands(context: vscode.ExtensionContext, client:
 		});
 	}));
 
-	subscriptions.push(vscode.commands.registerTextEditorCommand("code-d.ignoreDscannerKey", (editor, edit, key: string, global?: boolean) => {
+	subscriptions.push(vscode.commands.registerTextEditorCommand("code-d.ignoreDscannerKey", (editor, edit, key: string, mode?: boolean | "line") => {
 		var ignored = vscode.workspace.getConfiguration("dscanner", editor.document.uri).get("ignoredKeys");
+		if (!ignored)
+			ignored = vscode.workspace.getConfiguration("dscanner", null).get("ignoredKeys");
 		var doChange = function (key: string, global?: boolean) {
 			if (Array.isArray(ignored))
 				ignored.push(key);
 			else
 				ignored = [key];
 			vscode.workspace.getConfiguration("dscanner", editor.document.uri).update("ignoredKeys", ignored, global ? vscode.ConfigurationTarget.Global : vscode.ConfigurationTarget.WorkspaceFolder).then(() => {
-				setTimeout(() => {
-					served.client.sendNotification("coded/doDscanner", {
-						textDocument: {
-							uri: editor.document.uri.toString()
-						}
-					});
-				}, 50);
+				served.triggerDscanner(editor.document.uri);
 			});
 		};
 		if (typeof key !== "string" || !key.length) {
@@ -200,12 +196,26 @@ export function registerClientCommands(context: vscode.ExtensionContext, client:
 			vscode.window.showQuickPick(available, {
 				placeHolder: "Select which key to ignore"
 			}).then(key => {
-				if (key)
-					doChange(key, global);
+				if (key) {
+					if (typeof mode == "string") {
+						editor.edit(edit => {
+							edit.insert(editor.document.lineAt(editor.selection.end).range.end, " // @suppress(" + key + ")");
+							served.triggerDscanner(editor.document.uri);
+						});
+					}
+					else
+						doChange(key, mode);
+				}
 			});
 		}
-		else
-			doChange(key, global);
+		else {
+			if (typeof mode == "string") {
+				edit.insert(editor.document.lineAt(editor.selection.end).range.end, " // @suppress(" + key + ")");
+				served.triggerDscanner(editor.document.uri);
+			}
+			else
+				doChange(key, mode);
+		}
 	}));
 
 	subscriptions.push(vscode.commands.registerTextEditorCommand("code-d.addImport", (editor, edit, name, location) => {

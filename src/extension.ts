@@ -65,6 +65,14 @@ export class ServeD extends EventEmitter implements vscode.TreeDataProvider<DubD
 		});
 	}
 
+	triggerDscanner(uri: vscode.Uri) {
+		this.client.sendNotification("coded/doDscanner", {
+			textDocument: {
+				uri: uri.toString()
+			}
+		});
+	}
+
 	private static taskGroups: vscode.TaskGroup[] = [
 		vscode.TaskGroup.Build,
 		vscode.TaskGroup.Clean,
