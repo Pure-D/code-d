@@ -613,26 +613,6 @@
 				}
 			},
 			{
-				"command": "code-d.run",
-				"title": "Run project",
-				"category": "code-d"
-			},
-			{
-				"command": "code-d.build",
-				"title": "Build project",
-				"category": "code-d"
-			},
-			{
-				"command": "code-d.stop",
-				"title": "Stop project",
-				"category": "code-d"
-			},
-			{
-				"command": "code-d.debug",
-				"title": "Debug project using code-debug",
-				"category": "code-d"
-			},
-			{
 				"command": "code-d.uploadSelection",
 				"title": "Upload selection to dpaste.com",
 				"category": "code-d"
