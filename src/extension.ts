@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
-import { LanguageClient, LanguageClientOptions, ServerOptions, DocumentFilter, NotificationType } from "vscode-languageclient";
+import { LanguageClient, LanguageClientOptions, ServerOptions, DocumentFilter, NotificationType, CloseAction, ErrorAction, ErrorHandler, Message } from "vscode-languageclient";
 import { setContext, downloadDub, installServeD, compileServeD, getInstallOutput, checkBetaServeD, TARGET_SERVED_VERSION } from "./installer"
 import { EventEmitter } from "events"
 import * as ChildProcess from "child_process"
@@ -16,6 +16,34 @@ import { registerCommands, registerClientCommands } from "./commands";
 import { DubDependency, DubDependencyInfo } from "./dub-view";
 
 const opn = require('opn');
+
+class CustomErrorHandler implements ErrorHandler {
+	private restarts: number[];
+
+	constructor(private output: vscode.OutputChannel) {
+		this.restarts = [];
+	}
+
+	public error(error: Error, message: Message, count: number): ErrorAction {
+		return ErrorAction.Continue;
+	}
+	public closed(): CloseAction {
+		this.restarts.push(Date.now());
+		if (this.restarts.length < 20) {
+			return CloseAction.Restart;
+		} else {
+			let diff = this.restarts[this.restarts.length - 1] - this.restarts[0];
+			if (diff <= 60 * 1000) {
+				// TODO: run automated diagnostics about current code file here
+				this.output.appendLine(`Server crashed 20 times in the last minute. The server will not be restarted.`);
+				return CloseAction.DoNotRestart;
+			} else {
+				this.restarts.shift();
+				return CloseAction.Restart;
+			}
+		}
+	}
+}
 
 export class ServeD extends EventEmitter implements vscode.TreeDataProvider<DubDependency> {
 	constructor(public client: LanguageClient) {
@@ -101,12 +129,15 @@ function startClient(context: vscode.ExtensionContext) {
 			}
 		}
 	};
+	var outputChannel = vscode.window.createOutputChannel("code-d & serve-d");
 	let clientOptions: LanguageClientOptions = {
 		documentSelector: <DocumentFilter[]>[mode.D_MODE, mode.DUB_MODE, mode.DIET_MODE, mode.DSCANNER_INI_MODE],
 		synchronize: {
 			configurationSection: ["d", "dfmt", "dscanner", "editor", "git"],
 			fileEvents: vscode.workspace.createFileSystemWatcher("**/*.d")
-		}
+		},
+		outputChannel: outputChannel,
+		errorHandler: new CustomErrorHandler(outputChannel)
 	};
 	let client = new LanguageClient("serve-d", "code-d & serve-d", executable, clientOptions);
 	client.start();

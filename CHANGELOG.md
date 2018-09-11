@@ -1,3 +1,20 @@
+# 0.x.y
+
+## Diet templates
+
+vibe.d Diet templates have gotten a lot of love.
+
+New features include:
+
+* Auto-Completion + Calltips of D code inside diet + HTML Tag & Attribute Name & Value completions
+* Proper language config (autoclosing quotes)
+
+## Other Things
+
+The server now tries to restart more. It now only doesn't restart after 20 restart fails in one minute instead of 5 fails in 3 minutes.
+
+serve-d upgrade to 0.4.0
+
 # 0.19.0
 
 * Workspace symbol search now shows all symbols starting with the search query.

@@ -32,10 +32,7 @@
 		"onCommand:code-d.killServer",
 		"onCommand:code-d.restartServer",
 		"onCommand:code-d.reloadImports",
-		"onCommand:code-d.run",
-		"onCommand:code-d.build",
 		"onCommand:code-d.stop",
-		"onCommand:code-d.debug",
 		"onCommand:code-d.uploadSelection",
 		"onCommand:code-d.insertDscanner",
 		"onCommand:code-d.rdmdCurrent",
@@ -98,7 +95,8 @@
 				],
 				"extensions": [
 					".dt"
-				]
+				],
+				"configuration": "./lang-configs/diet.json"
 			}
 		],
 		"grammars": [
@@ -758,7 +756,7 @@
 		"ncp": "^2.0.0",
 		"rmdir": "^1.2.0",
 		"line-by-line": "^0.1.6",
-		"vscode-languageclient": "^5.0.1",
+		"vscode-languageclient": "^5.1.0-next",
 		"mkdirp": "^0.5.1",
 		"opn": "^5.3.0",
 		"rimraf": "^2.6.2"
