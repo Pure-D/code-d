@@ -1,5 +1,13 @@
 # 0.x.y
 
+* Implemented proper outline view and with that also breadcrumbs. See #201
+
+## Invalid dub configurations and dependencies don't fatally crash serve-d anymore.
+
+You can now just fix your syntax mistakes and save the file again (or maybe twice for good measure) and it will magically just start working again!
+
+Dependency issues also no longer cause issues as they are now loaded and upgraded in-memory if there are any missing, keeping your working directory clean while making sure that everything is working.
+
 ## Diet templates
 
 vibe.d Diet templates have gotten a lot of love.
