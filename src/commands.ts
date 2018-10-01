@@ -1,14 +1,16 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
+import { JSDOM } from "jsdom";
 import { DubEditor } from "./dub-editor";
 import { LanguageClient, LanguageClientOptions, ServerOptions, DocumentFilter, NotificationType, TextEdit } from "vscode-languageclient";
 import { ServeD } from "./extension";
 import { showProjectCreator, performTemplateCopy, openFolderWithExtension } from "./project-creator";
-import { uploadCode } from "./util";
+import { uploadCode, req } from "./util";
 import { listPackageOptions, getLatestPackageInfo } from "./dub-api"
 import { DubDependency } from "./dub-view";
 import { DubTasksProvider } from "./dub-tasks";
+import { showDpldocsSearch } from "./dpldocs";
 
 var gClient: LanguageClient;
 
@@ -415,12 +417,10 @@ export function registerCommands(context: vscode.ExtensionContext) {
 				vscode.window.showInformationMessage("Code pasted on " + url);
 			});
 		}
-	}, (err: any) => {
-		if (gClient)
-			gClient.outputChannel.appendLine(err);
-		else
-			console.error(err);
-		vscode.window.showErrorMessage("Failed to switch configuration. See extension output for details.");
+	}));
+
+	subscriptions.push(vscode.commands.registerCommand("code-d.searchDocs", () => {
+		showDpldocsSearch();
 	}));
 
 	subscriptions.push(vscode.commands.registerCommand("code-d.insertDscanner", () => {

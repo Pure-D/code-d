@@ -8,6 +8,14 @@ You can now just fix your syntax mistakes and save the file again (or maybe twic
 
 Dependency issues also no longer cause issues as they are now loaded and upgraded in-memory if there are any missing, keeping your working directory clean while making sure that everything is working.
 
+# Embedded Documentation View
+
+Don't open your browser to browse phobos and other project documentation anymore.
+
+You can now browse through the online documentation of Phobos and all your dub dependencies using the new embedded documentation browser powered by [dpldocs.info](https://dpldocs.info).
+
+Just open up your command palette and search for `Search dpldocs for Phobos & Dependency documentation`. You can also map this to a keyboard shortcut to make this even easier to access.
+
 ## Diet templates
 
 vibe.d Diet templates have gotten a lot of love.
@@ -22,6 +30,10 @@ New features include:
 The server now tries to restart more. It now only doesn't restart after 20 restart fails in one minute instead of 5 fails in 3 minutes.
 
 serve-d upgrade to 0.4.0
+
+Minor stuff:
+
+* removed long gone dscannerPath and dfmtPath from the settings (as they are integrated into serve-d and have been ignored ever since)
 
 # 0.19.0
 

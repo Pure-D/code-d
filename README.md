@@ -2,6 +2,8 @@
 
 Adds D language support for visual studio code.
 
+> It works pretty good - Wild 2018
+
 Also [available for Atom](https://github.com/Pure-D/atomize-d)!
 
 ## Features

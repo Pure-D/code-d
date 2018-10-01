@@ -45,6 +45,8 @@ class CustomErrorHandler implements ErrorHandler {
 	}
 }
 
+export var served: ServeD;
+
 export class ServeD extends EventEmitter implements vscode.TreeDataProvider<DubDependency> {
 	constructor(public client: LanguageClient) {
 		super();
@@ -101,6 +103,14 @@ export class ServeD extends EventEmitter implements vscode.TreeDataProvider<DubD
 		});
 	}
 
+	findFiles(query: string): Thenable<string[]> {
+		return this.client.sendRequest("served/searchFile", query);
+	}
+
+	findFilesByModule(query: string): Thenable<string[]> {
+		return this.client.sendRequest("served/findFilesByModule", query);
+	}
+
 	private static taskGroups: vscode.TaskGroup[] = [
 		vscode.TaskGroup.Build,
 		vscode.TaskGroup.Clean,
@@ -141,7 +151,7 @@ function startClient(context: vscode.ExtensionContext) {
 	};
 	let client = new LanguageClient("serve-d", "code-d & serve-d", executable, clientOptions);
 	client.start();
-	var served = new ServeD(client);
+	served = new ServeD(client);
 
 	context.subscriptions.push({
 		dispose() {
