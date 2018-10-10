@@ -31,6 +31,8 @@ The server now tries to restart more. It now only doesn't restart after 20 resta
 
 serve-d upgrade to 0.4.0
 
+Coverage and GC decorations (red/green background tint and allocation code lenses) can now be toggled with the new `d.enableCoverageDecoration` and `d.enableGCProfilerDecorations` settings respectively. Coverage will always still show in the statusbar.
+
 Minor stuff:
 
 * removed long gone dscannerPath and dfmtPath from the settings (as they are integrated into serve-d and have been ignored ever since)

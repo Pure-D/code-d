@@ -1,6 +1,7 @@
 import * as vscode from "vscode"
 import * as path from "path"
 import * as fs from "fs"
+import { config } from "./extension";
 
 interface CoverageLine {
 	hits: number;
@@ -100,6 +101,7 @@ export class CoverageAnalyzer implements vscode.TextDocumentContentProvider {
 			name = pathToName(folder.uri.path, editor.document.fileName);
 		if (!name)
 			return;
+
 		var info = this.cache.get(name);
 		var cache = info ? info.lines : undefined;
 		var uncovRanges: vscode.Range[] = [];
@@ -128,8 +130,14 @@ export class CoverageAnalyzer implements vscode.TextDocumentContentProvider {
 		}
 		else
 			this.coverageStat.hide();
-		editor.setDecorations(this.uncovDecorator, uncovRanges);
-		editor.setDecorations(this.covDecorator, covRanges);
+
+		if (config(editor.document.uri).get("enableCoverageDecoration", true)) {
+			editor.setDecorations(this.uncovDecorator, uncovRanges);
+			editor.setDecorations(this.covDecorator, covRanges);
+		} else {
+			editor.setDecorations(this.uncovDecorator, []);
+			editor.setDecorations(this.covDecorator, []);
+		}
 	}
 
 	provideTextDocumentContent(uri: vscode.Uri, token: vscode.CancellationToken): string {

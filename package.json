@@ -257,6 +257,18 @@
 					"default": false,
 					"description": "Add code lenses on import statements executing a dmd instance trying to compile that import statement to get the impact on compilation time by this import."
 				},
+				"d.enableCoverageDecoration": {
+					"type": "boolean",
+					"scope": "resource",
+					"default": false,
+					"description": "Automatically highlight tested/untested converage lines with light red/green backgrounds per line for *.lst files."
+				},
+				"d.enableGCProfilerDecorations": {
+					"type": "boolean",
+					"scope": "resource",
+					"default": false,
+					"description": "Automatically embed code lenses for all GC allocations based on profilegc.log."
+				},
 				"d.neverUseDub": {
 					"type": "boolean",
 					"scope": "resource",

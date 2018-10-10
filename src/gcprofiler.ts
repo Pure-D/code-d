@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import * as fs from "fs";
 import * as path from "path";
+import { config } from "./extension";
 
 var spaces = /[^\S\n]+/g;
 var filelineRegex = /(\S+):(\d+)$/;
@@ -11,6 +12,9 @@ interface ProfileQuickPick extends vscode.QuickPickItem {
 
 export class GCProfiler implements vscode.CodeLensProvider {
 	provideCodeLenses(document: vscode.TextDocument, token: vscode.CancellationToken): vscode.CodeLens[] {
+		if (!config(document.uri).get("enableGCProfilerDecorations", true))
+			return [];
+
 		var lenses: vscode.CodeLens[] = [];
 		this.profiles.forEach(profile => {
 			if (document.uri.fsPath == vscode.Uri.parse(profile.file).fsPath) {
