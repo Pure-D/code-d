@@ -260,13 +260,13 @@
 				"d.enableCoverageDecoration": {
 					"type": "boolean",
 					"scope": "resource",
-					"default": false,
+					"default": true,
 					"description": "Automatically highlight tested/untested converage lines with light red/green backgrounds per line for *.lst files."
 				},
 				"d.enableGCProfilerDecorations": {
 					"type": "boolean",
 					"scope": "resource",
-					"default": false,
+					"default": true,
 					"description": "Automatically embed code lenses for all GC allocations based on profilegc.log."
 				},
 				"d.neverUseDub": {
