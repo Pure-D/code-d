@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { D_MODE } from "./dmode"
-import { ServeD } from "./extension";
+import { ServeD, config } from "./extension";
 
 export function setup(served: ServeD): vscode.Disposable {
 	let subscriptions: vscode.Disposable[] = [];
@@ -11,6 +12,36 @@ export function setup(served: ServeD): vscode.Disposable {
 	subscriptions.push(new CompilerSelector(served));
 
 	return vscode.Disposable.from(...subscriptions);
+}
+
+export function isStatusbarRelevantDocument(document: vscode.TextDocument): boolean {
+	var language = document.languageId;
+	if (language == "d" || language == "dml" || language == "diet")
+		return true;
+	var filename = path.basename(document.fileName.toLowerCase());
+	if (filename == "dub.json" || filename == "dub.sdl")
+		return true;
+	return false;
+}
+
+export function checkStatusbarVisibility(overrideConfig: string, editor?: vscode.TextEditor | null): boolean {
+	if (editor === null) {
+		if (config(null).get(overrideConfig, false))
+			return true
+		else
+			return false
+	} else {
+		if (!editor)
+			editor = vscode.window.activeTextEditor;
+		if (editor) {
+			if (config(editor.document.uri).get(overrideConfig, false) || isStatusbarRelevantDocument(editor.document))
+				return true
+			else
+				return false
+		} else {
+			return false;
+		}
+	}
 }
 
 class GenericSelector implements vscode.Disposable {
@@ -37,7 +68,10 @@ class GenericSelector implements vscode.Disposable {
 		this.item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, this.x);
 		this.item.command = this.command;
 		this.item.tooltip = this.tooltip;
-		this.item.show();
+		this.updateDocumentVisibility();
+		this.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(editor => {
+			this.updateDocumentVisibility(editor || null);
+		}));
 		this.served.on(this.event, config => {
 			if (this.item)
 				this.item.text = config;
@@ -46,6 +80,15 @@ class GenericSelector implements vscode.Disposable {
 			this.update();
 		});
 		this.update();
+	}
+
+	updateDocumentVisibility(editor?: vscode.TextEditor | null) {
+		if (this.item) {
+			if (checkStatusbarVisibility("alwaysShowDubStatusButtons", editor))
+				this.item.show();
+			else
+				this.item.hide();
+		}
 	}
 
 	update() {

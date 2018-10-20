@@ -352,6 +352,18 @@
 					"default": [],
 					"description": "Array of workspace-relative (or absolute) folders to force start a project instance in."
 				},
+				"d.alwaysShowDubStatusButtons": {
+					"type": "boolean",
+					"scope": "resource",
+					"default": false,
+					"description": "Switch to always show dub Configuration/Arch Type/Build Type/Compiler buttons in dub projects and not just when a D file is open."
+				},
+				"d.alwaysShowCoverageStatus": {
+					"type": "boolean",
+					"scope": "resource",
+					"default": false,
+					"description": "Switch to always show coverage status when available through lst files and not just when a D file is open."
+				},
 				"dfmt.alignSwitchStatements": {
 					"type": "boolean",
 					"scope": "resource",

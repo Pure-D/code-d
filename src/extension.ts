@@ -256,6 +256,7 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 		{
 			let coverageanal = new CoverageAnalyzer();
+			context.subscriptions.push(coverageanal);
 			context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider("dcoveragereport", coverageanal));
 
 			let watcher = vscode.workspace.createFileSystemWatcher("**/*.lst", false, false, false);

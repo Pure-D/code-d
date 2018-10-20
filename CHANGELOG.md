@@ -33,6 +33,8 @@ serve-d upgrade to 0.4.0
 
 Coverage and GC decorations (red/green background tint and allocation code lenses) can now be toggled with the new `d.enableCoverageDecoration` and `d.enableGCProfilerDecorations` settings respectively. Coverage will always still show in the statusbar.
 
+Status bar items will now only be shown when a D file is opened. You can revert this to the old behaviour by setting `d.alwaysShowDubStatusButtons` to `true` in your user or workspace settings to bring back dub buttons and you can enable `d.alwaysShowCoverageStatus` to do the same to the coverage status indicator.
+
 Minor stuff:
 
 * removed long gone dscannerPath and dfmtPath from the settings (as they are integrated into serve-d and have been ignored ever since)

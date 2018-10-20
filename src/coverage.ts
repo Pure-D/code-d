@@ -2,6 +2,7 @@ import * as vscode from "vscode"
 import * as path from "path"
 import * as fs from "fs"
 import { config } from "./extension";
+import { checkStatusbarVisibility } from "./statusbar";
 
 interface CoverageLine {
 	hits: number;
@@ -25,7 +26,10 @@ function pathToName(root: string, fspath: string) {
 	return file.substr(0, file.length - 2);
 }
 
-export class CoverageAnalyzer implements vscode.TextDocumentContentProvider {
+export class CoverageAnalyzer implements vscode.TextDocumentContentProvider, vscode.Disposable {
+	subscriptions: vscode.Disposable[] = [];
+	gotCoverage: boolean;
+
 	constructor() {
 		this.uncovDecorator = vscode.window.createTextEditorDecorationType({
 			backgroundColor: "rgba(255, 128, 16, 0.1)",
@@ -41,6 +45,15 @@ export class CoverageAnalyzer implements vscode.TextDocumentContentProvider {
 		this.coverageStat.text = "0.00% Coverage";
 		this.coverageStat.tooltip = "Coverage in this file generated from the according .lst file";
 		this.coverageStat.command = "code-d.generateCoverageReport";
+
+		this.gotCoverage = false;
+
+		this.subscriptions.push(this.uncovDecorator);
+		this.subscriptions.push(this.covDecorator);
+		this.subscriptions.push(this.coverageStat);
+		this.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(editor => {
+			this.refreshStatusBar(editor);
+		}));
 	}
 
 	updateCache(uri: vscode.Uri) {
@@ -126,10 +139,13 @@ export class CoverageAnalyzer implements vscode.TextDocumentContentProvider {
 				}
 			}
 			this.coverageStat.text = (info ? info.totalCov : "unknown") + "% Coverage";
-			this.coverageStat.show();
+			this.gotCoverage = true;
+			this.refreshStatusBar();
 		}
-		else
+		else {
+			this.gotCoverage = false;
 			this.coverageStat.hide();
+		}
 
 		if (config(editor.document.uri).get("enableCoverageDecoration", true)) {
 			editor.setDecorations(this.uncovDecorator, uncovRanges);
@@ -138,6 +154,13 @@ export class CoverageAnalyzer implements vscode.TextDocumentContentProvider {
 			editor.setDecorations(this.uncovDecorator, []);
 			editor.setDecorations(this.covDecorator, []);
 		}
+	}
+
+	refreshStatusBar(editor?: vscode.TextEditor | null): any {
+		if (this.gotCoverage && checkStatusbarVisibility("alwaysShowCoverageStatus", editor))
+			this.coverageStat.show();
+		else
+			this.coverageStat.hide();
 	}
 
 	provideTextDocumentContent(uri: vscode.Uri, token: vscode.CancellationToken): string {
@@ -181,6 +204,10 @@ export class CoverageAnalyzer implements vscode.TextDocumentContentProvider {
 		report += "Total coverage: <b>" + ((totalLinesWith / totalCount) * 100).toFixed(1) + "%</b>";
 		report += "</body></html>";
 		return report;
+	}
+
+	dispose() {
+		vscode.Disposable.from(...this.subscriptions).dispose();
 	}
 
 	private coverageStat: vscode.StatusBarItem;
