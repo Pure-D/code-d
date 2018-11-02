@@ -115,6 +115,7 @@ function completeDubPackageName(info: any) {
 
 const licenses = [
 	"public domain",
+	"proprietary",
 	"AFL-3.0",
 	"AGPL-3.0",
 	"Apache-2.0",
@@ -133,6 +134,7 @@ const licenses = [
 	"MPL-2.0",
 	"MS-PL",
 	"MS-RL",
+	"NCSA",
 	"OpenSSL",
 	"SSLeay",
 	"Zlib"
@@ -280,6 +282,7 @@ const buildSettings = {
 				"noBoundsCheck",
 				"optimize",
 				"profile",
+				"profileGC",
 				"unittests",
 				"verbose",
 				"ignoreUnknownPragmas",
@@ -289,7 +292,8 @@ const buildSettings = {
 				"ignoreDeprecations",
 				"deprecationWarnings",
 				"deprecationErrors",
-				"property"
+				"property",
+				"betterC"
 			]
 		},
 		minValues: 1

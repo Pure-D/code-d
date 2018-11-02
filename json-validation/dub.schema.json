@@ -35,6 +35,7 @@
                     "noBoundsCheck",
                     "optimize",
                     "profile",
+                    "profileGC",
                     "unittests",
                     "verbose",
                     "ignoreUnknownPragmas",
@@ -44,7 +45,8 @@
                     "ignoreDeprecations",
                     "deprecationWarnings",
                     "deprecationErrors",
-                    "property"
+                    "property",
+                    "betterC"
                 ]
             },
             "minItems": 1,
@@ -247,7 +249,7 @@
                 },
                 "authors": {
                     "$ref": "#/definitions/stringArray",
-                    "description": "List of project authors"
+                    "description": "List of project authors. The suggested format is either \"Peter Parker\" or \"Peter Parker <pparker@example.com>\""
                 },
                 "copyright": {
                     "type": "string",
@@ -257,6 +259,7 @@
                     "type": "string",
                     "enum": [
                         "public domain",
+                        "proprietary",
                         "AFL-3.0",
                         "AGPL-3.0",
                         "Apache-2.0",
@@ -275,6 +278,7 @@
                         "MPL-2.0",
                         "MS-PL",
                         "MS-RL",
+                        "NCSA",
                         "OpenSSL",
                         "SSLeay",
                         "Zlib"
