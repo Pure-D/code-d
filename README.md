@@ -36,13 +36,18 @@ This assumes [serve-d](https://github.com/Pure-D/serve-d) is already installed.
   ext install webfreak.code-d
   ```
 
+  Or search for code-d and select the "D Programming Language (code-d)" extension from the list.
+
 * Manual (if the automatic way doesn't work)
 
     ```
+    # discouraged if you are trying out code-d, you should preferably install it from the marketplace
+
     cd ~/.vscode/extensions/
     git clone https://github.com/Pure-D/code-d.git
     cd code-d
     npm install
+    # requires `npm install -g typescript` once
     tsc -p .
     ```
 
