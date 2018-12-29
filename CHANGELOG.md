@@ -8,7 +8,7 @@ You can now just fix your syntax mistakes and save the file again (or maybe twic
 
 Dependency issues also no longer cause issues as they are now loaded and upgraded in-memory if there are any missing, keeping your working directory clean while making sure that everything is working.
 
-# Embedded Documentation View
+## Embedded Documentation View
 
 Don't open your browser to browse phobos and other project documentation anymore.
 
@@ -25,15 +25,35 @@ New features include:
 * Auto-Completion + Calltips of D code inside diet + HTML Tag & Attribute Name & Value completions
 * Proper language config (autoclosing quotes)
 
+## Implement interface improvements
+
+The implement interface code action will no longer insert duplicate code and a lot more tests have been added to ensure correctness.
+
+If you do OOP, try it out by simply extending an interface or abstract class and going on the inherited symbol with your cursor.
+
+## Completion improvements
+
+If you have `d.argumentSnippets` enabled, you will now have a much cleaner experience. Types and default values are no longer passed inside the snippets, so only variable names are put in inside the function arguments.
+
+This makes it much easier to especially write OOP code or code where your variables are often called the same thing as the arguments.
+
+Additionally autocompletion no longer shows duplicates of the same symbols. The documentation and definition of all symbols with same name, kind are merged into one for the autocompletion.
+
+You can revert this back to a slightly modified version using `"d.completeNoDupes": false`, symbols with same name, kind and definition are always merged now however.
+
 ## Other Things
 
 The server now tries to restart more. It now only doesn't restart after 20 restart fails in one minute instead of 5 fails in 3 minutes.
 
 serve-d upgrade to 0.4.0
 
+DCD upgrade to 0.10.1
+
 Coverage and GC decorations (red/green background tint and allocation code lenses) can now be toggled with the new `d.enableCoverageDecoration` and `d.enableGCProfilerDecorations` settings respectively. Coverage will always still show in the statusbar.
 
 Status bar items will now only be shown when a D file is opened. You can revert this to the old behaviour by setting `d.alwaysShowDubStatusButtons` to `true` in your user or workspace settings to bring back dub buttons and you can enable `d.alwaysShowCoverageStatus` to do the same to the coverage status indicator.
+
+The installation of DCD is fixed and reloading after installation is no longer required.
 
 Minor stuff:
 
