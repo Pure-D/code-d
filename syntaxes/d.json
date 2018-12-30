@@ -1601,7 +1601,7 @@
           ]
         },
         {
-          "match": "\\balign\\s*(?!\\()",
+          "match": "\\balign\\b\\s*(?!\\()",
           "name": "storage.modifier.align-attribute.d"
         }
       ]
