@@ -355,7 +355,7 @@
     "lambda-expression": {
       "patterns": [
         {
-          "begin": "(([_\\w][_\\d\\w]*)+)\\s*(=>)",
+          "begin": "\\b([_\\w][_\\d\\w]*)\\s*(=>)",
           "end": "(?=[\\);,\\]}])",
           "beginCaptures": {
             "1": {
