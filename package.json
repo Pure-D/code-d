@@ -42,7 +42,8 @@
 		"onCommand:dub.closeSettingsEditor",
 		"onCommand:code-d.createProject",
 		"onCommand:code-d.addImport",
-		"onCommand:code-d.searchDocs"
+		"onCommand:code-d.searchDocs",
+		"onCommand:code-d.convertDubRecipe"
 	],
 	"main": "./out/src/extension",
 	"contributes": {
@@ -502,6 +503,11 @@
 			],
 			"editor/title": [
 				{
+					"when": "resourceFilename =~ /dub\\.json|dub\\.sdl/",
+					"command": "code-d.convertDubRecipe",
+					"group": "navigation"
+				},
+				{
 					"when": "resourceFilename == 'dub.json'",
 					"command": "dub.openSettingsEditor",
 					"group": "navigation"
@@ -554,6 +560,10 @@
 				{
 					"command": "code-d.uploadSelection",
 					"when": "editorHasSelection"
+				},
+				{
+					"command": "code-d.convertDubRecipe",
+					"when": "resourceFilename =~ /dub\\.json|dub\\.sdl/"
 				}
 			]
 		},
@@ -696,6 +706,15 @@
 				"command": "code-d.searchDocs",
 				"title": "Search dpldocs for Phobos & Dependency documentation",
 				"category": "code-d"
+			},
+			{
+				"command": "code-d.convertDubRecipe",
+				"title": "Convert between dub.json/dub.sdl",
+				"category": "code-d",
+				"icon": {
+					"light": "./images/dub-convert-inverse.svg",
+					"dark": "./images/dub-convert.svg"
+				}
 			}
 		],
 		"jsonValidation": [

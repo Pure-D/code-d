@@ -278,6 +278,18 @@ export function registerClientCommands(context: vscode.ExtensionContext, client:
 		});
 	}));
 
+	subscriptions.push(vscode.commands.registerTextEditorCommand("code-d.convertDubRecipe", (editor, edit) => {
+		if (editor.document.isDirty || editor.document.isUntitled) {
+			vscode.window.showErrorMessage("Please save the file first");
+			return;
+		}
+		var uri = editor.document.uri.toString();
+		client.sendNotification("served/convertDubFormat", {
+			textDocument: { uri: uri },
+			newFormat: uri.toLowerCase().endsWith(".sdl") ? "json" : "sdl"
+		});
+	}));
+
 	subscriptions.push(vscode.commands.registerCommand("code-d.addDependency", () => {
 		vscode.window.showQuickPick(listPackageOptions(), {
 			matchOnDescription: false,
