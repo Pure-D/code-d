@@ -532,7 +532,7 @@
     "traits-argument": {
       "patterns": [
         {
-          "include": "#assign-expression"
+          "include": "#expression"
         },
         {
           "include": "#type"
