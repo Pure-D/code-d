@@ -327,7 +327,8 @@ function preStartup(context: vscode.ExtensionContext) {
 					else {
 						var isDirectory = false;
 						try {
-							isDirectory = fs.statSync(config(null).get(configName, "")).isDirectory();
+							var testPath = config(null).get(configName, "");
+							isDirectory = path.isAbsolute(testPath) && fs.statSync(testPath).isDirectory();
 						} catch (e) { }
 						if (isDirectory) {
 							vscode.window.showErrorMessage(name + " points to a directory", "Open User Settings").then(s => {

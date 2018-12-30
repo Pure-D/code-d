@@ -41,9 +41,17 @@ Additionally autocompletion no longer shows duplicates of the same symbols. The 
 
 You can revert this back to a slightly modified version using `"d.completeNoDupes": false`, symbols with same name, kind and definition are always merged now however.
 
+# Convert between dub JSON and SDL
+
+You can now convert dub package recipes between JSON/SDL using a click on the convert button in the toolbar or by running the "Convert between dub.json/dub.sdl" command while having the recipe open. You can still undo after conversion if it missed something or you noticed you had comments it removed.
+
 ## Other Things
 
 The server now tries to restart more. It now only doesn't restart after 20 restart fails in one minute instead of 5 fails in 3 minutes.
+
+Fixed an SDL parsing issue with comments not consuming line endings. Comments won't affect parsing of the next line anymore.
+
+When opening a file, it will get linted by D-Scanner immediately.
 
 serve-d upgrade to 0.4.0
 

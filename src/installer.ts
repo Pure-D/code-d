@@ -40,7 +40,7 @@ function determineOutputFolder() {
 }
 
 var installationLog: vscode.OutputChannel;
-const installationTitle = "code-d installation progress";
+const installationTitle = "code-d/serve-d installation progress";
 
 export function getInstallOutput() {
 	if (!installationLog) {
@@ -49,6 +49,41 @@ export function getInstallOutput() {
 		installationLog.show(true);
 	}
 	return installationLog;
+}
+
+function downloadFileInteractive(url: string, title: string, aborted: Function): any {
+	var ret = progress(req()(url), {
+		throttle: 100,
+		delay: 100
+	});
+	var lastProgress = 0;
+	vscode.window.withProgress({
+		cancellable: true,
+		location: vscode.ProgressLocation.Notification,
+		title: title
+	}, (progress, cancel) => {
+		cancel.onCancellationRequested(() => {
+			ret.abort();
+			aborted();
+		});
+		ret.on("progress", (state: any) => {
+			if (!isNaN(state.percent)) {
+				var msg = "Downloaded " + (state.percent * 100).toFixed(2) + "%" + (state.time.remaining ? " (ETA " + state.time.remaining.toFixed(1) + "s)" : "");
+				var increment = state.percent * 100 - lastProgress;
+				lastProgress = state.percent * 100;
+				progress.report({
+					message: msg,
+					increment: increment
+				});
+			}
+		});
+		return new Promise((resolve) => {
+			ret.on("end", resolve);
+		});
+	}).then(function() {
+		installationLog.appendLine("Finished downloading");
+	});
+	return ret;
 }
 
 export function downloadDub(env: any, done: (installed: boolean) => void) {
@@ -76,11 +111,7 @@ export function downloadDub(env: any, done: (installed: boolean) => void) {
 	}
 	else
 		return vscode.window.showErrorMessage("dub is not available for your platform");
-	if (!installationLog) {
-		installationLog = vscode.window.createOutputChannel(installationTitle);
-		extensionContext.subscriptions.push(installationLog);
-	}
-	installationLog.show(true);
+	getInstallOutput().show(true);
 	var outputFolder = determineOutputFolder();
 	mkdirp.sync(outputFolder);
 	var finalDestination = path.join(outputFolder, "dub" + (process.platform == "win32" ? ".exe" : ""));
@@ -90,9 +121,9 @@ export function downloadDub(env: any, done: (installed: boolean) => void) {
 			fs.mkdirSync(outputFolder);
 		installationLog.appendLine("Downloading from " + url + " into " + outputFolder);
 		var outputPath = path.join(outputFolder, "dub" + ext);
-		progress(req()(url)).on("progress", (state: any) => {
-			if (!isNaN(state.percentage))
-				installationLog.appendLine("Downloaded " + (state.percentage * 100).toFixed(2) + "%" + (state.time.remaining ? " (ETA " + state.time.remaining.toFixed(1) + "s)" : ""));
+		downloadFileInteractive(url, "Dub Download", () => {
+			installationLog.appendLine("Aborted download");
+			fs.unlink(outputPath, function () { });
 		}).pipe(fs.createWriteStream(outputPath)).on("finish", () => {
 			installationLog.appendLine("Extracting dub");
 			if (ext == ".zip") {
@@ -132,7 +163,7 @@ export function installServeD(env: any, done: Function) {
 	if (process.platform == "linux" && process.arch == "x64") {
 		urls = [
 			"https://github.com/Pure-D/serve-d/releases/download/v" + TARGET_SERVED_VERSION.join(".") + "/serve-d_" + TARGET_SERVED_VERSION.join(".") + "-linux-x86_64.tar.xz",
-			"https://github.com/dlang-community/DCD/releases/download/v0.9.9/dcd-v0.9.9-linux-x86_64.tar.gz"
+			"https://github.com/dlang-community/DCD/releases/download/v0.10.1/dcd-v0.10.1-linux-x86_64.tar.gz"
 		];
 	}
 	else if (process.platform == "win32") {
@@ -140,45 +171,43 @@ export function installServeD(env: any, done: Function) {
 			"https://github.com/Pure-D/serve-d/releases/download/v" + TARGET_SERVED_VERSION.join(".") + "/serve-d_" + TARGET_SERVED_VERSION.join(".") + "-windows.zip"
 		];
 		if (process.arch == "x64")
-			urls.push("https://github.com/dlang-community/DCD/releases/download/v0.9.9/dcd-v0.9.9-windows-x86_64.zip");
+			urls.push("https://github.com/dlang-community/DCD/releases/download/v0.10.1/dcd-v0.10.1-windows-x86_64.zip");
 		else
-			urls.push("https://github.com/dlang-community/DCD/releases/download/v0.9.9/dcd-v0.9.9-windows-x86.zip");
+			urls.push("https://github.com/dlang-community/DCD/releases/download/v0.10.1/dcd-v0.10.1-windows-x86.zip");
 	}
 	else
 		return vscode.window.showErrorMessage("No precompiled serve-d binary for this platform/architecture", "Compile from source").then((r?: string) => {
 			if (r == "Compile from source")
 				compileServeD(env, done);
 		});
-	var output = vscode.window.createOutputChannel("serve-d installation progress");
-	extensionContext.subscriptions.push(output);
-	output.show(true);
+	getInstallOutput().show(true);
 	var outputFolder = determineOutputFolder();
 	mkdirp.sync(outputFolder);
 	var finalDestination = path.join(outputFolder, "serve-d" + (process.platform == "win32" ? ".exe" : ""));
-	output.appendLine("Installing into " + outputFolder);
+	installationLog.appendLine("Installing into " + outputFolder);
 	fs.exists(outputFolder, function (exists) {
 		if (!exists)
 			fs.mkdirSync(outputFolder);
 		if (fs.existsSync(finalDestination))
 			rimraf.sync(finalDestination);
 		async.each(urls, function (url: string, cb: Function) {
-			output.appendLine("Downloading from " + url + " into " + outputFolder);
+			installationLog.appendLine("Downloading from " + url + " into " + outputFolder);
 			var ext = url.endsWith(".tar.xz") ? ".tar.xz" : url.endsWith(".tar.gz") ? ".tar.gz" : path.extname(url);
-			var fileName = path.basename(url, ext);
+			var fileName = path.basename(url);
 			var outputPath = path.join(outputFolder, fileName);
-			progress(req()(url)).on("progress", (state: any) => {
-				if (!isNaN(state.percentage))
-					output.appendLine("Downloaded " + (state.percentage * 100).toFixed(2) + "%" + (state.time.remaining ? " (ETA " + state.time.remaining.toFixed(1) + "s)" : ""));
+			downloadFileInteractive(url, "Serve-D Download", () => {
+				installationLog.appendLine("Aborted download");
+				fs.unlink(outputPath, function () { });
 			}).pipe(fs.createWriteStream(outputPath)).on("finish", () => {
-				output.appendLine("Extracting " + fileName);
+				installationLog.appendLine("Extracting " + fileName);
 				if (ext == ".zip") {
 					try {
 						new AdmZip(outputPath).extractAllTo(outputFolder);
 						try {
-							output.appendLine("Deleting " + outputPath);
+							installationLog.appendLine("Deleting " + outputPath);
 							fs.unlink(outputPath, (err) => {
 								if (err)
-									output.appendLine("Failed to delete " + outputPath);
+									installationLog.appendLine("Failed to delete " + outputPath);
 							});
 						}
 						catch (e) {
@@ -192,7 +221,7 @@ export function installServeD(env: any, done: Function) {
 				}
 				else if (ext == ".tar.xz" || ext == ".tar.gz") {
 					var mod = ext == ".tar.xz" ? "J" : "z";
-					output.appendLine("> tar xvf" + mod + " " + fileName);
+					installationLog.appendLine("> tar xvf" + mod + " " + fileName);
 					ChildProcess.spawn("tar", ["xvf" + mod, fileName], {
 						cwd: outputFolder
 					}).on("exit", function (code) {
@@ -200,10 +229,10 @@ export function installServeD(env: any, done: Function) {
 							return cb(code);
 						}
 						try {
-							output.appendLine("Deleting " + outputPath);
+							installationLog.appendLine("Deleting " + outputPath);
 							fs.unlink(outputPath, (err) => {
 								if (err)
-									output.appendLine("Failed to delete " + outputPath);
+									installationLog.appendLine("Failed to delete " + outputPath);
 							});
 						}
 						catch (e) {
@@ -222,7 +251,7 @@ export function installServeD(env: any, done: Function) {
 			}
 			else {
 				config(null).update("servedPath", finalDestination, true);
-				output.appendLine("Finished installing into " + finalDestination);
+				installationLog.appendLine("Finished installing into " + finalDestination);
 				done(true);
 			}
 		});
