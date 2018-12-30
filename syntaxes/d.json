@@ -2101,7 +2101,7 @@
           "name": "string.wysiwyg-string.d",
           "patterns": [
             {
-              "include": "#wysiwyg-chars"
+              "include": "#wysiwyg-characters"
             }
           ]
         }
