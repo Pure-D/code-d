@@ -1812,6 +1812,9 @@
           },
           "patterns": [
             {
+              "include": "#comment"
+            },
+            {
               "include": "#expression"
             }
           ]
