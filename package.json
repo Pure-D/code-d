@@ -110,7 +110,7 @@
 			{
 				"language": "dscript",
 				"scopeName": "source.dscript",
-				"path": "./syntaxes/arsd.dscript.json"
+				"path": "./syntaxes/d.json"
 			},
 			{
 				"language": "dml",
