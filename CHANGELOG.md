@@ -1,7 +1,5 @@
 # 0.x.y
 
-* Implemented proper outline view and with that also breadcrumbs. See #201
-
 ## Invalid dub configurations and dependencies don't fatally crash serve-d anymore.
 
 You can now just fix your syntax mistakes and save the file again (or maybe twice for good measure) and it will magically just start working again!
@@ -25,6 +23,12 @@ New features include:
 * Auto-Completion + Calltips of D code inside diet + HTML Tag & Attribute Name & Value completions
 * Proper language config (autoclosing quotes)
 
+## New Syntax Highlighting
+
+If you were often frustrated with how random the old syntax highlighting was, it has now been made a lot more consistent and less buggy in general.
+
+Check out a comparision on https://twitter.com/WebFreak001/status/1079446928256053249
+
 ## Implement interface improvements
 
 The implement interface code action will no longer insert duplicate code and a lot more tests have been added to ensure correctness.
@@ -41,13 +45,15 @@ Additionally autocompletion no longer shows duplicates of the same symbols. The 
 
 You can revert this back to a slightly modified version using `"d.completeNoDupes": false`, symbols with same name, kind and definition are always merged now however.
 
-# Convert between dub JSON and SDL
+## Convert between dub JSON and SDL
 
 You can now convert dub package recipes between JSON/SDL using a click on the convert button in the toolbar or by running the "Convert between dub.json/dub.sdl" command while having the recipe open. You can still undo after conversion if it missed something or you noticed you had comments it removed.
 
 ## Other Things
 
 The server now tries to restart more. It now only doesn't restart after 20 restart fails in one minute instead of 5 fails in 3 minutes.
+
+Implemented proper outline view and with that also breadcrumbs. See [#201](https://github.com/Pure-D/code-d/issues/201)
 
 Fixed an SDL parsing issue with comments not consuming line endings. Comments won't affect parsing of the next line anymore.
 
