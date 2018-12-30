@@ -90,7 +90,7 @@ function parseStringLiteral(sdl: string) {
 	else return null;
 }
 
-var lineComment = /^(?:#|\/\/|--).*?\n/;
+var lineComment = /^(?:#|\/\/|--).*?(?=\n|$)/;
 var blockComment = /^\/\*[\s\S]*?\*\//;
 var whitespace = /^[^\S\n]+/;
 var escapedNewline = /^\\\n/;
