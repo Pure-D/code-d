@@ -11,7 +11,7 @@
 	"icon": "images/dlogo-square.png",
 	"license": "MIT",
 	"engines": {
-		"vscode": "^1.26.0"
+		"vscode": "^1.29.0"
 	},
 	"categories": [
 		"Programming Languages",
@@ -46,6 +46,18 @@
 		"onCommand:code-d.convertDubRecipe"
 	],
 	"main": "./out/src/extension",
+	"keywords": [
+		"d",
+		"dlang",
+		"d language",
+		"code-d",
+		"serve-d",
+		"d programming"
+	],
+	"bugs": {
+		"email": "code-d@webfreak.org",
+		"url": "https://github.com/Pure-D/code-d/issues"
+	},
 	"contributes": {
 		"languages": [
 			{
@@ -55,7 +67,20 @@
 					".di"
 				],
 				"aliases": [
-					"D"
+					"D",
+					"Dlang"
+				],
+				"firstLine": "^#!.*(dub|rdmd)",
+				"configuration": "./lang-configs/d.json"
+			},
+			{
+				"id": "dpp",
+				"extensions": [
+					".dpp",
+					".d++"
+				],
+				"aliases": [
+					"D++"
 				],
 				"configuration": "./lang-configs/d.json"
 			},
@@ -68,7 +93,7 @@
 					".dscript",
 					".ds"
 				],
-				"configuration": "./lang-configs/d.json"
+				"configuration": "./lang-configs/general.json"
 			},
 			{
 				"id": "dml",
@@ -78,17 +103,18 @@
 				"extensions": [
 					".dml"
 				],
-				"configuration": "./lang-configs/d.json"
+				"configuration": "./lang-configs/general.json"
 			},
 			{
 				"id": "sdl",
 				"aliases": [
+					"SDL",
 					"Simple Declarative Language"
 				],
 				"extensions": [
 					".sdl"
 				],
-				"configuration": "./lang-configs/d.json"
+				"configuration": "./lang-configs/general.json"
 			},
 			{
 				"id": "diet",
