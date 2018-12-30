@@ -26,9 +26,6 @@
           "include": "#base-type"
         },
         {
-          "include": "#defined-type"
-        },
-        {
           "include": "#type-ctor"
         },
         {
@@ -39,16 +36,8 @@
     "base-type": {
       "patterns": [
         {
-          "match": "(auto|bool|byte|ubyte|short|ushort|int|uint|long|ulong|char|wchar|dchar|float|double|real|ifloat|idouble|ireal|cfloat|cdouble|creal|void)\\**\\b",
+          "match": "\\b(auto|bool|byte|ubyte|short|ushort|int|uint|long|ulong|char|wchar|dchar|float|double|real|ifloat|idouble|ireal|cfloat|cdouble|creal|void)\\b",
           "name": "storage.type.basic-type.d"
-        }
-      ]
-    },
-    "defined-type": {
-      "patterns": [
-        {
-          "match": "(wstring|dstring|string|size_t|ptrdiff_t)\\**\\b",
-          "name": "storage.type.defined.d"
         }
       ]
     },
@@ -104,14 +93,52 @@
         }
       ]
     },
+    "nesting-expression": {
+      "patterns": [
+        {
+          "begin": "\\(",
+          "end": "\\)",
+          "patterns": [
+            {
+              "include": "#nesting-expression"
+            }
+          ]
+        },
+        {
+          "begin": "\\[",
+          "end": "\\]",
+          "patterns": [
+            {
+              "include": "#nesting-expression"
+            }
+          ]
+        },
+        {
+          "begin": "{",
+          "end": "}",
+          "patterns": [
+            {
+              "include": "#nesting-expression"
+            }
+          ]
+        },
+        {
+          "include": "#expression"
+        }
+      ]
+    },
     "expression": {
       "patterns": [
         {
           "include": "#index-expression"
         },
         {
-          "include": "#lambda"
-        },
+          "include": "#expression-no-index"
+        }
+      ]
+    },
+    "expression-no-index": {
+      "patterns": [
         {
           "include": "#function-literal"
         },
@@ -253,7 +280,7 @@
     "arithmetic-expression": {
       "patterns": [
         {
-          "match": "\\^\\^|\\+\\+|--|\\+|-|~|\\*|/|%",
+          "match": "\\^\\^|\\+\\+|--|(?<!/)\\+(?!/)|-|~|(?<!/)\\*(?!/)|(?<![+*])/(?![+*])|%",
           "name": "keyword.operator.add.d"
         }
       ]
@@ -261,7 +288,7 @@
     "new-expression": {
       "patterns": [
         {
-          "match": "new\\s+",
+          "match": "\\bnew\\s+",
           "name": "keyword.other.new.d"
         }
       ]
@@ -269,7 +296,7 @@
     "delete-expression": {
       "patterns": [
         {
-          "match": "delete\\s+",
+          "match": "\\bdelete\\s+",
           "name": "keyword.other.delete.d"
         }
       ]
@@ -277,7 +304,7 @@
     "cast-expression": {
       "patterns": [
         {
-          "begin": "cast\\s*\\(",
+          "begin": "\\bcast\\s*\\(",
           "beginCaptures": {
             "0": {
               "name": "support.type.cast.begin.d"
@@ -300,9 +327,6 @@
     "index-expression": {
       "patterns": [
         {
-          "include": "#postfix-expression"
-        },
-        {
           "begin": "\\[",
           "end": "\\]",
           "patterns": [
@@ -311,10 +335,7 @@
               "name": "keyword.operator.slice.d"
             },
             {
-              "include": "#type"
-            },
-            {
-              "include": "#expression"
+              "include": "#expression-no-index"
             }
           ]
         }
@@ -323,23 +344,42 @@
     "function-literal": {
       "patterns": [
         {
-          "match": "(function|delegate)\\b",
+          "include": "#lambda-expression"
+        },
+        {
+          "match": "\\b(function|delegate)\\b",
           "name": "keyword.other.function-literal.d"
         }
       ]
     },
-    "lambda": {
+    "lambda-expression": {
       "patterns": [
         {
-          "match": "(?<=\\))\\s*=>",
-          "name": "entity.name.function.lambda.d"
+          "begin": "(([_\\w][_\\d\\w]*)+)\\s*(=>)",
+          "end": "(?=[\\);,\\]}])",
+          "beginCaptures": {
+            "1": {
+              "name": "variable.parameter.d"
+            },
+            "2": {
+              "name": "meta.lexical.token.symbolic.d"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#comment"
+            },
+            {
+              "include": "#expression"
+            }
+          ]
         }
       ]
     },
     "assert-expression": {
       "patterns": [
         {
-          "begin": "assert\\s*\\(",
+          "begin": "\\bassert\\s*\\(",
           "beginCaptures": {
             "0": {
               "name": "keyword.other.assert.begin.d"
@@ -353,7 +393,13 @@
           },
           "patterns": [
             {
-              "include": "#expression"
+              "include": "#comment"
+            },
+            {
+              "include": "#nesting-expression"
+            },
+            {
+              "include": "#comma"
             }
           ]
         }
@@ -362,7 +408,7 @@
     "mixin-expression": {
       "patterns": [
         {
-          "begin": "mixin\\s*\\(",
+          "begin": "\\bmixin\\s*\\(",
           "beginCaptures": {
             "0": {
               "name": "keyword.other.mixin.begin.d"
@@ -376,7 +422,13 @@
           },
           "patterns": [
             {
+              "include": "#comment"
+            },
+            {
               "include": "#expression"
+            },
+            {
+              "include": "#comma"
             }
           ]
         }
@@ -385,9 +437,12 @@
     "import-expression": {
       "patterns": [
         {
-          "begin": "import\\s*(?=\\()",
+          "begin": "\\b(import)\\s*(\\()",
           "beginCaptures": {
-            "0": {
+            "1": {
+              "name": "keyword.other.import.d"
+            },
+            "2": {
               "name": "keyword.other.import.begin.d"
             }
           },
@@ -399,7 +454,13 @@
           },
           "patterns": [
             {
-              "include": "#expression"
+              "include": "#comment"
+            },
+            {
+              "include": "#nesting-expression"
+            },
+            {
+              "include": "#comma"
             }
           ]
         }
@@ -408,7 +469,7 @@
     "typeid-expression": {
       "patterns": [
         {
-          "match": "typeid\\s*(?=\\()",
+          "match": "\\btypeid\\s*(?=\\()",
           "name": "keyword.other.typeid.d"
         }
       ]
@@ -416,7 +477,7 @@
     "type-specialization": {
       "patterns": [
         {
-          "match": "(struct|union|class|interface|enum|function|delegate|super|const|immutable|inout|shared|return|__parameters)\\b",
+          "match": "\\b(struct|union|class|interface|enum|function|delegate|super|const|immutable|inout|shared|return|__parameters)\\b",
           "name": "keyword.other.storage.type-specialization.d"
         }
       ]
@@ -424,7 +485,7 @@
     "traits-expression": {
       "patterns": [
         {
-          "begin": "__traits\\s*\\(",
+          "begin": "\\b__traits\\s*\\(",
           "beginCaptures": {
             "0": {
               "name": "keyword.other.traits.begin.d"
@@ -481,7 +542,7 @@
     "special-keyword": {
       "patterns": [
         {
-          "match": "(__FILE__|__MODULE__|__LINE__|__FUNCTION__|__PRETTY_FUNCTION__)\\b",
+          "match": "\\b(__FILE__|__MODULE__|__LINE__|__FUNCTION__|__PRETTY_FUNCTION__)\\b",
           "name": "constant.language.special-keyword.d"
         }
       ]
@@ -503,9 +564,6 @@
         },
         {
           "include": "#labeled-statement"
-        },
-        {
-          "include": "#declaration-statement"
         },
         {
           "include": "#if-statement"
@@ -532,6 +590,9 @@
           "include": "#case-statement"
         },
         {
+          "include": "#default-statement"
+        },
+        {
           "include": "#continue-statement"
         },
         {
@@ -551,6 +612,9 @@
         },
         {
           "include": "#try-statement"
+        },
+        {
+          "include": "#catches"
         },
         {
           "include": "#scope-guard-statement"
@@ -581,13 +645,16 @@
         },
         {
           "include": "#unit-test"
+        },
+        {
+          "include": "#declaration-statement"
         }
       ]
     },
     "labeled-statement": {
       "patterns": [
         {
-          "match": "[a-zA-Z_][a-zA-Z_0-9]*:",
+          "match": "\\b(?!abstract|alias|align|asm|assert|auto|body|bool|break|byte|case|cast|catch|cdouble|cent|cfloat|char|class|const|continue|creal|dchar|debug|default|delegate|delete|deprecated|do|double|else|enum|export|extern|false|final|finally|float|for|foreach|foreach_reverse|function|goto|idouble|if|ifloat|immutable|import|in|inout|int|interface|invariant|ireal|is|lazy|long|macro|mixin|module|new|nothrow|null|out|override|package|pragma|private|protected|public|pure|real|ref|return|scope|shared|short|static|struct|super|switch|synchronized|template|this|throw|true|try|typedef|typeid|typeof|ubyte|ucent|uint|ulong|union|unittest|ushort|version|void|volatile|wchar|while|with|__FILE__|__MODULE__|__LINE__|__FUNCTION__|__PRETTY_FUNCTION__|__gshared|__traits|__vector|__parameters)[a-zA-Z_][a-zA-Z_0-9]*\\s*:",
           "name": "entity.name.d"
         }
       ]
@@ -602,11 +669,11 @@
     "if-statement": {
       "patterns": [
         {
-          "match": "if\\s*(?=\\()",
+          "match": "\\bif\\s*(?=\\()",
           "name": "keyword.control.if.d"
         },
         {
-          "match": "else",
+          "match": "\\belse\\b\\s*",
           "name": "keyword.control.else.d"
         }
       ]
@@ -614,7 +681,7 @@
     "while-statement": {
       "patterns": [
         {
-          "match": "while\\s*(?=\\()",
+          "match": "\\bwhile\\s*(?=\\()",
           "name": "keyword.control.while.d"
         }
       ]
@@ -622,7 +689,7 @@
     "do-statement": {
       "patterns": [
         {
-          "match": "do\\s+",
+          "match": "\\bdo\\b",
           "name": "keyword.control.do.d"
         }
       ]
@@ -630,7 +697,7 @@
     "for-statement": {
       "patterns": [
         {
-          "match": "for\\s*(?=\\()",
+          "match": "\\bfor\\s*(?=\\()",
           "name": "keyword.control.for.d"
         }
       ]
@@ -638,7 +705,7 @@
     "foreach-statement": {
       "patterns": [
         {
-          "match": "foreach\\s*(?=\\()",
+          "match": "\\bforeach\\s*(?=\\()",
           "name": "keyword.control.foreach.d"
         }
       ]
@@ -646,7 +713,7 @@
     "switch-statement": {
       "patterns": [
         {
-          "match": "switch\\s*(?=\\()",
+          "match": "\\bswitch\\s*(?=\\()",
           "name": "keyword.control.switch.d"
         }
       ]
@@ -654,7 +721,7 @@
     "case-statement": {
       "patterns": [
         {
-          "match": "case\\s+",
+          "match": "\\bcase\\b",
           "name": "keyword.control.case.range.d"
         },
         {
@@ -666,7 +733,7 @@
     "case-range-statement": {
       "patterns": [
         {
-          "match": "case\\s+",
+          "match": "\\bcase\\b",
           "name": "keyword.control.case.range.d"
         },
         {
@@ -674,7 +741,7 @@
           "name": "keyword.control.case.colon.d"
         },
         {
-          "match": "\\.\\.\\s*case\\s+",
+          "match": "\\.\\.\\s*case\\b",
           "name": "keyword.control.case.range-2.d"
         }
       ]
@@ -682,15 +749,15 @@
     "default-statement": {
       "patterns": [
         {
-          "match": "default\\s+:\\s+",
-          "name": "keyword.control.default.d"
+          "match": "\\bdefault\\s*:",
+          "name": "keyword.control.case.default.d"
         }
       ]
     },
     "final-switch-statement": {
       "patterns": [
         {
-          "match": "final\\s+switch\\s*(?=\\()",
+          "match": "\\bfinal\\s+switch\\s*(?=\\()",
           "name": "keyword.control.final.switch.d"
         }
       ]
@@ -698,7 +765,7 @@
     "continue-statement": {
       "patterns": [
         {
-          "match": "continue",
+          "match": "\\bcontinue\\b",
           "name": "keyword.control.continue.d"
         }
       ]
@@ -706,7 +773,7 @@
     "break-statement": {
       "patterns": [
         {
-          "match": "break",
+          "match": "\\bbreak\\b",
           "name": "keyword.control.break.d"
         }
       ]
@@ -714,7 +781,7 @@
     "return-statement": {
       "patterns": [
         {
-          "match": "return",
+          "match": "\\breturn\\b",
           "name": "keyword.control.return.d"
         }
       ]
@@ -722,15 +789,15 @@
     "goto-statement": {
       "patterns": [
         {
-          "match": "goto\\s+default",
+          "match": "\\bgoto\\s+default\\b",
           "name": "keyword.control.goto.d"
         },
         {
-          "match": "goto\\s+case\\s+",
+          "match": "\\bgoto\\s+case\\b",
           "name": "keyword.control.goto.d"
         },
         {
-          "match": "goto\\s+",
+          "match": "\\bgoto\\b",
           "name": "keyword.control.goto.d"
         }
       ]
@@ -738,7 +805,7 @@
     "with-statement": {
       "patterns": [
         {
-          "match": "with\\s*(?=\\()",
+          "match": "\\bwith\\s*(?=\\()",
           "name": "keyword.control.with.d"
         }
       ]
@@ -746,7 +813,7 @@
     "synchronized-statement": {
       "patterns": [
         {
-          "match": "synchronized\\s*(?=\\()",
+          "match": "\\bsynchronized\\s*(?=\\()",
           "name": "keyword.other.synchronized.d"
         }
       ]
@@ -754,7 +821,7 @@
     "try-statement": {
       "patterns": [
         {
-          "match": "try\\s+",
+          "match": "\\btry\\b",
           "name": "keyword.control.try.d"
         }
       ]
@@ -762,25 +829,14 @@
     "catches": {
       "patterns": [
         {
-          "include": "#last-catch"
-        },
-        {
           "include": "#catch"
-        }
-      ]
-    },
-    "last-catch": {
-      "patterns": [
-        {
-          "match": "catch\\s*(?=\\()",
-          "name": "keyword.control.catch.d"
         }
       ]
     },
     "catch": {
       "patterns": [
         {
-          "match": "catch\\s*(?=\\()",
+          "match": "\\bcatch\\s*(?=\\()",
           "name": "keyword.control.catch.d"
         }
       ]
@@ -788,7 +844,7 @@
     "finally-statement": {
       "patterns": [
         {
-          "match": "finally\\s+",
+          "match": "\\bfinally\\b",
           "name": "keyword.control.throw.d"
         }
       ]
@@ -796,7 +852,7 @@
     "throw-statement": {
       "patterns": [
         {
-          "match": "throw\\s+",
+          "match": "\\bthrow\\b",
           "name": "keyword.control.throw.d"
         }
       ]
@@ -804,7 +860,7 @@
     "scope-guard-statement": {
       "patterns": [
         {
-          "match": "scope\\s*\\((exit|success|failure)\\)\\s+",
+          "match": "\\bscope\\s*\\((exit|success|failure)\\)",
           "name": "keyword.control.scope.d"
         }
       ]
@@ -812,7 +868,7 @@
     "asm-statement": {
       "patterns": [
         {
-          "begin": "asm\\s*\\{",
+          "begin": "\\basm\\s*\\{",
           "end": "\\}",
           "beginCaptures": {
             "0": {
@@ -843,7 +899,7 @@
     "mixin-statement": {
       "patterns": [
         {
-          "begin": "mixin\\s*\\(",
+          "begin": "\\bmixin\\s*\\(",
           "beginCaptures": {
             "0": {
               "name": "keyword.control.mixin.begin.d"
@@ -857,7 +913,13 @@
           },
           "patterns": [
             {
-              "include": "#expression"
+              "include": "#comment"
+            },
+            {
+              "include": "#nesting-expression"
+            },
+            {
+              "include": "#comma"
             }
           ]
         }
@@ -866,7 +928,7 @@
     "deprecated-statement": {
       "patterns": [
         {
-          "begin": "deprecated\\s*\\(",
+          "begin": "\\bdeprecated\\s*\\(",
           "beginCaptures": {
             "0": {
               "name": "keyword.other.deprecated.begin.d"
@@ -880,12 +942,18 @@
           },
           "patterns": [
             {
-              "include": "#string-literal"
+              "include": "#comment"
+            },
+            {
+              "include": "#nesting-expression"
+            },
+            {
+              "include": "#comma"
             }
           ]
         },
         {
-          "match": "deprecated\\s*[^\\(]",
+          "match": "\\bdeprecated\\s*(?!\\()",
           "name": "keyword.other.deprecated.plain.d"
         }
       ]
@@ -896,15 +964,15 @@
           "include": "#comment"
         },
         {
-          "match": "align|even|naked|db|ds|di|dl|df|dd|de|:",
+          "match": "\\b(align|even|naked|db|ds|di|dl|df|dd|de)\\b|:",
           "name": "keyword.asm-instruction.d"
         },
         {
-          "match": "__LOCAL_SIZE",
+          "match": "\\b__LOCAL_SIZE\\b",
           "name": "constant.language.assembly.d"
         },
         {
-          "match": "offsetof|seg",
+          "match": "\\b(offsetof|seg)\\b",
           "name": "support.type.assembly.d"
         },
         {
@@ -952,7 +1020,7 @@
     "asm-type-prefix": {
       "patterns": [
         {
-          "match": "(near\\s+ptr)|(far\\s+ptr)|(byte\\s+ptr)|(short\\s+ptr)|(int\\s+ptr)|(word\\s+ptr)|(dword\\s+ptr)|(qword\\s+ptr)|(float\\s+ptr)|(double\\s+ptr)|(real\\s+ptr)",
+          "match": "\\b((near\\s+ptr)|(far\\s+ptr)|(byte\\s+ptr)|(short\\s+ptr)|(int\\s+ptr)|(word\\s+ptr)|(dword\\s+ptr)|(qword\\s+ptr)|(float\\s+ptr)|(double\\s+ptr)|(real\\s+ptr))\\b",
           "name": "support.type.asm-type-prefix.d"
         }
       ]
@@ -960,7 +1028,7 @@
     "register": {
       "patterns": [
         {
-          "match": "XMM0|XMM1|XMM2|XMM3|XMM4|XMM5|XMM6|XMM7|MM0|MM1|MM2|MM3|MM4|MM5|MM6|MM7|ST\\(0\\)|ST\\(1\\)|ST\\(2\\)|ST\\(3\\)|ST\\(4\\)|ST\\(5\\)|ST\\(6\\)|ST\\(7\\)|ST|TR1|TR2|TR3|TR4|TR5|TR6|TR7|DR0|DR1|DR2|DR3|DR4|DR5|DR6|DR7|CR0|CR2|CR3|CR4|EAX|EBX|ECX|EDX|EBP|ESP|EDI|ESI|AL|AH|AX|BL|BH|BX|CL|CH|CX|DL|DH|DX|BP|SP|DI|SI|ES|CS|SS|DS|GS|FS",
+          "match": "\\b(XMM0|XMM1|XMM2|XMM3|XMM4|XMM5|XMM6|XMM7|MM0|MM1|MM2|MM3|MM4|MM5|MM6|MM7|ST\\(0\\)|ST\\(1\\)|ST\\(2\\)|ST\\(3\\)|ST\\(4\\)|ST\\(5\\)|ST\\(6\\)|ST\\(7\\)|ST|TR1|TR2|TR3|TR4|TR5|TR6|TR7|DR0|DR1|DR2|DR3|DR4|DR5|DR6|DR7|CR0|CR2|CR3|CR4|EAX|EBX|ECX|EDX|EBP|ESP|EDI|ESI|AL|AH|AX|BL|BH|BX|CL|CH|CX|DL|DH|DX|BP|SP|DI|SI|ES|CS|SS|DS|GS|FS)\\b",
           "name": "storage.type.assembly.register.d"
         }
       ]
@@ -968,7 +1036,7 @@
     "register-64": {
       "patterns": [
         {
-          "match": "RAX|RBX|RCX|RDX|BPL|RBP|SPL|RSP|DIL|RDI|SIL|RSI|R8B|R8W|R8D|R8|R9B|R9W|R9D|R9|R10B|R10W|R10D|R10|R11B|R11W|R11D|R11|R12B|R12W|R12D|R12|R13B|R13W|R13D|R13|R14B|R14W|R14D|R14|R15B|R15W|R15D|R15|XMM8|XMM9|XMM10|XMM11|XMM12|XMM13|XMM14|XMM15|YMM0|YMM1|YMM2|YMM3|YMM4|YMM5|YMM6|YMM7|YMM8|YMM9|YMM10|YMM11|YMM12|YMM13|YMM14|YMM15",
+          "match": "\\b(RAX|RBX|RCX|RDX|BPL|RBP|SPL|RSP|DIL|RDI|SIL|RSI|R8B|R8W|R8D|R8|R9B|R9W|R9D|R9|R10B|R10W|R10D|R10|R11B|R11W|R11D|R11|R12B|R12W|R12D|R12|R13B|R13W|R13D|R13|R14B|R14W|R14D|R14|R15B|R15W|R15D|R15|XMM8|XMM9|XMM10|XMM11|XMM12|XMM13|XMM14|XMM15|YMM0|YMM1|YMM2|YMM3|YMM4|YMM5|YMM6|YMM7|YMM8|YMM9|YMM10|YMM11|YMM12|YMM13|YMM14|YMM15)\\b",
           "name": "storage.type.assembly.register-64.d"
         }
       ]
@@ -1001,22 +1069,37 @@
     "alias-declaration": {
       "patterns": [
         {
-          "match": "(alias)\\s+(.+)(?=;)",
-          "captures": {
-            "1": {
+          "begin": "\\b(alias)\\s*",
+          "beginCaptures": {
+            "0": {
               "name": "keyword.other.alias.d"
-            },
-            "2": {
+            }
+          },
+          "end": ";",
+          "endCaptures": {
+            "0": {
               "name": "support.type.alias.d"
             }
-          }
+          },
+          "patterns": [
+            {
+              "include": "#type"
+            },
+            {
+              "match": "=",
+              "name": "keyword.operator.equal.alias.d"
+            },
+            {
+              "include": "#expression"
+            }
+          ]
         }
       ]
     },
     "storage-class": {
       "patterns": [
         {
-          "match": "(deprecated|enum|static|extern|abstract|final|override|synchronized|auto|scope|const|immutable|inout|shared|__gshared|nothrow|pure|ref)\\s+",
+          "match": "\\b(deprecated|enum|static|extern|abstract|final|override|synchronized|auto|scope|const|immutable|inout|shared|__gshared|nothrow|pure|ref)\\b",
           "name": "storage.class.d"
         },
         {
@@ -1033,7 +1116,7 @@
     "void-initializer": {
       "patterns": [
         {
-          "match": "void",
+          "match": "\\bvoid\\b",
           "name": "support.type.void.d"
         }
       ]
@@ -1054,7 +1137,7 @@
     "function-prelude": {
       "patterns": [
         {
-          "match": "[_\\w][_\\d\\w]*\\s*(?=\\()",
+          "match": "((\\.\\s*)?[_\\w][_\\d\\w]*)(\\s*\\.\\s*[_\\w][_\\d\\w]*)*\\s*(?=\\()",
           "name": "entity.name.function.d"
         }
       ]
@@ -1102,6 +1185,9 @@
           "name": "keyword.operator.comma.d"
         },
         {
+          "include": "#comment"
+        },
+        {
           "include": "#parameter"
         }
       ]
@@ -1115,15 +1201,18 @@
           "include": "#type"
         },
         {
+          "include": "#function-literal"
+        },
+        {
           "match": "\\.\\.\\.",
           "name": "support.type.tuple.d"
         },
         {
-          "match": "[R-Z]([0-9])?",
+          "match": "\\b[R-Z]([0-9])?\\b",
           "name": "variable.parameter.d"
         },
         {
-          "match": "(\\.?[_\\w][_\\d\\w]*)+",
+          "match": "\\b(\\.?[_\\w][_\\d\\w]*)+\\b",
           "name": "variable.parameter.d"
         },
         {
@@ -1134,7 +1223,7 @@
     "in-out": {
       "patterns": [
         {
-          "match": "(auto|final|in|out|lazy|ref|scope)\\s+",
+          "match": "\\b(auto|final|in|out|lazy|ref|scope)\\b",
           "name": "storage.type.modifier.inout.d"
         }
       ]
@@ -1142,7 +1231,7 @@
     "function-attribute": {
       "patterns": [
         {
-          "match": "(nothrow|pure)\\s+",
+          "match": "\\b(nothrow|pure)\\b",
           "name": "storage.type.modifier.function-attribute.d"
         },
         {
@@ -1153,7 +1242,7 @@
     "member-function-attribute": {
       "patterns": [
         {
-          "match": "(const|immutable|inout|shared)\\s+",
+          "match": "\\b(const|immutable|inout|shared)\\b",
           "name": "storage.type.modifier.member-function-attribute"
         }
       ]
@@ -1177,7 +1266,7 @@
     "in-statement": {
       "patterns": [
         {
-          "match": "in\\s+",
+          "match": "\\bin\\b",
           "name": "#keyword.control.in.d"
         }
       ]
@@ -1185,7 +1274,7 @@
     "out-statement": {
       "patterns": [
         {
-          "begin": "out\\s*\\(",
+          "begin": "\\bout\\s*\\(",
           "beginCaptures": {
             "0": {
               "name": "keyword.control.out.begin.d"
@@ -1204,7 +1293,7 @@
           ]
         },
         {
-          "match": "out\\b",
+          "match": "\\bout\\b",
           "name": "keyword.control.out.d"
         }
       ]
@@ -1212,7 +1301,7 @@
     "body-statement": {
       "patterns": [
         {
-          "match": "body\\b",
+          "match": "\\bbody\\b",
           "name": "keyword.control.body.d"
         }
       ]
@@ -1220,7 +1309,7 @@
     "constructor": {
       "patterns": [
         {
-          "match": "this\\b",
+          "match": "\\bthis\\b",
           "name": "entity.name.function.constructor.d"
         }
       ]
@@ -1228,23 +1317,23 @@
     "destructor": {
       "patterns": [
         {
-          "match": "~this\\s*\\(\\s*\\)",
-          "name": "#entity.name.class.destructor.d"
+          "match": "\\b~this\\s*\\(\\s*\\)",
+          "name": "entity.name.class.destructor.d"
         }
       ]
     },
     "postblit": {
       "patterns": [
         {
-          "match": "this\\s*\\(\\s*this\\s*\\)\\s",
-          "name": "#entity.name.class.postblit.d"
+          "match": "\\bthis\\s*\\(\\s*this\\s*\\)\\s",
+          "name": "entity.name.class.postblit.d"
         }
       ]
     },
     "invariant": {
       "patterns": [
         {
-          "match": "invariant\\s*\\(\\s*\\)",
+          "match": "\\binvariant\\s*\\(\\s*\\)",
           "name": "entity.name.class.invariant.d"
         }
       ]
@@ -1252,7 +1341,7 @@
     "unit-test": {
       "patterns": [
         {
-          "match": "unittest\\b",
+          "match": "\\bunittest\\b",
           "name": "entity.name.function.unit-test.d"
         }
       ]
@@ -1260,7 +1349,7 @@
     "shared-static-constructor": {
       "patterns": [
         {
-          "match": "(shared\\s+)?static\\s+this\\s*\\(\\s*\\)",
+          "match": "\\b(shared\\s+)?static\\s+this\\s*\\(\\s*\\)",
           "name": "entity.name.class.constructor.shared-static.d"
         },
         {
@@ -1271,7 +1360,7 @@
     "shared-static-destructor": {
       "patterns": [
         {
-          "match": "(shared\\s+)?static\\s+~\\s*this\\s*\\(\\s*\\)",
+          "match": "\\b(shared\\s+)?static\\s+~this\\s*\\(\\s*\\)",
           "name": "entity.name.class.destructor.static.d"
         }
       ]
@@ -1291,6 +1380,9 @@
           "include": "#union-declaration"
         },
         {
+          "include": "#mixin-template-declaration"
+        },
+        {
           "include": "#template-declaration"
         }
       ]
@@ -1298,10 +1390,10 @@
     "class-declaration": {
       "patterns": [
         {
-          "match": "(class)\\s+([A-Z][\\w_\\d]*)",
+          "match": "\\b(class)(?:\\s+([A-Za-z_][\\w_\\d]*))?\\b",
           "captures": {
             "1": {
-              "name": "keyword.other.class.d"
+              "name": "storage.type.class.d"
             },
             "2": {
               "name": "entity.name.class.d"
@@ -1319,40 +1411,101 @@
     "interface-declaration": {
       "patterns": [
         {
-          "match": "interface\\b",
-          "name": "keyword.other.class.interface.d"
+          "match": "\\b(interface)(?:\\s+([A-Za-z_][\\w_\\d]*))?\\b",
+          "captures": {
+            "1": {
+              "name": "storage.type.interface.d"
+            },
+            "2": {
+              "name": "entity.name.type.interface.d"
+            }
+          }
         }
       ]
     },
     "struct-declaration": {
       "patterns": [
         {
-          "match": "struct\\b",
-          "name": "storage.type.struct.d"
+          "match": "\\b(struct)(?:\\s+([A-Za-z_][\\w_\\d]*))?\\b",
+          "captures": {
+            "1": {
+              "name": "storage.type.struct.d"
+            },
+            "2": {
+              "name": "entity.name.type.struct.d"
+            }
+          }
         }
       ]
     },
     "union-declaration": {
       "patterns": [
         {
-          "match": "union\\b",
-          "name": "storage.type.union.d"
+          "match": "\\b(union)(?:\\s+([A-Za-z_][\\w_\\d]*))?\\b",
+          "captures": {
+            "1": {
+              "name": "storage.type.union.d"
+            },
+            "2": {
+              "name": "entity.name.type.union.d"
+            }
+          }
         }
       ]
     },
     "enum-declaration": {
       "patterns": [
         {
-          "match": "enum\\b",
-          "name": "storage.type.enum.d"
+          "match": "\\b(enum)(?:\\s+([A-Za-z_][\\w_\\d]*))?\\b",
+          "captures": {
+            "1": {
+              "name": "storage.type.enum.d"
+            },
+            "2": {
+              "name": "entity.name.type.enum.d"
+            }
+          }
+        },
+        {
+          "match": "\\b(enum)\\b\\s+([A-Za-z_][\\w_\\d]*)\\s*(?=;|=)",
+          "captures": {
+            "1": {
+              "name": "storage.type.enum.d"
+            },
+            "2": {
+              "name": "entity.name.type.enum.d"
+            }
+          }
         }
       ]
     },
     "template-declaration": {
       "patterns": [
         {
-          "match": "template\\b",
-          "name": "support.class.template.d"
+          "match": "\\b(template)(?:\\s+([A-Za-z_][\\w_\\d]*))?\\b",
+          "captures": {
+            "1": {
+              "name": "storage.type.template.d"
+            },
+            "2": {
+              "name": "entity.name.type.template.d"
+            }
+          }
+        }
+      ]
+    },
+    "mixin-template-declaration": {
+      "patterns": [
+        {
+          "match": "\\b(mixin\\s*template)(?:\\s+([A-Za-z_][\\w_\\d]*))?\\b",
+          "captures": {
+            "1": {
+              "name": "storage.type.mixintemplate.d"
+            },
+            "2": {
+              "name": "entity.name.type.mixintemplate.d"
+            }
+          }
         }
       ]
     },
@@ -1374,7 +1527,7 @@
           "include": "#pragma"
         },
         {
-          "match": "static|extern|abstract|final|override|synchronized|auto|scope|const|immutable|inout|shared|__gshared|nothrow|pure|ref",
+          "match": "\\b(static|extern|abstract|final|override|synchronized|auto|scope|const|immutable|inout|shared|__gshared|nothrow|pure|ref)\\b",
           "name": "entity.other.attribute-name.d"
         },
         {
@@ -1385,7 +1538,7 @@
     "linkage-attribute": {
       "patterns": [
         {
-          "begin": "extern\\s*\\(\\s*C\\+\\+,",
+          "begin": "\\bextern\\s*\\(\\s*C\\+\\+\\s*,",
           "beginCaptures": {
             "0": {
               "name": "keyword.other.extern.cplusplus.begin.d"
@@ -1407,7 +1560,7 @@
           ]
         },
         {
-          "begin": "extern\\s*\\(",
+          "begin": "\\bextern\\s*\\(",
           "beginCaptures": {
             "0": {
               "name": "keyword.other.extern.begin.d"
@@ -1438,7 +1591,7 @@
     "align-attribute": {
       "patterns": [
         {
-          "begin": "align\\s*\\(",
+          "begin": "\\balign\\s*\\(",
           "end": "\\)",
           "name": "storage.modifier.align-attribute.d",
           "patterns": [
@@ -1448,7 +1601,7 @@
           ]
         },
         {
-          "match": "align\\s*[^\\(]",
+          "match": "\\balign\\s*(?!\\()",
           "name": "storage.modifier.align-attribute.d"
         }
       ]
@@ -1456,7 +1609,7 @@
     "protection-attribute": {
       "patterns": [
         {
-          "match": "(private|package|protected|public|export)\\b",
+          "match": "\\b(private|package|protected|public|export)\\b",
           "name": "keyword.other.protections.d"
         }
       ]
@@ -1464,7 +1617,7 @@
     "property": {
       "patterns": [
         {
-          "match": "@(property|safe|trusted|system|disable|nogc)",
+          "match": "@(property|safe|trusted|system|disable|nogc)\\b",
           "name": "entity.name.tag.property.d"
         },
         {
@@ -1475,11 +1628,11 @@
     "user-defined-attribute": {
       "patterns": [
         {
-          "match": "@([_\\w][_\\d\\w]*)",
+          "match": "@([_\\w][_\\d\\w]*)\\b",
           "name": "entity.name.tag.user-defined-property.d"
         },
         {
-          "begin": "@([_\\w][_\\d\\w]*)\\(",
+          "begin": "@([_\\w][_\\d\\w]*)?\\(",
           "end": "\\)",
           "name": "entity.name.tag.user-defined-property.d",
           "patterns": [
@@ -1493,11 +1646,11 @@
     "pragma": {
       "patterns": [
         {
-          "match": "pragma\\s*\\(\\s*[_\\w][_\\d\\w]*\\s*\\)",
+          "match": "\\bpragma\\s*\\(\\s*[_\\w][_\\d\\w]*\\s*\\)",
           "name": "keyword.other.pragma.d"
         },
         {
-          "begin": "pragma\\s*\\(\\s*[_\\w][_\\d\\w]*\\s*,",
+          "begin": "\\bpragma\\s*\\(\\s*[_\\w][_\\d\\w]*\\s*,",
           "end": "\\)",
           "name": "keyword.other.pragma.d",
           "patterns": [
@@ -1521,7 +1674,7 @@
           "include": "#declaration-block"
         },
         {
-          "match": "else\\b",
+          "match": "\\belse\\b",
           "name": "keyword.control.else.d"
         },
         {
@@ -1541,7 +1694,7 @@
           "include": "#no-scope-non-empty-statement"
         },
         {
-          "match": "else\\b",
+          "match": "\\belse\\b",
           "name": "keyword.control.else.d"
         }
       ]
@@ -1562,15 +1715,15 @@
     "version-condition": {
       "patterns": [
         {
-          "match": "version\\s*\\(\\s*unittest\\s*\\)",
+          "match": "\\bversion\\s*\\(\\s*unittest\\s*\\)",
           "name": "keyword.other.version.unittest.d"
         },
         {
-          "match": "version\\s*\\(\\s*assert\\s*\\)",
+          "match": "\\bversion\\s*\\(\\s*assert\\s*\\)",
           "name": "keyword.other.version.assert.d"
         },
         {
-          "begin": "version\\s*\\(",
+          "begin": "\\bversion\\s*\\(",
           "beginCaptures": {
             "0": {
               "name": "keyword.other.version.identifier.begin.d"
@@ -1599,7 +1752,7 @@
     "debug-condition": {
       "patterns": [
         {
-          "begin": "debug\\s*\\(",
+          "begin": "\\bdebug\\s*\\(",
           "beginCaptures": {
             "0": {
               "name": "keyword.other.debug.identifier.begin.d"
@@ -1621,7 +1774,7 @@
           ]
         },
         {
-          "match": "debug\\s*[^\\(\\s)]",
+          "match": "\\bdebug\\s*(?!\\()",
           "name": "keyword.other.debug.plain.d"
         }
       ]
@@ -1629,7 +1782,7 @@
     "version-specification": {
       "patterns": [
         {
-          "match": "version\\s*=",
+          "match": "\\bversion\\s*(?==)",
           "name": "keyword.other.version-specification.d"
         }
       ]
@@ -1637,7 +1790,7 @@
     "debug-specification": {
       "patterns": [
         {
-          "match": "debug\\s*=",
+          "match": "\\bdebug\\s*(?==)",
           "name": "keyword.other.debug-specification.d"
         }
       ]
@@ -1645,7 +1798,7 @@
     "static-if-condition": {
       "patterns": [
         {
-          "begin": "static\\s+if\\s*\\(",
+          "begin": "\\bstatic\\s+if\\s*(?=\\()",
           "beginCaptures": {
             "0": {
               "name": "keyword.other.static-if.begin.d"
@@ -1668,7 +1821,7 @@
     "static-assert": {
       "patterns": [
         {
-          "begin": "static\\s+assert\\s*\\(",
+          "begin": "\\bstatic\\s+assert\\s*(?=\\()",
           "beginCaptures": {
             "0": {
               "name": "keyword.other.static-assert.begin.d"
@@ -1698,40 +1851,65 @@
     "module-declaration": {
       "patterns": [
         {
-          "match": "(module)\\s+(.+)(?=;)",
-          "captures": {
+          "begin": "\\b(module)\\s+",
+          "end": ";",
+          "beginCaptures": {
             "1": {
               "name": "keyword.package.module.d"
-            },
-            "2": {
-              "name": "variable.parameter.module.d"
             }
-          }
+          },
+          "endCaptures": {
+            "0": {
+              "name": "keyword.operator.semi-colon.d"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#module-identifier"
+            },
+            {
+              "include": "#comment"
+            }
+          ]
         }
       ]
     },
     "import-declaration": {
       "patterns": [
         {
-          "match": "(static\\s+)?(import)\\s+(.+)(?=;)",
-          "captures": {
+          "begin": "\\b(static\\s+)?(import)\\s+(?!\\()",
+          "end": ";",
+          "beginCaptures": {
             "1": {
               "name": "keyword.package.import.d"
             },
             "2": {
               "name": "keyword.package.import.d"
-            },
-            "3": {
-              "name": "variable.parameter.import.d"
             }
-          }
+          },
+          "endCaptures": {
+            "0": {
+              "name": "keyword.operator.semi-colon.d"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#import-identifier"
+            },
+            {
+              "include": "#comma"
+            },
+            {
+              "include": "#comment"
+            }
+          ]
         }
       ]
     },
     "mixin-declaration": {
       "patterns": [
         {
-          "begin": "mixin\\s*\\(",
+          "begin": "\\bmixin\\s*\\(",
           "end": "\\)",
           "beginCaptures": {
             "0": {
@@ -1745,7 +1923,13 @@
           },
           "patterns": [
             {
+              "include": "#comment"
+            },
+            {
               "include": "#expression"
+            },
+            {
+              "include": "#comma"
             }
           ]
         }
@@ -1790,6 +1974,9 @@
     "lexical": {
       "patterns": [
         {
+          "include": "#comment"
+        },
+        {
           "include": "#string-literal"
         },
         {
@@ -1808,7 +1995,7 @@
           "include": "#special-token-sequence"
         },
         {
-          "include": "#class-identifier"
+          "include": "#keyword"
         },
         {
           "include": "#identifier"
@@ -1831,7 +2018,7 @@
     "decimal-integer": {
       "patterns": [
         {
-          "match": "(0(?=[^\\dxXbB]))|([1-9][0-9_]*)(Lu|LU|uL|UL|L|u|U)?",
+          "match": "\\b(0(?=[^\\dxXbB]))|([1-9][0-9_]*)(Lu|LU|uL|UL|L|u|U)?\\b",
           "name": "constant.numeric.integer.decimal.d"
         }
       ]
@@ -1839,7 +2026,7 @@
     "binary-integer": {
       "patterns": [
         {
-          "match": "(0b|0B)[0-1_]+(Lu|LU|uL|UL|L|u|U)?",
+          "match": "\\b(0b|0B)[0-1_]+(Lu|LU|uL|UL|L|u|U)?\\b",
           "name": "constant.numeric.integer.binary.d"
         }
       ]
@@ -1847,7 +2034,7 @@
     "hexadecimal-integer": {
       "patterns": [
         {
-          "match": "(0x|0X)([0-9a-fA-F][0-9a-fA-F_]*)(Lu|LU|uL|UL|L|u|U)?",
+          "match": "\\b(0x|0X)([0-9a-fA-F][0-9a-fA-F_]*)(Lu|LU|uL|UL|L|u|U)?\\b",
           "name": "constant.numeric.integer.hexadecimal.d"
         }
       ]
@@ -1865,7 +2052,7 @@
     "decimal-float": {
       "patterns": [
         {
-          "match": "((\\.[0-9])|(0\\.)|(([1-9]|(0[1-9_]))[0-9_]*\\.))[0-9_]*((e-|E-|e\\+|E\\+|e|E)[0-9][0-9_]*)?[LfF]?i?",
+          "match": "\\b((\\.[0-9])|(0\\.)|(([1-9]|(0[1-9_]))[0-9_]*\\.))[0-9_]*((e-|E-|e\\+|E\\+|e|E)[0-9][0-9_]*)?[LfF]?i?\\b",
           "name": "constant.numeric.float.decimal.d"
         }
       ]
@@ -1873,7 +2060,7 @@
     "hexadecimal-float": {
       "patterns": [
         {
-          "match": "0[xX][0-9a-fA-F_]*(\\.[0-9a-fA-F_]*)?(p-|P-|p\\+|P\\+|p|P)[0-9][0-9_]*[LfF]?i?",
+          "match": "\\b0[xX][0-9a-fA-F_]*(\\.[0-9a-fA-F_]*)?(p-|P-|p\\+|P\\+|p|P)[0-9][0-9_]*[LfF]?i?\\b",
           "name": "constant.numeric.fload.hexadecimal.d"
         }
       ]
@@ -1888,6 +2075,9 @@
         },
         {
           "include": "#hex-string"
+        },
+        {
+          "include": "#arbitrary-delimited-string"
         },
         {
           "include": "#delimited-string"
@@ -1957,6 +2147,17 @@
         }
       ]
     },
+    "arbitrary-delimited-string": {
+      "begin": "q\"(\\w+)",
+      "end": "\\1\"",
+      "name": "string.delimited.d",
+      "patterns": [
+        {
+          "match": ".",
+          "name": "string.delimited.d"
+        }
+      ]
+    },
     "delimited-string": {
       "begin": "q\"",
       "end": "\"",
@@ -1973,9 +2174,6 @@
         },
         {
           "include": "#delimited-string-braces"
-        },
-        {
-          "include": "#delimited-string-arbitrary"
         }
       ]
     },
@@ -1986,24 +2184,6 @@
       "patterns": [
         {
           "include": "#tokens"
-        }
-      ]
-    },
-    "delimited-string-arbitrary": {
-      "patterns": [
-        {
-          "match": "(.)([\\w\\s\\n]*?)(\\1)",
-          "captures": {
-            "1": {
-              "name": "constant.character.delimiter.d"
-            },
-            "2": {
-              "name": "string.delimited.d"
-            },
-            "3": {
-              "name": "constant.character.delimiter.d"
-            }
-          }
         }
       ]
     },
@@ -2105,31 +2285,24 @@
     "character-literal": {
       "patterns": [
         {
-          "match": "'(?:(.)|(?:(?=\\\\)(.+)))'",
+          "begin": "'",
+          "end": "'",
           "name": "string.character-literal.d",
-          "captures": {
-            "1": {
-              "patterns": [
-                {
-                  "include": "#character"
-                }
-              ]
+          "patterns": [
+            {
+              "include": "#character"
             },
-            "2": {
-              "patterns": [
-                {
-                  "include": "#escape-sequence"
-                }
-              ]
+            {
+              "include": "#escape-sequence"
             }
-          }
+          ]
         }
       ]
     },
     "character": {
       "patterns": [
         {
-          "match": "[\\w\\s]",
+          "match": "[\\w\\s]+",
           "name": "string.character.d"
         }
       ]
@@ -2137,7 +2310,7 @@
     "end-of-line": {
       "patterns": [
         {
-          "match": "\\n",
+          "match": "\\n+",
           "name": "string.character.end-of-line.d"
         }
       ]
@@ -2153,19 +2326,27 @@
         }
       ]
     },
-    "class-identifier": {
-      "patterns": [
-        {
-          "match": "(\\.?[A-Z][_\\d\\w]*)+\\s*(?!\\()",
-          "name": "entity.name.instance.d"
-        }
-      ]
-    },
     "identifier": {
       "patterns": [
         {
-          "match": "(\\.?[_\\w][_\\d\\w]*)+",
+          "match": "\\b((\\.\\s*)?[_\\w][_\\d\\w]*)(\\s*\\.\\s*[_\\w][_\\d\\w]*)*\\b",
           "name": "variable.d"
+        }
+      ]
+    },
+    "module-identifier": {
+      "patterns": [
+        {
+          "match": "([_a-zA-Z][_\\d\\w]*)(\\s*\\.\\s*[_a-zA-Z][_\\d\\w]*)*",
+          "name": "variable.parameter.module.d"
+        }
+      ]
+    },
+    "import-identifier": {
+      "patterns": [
+        {
+          "match": "([_a-zA-Z][_\\d\\w]*)(\\s*\\.\\s*[_a-zA-Z][_\\d\\w]*)*",
+          "name": "variable.parameter.import.d"
         }
       ]
     },
@@ -2194,7 +2375,7 @@
     "line-comment": {
       "patterns": [
         {
-          "match": "//.+$",
+          "match": "//.*$",
           "name": "comment.line.d"
         }
       ]
@@ -2204,7 +2385,12 @@
         {
           "begin": "/\\+",
           "end": "\\+/",
-          "name": "comment.block.documentation.d"
+          "name": "comment.block.documentation.d",
+          "patterns": [
+            {
+              "include": "#nesting-block-comment"
+            }
+          ]
         }
       ]
     },
@@ -2237,7 +2423,7 @@
     "keyword": {
       "patterns": [
         {
-          "match": "abstract|alias|align|asm|assert|auto|body|bool|break|byte|case|cast|catch|cdouble|cent|cfloat|char|class|const|continue|creal|dchar|debug|default|delegate|delete|deprecated|do|double|else|enum|export|extern|false|final|finally|float|for|foreach|foreach_reverse|function|goto|idouble|if|ifloat|immutable|import|in|inout|int|interface|invariant|ireal|is|lazy|long|macro|mixin|module|new|nothrow|null|out|override|package|pragma|private|protected|public|pure|real|ref|return|scope|shared|short|static|struct|super|switch|synchronized|template|this|throw|true|try|typedef|typeid|typeof|ubyte|ucent|uint|ulong|union|unittest|ushort|version|void|volatile|wchar|while|with|__FILE__|__MODULE__|__LINE__|__FUNCTION__|__PRETTY_FUNCTION__|__gshared|__traits|__vector|__parameters",
+          "match": "\\b(abstract|alias|align|asm|assert|auto|body|bool|break|byte|case|cast|catch|cdouble|cent|cfloat|char|class|const|continue|creal|dchar|debug|default|delegate|delete|deprecated|do|double|else|enum|export|extern|false|final|finally|float|for|foreach|foreach_reverse|function|goto|idouble|if|ifloat|immutable|import|in|inout|int|interface|invariant|ireal|is|lazy|long|macro|mixin|module|new|nothrow|null|out|override|package|pragma|private|protected|public|pure|real|ref|return|scope|shared|short|static|struct|super|switch|synchronized|template|this|throw|true|try|typedef|typeid|typeof|ubyte|ucent|uint|ulong|union|unittest|ushort|version|void|volatile|wchar|while|with|__FILE__|__MODULE__|__LINE__|__FUNCTION__|__PRETTY_FUNCTION__|__gshared|__traits|__vector|__parameters)\\b",
           "name": "keyword.token.d"
         }
       ]
@@ -2245,7 +2431,7 @@
     "special-token-sequence": {
       "patterns": [
         {
-          "match": "#\\s*line\\s+.+",
+          "match": "#\\s*line.*",
           "name": "gfm.markup.italic.special-token-sequence.d"
         }
       ]
@@ -2253,7 +2439,7 @@
     "special-tokens": {
       "patterns": [
         {
-          "match": "__DATE__|__EOF__|__TIME__|__TIMESTAMP__|__VENDOR__|__VERSION__",
+          "match": "\\b(__DATE__|__EOF__|__TIME__|__TIMESTAMP__|__VENDOR__|__VERSION__)\\b",
           "name": "gfm.markup.raw.special-tokens.d"
         }
       ]
