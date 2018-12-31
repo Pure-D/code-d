@@ -14,6 +14,8 @@ You can now browse through the online documentation of Phobos and all your dub d
 
 Just open up your command palette and search for `Search dpldocs for Phobos & Dependency documentation` or press `Ctrl-Q Ctrl-Q` by default. You can also map this to a keyboard shortcut to make this even easier to access.
 
+This is a really useful command, try it out!
+
 ## Diet templates
 
 vibe.d Diet templates have gotten a lot of love.

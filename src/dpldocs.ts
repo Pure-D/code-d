@@ -8,7 +8,7 @@ var DOMParser = require("xmldom").DOMParser;
 
 export type DocItem = vscode.QuickPickItem & { href: string, score: number, dependency?: DubDependencyInfo };
 
-export function showDpldocsSearch() {
+export function showDpldocsSearch(query?: string) {
 
 	var quickpick = vscode.window.createQuickPick<DocItem>();
 	var items: DocItem[] = [];
@@ -109,8 +109,7 @@ export function showDpldocsSearch() {
 			});
 		});
 
-	var timeout: NodeJS.Timer;
-	quickpick.onDidChangeValue((value) => {
+	function didChangeValue(value: string) {
 		clearTimeout(timeout);
 		timeout = setTimeout(() => {
 			working++;
@@ -149,7 +148,10 @@ export function showDpldocsSearch() {
 				refreshItems();
 			});
 		}, 500);
-	});
+	}
+
+	var timeout: NodeJS.Timer;
+	quickpick.onDidChangeValue(didChangeValue);
 
 	quickpick.placeholder = "Enter search term for symbol...";
 	quickpick.onDidAccept(() => {
@@ -212,6 +214,11 @@ export function showDpldocsSearch() {
 	});
 	quickpick.items = items;
 	quickpick.show();
+
+	if (query) {
+		quickpick.value = query;
+		didChangeValue(query);
+	}
 }
 
 export function fillDplDocs(panel: vscode.WebviewPanel, label: string, href: string) {

@@ -432,7 +432,10 @@ export function registerCommands(context: vscode.ExtensionContext) {
 	}));
 
 	subscriptions.push(vscode.commands.registerCommand("code-d.searchDocs", () => {
-		showDpldocsSearch();
+		var query = "";
+		if (vscode.window.activeTextEditor)
+			query = vscode.window.activeTextEditor.document.getText(vscode.window.activeTextEditor.selection);
+		showDpldocsSearch(query);
 	}));
 
 	subscriptions.push(vscode.commands.registerCommand("code-d.insertDscanner", () => {
