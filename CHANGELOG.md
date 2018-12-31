@@ -1,3 +1,5 @@
+Don't forget to join our discord server [![Join on Discord](https://discordapp.com/api/guilds/242094594181955585/widget.png?style=shield)](https://discord.gg/Bstj9bx)
+
 # 0.20.0
 
 ## Invalid dub configurations and dependencies don't fatally crash serve-d anymore.
