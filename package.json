@@ -2,7 +2,7 @@
 	"name": "code-d",
 	"displayName": "D Programming Language (code-d)",
 	"description": "auto-complete, snippets, linter and formatter for dlang",
-	"version": "0.19.0",
+	"version": "0.20.0",
 	"publisher": "webfreak",
 	"repository": {
 		"type": "git",

@@ -1,4 +1,4 @@
-# 0.x.y
+# 0.20.0
 
 ## Invalid dub configurations and dependencies don't fatally crash serve-d anymore.
 
