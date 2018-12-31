@@ -12,7 +12,7 @@ var async = require("async");
 var rmdir = require("rmdir");
 var mkdirp = require("mkdirp");
 
-export const TARGET_SERVED_VERSION: [number, number, number] = [0, 4, 0];
+export const TARGET_SERVED_VERSION: [number, number, number] = [0, 4, 1];
 
 var extensionContext: vscode.ExtensionContext;
 
@@ -90,11 +90,11 @@ export function downloadDub(env: any, done: (installed: boolean) => void) {
 	var url = "";
 	var ext = "";
 	if (process.platform == "linux" && process.arch == "x64") {
-		url = "https://code.dlang.org/files/dub-1.9.0-linux-x86_64.tar.gz";
+		url = "https://code.dlang.org/files/dub-1.11.0-linux-x86_64.tar.gz";
 		ext = ".tar.gz";
 	}
 	else if (process.platform == "linux" && process.arch == "ia32") {
-		url = "https://code.dlang.org/files/dub-1.9.0-linux-x86.tar.gz";
+		url = "https://code.dlang.org/files/dub-1.11.0-linux-x86.tar.gz";
 		ext = ".tar.gz";
 	}
 	else if (process.platform == "linux" && process.arch == "arm") {
@@ -102,11 +102,11 @@ export function downloadDub(env: any, done: (installed: boolean) => void) {
 		ext = ".tar.gz";
 	}
 	else if (process.platform == "win32") {
-		url = "https://code.dlang.org/files/dub-1.9.0-windows-x86.zip";
+		url = "https://code.dlang.org/files/dub-1.11.0-windows-x86.zip";
 		ext = ".zip";
 	}
 	else if (process.platform == "darwin" && process.arch == "x64") {
-		url = "https://code.dlang.org/files/dub-1.9.0-osx-x86_64.tar.gz";
+		url = "https://code.dlang.org/files/dub-1.11.0-osx-x86_64.tar.gz";
 		ext = ".tar.gz";
 	}
 	else
