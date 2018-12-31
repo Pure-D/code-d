@@ -15,7 +15,8 @@ import { CoverageAnalyzer } from "./coverage";
 import { registerCommands, registerClientCommands } from "./commands";
 import { DubDependency, DubDependencyInfo } from "./dub-view";
 
-const opn = require('opn');
+const opn = require("opn");
+const expandTilde = require("expand-tilde");
 
 class CustomErrorHandler implements ErrorHandler {
 	private restarts: number[];
@@ -120,7 +121,7 @@ export class ServeD extends EventEmitter implements vscode.TreeDataProvider<DubD
 }
 
 function startClient(context: vscode.ExtensionContext) {
-	let servedPath = config(null).get("servedPath", "serve-d");
+	let servedPath = expandTilde(config(null).get("servedPath", "serve-d"));
 	let executable: ServerOptions = {
 		run: {
 			command: servedPath,
@@ -311,7 +312,7 @@ function preStartup(context: vscode.ExtensionContext) {
 		function checkProgram(configName: string, defaultPath: string, name: string, installFunc: (env: NodeJS.ProcessEnv, done: (installed: boolean) => void) => any, btn: string, done?: (installed: boolean) => void, outdatedCheck?: (log: string) => boolean) {
 			var version = "";
 			var errored = false;
-			var proc = ChildProcess.spawn(config(null).get(configName, defaultPath), ["--version"], { cwd: vscode.workspace.rootPath, env: env });
+			var proc = ChildProcess.spawn(expandTilde(config(null).get(configName, defaultPath)), ["--version"], { cwd: vscode.workspace.rootPath, env: env });
 			proc.stderr.on("data", function (chunk) {
 				version += chunk;
 			});

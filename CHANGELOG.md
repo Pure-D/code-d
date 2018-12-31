@@ -12,7 +12,7 @@ Don't open your browser to browse phobos and other project documentation anymore
 
 You can now browse through the online documentation of Phobos and all your dub dependencies using the new embedded documentation browser powered by [dpldocs.info](https://dpldocs.info).
 
-Just open up your command palette and search for `Search dpldocs for Phobos & Dependency documentation`. You can also map this to a keyboard shortcut to make this even easier to access.
+Just open up your command palette and search for `Search dpldocs for Phobos & Dependency documentation` or press `Ctrl-Q Ctrl-Q` by default. You can also map this to a keyboard shortcut to make this even easier to access.
 
 ## Diet templates
 

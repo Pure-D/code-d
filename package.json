@@ -59,6 +59,12 @@
 		"url": "https://github.com/Pure-D/code-d/issues"
 	},
 	"contributes": {
+		"keybindings": [
+			{
+				"command": "code-d.searchDocs",
+				"key": "ctrl-q ctrl-q"
+			}
+		],
 		"languages": [
 			{
 				"id": "d",
@@ -820,6 +826,7 @@
 		"request": "^2.88.0",
 		"request-progress": "^3.0.0",
 		"jsonc-parser": "^2.0.2",
+		"expand-tilde": "^2.0.2",
 		"adm-zip": "^0.4.11",
 		"async": "^2.6.1",
 		"ncp": "^2.0.0",
