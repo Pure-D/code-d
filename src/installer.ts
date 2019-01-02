@@ -317,9 +317,10 @@ export function compileServeD(env: any, done: Function) {
 	fs.exists(outputFolder, function (exists) {
 		if (!exists)
 			fs.mkdirSync(outputFolder);
-		var buildArgs = ["build", "--build=release"];
+		env["DFLAGS"] = "-O -release";
+		var buildArgs = ["build"];
 		if (process.platform == "win32") {
-			buildArgs.pop(); // remove release
+			env["DFLAGS"] = "-release";
 			buildArgs.push("--arch=x86_mscoff");
 		}
 		compileDependency(outputFolder, "serve-d", "https://github.com/Pure-D/serve-d.git", [
