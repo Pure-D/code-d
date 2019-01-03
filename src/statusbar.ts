@@ -3,8 +3,14 @@ import * as path from 'path';
 import { D_MODE } from "./dmode"
 import { ServeD, config } from "./extension";
 
-export function setup(served: ServeD): vscode.Disposable {
-	let subscriptions: vscode.Disposable[] = [];
+var dubLoaded = false;
+
+export function setupDub(served: ServeD): vscode.Disposable {
+	let subscriptions: vscode.Disposable[] = [new vscode.Disposable(() => { dubLoaded = false; })];
+
+	if (dubLoaded)
+		return new vscode.Disposable(() => { });
+	dubLoaded = true;
 
 	subscriptions.push(new ConfigSelector(served));
 	subscriptions.push(new ArchSelector(served));

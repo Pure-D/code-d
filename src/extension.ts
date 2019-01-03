@@ -160,8 +160,6 @@ function startClient(context: vscode.ExtensionContext) {
 		}
 	});
 
-	context.subscriptions.push(statusbar.setup(served));
-
 	client.onReady().then(() => {
 		var updateSetting = new NotificationType<{ section: string, value: any, global: boolean }, void>("coded/updateSetting");
 		client.onNotification(updateSetting, (arg: { section: string, value: any, global: boolean }) => {
@@ -174,6 +172,7 @@ function startClient(context: vscode.ExtensionContext) {
 		});
 
 		client.onNotification("coded/initDubTree", function () {
+			context.subscriptions.push(statusbar.setupDub(served));
 			context.subscriptions.push(vscode.window.registerTreeDataProvider<DubDependency>("dubDependencies", served));
 		});
 
