@@ -403,6 +403,24 @@
 					"default": false,
 					"description": "Switch to always show coverage status when available through lst files and not just when a D file is open."
 				},
+				"d.manyProjectsAction": {
+					"type": "string",
+					"scope": "resource",
+					"default": "ask",
+					"enum": [
+						"ask",
+						"skip",
+						"load"
+					],
+					"description": "What to do when there are too many project roots to load from. The deepest folder paths are skipped for skip."
+				},
+				"d.manyProjectsThreshold": {
+					"type": "number",
+					"scope": "resource",
+					"default": 4,
+					"minimum": 0,
+					"description": "For how many projects to start triggering the manyProjectsAction to load or not load further projects."
+				},
 				"dfmt.alignSwitchStatements": {
 					"type": "boolean",
 					"scope": "resource",
