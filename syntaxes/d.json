@@ -1774,7 +1774,7 @@
           ]
         },
         {
-          "match": "\\bdebug\\s*(?!\\()",
+          "match": "\\bdebug\\b\\s*(?!\\()",
           "name": "keyword.other.debug.plain.d"
         }
       ]
@@ -1782,7 +1782,7 @@
     "version-specification": {
       "patterns": [
         {
-          "match": "\\bversion\\s*(?==)",
+          "match": "\\bversion\\b\\s*(?==)",
           "name": "keyword.other.version-specification.d"
         }
       ]
@@ -1790,7 +1790,7 @@
     "debug-specification": {
       "patterns": [
         {
-          "match": "\\bdebug\\s*(?==)",
+          "match": "\\bdebug\\b\\s*(?==)",
           "name": "keyword.other.debug-specification.d"
         }
       ]
@@ -1798,7 +1798,7 @@
     "static-if-condition": {
       "patterns": [
         {
-          "begin": "\\bstatic\\s+if\\s*(?=\\()",
+          "begin": "\\bstatic\\s+if\\b\\s*(?=\\()",
           "beginCaptures": {
             "0": {
               "name": "keyword.other.static-if.begin.d"
@@ -1824,7 +1824,7 @@
     "static-assert": {
       "patterns": [
         {
-          "begin": "\\bstatic\\s+assert\\s*(?=\\()",
+          "begin": "\\bstatic\\s+assert\\b\\s*(?=\\()",
           "beginCaptures": {
             "0": {
               "name": "keyword.other.static-assert.begin.d"
