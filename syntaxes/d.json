@@ -635,6 +635,9 @@
           "include": "#mixin-statement"
         },
         {
+          "include": "#is-statement"
+        },
+        {
           "include": "#conditional-statement"
         },
         {
@@ -721,28 +724,29 @@
     "case-statement": {
       "patterns": [
         {
-          "match": "\\bcase\\b",
-          "name": "keyword.control.case.range.d"
-        },
-        {
-          "match": ":",
-          "name": "keyword.control.case.colon.d"
-        }
-      ]
-    },
-    "case-range-statement": {
-      "patterns": [
-        {
-          "match": "\\bcase\\b",
-          "name": "keyword.control.case.range.d"
-        },
-        {
-          "match": ":",
-          "name": "keyword.control.case.colon.d"
-        },
-        {
-          "match": "\\.\\.\\s*case\\b",
-          "name": "keyword.control.case.range-2.d"
+          "begin": "\\b(case)\\b\\s*",
+          "beginCaptures": {
+            "1": {
+              "name": "keyword.control.case.range.d"
+            }
+          },
+          "end": ":",
+          "endCaptures": {
+            "0": {
+              "name": "keyword.control.case.colon.d"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#comment"
+            },
+            {
+              "include": "#nesting-expression"
+            },
+            {
+              "include": "#comma"
+            }
+          ]
         }
       ]
     },
@@ -925,6 +929,35 @@
         }
       ]
     },
+    "is-statement": {
+      "patterns": [
+        {
+          "begin": "\\bis\\s*\\(",
+          "beginCaptures": {
+            "0": {
+              "name": "keyword.control.is.begin.d"
+            }
+          },
+          "end": "\\)",
+          "endCaptures": {
+            "0": {
+              "name": "keyword.control.is.end.d"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#comment"
+            },
+            {
+              "include": "#nesting-expression"
+            },
+            {
+              "include": "#comma"
+            }
+          ]
+        }
+      ]
+    },
     "deprecated-statement": {
       "patterns": [
         {
@@ -1069,7 +1102,7 @@
     "alias-declaration": {
       "patterns": [
         {
-          "begin": "\\b(alias)\\s*",
+          "begin": "\\b(alias)\\b\\s*",
           "beginCaptures": {
             "0": {
               "name": "keyword.other.alias.d"
@@ -1798,7 +1831,7 @@
     "static-if-condition": {
       "patterns": [
         {
-          "begin": "\\bstatic\\s+if\\b\\s*(?=\\()",
+          "begin": "\\bstatic\\s+if\\b\\s*\\(",
           "beginCaptures": {
             "0": {
               "name": "keyword.other.static-if.begin.d"
@@ -1824,7 +1857,7 @@
     "static-assert": {
       "patterns": [
         {
-          "begin": "\\bstatic\\s+assert\\b\\s*(?=\\()",
+          "begin": "\\bstatic\\s+assert\\b\\s*\\(",
           "beginCaptures": {
             "0": {
               "name": "keyword.other.static-assert.begin.d"
