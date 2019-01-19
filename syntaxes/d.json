@@ -38,6 +38,10 @@
         {
           "match": "\\b(auto|bool|byte|ubyte|short|ushort|int|uint|long|ulong|char|wchar|dchar|float|double|real|ifloat|idouble|ireal|cfloat|cdouble|creal|void)\\b",
           "name": "storage.type.basic-type.d"
+        },
+        {
+          "match": "\\b(string|wstring|dstring)\\b(?!\\s*[\\(\\[,])",
+          "name": "storage.type.basic-type.d"
         }
       ]
     },
