@@ -40,7 +40,7 @@
           "name": "storage.type.basic-type.d"
         },
         {
-          "match": "\\b(string|wstring|dstring)\\b(?!\\s*[\\(\\[,])",
+          "match": "\\b(string|wstring|dstring)\\b(?!\\s*=)",
           "name": "storage.type.basic-type.d"
         }
       ]
