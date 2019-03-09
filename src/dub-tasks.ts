@@ -92,7 +92,9 @@ export class DubTasksProvider implements vscode.TaskProvider {
 			args.push("--config=" + task.definition.configuration);
 		if (Array.isArray(task.definition.args))
 			args.push.apply(args, task.definition.args);
-		task.execution.args = args;
+
+		if (task.execution)
+			task.execution.args = args;
 
 		if (args.length > 2)
 			vscode.window.showInformationMessage("Congratulation on finding out how to get this working. "
@@ -100,8 +102,7 @@ export class DubTasksProvider implements vscode.TaskProvider {
 					modal: true
 				}, "Submit Reproduction").then(v => {
 					if (v == "Submit Reproduction") {
-						const opn = require('opn');
-						opn("https://github.com/Pure-D/code-d/issues/new");
+						vscode.env.openExternal(vscode.Uri.parse("https://github.com/Pure-D/code-d/issues/new"));
 					}
 				});
 

@@ -15,7 +15,6 @@ import { CoverageAnalyzer } from "./coverage";
 import { registerCommands, registerClientCommands } from "./commands";
 import { DubDependency, DubDependencyInfo } from "./dub-view";
 
-const opn = require("opn");
 const expandTilde = require("expand-tilde");
 
 class CustomErrorHandler implements ErrorHandler {
@@ -422,7 +421,7 @@ function preStartup(context: vscode.ExtensionContext) {
 			function gotCompiler(compiler: string | false) {
 				context.globalState.update("checkedCompiler", true);
 				if (!compiler)
-					opn("https://dlang.org/download.html").then(() => {
+					vscode.env.openExternal(vscode.Uri.parse("https://dlang.org/download.html")).then(() => {
 						vscode.window.showInformationMessage("Please install a D compiler from dlang.org and reload the window once done.");
 					});
 			}

@@ -1,7 +1,6 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
-import { JSDOM } from "jsdom";
 import { DubEditor } from "./dub-editor";
 import { LanguageClient, LanguageClientOptions, ServerOptions, DocumentFilter, NotificationType, TextEdit } from "vscode-languageclient";
 import { ServeD } from "./extension";
