@@ -1,5 +1,19 @@
 Don't forget to join our discord server [![Join on Discord](https://discordapp.com/api/guilds/242094594181955585/widget.png?style=shield)](https://discord.gg/Bstj9bx)
 
+# 0.x.y
+
+Minor Changes:
+* The statusbar now only loads once dub is ready.
+
+Bug Fixes:
+* Some memory optimizations and segfault fixes.
+* Dub build task doesn't break anymore for not loaded workspaces.
+* Some threading issues fixed which previously caused random crashes.
+* Unreadable directories don't crash serve-d startup anymore.
+* Fixed several "Sort imports" bugs.
+* Module name insertion properly takes the longest import path now for determining the module name, so it will always insert the shortest module name for your imports.
+* When uninstalling code-d an uninstall script deleting the code-d folder should run now.
+
 # 0.20.2
 
 When compiling serve-d from source, don't inline (fixes fatal OSX bug)
