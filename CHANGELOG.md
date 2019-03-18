@@ -13,6 +13,8 @@ Bug Fixes:
 * Fixed several "Sort imports" bugs.
 * Module name insertion properly takes the longest import path now for determining the module name, so it will always insert the shortest module name for your imports.
 * When uninstalling code-d an uninstall script deleting the code-d folder should run now.
+* Code actions now properly show on all characters on diagnostics instead of just the first character.
+* DML autocompletes again (nobody told me it was broken)
 
 # 0.20.2
 
