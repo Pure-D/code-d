@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
 import { LanguageClient, LanguageClientOptions, ServerOptions, DocumentFilter, NotificationType, CloseAction, ErrorAction, ErrorHandler, Message } from "vscode-languageclient";
-import { setContext, downloadDub, installServeD, compileServeD, getInstallOutput, checkBetaServeD, TARGET_SERVED_VERSION } from "./installer"
+import { setContext, downloadDub, installServeD, compileServeD, getInstallOutput, checkBetaServeD, TARGET_SERVED_VERSION, downloadFileInteractive } from "./installer"
 import { EventEmitter } from "events"
 import * as ChildProcess from "child_process"
 
@@ -124,7 +124,7 @@ function startClient(context: vscode.ExtensionContext) {
 	let executable: ServerOptions = {
 		run: {
 			command: servedPath,
-			args: ["--require", "D", "--lang", vscode.env.language],
+			args: ["--require", "D", "--lang", vscode.env.language, "--provide", "http"],
 			options: {
 				cwd: context.extensionPath
 			}
@@ -133,7 +133,7 @@ function startClient(context: vscode.ExtensionContext) {
 			//command: "gdbserver",
 			//args: ["--once", ":2345", servedPath, "--require", "D", "--lang", vscode.env.language],
 			command: servedPath,
-			args: ["--require", "D", "--lang", vscode.env.language, "--wait"],
+			args: ["--require", "D", "--lang", vscode.env.language, "--wait", "--provide", "http"],
 			options: {
 				cwd: context.extensionPath
 			}
@@ -182,6 +182,16 @@ function startClient(context: vscode.ExtensionContext) {
 		client.onNotification("coded/changedSelectedWorkspace", function () {
 			served.emit("workspace-change");
 			served.refreshDependencies();
+		});
+
+		client.onRequest<boolean, { url: string, title?: string, output: string }>("coded/interactiveDownload", function (e, token): Thenable<boolean> {
+			return new Promise((resolve, reject) => {
+				downloadFileInteractive(e.url, e.title || "Dependency Download", () => {
+					resolve(false);
+				}).pipe(fs.createWriteStream(e.output)).on("finish", () => {
+					resolve(true);
+				});
+			});
 		});
 	});
 

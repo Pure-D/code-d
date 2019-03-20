@@ -51,7 +51,7 @@ export function getInstallOutput() {
 	return installationLog;
 }
 
-function downloadFileInteractive(url: string, title: string, aborted: Function): any {
+export function downloadFileInteractive(url: string, title: string, aborted: Function): any {
 	var ret = progress(req()(url), {
 		throttle: 100,
 		delay: 100
