@@ -4,6 +4,8 @@ Don't forget to join our discord server [![Join on Discord](https://discordapp.c
 
 Minor Changes:
 * The statusbar now only loads once dub is ready.
+* DCD now downloads with a rich download UI in newer code-d and with console progress bar in older code-d or other editors
+* Import paths are now much better resolved if dmd is installed. They will use a very accurate search on Posix platforms using dmd.conf and on windows relative to the exe path. Also per-project overrides using dmd.conf are possible with this.
 
 Bug Fixes:
 * Some memory optimizations and segfault fixes.
@@ -15,6 +17,8 @@ Bug Fixes:
 * When uninstalling code-d an uninstall script deleting the code-d folder should run now.
 * Code actions now properly show on all characters on diagnostics instead of just the first character.
 * DML autocompletes again (nobody told me it was broken)
+* Installation will no longer silently halt if dependencies aren't installed
+* Serve-D installation will now fall back to x86 if x86_mscoff isn't available (fixes installation if only LDC is available)
 
 # 0.20.2
 

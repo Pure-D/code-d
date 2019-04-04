@@ -80,7 +80,7 @@ export function downloadFileInteractive(url: string, title: string, aborted: Fun
 		return new Promise((resolve) => {
 			ret.on("end", resolve);
 		});
-	}).then(function() {
+	}).then(function () {
 		installationLog.appendLine("Finished downloading");
 	});
 	return ret;
@@ -335,18 +335,34 @@ export function compileServeD(env: any, done: Function) {
 	});
 }
 
-function spawnCommand(cmd: string, args: string[], options: ChildProcess.SpawnOptions, cb: Function) {
+function spawnCommand(cmd: string, args: string[], options: ChildProcess.SpawnOptions, cb: Function, onLog?: Function) {
+	function log(chunk: any) {
+		var dat = chunk.toString() || "null";
+		installationLog.append(dat);
+		if (typeof onLog === "function")
+			onLog(dat);
+	}
+
 	installationLog.appendLine("> " + cmd + " " + args.join(" "));
-	var proc = ChildProcess.spawn(cmd, args, options);
-	proc.stdout.on("data", function (chunk) {
-		installationLog.append(chunk.toString() || "null");
-	});
-	proc.stderr.on("data", function (chunk) {
-		installationLog.append(chunk.toString() || "null");
-	});
-	proc.on("exit", function (d: any) {
-		return cb(typeof d == "number" ? d : (d.code || -1));
-	});
+	try {
+		var proc = ChildProcess.spawn(cmd, args, options);
+		proc.stdout.on("data", log);
+		proc.stderr.on("data", log);
+		proc.on("error", function (error: any) {
+			if (((error ? error.message : "").toString()).endsWith("ENOENT")) {
+				installationLog.appendLine("The program '" + cmd + "' could not be found! Did you perhaps not install it or misconfigure some path?");
+			} else {
+				installationLog.appendLine("An internal error occured while running the command: " + error);
+			}
+			cb(-1);
+		});
+		proc.on("exit", function (d: any) {
+			return cb(typeof d == "number" ? d : (d.code || -1));
+		});
+	} catch (e) {
+		installationLog.appendLine("An internal error occured while running the command: " + e);
+		cb(-2);
+	}
 }
 
 export function compileDependency(cwd: string, name: string, gitURI: string, commands: [string, string[]][], callback: Function, env: any) {
@@ -365,10 +381,31 @@ export function compileDependency(cwd: string, name: string, gitURI: string, com
 			if (err !== 0)
 				return error(err);
 			async.eachSeries(commands, function (command: [string, string[]], cb: Function) {
+				var failedArch = false;
+				var prevLog = "";
 				spawnCommand(command[0], command[1], {
 					cwd: newCwd
 				}, function (err: any) {
-					cb(err);
+					var index = command[1].indexOf("--arch=x86_mscoff"); // must be this format for it to work
+					if (err && failedArch && command[0] == "dub" && index != -1) {
+						// failed because we tried to build with x86_mscoff but it wasn't available (LDC was probably used)
+						// try again with x86
+						command[1][index] = "--arch=x86";
+						installationLog.appendLine("Retrying with --arch=x86...");
+						spawnCommand(command[0], command[1], {
+							cwd: newCwd
+						}, function (err: any) {
+							cb(err);
+						});
+					}
+					else
+						cb(err);
+				}, function (log: string) {
+					// concat with previous log just to make it very unlikely to split in middle because of buffering
+					if ((prevLog + log).toLowerCase().indexOf("unsupported architecture: x86_mscoff") != -1) {
+						failedArch = true;
+					}
+					prevLog = log;
 				});
 			}, function (err: any) {
 				if (err)
