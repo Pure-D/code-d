@@ -95,7 +95,7 @@ export class CoverageAnalyzer implements vscode.TextDocumentContentProvider, vsc
 			if (source && totalCov)
 				this.cache.set(file, { lines: cache, totalCov: totalCov, source: source });
 			var folder = vscode.workspace.getWorkspaceFolder(uri);
-			if (folder && vscode.window.activeTextEditor && pathToName(folder.uri.path, vscode.window.activeTextEditor.document.fileName) == file)
+			if (folder && vscode.window.activeTextEditor && pathToName(folder.uri.fsPath, vscode.window.activeTextEditor.document.uri.fsPath) == file)
 				this.populateCurrent();
 		});
 	}
@@ -111,7 +111,7 @@ export class CoverageAnalyzer implements vscode.TextDocumentContentProvider, vsc
 		var folder = vscode.workspace.getWorkspaceFolder(editor.document.uri);
 		var name;
 		if (folder)
-			name = pathToName(folder.uri.path, editor.document.fileName);
+			name = pathToName(folder.uri.fsPath, editor.document.uri.fsPath);
 		if (!name)
 			return;
 
