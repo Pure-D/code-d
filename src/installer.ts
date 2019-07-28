@@ -163,7 +163,7 @@ export function installServeD(env: any, done: Function) {
 	if (process.platform == "linux" && process.arch == "x64") {
 		urls = [
 			"https://github.com/Pure-D/serve-d/releases/download/v" + TARGET_SERVED_VERSION.join(".") + "/serve-d_" + TARGET_SERVED_VERSION.join(".") + "-linux-x86_64.tar.xz",
-			"https://github.com/dlang-community/DCD/releases/download/v0.10.2/dcd-v0.10.2-linux-x86_64.tar.gz"
+			"https://github.com/dlang-community/DCD/releases/download/v0.11.1/dcd-v0.11.1-linux-x86_64.tar.gz"
 		];
 	}
 	else if (process.platform == "win32") {
@@ -171,9 +171,9 @@ export function installServeD(env: any, done: Function) {
 			"https://github.com/Pure-D/serve-d/releases/download/v" + TARGET_SERVED_VERSION.join(".") + "/serve-d_" + TARGET_SERVED_VERSION.join(".") + "-windows.zip"
 		];
 		if (process.arch == "x64")
-			urls.push("https://github.com/dlang-community/DCD/releases/download/v0.10.2/dcd-v0.10.2-windows-x86_64.zip");
-		else
-			urls.push("https://github.com/dlang-community/DCD/releases/download/v0.10.2/dcd-v0.10.2-windows-x86.zip");
+			urls.push("https://github.com/dlang-community/DCD/releases/download/v0.11.1/dcd-v0.11.1-windows-x86_64.zip");
+		// else
+		// 	urls.push("https://github.com/dlang-community/DCD/releases/download/v0.11.0/dcd-v0.11.0-windows-x86.zip");
 	}
 	else
 		return vscode.window.showErrorMessage("No precompiled serve-d binary for this platform/architecture", "Compile from source").then((r?: string) => {

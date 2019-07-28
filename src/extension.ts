@@ -172,6 +172,7 @@ function startClient(context: vscode.ExtensionContext) {
 
 		client.onNotification("coded/initDubTree", function () {
 			context.subscriptions.push(statusbar.setupDub(served));
+			vscode.commands.executeCommand("setContext", "d.hasDubProject", true);
 			context.subscriptions.push(vscode.window.registerTreeDataProvider<DubDependency>("dubDependencies", served));
 		});
 
@@ -284,7 +285,7 @@ export function activate(context: vscode.ExtensionContext) {
 			});
 
 			vscode.commands.registerCommand("code-d.generateCoverageReport", () => {
-				vscode.commands.executeCommand("vscode.previewHtml", vscode.Uri.parse("dcoveragereport://null"));
+				vscode.workspace.openTextDocument(vscode.Uri.parse("dcoveragereport://null"));
 			});
 		}
 	}

@@ -427,6 +427,12 @@
 					"default": true,
 					"description": "Enables dscanner linting when opening a new file."
 				},
+				"d.dietContextCompletion": {
+					"type": "boolean",
+					"scope": "resource",
+					"default": false,
+					"description": "Enables parsing of //-context= in diet files to import local variables shared with the opened diet template."
+				},
 				"dfmt.alignSwitchStatements": {
 					"type": "boolean",
 					"scope": "resource",
@@ -627,7 +633,8 @@
 			"explorer": [
 				{
 					"id": "dubDependencies",
-					"name": "Dub Dependencies"
+					"name": "Dub Dependencies",
+					"when": "d.hasDubProject"
 				}
 			]
 		},

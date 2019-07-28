@@ -2,14 +2,39 @@ Don't forget to join our discord server [![Join on Discord](https://discordapp.c
 
 # 0.x.y
 
+## Diet templates
+
+Diet completion got a lot of bug fixes and will work a lot better with more D code now.
+
+Adding
+```
+//-context=app.d
+```
+
+where `app.d` is the primary file in which the template is used will result in improved completion. This comment must be the first token of the file (or second line if first is extends) and the context file must have been opened.
+
+For this serve-d will search for a string using the diet template filename (without folder, but with extension) in the code.
+
+Currently this is not enabled by default because it is still completing too many symbols which aren't even accessible. To enable it anyway, set `"d.dietContextCompletion": true` in your user settings.
+
+## Settings Contexts
+
+You can now use new context variables in `when` clauses in vscode settings like keyboard shortcuts. Added are:
+
+- `d.hasDubProject` which is true if there is a project with dub enabled (when the dub outline is visible)
+
+## Other Things
+
+DCD upgrade to 0.11.1
+
 Minor Changes:
-* The statusbar now only loads once dub is ready.
 * DCD now downloads with a rich download UI in newer code-d and with console progress bar in older code-d or other editors
 * Import paths are now much better resolved if dmd is installed. They will use a very accurate search on Posix platforms using dmd.conf and on windows relative to the exe path. Also per-project overrides using dmd.conf are possible with this.
 * Added `d.lintOnFileOpen` which controls whether files should be linted with DScanner when opening (defaults to true)
 * Files external to the project no longer persist linting warnings when closing anymore.
 
 Bug Fixes:
+* The statusbar now only loads once dub is ready.
 * Some memory optimizations and segfault fixes.
 * Dub build task doesn't break anymore for not loaded workspaces.
 * Some threading issues fixed which previously caused random crashes.
@@ -18,9 +43,12 @@ Bug Fixes:
 * Module name insertion properly takes the longest import path now for determining the module name, so it will always insert the shortest module name for your imports.
 * When uninstalling code-d an uninstall script deleting the code-d folder should run now.
 * Code actions now properly show on all characters on diagnostics instead of just the first character.
-* DML autocompletes again (nobody told me it was broken)
+* DML autocompletes again
 * Installation will no longer silently halt if dependencies aren't installed
 * Serve-D installation will now fall back to x86 if x86_mscoff isn't available (fixes installation if only LDC is available)
+* Fixed DCD stdout error message box on Windows on shutdown
+* Sorting imports now supports `public import` and `static import` and will also sort those before the other imports.
+* Fixed code coverage highlighting on Windows
 
 # 0.20.2
 

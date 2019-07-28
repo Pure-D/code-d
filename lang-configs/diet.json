@@ -30,6 +30,14 @@
 			")"
 		],
 		{
+			"open": "<",
+			"close": ">",
+			"notIn": [
+				"embedded",
+				"string"
+			]
+		},
+		{
 			"open": "`",
 			"close": "`",
 			"notIn": [

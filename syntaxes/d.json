@@ -990,7 +990,7 @@
           ]
         },
         {
-          "match": "\\bdeprecated\\s*(?!\\()",
+          "match": "\\bdeprecated\\b\\s*(?!\\()",
           "name": "keyword.other.deprecated.plain.d"
         }
       ]
