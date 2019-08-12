@@ -109,11 +109,9 @@ export function registerClientCommands(context: vscode.ExtensionContext, client:
 		}).then((change: TextEdit[]) => {
 			if (!change.length)
 				return;
-			editor.edit((edit) => {
-				var s = change[0].range.start;
-				var start = new vscode.Position(s.line, s.character);
-				edit.insert(start, change[0].newText);
-			});
+			var s = change[0].range.start;
+			var start = new vscode.Position(s.line, s.character);
+			editor.insertSnippet(new vscode.SnippetString(change[0].newText), start);
 		}, (err) => {
 			vscode.window.showErrorMessage("Could not implement methods");
 			client.outputChannel.appendLine(err.toString());
