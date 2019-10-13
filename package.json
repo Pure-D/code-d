@@ -422,9 +422,14 @@
 					"description": "For how many projects to start triggering the manyProjectsAction to load or not load further projects."
 				},
 				"d.lintOnFileOpen": {
-					"type": "boolean",
+					"type": "string",
 					"scope": "resource",
-					"default": true,
+					"default": "project",
+					"enum": [
+						"always",
+						"project",
+						"never"
+					],
 					"description": "Enables dscanner linting when opening a new file."
 				},
 				"d.dietContextCompletion": {
