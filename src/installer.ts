@@ -24,7 +24,7 @@ export function setContext(context: vscode.ExtensionContext) {
 	extensionContext = context;
 }
 
-function determineOutputFolder() {
+function determineOutputFolder(): string {
 	if (process.platform == "linux") {
 		if (fs.existsSync(path.join((<any>process.env).HOME, ".local", "share")))
 			return path.join((<any>process.env).HOME, ".local", "share", "code-d", "bin");
@@ -42,7 +42,7 @@ function determineOutputFolder() {
 var installationLog: vscode.OutputChannel;
 const installationTitle = "code-d/serve-d installation progress";
 
-export function getInstallOutput() {
+export function getInstallOutput(): vscode.OutputChannel {
 	if (!installationLog) {
 		installationLog = vscode.window.createOutputChannel(installationTitle);
 		extensionContext.subscriptions.push(installationLog);
@@ -90,11 +90,11 @@ export function downloadDub(env: any, done: (installed: boolean) => void) {
 	var url = "";
 	var ext = "";
 	if (process.platform == "linux" && process.arch == "x64") {
-		url = "https://code.dlang.org/files/dub-1.11.0-linux-x86_64.tar.gz";
+		url = "https://github.com/dlang/dub/releases/download/v1.17.0/dub-v1.17.0-linux-x86_64.tar.gz";
 		ext = ".tar.gz";
 	}
 	else if (process.platform == "linux" && process.arch == "ia32") {
-		url = "https://code.dlang.org/files/dub-1.11.0-linux-x86.tar.gz";
+		url = "https://github.com/dlang/dub/releases/download/v1.17.0/dub-v1.17.0-linux-x86.tar.gz";
 		ext = ".tar.gz";
 	}
 	else if (process.platform == "linux" && process.arch == "arm") {
@@ -102,11 +102,11 @@ export function downloadDub(env: any, done: (installed: boolean) => void) {
 		ext = ".tar.gz";
 	}
 	else if (process.platform == "win32") {
-		url = "https://code.dlang.org/files/dub-1.11.0-windows-x86.zip";
+		url = "https://github.com/dlang/dub/releases/download/v1.17.0/dub-v1.17.0-windows-x86.zip";
 		ext = ".zip";
 	}
 	else if (process.platform == "darwin" && process.arch == "x64") {
-		url = "https://code.dlang.org/files/dub-1.11.0-osx-x86_64.tar.gz";
+		url = "https://github.com/dlang/dub/releases/download/v1.17.0/dub-v1.17.0-osx-x86_64.tar.gz";
 		ext = ".tar.gz";
 	}
 	else
