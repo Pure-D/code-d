@@ -27,15 +27,16 @@ class CustomErrorHandler implements ErrorHandler {
 	public error(error: Error, message: Message, count: number): ErrorAction {
 		return ErrorAction.Continue;
 	}
+
 	public closed(): CloseAction {
 		this.restarts.push(Date.now());
-		if (this.restarts.length < 20) {
+		if (this.restarts.length < 10) {
 			return CloseAction.Restart;
 		} else {
 			let diff = this.restarts[this.restarts.length - 1] - this.restarts[0];
 			if (diff <= 60 * 1000) {
 				// TODO: run automated diagnostics about current code file here
-				this.output.appendLine(`Server crashed 20 times in the last minute. The server will not be restarted.`);
+				this.output.appendLine(`Server crashed 10 times in the last minute. The server will not be restarted.`);
 				return CloseAction.DoNotRestart;
 			} else {
 				this.restarts.shift();
@@ -121,10 +122,11 @@ export class ServeD extends EventEmitter implements vscode.TreeDataProvider<DubD
 
 function startClient(context: vscode.ExtensionContext) {
 	let servedPath = expandTilde(config(null).get("servedPath", "serve-d"));
+	let args = ["--require", "D", "--lang", vscode.env.language, "--provide", "http", "--provide", "implement-snippets"];
 	let executable: ServerOptions = {
 		run: {
 			command: servedPath,
-			args: ["--require", "D", "--lang", vscode.env.language, "--provide", "http"],
+			args: args,
 			options: {
 				cwd: context.extensionPath
 			}
@@ -133,7 +135,7 @@ function startClient(context: vscode.ExtensionContext) {
 			//command: "gdbserver",
 			//args: ["--once", ":2345", servedPath, "--require", "D", "--lang", vscode.env.language],
 			command: servedPath,
-			args: ["--require", "D", "--lang", vscode.env.language, "--wait", "--provide", "http"],
+			args: args.concat("--wait"),
 			options: {
 				cwd: context.extensionPath
 			}

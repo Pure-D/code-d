@@ -17,6 +17,16 @@ For this serve-d will search for a string using the diet template filename (with
 
 Currently this is not enabled by default because it is still completing too many symbols which aren't even accessible. To enable it anyway, set `"d.dietContextCompletion": true` in your user settings.
 
+## More & improved code actions
+
+Implement interface got even more stable and now uses snippets to quickly navigate between implemented methods. It also now puts all methods at the bottom of a class instead of at the top. For default implementations sometimes you can also pick between multiple implementations.
+
+## DUB
+
+Dub errors now report and disappear much more consistently and have had extreme performance improvements. Template instances will be reported both in calling parts in your projects and where the error actually instantiated first. All error messages will now properly show the following error messages as location markers when hovering over the root cause and suggest only jumping there instead of marking them as invalid.
+
+Saving a file with dub linting enabled will also no longer run the pre/post build commands and only update errors in the current dub project. To show errors in other projects save files in other projects.
+
 ## Settings Contexts
 
 You can now use new context variables in `when` clauses in vscode settings like keyboard shortcuts. Added are:
