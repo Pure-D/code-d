@@ -315,17 +315,23 @@ export function compileServeD(env: any, done: Function) {
 	var outputFolder = determineOutputFolder();
 	mkdirp.sync(outputFolder);
 	fs.exists(outputFolder, function (exists) {
+		const dubPath = config(null).get("dubPath", "dub");
+		const dmdPath = config(null).get("dmdPath", undefined);
 		if (!exists)
 			fs.mkdirSync(outputFolder);
 		env["DFLAGS"] = "-O -release";
-		var buildArgs = ["build"];
+		let buildArgs = ["build"];
 		if (process.platform == "win32") {
 			env["DFLAGS"] = "-release";
 			buildArgs.push("--arch=x86_mscoff");
 		}
+		if (dubPath != "dub" && dmdPath) {
+			// explicit dub path specified, it won't automatically find dmd if it's not in the same folder so we just pass the path if we have it
+			buildArgs.push("--compiler=" + dmdPath);
+		}
 		compileDependency(outputFolder, "serve-d", "https://github.com/Pure-D/serve-d.git", [
-			[config(null).get("dubPath", "dub"), ["upgrade"]],
-			[config(null).get("dubPath", "dub"), buildArgs]
+			[dubPath, ["upgrade"]],
+			[dubPath, buildArgs]
 		], function () {
 			var finalDestination = path.join(outputFolder, "serve-d", "serve-d" + (process.platform == "win32" ? ".exe" : ""));
 
