@@ -167,7 +167,7 @@
 			}
 		],
 		"configuration": {
-			"title": "D configuration",
+			"title": "D",
 			"type": "object",
 			"properties": {
 				"d.servedPath": {
@@ -225,12 +225,14 @@
 					"description": "Array of paths to phobos and D runtime for automatic inclusion for auto completion"
 				},
 				"d.dcdClientPath": {
+					"title": "DCD Client Path",
 					"type": "string",
 					"scope": "resource",
 					"default": "dcd-client",
 					"description": "Path of the dcd-client executable. Path can be omitted if in $PATH or installed using code-d"
 				},
 				"d.dcdServerPath": {
+					"title": "DCD Server Path",
 					"type": "string",
 					"scope": "resource",
 					"default": "dcd-server",
@@ -412,6 +414,11 @@
 						"skip",
 						"load"
 					],
+					"enumDescriptions": [
+						"Open a dialog box each time there are too many projects. (recommended for user-settings)",
+						"Never load any more projects than the d.manyProjectsThreshold setting specified. (this or \"load\" recommended only per-project)",
+						"Load all projects even if there are more than the d.manyProjectsThreshold setting specified. (this or \"skip\" recommended only per-project; never recommended for user-settings or large projects with many dub test projects)"
+					],
 					"description": "What to do when there are too many project roots to load from. The deepest folder paths are skipped for skip."
 				},
 				"d.manyProjectsThreshold": {
@@ -429,6 +436,11 @@
 						"always",
 						"project",
 						"never"
+					],
+					"enumDescriptions": [
+						"D-Scanner runs on every file that is opened immediately, also for any internal cross-project or external dependencies.",
+						"D-Scanner runs on every file only in the current project that is opened immediately. It then only starts on other files when changing something.",
+						"D-Scanner never runs when opening a file and only starts running when changing something."
 					],
 					"description": "Enables dscanner linting when opening a new file."
 				},
@@ -451,6 +463,11 @@
 						"allman",
 						"otbs",
 						"stroustrup"
+					],
+					"enumDescriptions": [
+						"Curly braces always on separate lines",
+						"Curly braces on the same line as for example if or while statements. Else on same line as closing curly brace.",
+						"Curly braces on the same line as for example if or while statements, but a new line after the closing curly brace, even if there is an else"
 					],
 					"default": "allman",
 					"description": "See Wikipedia https://en.wikipedia.org/wiki/Brace_style"
@@ -494,8 +511,14 @@
 						"always_newline",
 						"always_newline_indent"
 					],
+					"enumDescriptions": [
+						"newline only if constraint will wrap, indent constraint",
+						"newline only if constraint will wrap",
+						"always add newline",
+						"always add newline and indent the constraint"
+					],
 					"default": "conditional_newline_indent",
-					"description": "Control the formatting of template constraints."
+					"description": "Control the formatting of template constraints. See https://github.com/dlang-community/dfmt/issues/215"
 				},
 				"dscanner.ignoredKeys": {
 					"type": "array",
