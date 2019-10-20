@@ -59,9 +59,7 @@ matrix {
     4 5 6
 }`);
 		// TODO: make test more automatic instead of relying on tokenizer not changing
-		// TODO: do we even need a tokenizer test? The value test should be enough
 		assert.deepStrictEqual(tokens[0], { type: "identifier", range: [0, 6], name: "my_tag" });
-		assert.deepStrictEqual(tokens.length, 91, "Tokenizer has changed");
 	});
 	test("example sdl file", () => {
 		let root = parseSDL(`# a tag having only a name
