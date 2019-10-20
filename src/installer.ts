@@ -12,8 +12,6 @@ var async = require("async");
 var rmdir = require("rmdir");
 var mkdirp = require("mkdirp");
 
-export const TARGET_SERVED_VERSION: [number, number, number] = [0, 4, 1];
-
 var extensionContext: vscode.ExtensionContext;
 
 function gitPath() {
@@ -157,105 +155,318 @@ export function downloadDub(env: any, done: (installed: boolean) => void) {
 	return undefined;
 }
 
-export function installServeD(env: any, done: Function) {
-	var urls: string[];
-	// TODO: platform checks here
+export interface ReleaseAsset {
+	id: number;
+	name: string;
+	size: number;
+	download_count: number;
+	browser_download_url: string;
+	created_at: string;
+}
+
+export interface Release {
+	name: string;
+	asset?: ReleaseAsset;
+}
+
+const nightlyReleaseId = 20717582;
+let servedVersionCache = {
+	release: <Release | undefined>undefined,
+	channel: ""
+};
+export function findLatestServeD(callback: (version: Release | undefined) => any, force: boolean = false, channel?: string) {
+	if (!channel)
+		channel = config(null).get("servedReleaseChannel", "stable");
+
+	if (channel == "frozen" && force)
+		channel = "stable";
+
+	if (channel == "frozen")
+		return callback(undefined);
+
+	if (servedVersionCache.channel == channel)
+		return callback(servedVersionCache.release);
+
+	let randomUpdateReduction = config(null).get("smartServedUpdates", true);
+	if (randomUpdateReduction && channel == "stable" && !force) {
+		if (Math.floor(Math.random() * 4) == 0) {
+			// only update approximately every 4th user/time running on stable.
+			// Lowers bandwidth and startup delay to check not-so-frequent stable releases
+			return callback(undefined);
+		}
+
+		if ((new Date()).getDay() == 5
+			&& Math.floor(Math.random() * 3) == 0) {
+			// furthermore reduce updates on fridays
+			// avoids breaking peoples workflow right at the end of their work week
+			return callback(undefined);
+		}
+	}
+
+	if (channel == "nightly") {
+		req().get({
+			url: "https://api.github.com/repos/Pure-D/serve-d/releases/" + nightlyReleaseId,
+			headers: {
+				"User-Agent": "https://github.com/Pure-D/code-d"
+			},
+			timeout: 3000
+		}, (err: any, httpResponse: any, body: any) => {
+			if (err)
+				return callback(undefined);
+
+			try {
+				if (typeof body == "string")
+					body = JSON.parse(body);
+			}
+			catch (e) {
+				return callback(undefined);
+			}
+
+			if (typeof body != "object")
+				return callback(undefined);
+
+			var assets = <ReleaseAsset[]>body.assets;
+			// reverse sort (largest date first)
+			assets.sort((a, b) => b.name.localeCompare(a.name));
+
+			let targetAsset = findFirstMatchingAsset("nightly", assets);
+			let ret: Release = {
+				name: "nightly",
+				asset: targetAsset
+			};
+
+			servedVersionCache.release = ret;
+			servedVersionCache.channel = channel!;
+			return callback(ret);
+		});
+	} else {
+		req().get({
+			url: "https://api.github.com/repos/Pure-D/serve-d/releases",
+			headers: {
+				"User-Agent": "https://github.com/Pure-D/code-d"
+			},
+			timeout: 3000
+		}, (err: any, httpResponse: any, body: any) => {
+			if (err)
+				return callback(undefined);
+
+			try {
+				if (typeof body == "string")
+					body = JSON.parse(body);
+			}
+			catch (e) {
+				return callback(undefined);
+			}
+
+			if (!Array.isArray(body))
+				return callback(undefined);
+
+			let numMatching = 0;
+
+			let ret: Release = {
+				name: "master"
+			};
+
+			for (let i = 0; i < body.length; i++) {
+				const release = body[i];
+				if (release.id == nightlyReleaseId)
+					continue;
+
+				if (channel == "stable" && release.prerelease)
+					continue;
+
+				let targetAsset = findFirstMatchingAsset(release.name, release.assets);
+				if (!targetAsset) {
+					if (ret.name == "master") {
+						ret.name = release.tag_name;
+					}
+				} else {
+					ret.name = release.tag_name;
+					ret.asset = targetAsset;
+					break;
+				}
+
+				// search last 3 releases for binaries
+				if (numMatching++ >= 3)
+					break;
+			}
+
+			servedVersionCache.release = ret;
+			servedVersionCache.channel = channel!;
+			return callback(ret);
+		});
+	}
+}
+
+function findFirstMatchingAsset(name: string | "nightly", assets: ReleaseAsset[]): ReleaseAsset | undefined {
+	let os = <string>process.platform;
+	let arch = process.arch == "x64" ? "x86_64" : process.arch == "ia32" ? "x86" : process.arch;
+
+	if (os == "win32") {
+		os = "windows";
+	}
+	else if (os == "darwin") {
+		os = "osx";
+	}
+
+	if (name == "nightly") {
+		for (let i = 0; i < assets.length; i++) {
+			const asset = assets[i];
+			let test = asset.name;
+			if (test.startsWith("serve-d"))
+				test = test.substr("serve-d".length);
+			if (test.startsWith("-") || test.startsWith("_"))
+				test = test.substr(1);
+
+			if (!test.startsWith(os))
+				continue;
+			test = test.substr(os.length);
+			if (test.startsWith("-") || test.startsWith("_"))
+				test = test.substr(1);
+			if (test.startsWith("nightly"))
+				test = test.substr("nightly".length);
+			if (test.startsWith("-") || test.startsWith("_"))
+				test = test.substr(1);
+
+			// remaining:
+			// either x86_64-20191017-4b5427.tar.xz
+			// or (platformless) 20191017-4b5427.tar.xz
+			if (test.startsWith(arch) || test.startsWith("2")) // 2 for 2019 and the next 980 years of support, indicating no architecture (windows)
+				return asset;
+		}
+		return undefined;
+	} else {
+		if (name.startsWith("v"))
+			name = name.substr(1);
+
+		for (let i = 0; i < assets.length; i++) {
+			const asset = assets[i];
+			let test = asset.name;
+			if (test.startsWith("serve-d"))
+				test = test.substr("serve-d".length);
+			if (test.startsWith("-") || test.startsWith("_"))
+				test = test.substr(1);
+			if (test.startsWith(name))
+				test = test.substr(name.length);
+			if (test.startsWith("-") || test.startsWith("_"))
+				test = test.substr(1);
+
+			const dot = test.indexOf('.');
+			if (dot != -1)
+				test = test.substr(0, dot);
+
+			if (test == `${os}-${arch}` || test == os)
+				return asset;
+		}
+		return undefined;
+	}
+}
+
+export function installServeD(urls: string[], ref: string): (env: any, done: Function) => any {
+	if (urls.length == 0)
+		return (env: any, done: Function) => {
+			vscode.window.showErrorMessage("No precompiled serve-d binary for this platform/architecture", "Compile from source").then((r?: string) => {
+				if (r == "Compile from source")
+					compileServeD(ref)(env, done);
+			});
+		};
+
+	// add DCD binaries here as well
 	if (process.platform == "linux" && process.arch == "x64") {
-		urls = [
-			"https://github.com/Pure-D/serve-d/releases/download/v" + TARGET_SERVED_VERSION.join(".") + "/serve-d_" + TARGET_SERVED_VERSION.join(".") + "-linux-x86_64.tar.xz",
-			"https://github.com/dlang-community/DCD/releases/download/v0.11.1/dcd-v0.11.1-linux-x86_64.tar.gz"
-		];
+		urls.push("https://github.com/dlang-community/DCD/releases/download/v0.11.1/dcd-v0.11.1-linux-x86_64.tar.gz");
+	}
+	else if (process.platform == "darwin" && process.arch == "x64") {
+		urls.push("https://github.com/dlang-community/DCD/releases/download/v0.11.1/dcd-v0.11.1-osx-x86_64.tar.gz");
 	}
 	else if (process.platform == "win32") {
-		urls = [
-			"https://github.com/Pure-D/serve-d/releases/download/v" + TARGET_SERVED_VERSION.join(".") + "/serve-d_" + TARGET_SERVED_VERSION.join(".") + "-windows.zip"
-		];
 		if (process.arch == "x64")
 			urls.push("https://github.com/dlang-community/DCD/releases/download/v0.11.1/dcd-v0.11.1-windows-x86_64.zip");
 		// else
 		// 	urls.push("https://github.com/dlang-community/DCD/releases/download/v0.11.0/dcd-v0.11.0-windows-x86.zip");
 	}
-	else
-		return vscode.window.showErrorMessage("No precompiled serve-d binary for this platform/architecture", "Compile from source").then((r?: string) => {
-			if (r == "Compile from source")
-				compileServeD(env, done);
-		});
-	getInstallOutput().show(true);
-	var outputFolder = determineOutputFolder();
-	mkdirp.sync(outputFolder);
-	var finalDestination = path.join(outputFolder, "serve-d" + (process.platform == "win32" ? ".exe" : ""));
-	installationLog.appendLine("Installing into " + outputFolder);
-	fs.exists(outputFolder, function (exists) {
-		if (!exists)
-			fs.mkdirSync(outputFolder);
-		if (fs.existsSync(finalDestination))
-			rimraf.sync(finalDestination);
-		async.each(urls, function (url: string, cb: Function) {
-			installationLog.appendLine("Downloading from " + url + " into " + outputFolder);
-			var ext = url.endsWith(".tar.xz") ? ".tar.xz" : url.endsWith(".tar.gz") ? ".tar.gz" : path.extname(url);
-			var fileName = path.basename(url);
-			var outputPath = path.join(outputFolder, fileName);
-			downloadFileInteractive(url, "Serve-D Download", () => {
-				installationLog.appendLine("Aborted download");
-				fs.unlink(outputPath, function () { });
-			}).pipe(fs.createWriteStream(outputPath)).on("finish", () => {
-				installationLog.appendLine("Extracting " + fileName);
-				if (ext == ".zip") {
-					try {
-						new AdmZip(outputPath).extractAllTo(outputFolder);
-						try {
-							installationLog.appendLine("Deleting " + outputPath);
-							fs.unlink(outputPath, (err) => {
-								if (err)
-									installationLog.appendLine("Failed to delete " + outputPath);
-							});
-						}
-						catch (e) {
-							vscode.window.showErrorMessage("Failed to delete temporary file: " + outputPath);
-						}
-						cb();
-					}
-					catch (e) {
-						return cb(e);
-					}
-				}
-				else if (ext == ".tar.xz" || ext == ".tar.gz") {
-					var mod = ext == ".tar.xz" ? "J" : "z";
-					installationLog.appendLine("> tar xvf" + mod + " " + fileName);
-					ChildProcess.spawn("tar", ["xvf" + mod, fileName], {
-						cwd: outputFolder
-					}).on("exit", function (code) {
-						if (code != 0) {
-							return cb(code);
-						}
-						try {
-							installationLog.appendLine("Deleting " + outputPath);
-							fs.unlink(outputPath, (err) => {
-								if (err)
-									installationLog.appendLine("Failed to delete " + outputPath);
-							});
-						}
-						catch (e) {
-							vscode.window.showErrorMessage("Failed to delete temporary file: " + outputPath);
-						}
-						return cb();
+
+	return (env: any, done: Function) => {
+		getInstallOutput().show(true);
+		var outputFolder = determineOutputFolder();
+		mkdirp.sync(outputFolder);
+		var finalDestination = path.join(outputFolder, "serve-d" + (process.platform == "win32" ? ".exe" : ""));
+		installationLog.appendLine("Installing into " + outputFolder);
+		fs.exists(outputFolder, function (exists) {
+			if (!exists)
+				fs.mkdirSync(outputFolder);
+			if (fs.existsSync(finalDestination))
+				rimraf.sync(finalDestination);
+			async.each(urls, installServeDEntry(outputFolder), function (err: any) {
+				if (err) {
+					vscode.window.showErrorMessage("Failed to download release", "Compile from source").then((r?: string) => {
+						if (r == "Compile from source")
+							compileServeD(ref)(env, done);
 					});
 				}
+				else {
+					config(null).update("servedPath", finalDestination, true);
+					installationLog.appendLine("Finished installing into " + finalDestination);
+					done(true);
+				}
 			});
-		}, function (err: any) {
-			if (err) {
-				vscode.window.showErrorMessage("Failed to download release", "Compile from source").then((r?: string) => {
-					if (r == "Compile from source")
-						compileServeD(env, done);
+		});
+	};
+}
+
+function installServeDEntry(outputFolder: string): (url: string, cb: Function) => any {
+	return (url: string, cb: Function) => {
+		installationLog.appendLine("Downloading from " + url + " into " + outputFolder);
+		var ext = url.endsWith(".tar.xz") ? ".tar.xz" : url.endsWith(".tar.gz") ? ".tar.gz" : path.extname(url);
+		var fileName = path.basename(url);
+		var outputPath = path.join(outputFolder, fileName);
+		downloadFileInteractive(url, "Serve-D Download", () => {
+			installationLog.appendLine("Aborted download");
+			fs.unlink(outputPath, function () { });
+		}).pipe(fs.createWriteStream(outputPath)).on("finish", () => {
+			installationLog.appendLine("Extracting " + fileName);
+			if (ext == ".zip") {
+				try {
+					new AdmZip(outputPath).extractAllTo(outputFolder);
+					try {
+						installationLog.appendLine("Deleting " + outputPath);
+						fs.unlink(outputPath, (err) => {
+							if (err)
+								installationLog.appendLine("Failed to delete " + outputPath);
+						});
+					}
+					catch (e) {
+						vscode.window.showErrorMessage("Failed to delete temporary file: " + outputPath);
+					}
+					cb();
+				}
+				catch (e) {
+					return cb(e);
+				}
+			}
+			else if (ext == ".tar.xz" || ext == ".tar.gz") {
+				var mod = ext == ".tar.xz" ? "J" : "z";
+				installationLog.appendLine("> tar xvf" + mod + " " + fileName);
+				ChildProcess.spawn("tar", ["xvf" + mod, fileName], {
+					cwd: outputFolder
+				}).on("exit", function (code) {
+					if (code != 0) {
+						return cb(code);
+					}
+					try {
+						installationLog.appendLine("Deleting " + outputPath);
+						fs.unlink(outputPath, (err) => {
+							if (err)
+								installationLog.appendLine("Failed to delete " + outputPath);
+						});
+					}
+					catch (e) {
+						vscode.window.showErrorMessage("Failed to delete temporary file: " + outputPath);
+					}
+					return cb();
 				});
 			}
-			else {
-				config(null).update("servedPath", finalDestination, true);
-				installationLog.appendLine("Finished installing into " + finalDestination);
-				done(true);
-			}
 		});
-	});
+	};
 }
 
 export function checkBetaServeD(callback: Function) {
@@ -288,21 +499,9 @@ export function checkBetaServeD(callback: Function) {
 					return callback(true);
 				}
 				var latest = new Date(body.commit.author.date);
-				var parsed = /Built: \w+\s+(\w+)\s+(\d+)\s+(\d+:\d+:\d+)\s+(\d+)/.exec(output);
-				if (!parsed)
+				var current = extractServedBuiltDate(output);
+				if (!current)
 					return callback(false);
-				var month = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"].indexOf(parsed[1].toLowerCase());
-				if (month < 0)
-					return callback(false);
-				var date = parseInt(parsed[2]);
-				var parts = parsed[3].split(':');
-				var year = parseInt(parsed[4]);
-				var hour = parseInt(parts[0]);
-				var minute = parseInt(parts[1]);
-				var second = parseInt(parts[2]);
-				if (isNaN(year) || isNaN(date) || isNaN(hour) || isNaN(minute) || isNaN(second))
-					return callback(false);
-				var current = new Date(year, month, date, hour, minute, second);
 				callback(current.getTime() >= latest.getTime());
 			});
 		}
@@ -311,34 +510,54 @@ export function checkBetaServeD(callback: Function) {
 	});
 }
 
-export function compileServeD(env: any, done: Function) {
-	var outputFolder = determineOutputFolder();
-	mkdirp.sync(outputFolder);
-	fs.exists(outputFolder, function (exists) {
-		const dubPath = config(null).get("dubPath", "dub");
-		const dmdPath = config(null).get("dmdPath", undefined);
-		if (!exists)
-			fs.mkdirSync(outputFolder);
-		env["DFLAGS"] = "-O -release";
-		let buildArgs = ["build"];
-		if (process.platform == "win32") {
-			env["DFLAGS"] = "-release";
-			buildArgs.push("--arch=x86_mscoff");
-		}
-		if (dubPath != "dub" && dmdPath) {
-			// explicit dub path specified, it won't automatically find dmd if it's not in the same folder so we just pass the path if we have it
-			buildArgs.push("--compiler=" + dmdPath);
-		}
-		compileDependency(outputFolder, "serve-d", "https://github.com/Pure-D/serve-d.git", [
-			[dubPath, ["upgrade"]],
-			[dubPath, buildArgs]
-		], function () {
-			var finalDestination = path.join(outputFolder, "serve-d", "serve-d" + (process.platform == "win32" ? ".exe" : ""));
+export function extractServedBuiltDate(log: string): Date | false {
+	var parsed = /Built: \w+\s+(\w+)\s+(\d+)\s+(\d+:\d+:\d+)\s+(\d+)/.exec(log);
+	if (!parsed)
+		return false;
+	var month = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"].indexOf(parsed[1].toLowerCase());
+	if (month < 0)
+		return false;
+	var date = parseInt(parsed[2]);
+	var parts = parsed[3].split(':');
+	var year = parseInt(parsed[4]);
+	var hour = parseInt(parts[0]);
+	var minute = parseInt(parts[1]);
+	var second = parseInt(parts[2]);
+	if (isNaN(year) || isNaN(date) || isNaN(hour) || isNaN(minute) || isNaN(second))
+		return false;
+	return new Date(Date.UTC(year, month, date, hour, minute, second));
+}
 
-			config(null).update("servedPath", finalDestination, true);
-			done(true);
-		}, env);
-	});
+export function compileServeD(ref?: string): (env: any, done: Function) => any {
+	return (env: any, done: Function) => {
+		var outputFolder = determineOutputFolder();
+		mkdirp.sync(outputFolder);
+		fs.exists(outputFolder, function (exists) {
+			const dubPath = config(null).get("dubPath", "dub");
+			const dmdPath = config(null).get("dmdPath", undefined);
+			if (!exists)
+				fs.mkdirSync(outputFolder);
+			env["DFLAGS"] = "-O -release";
+			let buildArgs = ["build"];
+			if (process.platform == "win32") {
+				env["DFLAGS"] = "-release";
+				buildArgs.push("--arch=x86_mscoff");
+			}
+			if (dubPath != "dub" && dmdPath) {
+				// explicit dub path specified, it won't automatically find dmd if it's not in the same folder so we just pass the path if we have it
+				buildArgs.push("--compiler=" + dmdPath);
+			}
+			compileDependency(outputFolder, "serve-d", "https://github.com/Pure-D/serve-d.git", [
+				[dubPath, ["upgrade"]],
+				[dubPath, buildArgs]
+			], function () {
+				var finalDestination = path.join(outputFolder, "serve-d", "serve-d" + (process.platform == "win32" ? ".exe" : ""));
+
+				config(null).update("servedPath", finalDestination, true);
+				done(true);
+			}, env, ref);
+		});
+	};
 }
 
 function spawnCommand(cmd: string, args: string[], options: ChildProcess.SpawnOptions, cb: Function, onLog?: Function) {
@@ -371,7 +590,7 @@ function spawnCommand(cmd: string, args: string[], options: ChildProcess.SpawnOp
 	}
 }
 
-export function compileDependency(cwd: string, name: string, gitURI: string, commands: [string, string[]][], callback: Function, env: any) {
+export function compileDependency(cwd: string, name: string, gitURI: string, commands: [string, string[]][], callback: Function, env: any, ref?: string) {
 	if (!installationLog) {
 		installationLog = vscode.window.createOutputChannel(installationTitle);
 		extensionContext.subscriptions.push(installationLog);
@@ -383,9 +602,12 @@ export function compileDependency(cwd: string, name: string, gitURI: string, com
 	};
 	var newCwd = path.join(cwd, name);
 	var startCompile = () => {
-		spawnCommand(gitPath(), ["clone", "--recursive", gitURI, name], { cwd: cwd, env: env }, (err: any) => {
+		const git = gitPath();
+		spawnCommand(git, ["clone", "--recursive", gitURI, name], { cwd: cwd, env: env }, (err: any) => {
 			if (err !== 0)
 				return error(err);
+			if (ref)
+				commands.unshift([git, ["checkout", ref]]);
 			async.eachSeries(commands, function (command: [string, string[]], cb: Function) {
 				var failedArch = false;
 				var prevLog = "";
@@ -431,4 +653,57 @@ export function compileDependency(cwd: string, name: string, gitURI: string, com
 		});
 	}
 	else startCompile();
+}
+
+export function parseSimpleSemver(a: string): [number, number, number, (string | number)[]] {
+	if (a.startsWith("v")) a = a.substr(1);
+
+	const plus = a.indexOf('+');
+	if (plus != -1) a = a.substr(0, plus);
+
+	const hyphen = a.indexOf('-');
+	let preRelease: (string | number)[] = [];
+	if (hyphen != -1) {
+		let part = a.substr(hyphen + 1);
+		a = a.substr(0, hyphen);
+
+		preRelease = part.split('.');
+		for (let i = 0; i < preRelease.length; i++) {
+			const n = parseInt(<string>preRelease[i]);
+			if (isFinite(n))
+				preRelease[i] = n;
+		}
+	}
+
+	const parts = a.split('.');
+	if (parts.length != 3)
+		throw new Error("Version specification '" + a + "' not parsable by simple semver rules");
+	return [parseInt(parts[0]), parseInt(parts[1]), parseInt(parts[2]), preRelease];
+}
+
+export function cmpSemver(as: string, bs: string): number {
+	const a = parseSimpleSemver(as);
+	const b = parseSimpleSemver(bs);
+
+	for (let i = 0; i < 3; i++) {
+		if (a[i] < b[i]) return -1;
+		else if (a[i] > b[i]) return 1;
+	}
+
+	// pre-release on a but not on b
+	if (a[3].length > 0 && b[3].length == 0) return -1;
+	// pre-release on b but not on a
+	else if (a[3].length == 0 && b[3].length > 0) return 1;
+
+	const min = Math.min(a[3].length, b[3].length);
+	for (let i = 0; i < min; i++) {
+		if (a[3][i] < b[3][i])
+			return -1;
+		else if (a[3][i] > b[3][i])
+			return 1;
+	}
+
+	if (a[3].length == b[3].length) return 0;
+	else if (a[3].length < b[3].length) return -1;
+	else return 1;
 }

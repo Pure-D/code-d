@@ -366,8 +366,33 @@
 				"d.betaStream": {
 					"type": "boolean",
 					"scope": "application",
+					"deprecationMessage": "This option has been replaced with \"d.servedReleaseChannel\":\"nightly\"",
 					"default": false,
 					"description": "Always get latest serve-d commit when starting vscode and an update is available."
+				},
+				"d.servedReleaseChannel": {
+					"type": "string",
+					"scope": "application",
+					"default": "stable",
+					"enum": [
+						"stable",
+						"beta",
+						"nightly",
+						"frozen"
+					],
+					"enumDescriptions": [
+						"Always fetch the latest pre-compiled stable release binaries from the serve-d GitHub repository",
+						"Always fetch the latest pre-compiled potentially unstable pre-release binaries from the serve-d GitHub repository",
+						"Always fetch the latest pre-compiled nightly binaries from the serve-d GitHub repository. These are being generated every night (UTC) if something changed and tests passed.",
+						"Don't do any update checks for serve-d (not recommended if you don't update serve-d outside code-d)"
+					],
+					"description": "Release channel (stable, beta, nightly) to automatically download serve-d binaries from. serve-d is the D language server used with code-d and provides all language functionality except syntax highlighting, which is provided by code-d."
+				},
+				"d.smartServedUpdates": {
+					"type": "boolean",
+					"scope": "application",
+					"default": true,
+					"description": "Randomly omits serve-d update checks to save bandwidth, lower startup delay and minimize breakage on new releases with quick fixes. Also avoids to update when working on fridays."
 				},
 				"d.scanAllFolders": {
 					"type": "boolean",

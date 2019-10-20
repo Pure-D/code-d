@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
 import { LanguageClient, LanguageClientOptions, ServerOptions, DocumentFilter, NotificationType, CloseAction, ErrorAction, ErrorHandler, Message } from "vscode-languageclient";
-import { setContext, downloadDub, installServeD, compileServeD, getInstallOutput, checkBetaServeD, TARGET_SERVED_VERSION, downloadFileInteractive } from "./installer"
+import { setContext, downloadDub, installServeD, compileServeD, getInstallOutput, downloadFileInteractive, findLatestServeD, cmpSemver, extractServedBuiltDate, ReleaseAsset, Release } from "./installer"
 import { EventEmitter } from "events"
 import * as ChildProcess from "child_process"
 
@@ -320,7 +320,7 @@ function preStartup(context: vscode.ExtensionContext) {
 		});
 	}
 	{
-		function checkProgram(configName: string, defaultPath: string, name: string, installFunc: (env: NodeJS.ProcessEnv, done: (installed: boolean) => void) => any, btn: string, done?: (installed: boolean) => void, outdatedCheck?: (log: string) => boolean) {
+		function checkProgram(configName: string, defaultPath: string, name: string, installFunc: (env: NodeJS.ProcessEnv, done: (installed: boolean) => void) => any, btn: string, done?: (installed: boolean) => void, outdatedCheck?: (log: string) => (boolean | [boolean, string])) {
 			var version = "";
 			var errored = false;
 			var proc = ChildProcess.spawn(expandTilde(config(null).get(configName, defaultPath)), ["--version"], { cwd: vscode.workspace.rootPath, env: env });
@@ -358,12 +358,17 @@ function preStartup(context: vscode.ExtensionContext) {
 					}
 				}
 			}).on("exit", function () {
-				if (outdatedCheck && outdatedCheck(version)) {
+				let outdatedResult = outdatedCheck && outdatedCheck(version);
+				let isOutdated = typeof outdatedResult == "boolean" ? outdatedResult
+					: typeof outdatedResult == "object" && Array.isArray(outdatedResult) ? outdatedResult[0]
+						: false;
+				let msg = typeof outdatedResult == "object" && Array.isArray(outdatedResult) ? outdatedResult[1] : undefined;
+				if (isOutdated) {
 					if (config(null).get("aggressiveUpdate", true)) {
 						installFunc(env, done || (() => { }));
 					}
 					else {
-						vscode.window.showErrorMessage(name + " is outdated.", btn + " " + name, "Continue Anyway").then(s => {
+						vscode.window.showErrorMessage(name + " is outdated. " + (msg || ""), btn + " " + name, "Continue Anyway").then(s => {
 							if (s == "Continue Anyway") {
 								if (done)
 									done(false);
@@ -379,42 +384,113 @@ function preStartup(context: vscode.ExtensionContext) {
 			});
 		}
 		checkProgram("dubPath", "dub", "dub", downloadDub, "Download", () => {
-			var isBeta = config(null).get("betaStream", false);
-			if (isBeta) {
-				checkBetaServeD((newest: boolean) => {
-					if (newest)
-						startClient(context);
-					else
-						compileServeD(env, () => {
-							setTimeout(() => {
-								// make sure settings get updated
-								startClient(context);
-							}, 500);
-						});
-				})
-			}
-			else {
-				checkProgram("servedPath", "serve-d", "serve-d", installServeD, "Download", () => {
+			let isLegacyBeta = config(null).get("betaStream", false);
+			let servedReleaseChannel = config(null).inspect("servedReleaseChannel");
+			let channelString = config(null).get("servedReleaseChannel", "stable");
+
+			let reloading = false;
+			let started = false;
+			let outdated = false;
+
+			function didChangeReleaseChannel(updated: Thenable<any>) {
+				if (started && !reloading) {
+					reloading = true;
 					// make sure settings get updated
-					setTimeout(() => {
-						startClient(context);
-					}, 500);
-				}, (log) => {
-					var m = /serve-d v(\d+)\.(\d+)\.(\d+)/.exec(log);
+					updated.then(() => {
+						vscode.commands.executeCommand("workbench.action.reloadWindow");
+					});
+				} else
+					outdated = true;
+			}
+
+			function isServedOutdated(current: Release | undefined): (log: string) => (boolean | [boolean, string]) {
+				return (log: string) => {
+					if (!current || !current.asset)
+						return false; // network failure or frozen release channel, let's not bother the user
+					else if (current.name == "nightly") {
+						let date = new Date(current.asset.created_at);
+						let installed = extractServedBuiltDate(log);
+						if (!installed)
+							return [true, "(target=nightly, installed=none)"];
+
+						date.setUTCHours(0);
+						date.setUTCMinutes(0);
+						date.setUTCSeconds(0);
+
+						installed.setUTCHours(12);
+						installed.setUTCMinutes(0);
+						installed.setUTCSeconds(0);
+
+						return installed < date;
+					}
+
+					let installedChannel = context.globalState.get("serve-d-downloaded-release-channel");
+					if (installedChannel && channelString != installedChannel)
+						return [true, "(target channel=" + channelString + ", installed channel=" + installedChannel + ")"];
+
+					var m = /serve-d v(\d+\.\d+\.\d+(?:-[-.a-zA-Z0-9]+)?)/.exec(log);
+					var target = current.name;
+					if (target.startsWith("v")) target = target.substr(1);
+
 					if (m) {
-						var major = parseInt(m[1]);
-						var minor = parseInt(m[2]);
-						var patch = parseInt(m[3]);
-						if (major < TARGET_SERVED_VERSION[0])
-							return true;
-						if (major == TARGET_SERVED_VERSION[0] && minor < TARGET_SERVED_VERSION[1])
-							return true;
-						if (major == TARGET_SERVED_VERSION[0] && minor == TARGET_SERVED_VERSION[1] && patch < TARGET_SERVED_VERSION[2])
-							return true;
+						try {
+							return [cmpSemver(m[1], target) < 0, "(target=" + target + ", installed=" + m[1] + ")"];
+						} catch (e) {
+							getInstallOutput().show(true);
+							getInstallOutput().appendLine("ERROR: could not compare current serve-d version with release");
+							getInstallOutput().appendLine(e.toString());
+						}
 					}
 					return false;
-				});
+				};
 			}
+
+			if (isLegacyBeta && servedReleaseChannel && !servedReleaseChannel.globalValue) {
+				config(null).update("servedReleaseChannel", "nightly", vscode.ConfigurationTarget.Global);
+				channelString = "nightly";
+
+				let stable = "Switch to Stable";
+				let beta = "Switch to Beta";
+				let userConfig = "Open User Settings";
+				vscode.window.showInformationMessage("Hey! The setting 'd.betaStream' no longer exists and has been replaced with "
+					+ "'d.servedReleaseChannel'. Your settings have been automatically updated to fetch nightly builds, but you "
+					+ "probably want to remove the old setting.\n\n"
+					+ "Stable and beta releases are planned more frequently now, so they might be a better option for you.",
+					stable, beta, userConfig).then(item => {
+						if (item == userConfig) {
+							vscode.commands.executeCommand("workbench.action.openGlobalSettings");
+						} else if (item == stable) {
+							let done = config(null).update("servedReleaseChannel", "stable", vscode.ConfigurationTarget.Global);
+							didChangeReleaseChannel(done);
+						} else if (item == beta) {
+							let done = config(null).update("servedReleaseChannel", "beta", vscode.ConfigurationTarget.Global);
+							didChangeReleaseChannel(done);
+						}
+					});
+			}
+
+			let targetRelease = findLatestServeD(version => {
+				checkProgram("servedPath", "serve-d", "serve-d",
+					version && version.asset
+						? installServeD([version.asset.browser_download_url], version.name)
+						: compileServeD(version ? version.name : undefined),
+					version ? "Download" : "Compile", () => {
+						context.globalState.update("serve-d-downloaded-release-channel", servedReleaseChannel).then(() => {
+							if (outdated) {
+								if (!reloading) {
+									reloading = true;
+									// just to be absolutely sure all settings have been written
+									setTimeout(() => {
+										vscode.commands.executeCommand("workbench.action.reloadWindow");
+									}, 500);
+								}
+							} else {
+								startClient(context);
+								started = true;
+							}
+						});
+					}, isServedOutdated(version));
+			}, false, channelString);
 		});
 		function checkCompiler(compiler: string, callback: Function | undefined) {
 			ChildProcess.spawn(compiler, ["--version"]).on("error", function (err) {
