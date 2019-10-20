@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
 import { LanguageClient, LanguageClientOptions, ServerOptions, DocumentFilter, NotificationType, CloseAction, ErrorAction, ErrorHandler, Message } from "vscode-languageclient";
-import { setContext, downloadDub, installServeD, compileServeD, getInstallOutput, downloadFileInteractive, findLatestServeD, cmpSemver, extractServedBuiltDate, ReleaseAsset, Release } from "./installer"
+import { setContext, downloadDub, installServeD, compileServeD, getInstallOutput, downloadFileInteractive, findLatestServeD, cmpSemver, extractServedBuiltDate, ReleaseAsset, Release, updateAndInstallServeD } from "./installer"
 import { EventEmitter } from "events"
 import * as ChildProcess from "child_process"
 
@@ -469,12 +469,17 @@ function preStartup(context: vscode.ExtensionContext) {
 					});
 			}
 
+			let force = true; // force release lookup before first install
+			if (context.globalState.get("serve-d-downloaded-release-channel"))
+				force = false;
+
 			let targetRelease = findLatestServeD(version => {
 				checkProgram("servedPath", "serve-d", "serve-d",
-					version && version.asset
-						? installServeD([version.asset.browser_download_url], version.name)
-						: compileServeD(version ? version.name : undefined),
-					version ? "Download" : "Compile", () => {
+					version ? (version.asset
+							? installServeD([version.asset.browser_download_url], version.name)
+							: compileServeD(version ? version.name : undefined))
+						: updateAndInstallServeD,
+					version ? (version.asset ? "Download" : "Compile") : "Install", () => {
 						context.globalState.update("serve-d-downloaded-release-channel", channelString).then(() => {
 							if (outdated) {
 								if (!reloading) {
@@ -490,7 +495,7 @@ function preStartup(context: vscode.ExtensionContext) {
 							}
 						});
 					}, isServedOutdated(version));
-			}, false, channelString);
+			}, force, channelString);
 		});
 		function checkCompiler(compiler: string, callback: Function | undefined) {
 			ChildProcess.spawn(compiler, ["--version"]).on("error", function (err) {

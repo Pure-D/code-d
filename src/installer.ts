@@ -202,6 +202,7 @@ export function findLatestServeD(callback: (version: Release | undefined) => any
 			return callback(undefined);
 		}
 	}
+	let timeout = force ? 8000 : 3000;
 
 	if (channel == "nightly") {
 		req().get({
@@ -209,7 +210,7 @@ export function findLatestServeD(callback: (version: Release | undefined) => any
 			headers: {
 				"User-Agent": "https://github.com/Pure-D/code-d"
 			},
-			timeout: 3000
+			timeout: timeout
 		}, (err: any, httpResponse: any, body: any) => {
 			if (err)
 				return callback(undefined);
@@ -245,7 +246,7 @@ export function findLatestServeD(callback: (version: Release | undefined) => any
 			headers: {
 				"User-Agent": "https://github.com/Pure-D/code-d"
 			},
-			timeout: 3000
+			timeout: timeout
 		}, (err: any, httpResponse: any, body: any) => {
 			if (err)
 				return callback(undefined);
@@ -362,6 +363,35 @@ function findFirstMatchingAsset(name: string | "nightly", assets: ReleaseAsset[]
 	}
 }
 
+export function updateAndInstallServeD(env: any, done: Function): any {
+	vscode.window.withProgress({
+		location: vscode.ProgressLocation.Notification,
+		title: "Searching for updates..."
+	}, (progress, token) => {
+		return new Promise((resolve, reject) => {
+			findLatestServeD((version) => {
+				resolve();
+				if (version === undefined) {
+					const compile = "Compile";
+					const userSettings = "Open User Settings";
+					vscode.window.showInformationMessage("Updates can currently not be determined. Would you like "
+						+ "to try and compile serve-d from source or specify a path to the serve-d executable in your user settings?",
+						compile, userSettings).then(option => {
+							if (option == compile)
+								compileServeD("master")(env, done);
+							else if (userSettings)
+								vscode.commands.executeCommand("workbench.action.openGlobalSettings");
+						});
+				} else if (!version.asset) {
+					compileServeD("master")(env, done);
+				} else {
+					installServeD([version.asset.browser_download_url], version.name)(env, done);
+				}
+			}, true);
+		});
+	});
+}
+
 export function installServeD(urls: string[], ref: string): (env: any, done: Function) => any {
 	if (urls.length == 0)
 		return (env: any, done: Function) => {
@@ -404,9 +434,10 @@ export function installServeD(urls: string[], ref: string): (env: any, done: Fun
 					});
 				}
 				else {
-					config(null).update("servedPath", finalDestination, true);
-					installationLog.appendLine("Finished installing into " + finalDestination);
-					done(true);
+					config(null).update("servedPath", finalDestination, true).then(() => {
+						installationLog.appendLine("Finished installing into " + finalDestination);
+						done(true);
+					});
 				}
 			});
 		});
@@ -553,8 +584,9 @@ export function compileServeD(ref?: string): (env: any, done: Function) => any {
 			], function () {
 				var finalDestination = path.join(outputFolder, "serve-d", "serve-d" + (process.platform == "win32" ? ".exe" : ""));
 
-				config(null).update("servedPath", finalDestination, true);
-				done(true);
+				config(null).update("servedPath", finalDestination, true).then(() => {
+					done(true);
+				});
 			}, env, ref);
 		});
 	};

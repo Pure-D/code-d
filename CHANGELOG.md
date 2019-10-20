@@ -2,6 +2,17 @@ Don't forget to join our discord server [![Join on Discord](https://discordapp.c
 
 # 0.x.y
 
+## New release mechanism
+
+The `d.betaStream` setting is now obsolete and got replaced by `d.servedReleaseChannel`.
+
+`d.servedReleaseChannel` offers 4 different modes:
+
+- `stable`: this behaves like previously having `d.betaStream` set to false but additionally now will always fetch newer releases directly from GitHub without a new code-d being needed to be installed first.
+- `beta`: this is a new option which behaves much like `stable`, but additionally to the release builds from GitHub also downloads the pre-release versions. These can be considered mostly stable and will be released in more frequent update iterations. Pick this release channel if you want to report extension issues early.
+- `nightly`: this option behaves similar to `d.betaStream` set to true. However now only pre-compiled versions will be downloaded and additionally these versions are only released past midnight UTC and only if all tests pass. This new option combines the fast iterations of betaStream with more stable releases that will not cause compilation errors.
+- `frozen`: this option completely disables the update check on GitHub and only uses the locally installed serve-d. However if serve-d is not installed or broken, code-d will still attempt to download it from the newest stable version.
+
 ## Diet templates
 
 Diet completion got a lot of bug fixes and will work a lot better with more D code now.
