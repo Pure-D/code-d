@@ -475,7 +475,7 @@ function preStartup(context: vscode.ExtensionContext) {
 						? installServeD([version.asset.browser_download_url], version.name)
 						: compileServeD(version ? version.name : undefined),
 					version ? "Download" : "Compile", () => {
-						context.globalState.update("serve-d-downloaded-release-channel", servedReleaseChannel).then(() => {
+						context.globalState.update("serve-d-downloaded-release-channel", channelString).then(() => {
 							if (outdated) {
 								if (!reloading) {
 									reloading = true;
