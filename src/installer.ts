@@ -606,8 +606,11 @@ function spawnCommand(cmd: string, args: string[], options: ChildProcess.SpawnOp
 	installationLog.appendLine("> " + cmd + " " + args.join(" "));
 	try {
 		var proc = ChildProcess.spawn(cmd, args, options);
-		proc.stdout.on("data", log);
-		proc.stderr.on("data", log);
+		if (proc.stdout)
+			proc.stdout.on("data", log);
+		if (proc.stderr)
+			proc.stderr.on("data", log);
+
 		proc.on("error", function (error: any) {
 			if (((error ? error.message : "").toString()).endsWith("ENOENT")) {
 				installationLog.appendLine("The program '" + cmd + "' could not be found! Did you perhaps not install it or misconfigure some path?");
