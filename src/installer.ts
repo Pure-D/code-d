@@ -11,6 +11,7 @@ var progress = require("request-progress");
 var async = require("async");
 var rmdir = require("rmdir");
 var mkdirp = require("mkdirp");
+const expandTilde = require("expand-tilde");
 
 var extensionContext: vscode.ExtensionContext;
 
@@ -501,17 +502,19 @@ function installServeDEntry(outputFolder: string): (url: string, cb: Function) =
 }
 
 export function checkBetaServeD(callback: Function) {
-	var proc = ChildProcess.spawn(config(null).get("servedPath", "serve-d"), ["--version"]);
+	var proc = ChildProcess.spawn(expandTilde(config(null).get("servedPath", "serve-d")), ["--version"]);
 	proc.on("error", () => {
 		callback(false);
 	});
 	var output = "";
-	proc.stdout.on('data', function (data) {
-		output += data;
-	});
-	proc.stderr.on('data', function (data) {
-		output += data;
-	});
+	if (proc.stdout)
+		proc.stdout.on('data', function (data) {
+			output += data;
+		});
+	if (proc.stderr)
+		proc.stderr.on('data', function (data) {
+			output += data;
+		});
 	proc.on("exit", (code) => {
 		if (code == 0) {
 			req().get({

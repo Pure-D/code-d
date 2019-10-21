@@ -324,15 +324,30 @@ function preStartup(context: vscode.ExtensionContext) {
 			var version = "";
 			var errored = false;
 			var proc = ChildProcess.spawn(expandTilde(config(null).get(configName, defaultPath)), ["--version"], { cwd: vscode.workspace.rootPath, env: env });
-			proc.stderr.on("data", function (chunk) {
-				version += chunk;
-			});
-			proc.stdout.on("data", function (chunk) {
-				version += chunk;
-			});
+			if (proc.stderr)
+				proc.stderr.on("data", function (chunk) {
+					version += chunk;
+				});
+			if (proc.stdout)
+				proc.stdout.on("data", function (chunk) {
+					version += chunk;
+				});
 			proc.on("error", function (err) {
+				console.error(err);
+				const fullConfigName = "d." + configName;
+				if (btn == "Install" || btn == "Download") btn = "Reinstall";
+				const reinstallBtn = btn + " " + name;
+				const userSettingsBtn = "Open User Settings";
+
+				let defaultHandler = (s: string | undefined) => {
+					if (s == userSettingsBtn)
+						vscode.commands.executeCommand("workbench.action.openGlobalSettings");
+					else if (s == reinstallBtn)
+						installFunc(env, done || (() => { }));
+				};
+
+				errored = true;
 				if (err && (<any>err).code == "ENOENT") {
-					errored = true;
 					if (config(null).get("aggressiveUpdate", true)) {
 						installFunc(env, done || (() => { }));
 					}
@@ -343,19 +358,17 @@ function preStartup(context: vscode.ExtensionContext) {
 							isDirectory = path.isAbsolute(testPath) && fs.statSync(testPath).isDirectory();
 						} catch (e) { }
 						if (isDirectory) {
-							vscode.window.showErrorMessage(name + " points to a directory", "Open User Settings").then(s => {
-								if (s == "Open User Settings")
-									vscode.commands.executeCommand("workbench.action.openGlobalSettings");
-							});
+							vscode.window.showErrorMessage(name + " from setting " + fullConfigName + " points to a directory", reinstallBtn, userSettingsBtn).then(defaultHandler);
 						} else {
-							vscode.window.showErrorMessage(name + " is not installed or couldn't be found", btn + " " + name, "Open User Settings").then(s => {
-								if (s == "Open User Settings")
-									vscode.commands.executeCommand("workbench.action.openGlobalSettings");
-								else if (s == btn + " " + name)
-									installFunc(env, done || (() => { }));
-							});
+							vscode.window.showErrorMessage(name + " from setting " + fullConfigName + " is not installed or couldn't be found", reinstallBtn, userSettingsBtn).then(defaultHandler);
 						}
 					}
+				} else if (err && (<any>err).code == "EACCES") {
+					vscode.window.showErrorMessage(name + " from setting " + fullConfigName + " is not marked as executable or is in a non-executable directory.", reinstallBtn, userSettingsBtn).then(defaultHandler);
+				} else if (err && (<any>err).code) {
+					vscode.window.showErrorMessage(name + " from setting " + fullConfigName + " failed executing: " + (<any>err).code, reinstallBtn, userSettingsBtn).then(defaultHandler);
+				} else if (err) {
+					vscode.window.showErrorMessage(name + " from setting " + fullConfigName + " failed executing: " + err, reinstallBtn, userSettingsBtn).then(defaultHandler);
 				}
 			}).on("exit", function () {
 				let outdatedResult = outdatedCheck && outdatedCheck(version);
@@ -476,8 +489,8 @@ function preStartup(context: vscode.ExtensionContext) {
 			let targetRelease = findLatestServeD(version => {
 				checkProgram("servedPath", "serve-d", "serve-d",
 					version ? (version.asset
-							? installServeD([version.asset.browser_download_url], version.name)
-							: compileServeD(version ? version.name : undefined))
+						? installServeD([version.asset.browser_download_url], version.name)
+						: compileServeD(version ? version.name : undefined))
 						: updateAndInstallServeD,
 					version ? (version.asset ? "Download" : "Compile") : "Install", () => {
 						context.globalState.update("serve-d-downloaded-release-channel", channelString).then(() => {
