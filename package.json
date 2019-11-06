@@ -919,7 +919,7 @@
 					"${cwd}"
 				],
 				"pattern": {
-					"regexp": "^(.*)\\((\\d+)(?:,\\s*(\\d+))?\\):\\s(Warning|Error|Deprecated|\\s{4,}):?\\s*(.*)$",
+					"regexp": "^(.*?)(?:-mixin-\\d+)?\\((\\d+)(?:,\\s*(\\d+))?\\):\\s([Ww]arning|[Ee]rror|[Dd]eprecated|[Dd]eprecation|\\s{4,}):?\\s*(.*)$",
 					"file": 1,
 					"line": 2,
 					"column": 3,
