@@ -6,6 +6,7 @@ export class DubTasksProvider implements vscode.TaskProvider {
 	constructor(public served: LanguageClient) { }
 
 	provideTasks(token?: vscode.CancellationToken | undefined): vscode.ProviderResult<vscode.Task[]> {
+		let dubLint = config(null).get("enableDubLinting", true);
 		return this.served.sendRequest<{
 			definition: any,
 			scope: string,
@@ -19,17 +20,40 @@ export class DubTasksProvider implements vscode.TaskProvider {
 			var ret: vscode.Task[] = [];
 			tasks.forEach(task => {
 				var target: vscode.WorkspaceFolder | vscode.TaskScope | undefined;
+				let cwd: string = "";
 				if (task.scope == "global")
 					target = vscode.TaskScope.Global;
 				else if (task.scope == "workspace")
 					target = vscode.TaskScope.Workspace;
-				else
-					target = vscode.workspace.getWorkspaceFolder(vscode.Uri.parse(task.scope));
+				else {
+					let uri = vscode.Uri.parse(task.scope);
+					cwd = uri.fsPath;
+					target = vscode.workspace.getWorkspaceFolder(uri);
+				}
 				if (!target)
 					return undefined;
 				var proc: string = task.exec.shift() || "exit";
 				var args: string[] = task.exec;
-				var t = new vscode.Task(task.definition, target, task.name, task.source, new vscode.ProcessExecution(proc, args), task.problemMatchers);
+
+				task.source += "-auto";
+				// workaround to weird behavior that vscode seems to ignore build tasks if the same as user task definition
+				task.definition._generated = true;
+
+				let options: vscode.ShellExecutionOptions | undefined = cwd ? { cwd: cwd } : undefined;
+
+				if (!dubLint && !Array.isArray(task.problemMatchers) || task.problemMatchers.length == 0)
+					task.problemMatchers = ["$dmd"];
+
+				var t = new vscode.Task(
+					task.definition, target, task.name, task.source,
+					new vscode.ShellExecution({
+						value: proc,
+						quoting: vscode.ShellQuoting.Strong
+					}, args.map(arg => <vscode.ShellQuotedString>{
+						value: arg,
+						quoting: vscode.ShellQuoting.Strong
+					}), options),
+					task.problemMatchers);
 				t.isBackground = task.isBackground;
 				switch (task.group) {
 					case "clean":
@@ -66,6 +90,7 @@ export class DubTasksProvider implements vscode.TaskProvider {
 			args?: string[]
 		}
 	}, token?: vscode.CancellationToken | undefined): vscode.ProviderResult<vscode.Task> {
+		let dubLint = config(null).get("enableDubLinting", true);
 		var args: string[] = [config(null).get("dubPath", "dub")];
 		args.push(task.definition.test ? "test" : task.definition.run ? "run" : "build");
 		if (task.definition.root)
@@ -87,19 +112,25 @@ export class DubTasksProvider implements vscode.TaskProvider {
 		if (Array.isArray(task.definition.args))
 			args.push.apply(args, task.definition.args);
 
+		let options: any = task.scope && (<vscode.WorkspaceFolder>task.scope).uri;
+		options = options ? <vscode.ShellExecutionOptions>{ cwd: options.fsPath } : undefined;
+
+		if (task.definition.cwd)
+			options = <vscode.ShellExecutionOptions>{ cwd: task.definition.cwd };
+
 		let exec = new vscode.ShellExecution({
 			value: args.shift() || "exit",
 			quoting: vscode.ShellQuoting.Strong
 		}, args.map(arg => <vscode.ShellQuotedString>{
 			value: arg,
 			quoting: vscode.ShellQuoting.Strong
-		}));
+		}), options);
 
 		return new vscode.Task(
 			task.definition,
 			task.scope || vscode.TaskScope.Global,
 			task.name || `dub ${task.definition.test ? "Test" : task.definition.run ? "Run" : "Build"}`,
-			"dub", exec, task.problemMatchers
+			"dub", exec, dubLint ? task.problemMatchers : ["$dmd"]
 		);
 	}
 }

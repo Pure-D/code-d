@@ -53,6 +53,7 @@ Minor Changes:
 * Import paths are now much better resolved if dmd is installed. They will use a very accurate search on Posix platforms using dmd.conf and on windows relative to the exe path. Also per-project overrides using dmd.conf are possible with this.
 * Added `d.lintOnFileOpen` with possible values `"always", "project", "never"` which controls whether files should be linted with DScanner when opening. (defaults to "project") To revert this to always lint every file, including phobos and other libraries, change it to `"always"`
 * Files external to the project no longer persist linting warnings when closing anymore.
+* Added `$dmd` problem matcher to build tasks.
 
 Bug Fixes:
 * **Build tasks now finally work properly**

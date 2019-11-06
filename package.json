@@ -880,22 +880,18 @@
 					},
 					"compiler": {
 						"type": "string",
-						"default": "",
 						"description": "Common name or path to compiler executable"
 					},
 					"archType": {
 						"type": "string",
-						"default": "",
 						"description": "Arch type to compile with"
 					},
 					"buildType": {
 						"type": "string",
-						"default": "",
 						"description": "Build type to compile with"
 					},
 					"configuration": {
 						"type": "string",
-						"default": "",
 						"description": "Configuration to run"
 					},
 					"args": {
@@ -905,7 +901,30 @@
 							"type": "string"
 						},
 						"description": "Extra arguments to pass to dub"
+					},
+					"_generated": {
+						"type": "boolean",
+						"default": false,
+						"description": "Workaround for vscode not detecting bugs if task definition is the same as dub generated ones"
 					}
+				}
+			}
+		],
+		"problemMatchers": [
+			{
+				"name": "dmd",
+				"owner": "d",
+				"fileLocation": [
+					"relative",
+					"${cwd}"
+				],
+				"pattern": {
+					"regexp": "^(.*)\\((\\d+)(?:,\\s*(\\d+))?\\):\\s(Warning|Error|Deprecated|\\s{4,}):?\\s*(.*)$",
+					"file": 1,
+					"line": 2,
+					"column": 3,
+					"severity": 4,
+					"message": 5
 				}
 			}
 		]
