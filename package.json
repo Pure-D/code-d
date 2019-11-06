@@ -842,6 +842,7 @@
 		"taskDefinitions": [
 			{
 				"type": "dub",
+				"required": [],
 				"properties": {
 					"run": {
 						"type": "boolean",
@@ -855,14 +856,17 @@
 					},
 					"root": {
 						"type": "string",
+						"default": "",
 						"description": "Path to an alternative root to not compile the workspace relative to cwd."
 					},
 					"cwd": {
 						"type": "string",
+						"default": "",
 						"description": "Working directory where dub should be run relative to the workspace."
 					},
 					"overrides": {
 						"type": "array",
+						"default": [],
 						"items": {
 							"type": "string",
 							"pattern": "^[-a-zA-Z0-9_.]+/.+$"
@@ -876,22 +880,27 @@
 					},
 					"compiler": {
 						"type": "string",
+						"default": "",
 						"description": "Common name or path to compiler executable"
 					},
 					"archType": {
 						"type": "string",
+						"default": "",
 						"description": "Arch type to compile with"
 					},
 					"buildType": {
 						"type": "string",
+						"default": "",
 						"description": "Build type to compile with"
 					},
 					"configuration": {
 						"type": "string",
+						"default": "",
 						"description": "Configuration to run"
 					},
 					"args": {
 						"type": "array",
+						"default": [],
 						"items": {
 							"type": "string"
 						},

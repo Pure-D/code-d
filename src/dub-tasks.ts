@@ -8,7 +8,7 @@ export class DubTasksProvider implements vscode.TaskProvider {
 	provideTasks(token?: vscode.CancellationToken | undefined): vscode.ProviderResult<vscode.Task[]> {
 		return this.served.sendRequest<{
 			definition: any,
-			scope: any,
+			scope: string,
 			exec: string[],
 			name: string,
 			isBackground: boolean,
@@ -27,14 +27,8 @@ export class DubTasksProvider implements vscode.TaskProvider {
 					target = vscode.workspace.getWorkspaceFolder(vscode.Uri.parse(task.scope));
 				if (!target)
 					return undefined;
-				var proc: string = "";
-				var args: string[] = [];
-				if (task.exec.length >= 1)
-					proc = task.exec[0];
-				if (task.exec.length >= 2) {
-					args = task.exec;
-					args.shift();
-				}
+				var proc: string = task.exec.shift() || "exit";
+				var args: string[] = task.exec;
 				var t = new vscode.Task(task.definition, target, task.name, task.source, new vscode.ProcessExecution(proc, args), task.problemMatchers);
 				t.isBackground = task.isBackground;
 				switch (task.group) {
@@ -93,19 +87,19 @@ export class DubTasksProvider implements vscode.TaskProvider {
 		if (Array.isArray(task.definition.args))
 			args.push.apply(args, task.definition.args);
 
-		if (task.execution)
-			task.execution.args = args;
+		let exec = new vscode.ShellExecution({
+			value: args.shift() || "exit",
+			quoting: vscode.ShellQuoting.Strong
+		}, args.map(arg => <vscode.ShellQuotedString>{
+			value: arg,
+			quoting: vscode.ShellQuoting.Strong
+		}));
 
-		if (args.length > 2)
-			vscode.window.showInformationMessage("Congratulation on finding out how to get this working. "
-				+ "First person who sends in reproduction steps gets 10$ on paypal", {
-					modal: true
-				}, "Submit Reproduction").then(v => {
-					if (v == "Submit Reproduction") {
-						vscode.env.openExternal(vscode.Uri.parse("https://github.com/Pure-D/code-d/issues/new"));
-					}
-				});
-
-		return task;
+		return new vscode.Task(
+			task.definition,
+			task.scope || vscode.TaskScope.Global,
+			task.name || `dub ${task.definition.test ? "Test" : task.definition.run ? "Run" : "Build"}`,
+			"dub", exec, task.problemMatchers
+		);
 	}
 }

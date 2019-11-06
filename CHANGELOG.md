@@ -55,6 +55,7 @@ Minor Changes:
 * Files external to the project no longer persist linting warnings when closing anymore.
 
 Bug Fixes:
+* **Build tasks now finally work properly**
 * The statusbar now only loads once dub is ready.
 * Some memory optimizations and segfault fixes.
 * Dub build task doesn't break anymore for not loaded workspaces.
