@@ -55,6 +55,7 @@ export class DubTasksProvider implements vscode.TaskProvider {
 					}), options),
 					task.problemMatchers);
 				t.isBackground = task.isBackground;
+				(<any>t).detail = "dub " + args.join(" ");
 				switch (task.group) {
 					case "clean":
 						t.group = vscode.TaskGroup.Clean;
@@ -126,11 +127,13 @@ export class DubTasksProvider implements vscode.TaskProvider {
 			quoting: vscode.ShellQuoting.Strong
 		}), options);
 
-		return new vscode.Task(
+		let ret = new vscode.Task(
 			task.definition,
 			task.scope || vscode.TaskScope.Global,
 			task.name || `dub ${task.definition.test ? "Test" : task.definition.run ? "Run" : "Build"}`,
 			"dub", exec, dubLint ? task.problemMatchers : ["$dmd"]
 		);
+		(<any>ret).detail = "dub " + args.join(" ");
+		return ret;
 	}
 }
