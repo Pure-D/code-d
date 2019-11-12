@@ -8,7 +8,7 @@
 		{
 			"comment": "Doctype declaration.",
 			"match": "^(!!!|doctype)(\\s*[a-zA-Z0-9-_]+)?",
-			"name": "meta.tag.sgml.doctype.html"
+			"name": "entity.name.tag.sgml.doctype.diet"
 		},
 		{
 			"begin": "^(\\s*)//-",

@@ -164,6 +164,10 @@
 			{
 				"language": "d",
 				"path": "./snippets/d.json"
+			},
+			{
+				"language": "diet",
+				"path": "./snippets/diet.json"
 			}
 		],
 		"configuration": {

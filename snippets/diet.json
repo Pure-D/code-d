@@ -1,0 +1,87 @@
+{
+	"html document": {
+		"prefix": "html",
+		"body": [
+			"doctype html",
+			"",
+			"html(lang=\"en\")",
+			"\thead",
+			"\t\tmeta(charset=\"UTF-8\")",
+			"\t\tmeta(name=\"viewport\", content=\"width=device-width, initial-scale=1.0\")",
+			"\t\tmeta(http-equiv=\"X-UA-Compatible\", content=\"ie=edge\")",
+			"\t\ttitle ${1:Document}",
+			"\tbody",
+			"\t\t$2"
+		],
+		"description": "Snippet emmet emulation for diet"
+	},
+	"atom link": {
+		"prefix": "link:atom",
+		"body": "link(rel=\"alternate\", href=\"${1:atom.xml}\", type=\"application/atom+xml\", title=\"Atom\")",
+		"description": "Snippet emmet emulation for diet"
+	},
+	"css link": {
+		"prefix": "link:css",
+		"body": "link(rel=\"stylesheet\", href=\"${1:style}.css\")",
+		"description": "Snippet emmet emulation for diet"
+	},
+	"favicon link": {
+		"prefix": "link:favicon",
+		"body": "link(rel=\"shortcut icon\", href=\"${1:favicon.ico}\", type=\"image/x-icon\")",
+		"description": "Snippet emmet emulation for diet"
+	},
+	"import link": {
+		"prefix": "link:import",
+		"body": "link(rel=\"import\", href=\"${1:component.html}\")",
+		"description": "Snippet emmet emulation for diet"
+	},
+	"manifest link": {
+		"prefix": "link:manifest",
+		"body": "link(rel=\"manifest\", href=\"${1:manifest.json}\")",
+		"description": "Snippet emmet emulation for diet"
+	},
+	"print link": {
+		"prefix": "link:print",
+		"body": "link(rel=\"stylesheet\", href=\"${1:print}.css\", media=\"print\")",
+		"description": "Snippet emmet emulation for diet"
+	},
+	"rss link": {
+		"prefix": "link:rss",
+		"body": "link(rel=\"alternate\", href=\"${1:rss.xml}\", type=\"application/rss+xml\", title=\"RSS\")",
+		"description": "Snippet emmet emulation for diet"
+	},
+	"touch icon link": {
+		"prefix": "link:touch",
+		"body": "link(rel=\"apple-touch-icon\", href=\"favicon.png\")",
+		"description": "Snippet emmet emulation for diet"
+	},
+	"script src": {
+		"prefix": "script:src",
+		"body": "script(src=\"$1\")",
+		"description": "Snippet emmet emulation for diet"
+	},
+	"style": {
+		"prefix": "style",
+		"body": [
+			":css",
+			"\t"
+		],
+		"description": "Snippet emmet emulation for diet"
+	},
+	"script": {
+		"prefix": "script",
+		"body": [
+			":javascript",
+			"\t"
+		],
+		"description": "Snippet emmet emulation for diet"
+	},
+	"markdown": {
+		"prefix": "markdown",
+		"body": [
+			":markdown",
+			"\t"
+		],
+		"description": "Snippet emmet emulation for diet"
+	}
+}
