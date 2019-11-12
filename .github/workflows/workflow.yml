@@ -20,7 +20,7 @@ jobs:
       run: npm install
 
     - name: typescript
-      run: npm run tsc
+      run: npx tsc
 
     - name: npm test
       run: npm test
