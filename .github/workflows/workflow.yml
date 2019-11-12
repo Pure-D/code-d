@@ -19,5 +19,8 @@ jobs:
     - name: npm install
       run: npm install
 
+    - name: typescript
+      run: npm run tsc
+
     - name: npm test
       run: npm test
