@@ -1,0 +1,23 @@
+name: Test ci folder
+on: [push]
+
+jobs:
+  npm_test:
+    name: Run npm tests
+    runs-on: ${{ matrix.operating-system }}
+    strategy:
+      matrix:
+        operating-system: [ubuntu-latest, windows-latest]
+    steps:
+    - uses: actions/checkout@master
+    
+    - name: Set Node.js 10.x
+      uses: actions/setup-node@master
+      with:
+        version: 10.x
+
+    - name: npm install
+      run: npm install
+
+    - name: npm test
+      run: npm test
