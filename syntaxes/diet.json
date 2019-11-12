@@ -223,53 +223,7 @@
 			]
 		},
 		{
-			"begin": "^(\\s*)(?=[\\w.#].*?\\.$)(?=(?:(?:(?:(?:(?:#[\\w-]+)|(?:\\.[\\w-]+))|(?:(?:[#!]\\{[^}]*\\})|(?:\\w(?:(?:[\\w:-]+[\\w-])|(?:[\\w-]*)))))(?:(?:#[\\w-]+)|(?:\\.[\\w-]+)|(?:\\((?:[^()\\'\\\"]*(?:(?:\\'(?:[^\\']|(?:(?<!\\\\)\\\\\\'))*\\')|(?:\\\"(?:[^\\\"]|(?:(?<!\\\\)\\\\\\\"))*\\\")))*[^()]*\\))*)*)(?:(?:(?::\\s+)|(?<=\\)))(?:(?:(?:(?:#[\\w-]+)|(?:\\.[\\w-]+))|(?:(?:[#!]\\{[^}]*\\})|(?:\\w(?:(?:[\\w:-]+[\\w-])|(?:[\\w-]*)))))(?:(?:#[\\w-]+)|(?:\\.[\\w-]+)|(?:\\((?:[^()\\'\\\"]*(?:(?:\\'(?:[^\\']|(?:(?<!\\\\)\\\\\\'))*\\')|(?:\\\"(?:[^\\\"]|(?:(?<!\\\\)\\\\\\\"))*\\\")))*[^()]*\\))*)*))*)\\.$)(?:(?:(#[\\w-]+)|(\\.[\\w-]+))|((?:[#!]\\{[^}]*\\})|(?:\\w(?:(?:[\\w:-]+[\\w-])|(?:[\\w-]*)))))",
-			"beginCaptures": {
-				"2": {
-					"name": "constant.id.tag.diet"
-				},
-				"3": {
-					"name": "constant.language.d"
-				},
-				"4": {
-					"name": "meta.tag.other entity.name.tag.diet"
-				}
-			},
-			"comment": "Generated from dot_block_tag.py",
-			"end": "^(?!(\\1\\s)|\\s*$)",
-			"patterns": [
-				{
-					"include": "#tag_attributes"
-				},
-				{
-					"include": "#complete_tag"
-				},
-				{
-					"begin": "^(?=.)",
-					"end": "$",
-					"name": "text.block.diet",
-					"patterns": [
-						{
-							"include": "#inline_diet"
-						},
-						{
-							"include": "#embedded_html"
-						},
-						{
-							"include": "#html_entity"
-						},
-						{
-							"include": "#interpolated_value"
-						},
-						{
-							"include": "#interpolated_error"
-						}
-					]
-				}
-			]
-		},
-		{
-			"begin": "^\\s+",
+			"begin": "^\\s*",
 			"comment": "All constructs that generally span a single line starting with any number of white-spaces.",
 			"end": "$",
 			"patterns": [
@@ -283,16 +237,7 @@
 					"include": "#unbuffered_code"
 				},
 				{
-					"include": "#mixin_definition"
-				},
-				{
-					"include": "#mixin_call"
-				},
-				{
 					"include": "#flow_control"
-				},
-				{
-					"include": "#case_conds"
 				},
 				{
 					"begin": "\\|",
@@ -370,65 +315,12 @@
 					"name": "storage.type.import.include.diet"
 				},
 				"4": {
-					"name": "variable.control.import.include.diet"
+					"name": "entity.name.type.include.diet"
 				}
 			},
 			"comment": "Template blocks and includes.",
-			"match": "(extends|include|yield|append|prepend|block( (append|prepend))?)\\s+(.*)$",
+			"match": "(extends|include|block( (append|prepend))?)\\s+(.*)$",
 			"name": "meta.first-class.diet"
-		},
-		"case_conds": {
-			"begin": "(default|when)((\\s+|(?=:))|$)",
-			"captures": {
-				"1": {
-					"name": "storage.type.function.diet"
-				}
-			},
-			"comment": "diet case conditionals.",
-			"end": "$",
-			"name": "meta.control.flow.diet",
-			"patterns": [
-				{
-					"begin": "\\G(?!:)",
-					"end": "(?=:\\s+)|$",
-					"name": "d.embedded.control.flow.diet",
-					"patterns": [
-						{
-							"include": "#case_when_paren"
-						},
-						{
-							"include": "source.d"
-						}
-					]
-				},
-				{
-					"begin": ":\\s+",
-					"end": "$",
-					"name": "tag.case.control.flow.diet",
-					"patterns": [
-						{
-							"include": "#complete_tag"
-						}
-					]
-				}
-			]
-		},
-		"case_when_paren": {
-			"begin": "\\(",
-			"end": "\\)",
-			"name": "d.when.control.flow.diet",
-			"patterns": [
-				{
-					"include": "#case_when_paren"
-				},
-				{
-					"match": ":",
-					"name": "invalid.illegal.name.tag.diet"
-				},
-				{
-					"include": "source.d"
-				}
-			]
 		},
 		"complete_tag": {
 			"begin": "(?=[\\w.#])|(:\\s*)",
@@ -439,9 +331,6 @@
 				},
 				{
 					"include": "#unbuffered_code"
-				},
-				{
-					"include": "#mixin_call"
 				},
 				{
 					"include": "#flow_control"
@@ -461,9 +350,6 @@
 				},
 				{
 					"include": "#tag_attributes"
-				},
-				{
-					"include": "#tag_mixin_attributes"
 				},
 				{
 					"captures": {
@@ -529,9 +415,6 @@
 					"include": "#inline_diet"
 				},
 				{
-					"include": "#mixin_call"
-				},
-				{
 					"begin": "(?<!\\])(?=[\\w.#])|(:\\s*)",
 					"end": "(?=\\]|(:.)|=|\\s)",
 					"name": "tag.inline.diet",
@@ -547,9 +430,6 @@
 						},
 						{
 							"include": "#tag_attributes"
-						},
-						{
-							"include": "#tag_mixin_attributes"
 						},
 						{
 							"include": "#inline_diet"
@@ -658,67 +538,6 @@
 					"include": "source.d"
 				}
 			]
-		},
-		"mixin_call": {
-			"begin": "((?:mixin\\s+)|\\+)([\\w-]+)",
-			"beginCaptures": {
-				"1": {
-					"name": "storage.type.function.diet"
-				},
-				"2": {
-					"name": "meta.tag.other entity.name.function.diet"
-				}
-			},
-			"end": "(?!\\()|$",
-			"patterns": [
-				{
-					"begin": "(?<!\\))\\(",
-					"end": "\\)",
-					"name": "args.mixin.diet",
-					"patterns": [
-						{
-							"include": "#d_parens"
-						},
-						{
-							"include": "#string"
-						},
-						{
-							"captures": {
-								"1": {
-									"name": "meta.tag.other entity.other.attribute-name.tag.diet"
-								}
-							},
-							"match": "([^\\s(),=/]+)\\s*=\\s*"
-						},
-						{
-							"include": "source.d"
-						}
-					]
-				},
-				{
-					"include": "#tag_attributes"
-				}
-			]
-		},
-		"mixin_definition": {
-			"captures": {
-				"1": {
-					"name": "storage.type.function.diet"
-				},
-				"2": {
-					"name": "meta.tag.other entity.name.function.diet"
-				},
-				"3": {
-					"name": "punctuation.definition.parameters.begin.d"
-				},
-				"4": {
-					"name": "variable.parameter.function.d"
-				},
-				"5": {
-					"name": "punctuation.definition.parameters.begin.d"
-				}
-			},
-			"match": "(mixin\\s+)([\\w-]+)(?:(\\()\\s*((?:[a-zA-Z_]\\w*\\s*)(?:,\\s*[a-zA-Z_]\\w*\\s*)*)(\\)))?$"
 		},
 		"printed_expression": {
 			"begin": "(!?\\=)\\s*",
@@ -849,30 +668,11 @@
 				}
 			},
 			"match": "\\.([^\\w-])?[\\w-]*",
-			"name": "constant.language.d"
+			"name": "constant.other.class.diet"
 		},
 		"tag_id": {
 			"match": "#[\\w-]+",
-			"name": "constant.id.tag.diet"
-		},
-		"tag_mixin_attributes": {
-			"begin": "(&attributes\\()",
-			"captures": {
-				"1": {
-					"name": "entity.name.function.diet"
-				}
-			},
-			"end": "(\\))",
-			"name": "meta.tag.other",
-			"patterns": [
-				{
-					"match": "attributes(?=\\))",
-					"name": "storage.type.keyword.diet"
-				},
-				{
-					"include": "source.d"
-				}
-			]
+			"name": "constant.other.id.diet"
 		},
 		"tag_name": {
 			"begin": "([#!]\\{(?=.*?\\}))|(\\w(([\\w:-]+[\\w-])|([\\w-]*)))",

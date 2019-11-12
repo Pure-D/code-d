@@ -933,7 +933,8 @@
 		"vscode:prepublish": "tsc -p ./",
 		"vscode:uninstall": "node ./out/src/uninstall.js",
 		"compile": "tsc -watch -p ./",
-		"postinstall": "node ./node_modules/vscode/bin/install"
+		"postinstall": "node ./node_modules/vscode/bin/install",
+		"test": "mocha out/ci"
 	},
 	"dependencies": {
 		"request": "^2.88.0",
@@ -958,7 +959,8 @@
 		"@types/parse5": "^5.0.2",
 		"mocha": "^6.2.2",
 		"typescript": "^3.6.4",
-		"vscode": "^1.1.36"
+		"vscode": "^1.1.36",
+		"vscode-textmate": "^4.3.0"
 	},
 	"__metadata": {
 		"id": "bf217d41-312b-4d39-9536-82fd0d9c6f94",
