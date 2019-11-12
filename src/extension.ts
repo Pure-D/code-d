@@ -299,6 +299,8 @@ export function config(resource: vscode.Uri | null): vscode.WorkspaceConfigurati
 }
 
 function preStartup(context: vscode.ExtensionContext) {
+	const userConfig = "Open User Settings";
+
 	setContext(context);
 	let env = process.env;
 	let proxy = vscode.workspace.getConfiguration("http").get("proxy", "");
@@ -321,19 +323,52 @@ function preStartup(context: vscode.ExtensionContext) {
 		});
 	}
 	{
+		function checkDub(dubPath: string | undefined, done: (available: boolean) => any, updateSetting: boolean = false) {
+			let tryCompiler = !!dubPath;
+			if (!dubPath)
+				dubPath = <string>expandTilde(config(null).get("dubPath", "dub"));
+			let errored = false;
+			let exited = false;
+
+			function errorCallback(err: any) {
+				console.error(err);
+				errored = true;
+				if (!exited) {
+					if (!tryCompiler)
+						return done(false);
+					checkCompilers((has, dmdPath) => {
+						if (!has || !dmdPath)
+							return done(false);
+						else {
+							let ext = process.platform == "win32" ? ".exe" : "";
+							checkDub(path.join(path.dirname(dmdPath), "dub" + ext), done, true);
+						}
+					});
+				}
+			}
+
+			let proc: ChildProcess.ChildProcessWithoutNullStreams;
+			try {
+				proc = ChildProcess.spawn(dubPath, ["--version"], { cwd: vscode.workspace.rootPath, env: env });
+			} catch (e) {
+				// for example invalid executable error
+				return errorCallback(e);
+			}
+			proc.on("error", errorCallback).on("exit", function () {
+				exited = true;
+				if (!errored) {
+					if (updateSetting)
+						config(null).update("dubPath", path).then(() => done(true));
+					else
+						done(true);
+				}
+			});
+		}
 		function checkProgram(configName: string, defaultPath: string, name: string, installFunc: (env: NodeJS.ProcessEnv, done: (installed: boolean) => void) => any, btn: string, done?: (installed: boolean) => void, outdatedCheck?: (log: string) => (boolean | [boolean, string])) {
 			var version = "";
 			var errored = false;
-			var proc = ChildProcess.spawn(expandTilde(config(null).get(configName, defaultPath)), ["--version"], { cwd: vscode.workspace.rootPath, env: env });
-			if (proc.stderr)
-				proc.stderr.on("data", function (chunk) {
-					version += chunk;
-				});
-			if (proc.stdout)
-				proc.stdout.on("data", function (chunk) {
-					version += chunk;
-				});
-			proc.on("error", function (err) {
+
+			function errorCallback(err: any) {
 				console.error(err);
 				const fullConfigName = "d." + configName;
 				if (btn == "Install" || btn == "Download") btn = "Reinstall";
@@ -348,7 +383,7 @@ function preStartup(context: vscode.ExtensionContext) {
 				};
 
 				errored = true;
-				if (err && (<any>err).code == "ENOENT") {
+				if (err && err.code == "ENOENT") {
 					if (config(null).get("aggressiveUpdate", true)) {
 						installFunc(env, done || (() => { }));
 					}
@@ -364,14 +399,30 @@ function preStartup(context: vscode.ExtensionContext) {
 							vscode.window.showErrorMessage(name + " from setting " + fullConfigName + " is not installed or couldn't be found", reinstallBtn, userSettingsBtn).then(defaultHandler);
 						}
 					}
-				} else if (err && (<any>err).code == "EACCES") {
+				} else if (err && err.code == "EACCES") {
 					vscode.window.showErrorMessage(name + " from setting " + fullConfigName + " is not marked as executable or is in a non-executable directory.", reinstallBtn, userSettingsBtn).then(defaultHandler);
-				} else if (err && (<any>err).code) {
-					vscode.window.showErrorMessage(name + " from setting " + fullConfigName + " failed executing: " + (<any>err).code, reinstallBtn, userSettingsBtn).then(defaultHandler);
+				} else if (err && err.code) {
+					vscode.window.showErrorMessage(name + " from setting " + fullConfigName + " failed executing: " + err.code, reinstallBtn, userSettingsBtn).then(defaultHandler);
 				} else if (err) {
 					vscode.window.showErrorMessage(name + " from setting " + fullConfigName + " failed executing: " + err, reinstallBtn, userSettingsBtn).then(defaultHandler);
 				}
-			}).on("exit", function () {
+			}
+
+			try {
+				var proc = ChildProcess.spawn(expandTilde(config(null).get(configName, defaultPath)), ["--version"], { cwd: vscode.workspace.rootPath, env: env });
+			} catch (e) {
+				// for example invalid executable error
+				return errorCallback(e);
+			}
+			if (proc.stderr)
+				proc.stderr.on("data", function (chunk) {
+					version += chunk;
+				});
+			if (proc.stdout)
+				proc.stdout.on("data", function (chunk) {
+					version += chunk;
+				});
+			proc.on("error", errorCallback).on("exit", function () {
 				let outdatedResult = outdatedCheck && outdatedCheck(version);
 				let isOutdated = typeof outdatedResult == "boolean" ? outdatedResult
 					: typeof outdatedResult == "object" && Array.isArray(outdatedResult) ? outdatedResult[0]
@@ -397,7 +448,22 @@ function preStartup(context: vscode.ExtensionContext) {
 					done(false);
 			});
 		}
-		checkProgram("dubPath", "dub", "dub", downloadDub, "Download", () => {
+
+		// disable dub checks for now because precompiled dub binaries on windows are broken
+		checkDub(undefined, (available) => {
+			if (!available) {
+				console.error("Failed to automatically find dub or execute it! Please set d.dubPath properly.");
+
+				if (config(null).get("dubPath", "dub") != "dub")
+					vscode.window.showErrorMessage("The dub path specified in your user settings via d.dubPath is not a"
+						+ " valid dub executable. Please unset it to automatically find it through your compiler or manually"
+						+ " point it to a valid executable file.\n\nIssues building projects might occur.",
+						userConfig).then((item) => {
+							if (item == userConfig)
+								vscode.commands.executeCommand("workbench.action.openGlobalSettings");
+						});
+			}
+
 			let isLegacyBeta = config(null).get("betaStream", false);
 			let servedReleaseChannel = config(null).inspect("servedReleaseChannel");
 			let channelString = config(null).get("servedReleaseChannel", "stable");
@@ -465,7 +531,6 @@ function preStartup(context: vscode.ExtensionContext) {
 
 				let stable = "Switch to Stable";
 				let beta = "Switch to Beta";
-				let userConfig = "Open User Settings";
 				vscode.window.showInformationMessage("Hey! The setting 'd.betaStream' no longer exists and has been replaced with "
 					+ "'d.servedReleaseChannel'. Your settings have been automatically updated to fetch nightly builds, but you "
 					+ "probably want to remove the old setting.\n\n"

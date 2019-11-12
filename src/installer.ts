@@ -502,11 +502,17 @@ function installServeDEntry(outputFolder: string): (url: string, cb: Function) =
 }
 
 export function checkBetaServeD(callback: Function) {
-	var proc = ChildProcess.spawn(expandTilde(config(null).get("servedPath", "serve-d")), ["--version"]);
+	let proc: ChildProcess.ChildProcessWithoutNullStreams;
+	try {
+		proc = ChildProcess.spawn(expandTilde(config(null).get("servedPath", "serve-d")), ["--version"]);
+	} catch (e) {
+		console.error("Failed spawning serve-d: ", e);
+		return callback(false);
+	}
 	proc.on("error", () => {
 		callback(false);
 	});
-	var output = "";
+	let output = "";
 	if (proc.stdout)
 		proc.stdout.on('data', function (data) {
 			output += data;
