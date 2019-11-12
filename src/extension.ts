@@ -5,6 +5,7 @@ import { LanguageClient, LanguageClientOptions, ServerOptions, DocumentFilter, N
 import { setContext, downloadDub, installServeD, compileServeD, getInstallOutput, downloadFileInteractive, findLatestServeD, cmpSemver, extractServedBuiltDate, ReleaseAsset, Release, updateAndInstallServeD } from "./installer"
 import { EventEmitter } from "events"
 import * as ChildProcess from "child_process"
+import * as which from "which"
 
 import * as mode from "./dmode";
 import * as statusbar from "./statusbar";
@@ -511,17 +512,52 @@ function preStartup(context: vscode.ExtensionContext) {
 			}, force, channelString);
 		});
 		function checkCompiler(compiler: string, callback: Function | undefined) {
-			ChildProcess.spawn(compiler, ["--version"]).on("error", function (err) {
-				if (err && (<any>err).code == "ENOENT") {
+			which(compiler, function (err: any, compilerPath: string | undefined) {
+				if (err || !compilerPath) {
 					if (callback)
 						callback(false);
-					callback = undefined;
+				} else {
+					function errorCallback(err: any) {
+						if (err && err.code == "ENOENT") {
+							if (callback)
+								callback(false, compilerPath);
+							callback = undefined;
+						}
+						else console.error(err);
+					}
+
+					let proc: ChildProcess.ChildProcessWithoutNullStreams;
+					try {
+						proc = ChildProcess.spawn(compilerPath, ["--version"]);
+					} catch (e) {
+						return errorCallback(e);
+					}
+					proc.on("error", errorCallback).on("exit", function () {
+						if (callback)
+							callback(true, compilerPath);
+						callback = undefined;
+					});
 				}
-				else console.error(err);
-			}).on("exit", function () {
-				if (callback)
-					callback(true);
-				callback = undefined;
+			});
+		}
+		function checkCompilers(done: (has: string | false, path: string | undefined) => any) {
+			checkCompiler("dmd", (has: boolean, path: string | undefined) => {
+				if (has)
+					return done("dmd", path);
+				checkCompiler("ldc", (has: boolean, path: string | undefined) => {
+					if (has)
+						return done("ldc", path);
+					checkCompiler("ldc2", (has: boolean, path: string | undefined) => {
+						if (has)
+							return done("ldc2", path);
+						checkCompiler("gdc", (has: boolean, path: string | undefined) => {
+							if (has)
+								return done("gdc", path);
+							else
+								return done(false, path);
+						});
+					});
+				});
 			});
 		}
 		if (!context.globalState.get("checkedCompiler", false)) {
@@ -533,24 +569,7 @@ function preStartup(context: vscode.ExtensionContext) {
 					});
 			}
 			console.log("Checking if compiler is present");
-			checkCompiler("dmd", (has: boolean) => {
-				if (has)
-					return gotCompiler("dmd");
-				checkCompiler("ldc", (has: boolean) => {
-					if (has)
-						return gotCompiler("ldc");
-					checkCompiler("ldc2", (has: boolean) => {
-						if (has)
-							return gotCompiler("ldc2");
-						checkCompiler("gdc", (has: boolean) => {
-							if (has)
-								return gotCompiler("gdc");
-							else
-								return gotCompiler(false);
-						});
-					});
-				});
-			});
+			checkCompilers(gotCompiler);
 		}
 	}
 }
