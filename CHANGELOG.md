@@ -1,6 +1,6 @@
 Don't forget to join our discord server [![Join on Discord](https://discordapp.com/api/guilds/242094594181955585/widget.png?style=shield)](https://discord.gg/Bstj9bx)
 
-# 0.x.y
+# 0.21.0
 
 ## New release mechanism
 
