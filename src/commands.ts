@@ -415,19 +415,6 @@ export function registerCommands(context: vscode.ExtensionContext) {
 		});
 	}
 
-	subscriptions.push(vscode.commands.registerCommand("code-d.uploadSelection", () => {
-		if (!vscode.window.activeTextEditor || vscode.window.activeTextEditor.selection.isEmpty)
-			vscode.window.showErrorMessage("No code selected");
-		else {
-			let code = vscode.window.activeTextEditor.document.getText(vscode.window.activeTextEditor.selection);
-			let name = path.basename(vscode.window.activeTextEditor.document.fileName);
-			let syntax = vscode.window.activeTextEditor.document.languageId;
-			uploadCode(name, syntax, code).then((url) => {
-				vscode.window.showInformationMessage("Code pasted on " + url);
-			});
-		}
-	}));
-
 	subscriptions.push(vscode.commands.registerCommand("code-d.searchDocs", () => {
 		var query = "";
 		if (vscode.window.activeTextEditor)

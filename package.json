@@ -33,7 +33,6 @@
 		"onCommand:code-d.restartServer",
 		"onCommand:code-d.reloadImports",
 		"onCommand:code-d.stop",
-		"onCommand:code-d.uploadSelection",
 		"onCommand:code-d.insertDscanner",
 		"onCommand:code-d.rdmdCurrent",
 		"onCommand:code-d.generateCoverageReport",
@@ -677,10 +676,6 @@
 					"when": "false"
 				},
 				{
-					"command": "code-d.uploadSelection",
-					"when": "editorHasSelection"
-				},
-				{
 					"command": "code-d.convertDubRecipe",
 					"when": "resourceFilename =~ /dub\\.json|dub\\.sdl/"
 				}
@@ -758,11 +753,6 @@
 					"light": "images/refresh-light.svg",
 					"dark": "images/refresh-dark.svg"
 				}
-			},
-			{
-				"command": "code-d.uploadSelection",
-				"title": "Upload selection to dpaste.com",
-				"category": "code-d"
 			},
 			{
 				"command": "code-d.insertDscanner",
