@@ -2,7 +2,7 @@ import { getLocationInfo } from "./sdlinfo"
 import { parseSDL, Tag, Value } from "./sdlparse"
 import * as path from "path"
 import * as vscode from "vscode"
-import { searchDubPackages, listPackages, getPackageInfo, getLatestPackageInfo } from "../dub-api"
+import { listPackages, getPackageInfo, getLatestPackageInfo } from "../dub-api"
 
 export function addSDLProviders(): vscode.Disposable {
 	let subscriptions: vscode.Disposable[] = [];

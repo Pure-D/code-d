@@ -228,7 +228,7 @@ export function parseSDL(sdl: string): Tag {
 		errors: [],
 		range: undefined
 	}
-	var currTag : Tag | null = root;
+	var currTag: Tag | null = root;
 	var currNamespace = "";
 	var anon = true;
 	var lastWasEnd = true;

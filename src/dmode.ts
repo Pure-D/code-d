@@ -1,5 +1,4 @@
 import vscode = require("vscode");
-import path = require("path");
 
 export const D_MODE: vscode.DocumentFilter = { language: "d", scheme: "file" };
 export const DML_MODE: vscode.DocumentFilter = { language: "dml", scheme: "file" };

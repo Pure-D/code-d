@@ -948,6 +948,7 @@
 		"xmldom": "^0.1.27"
 	},
 	"devDependencies": {
+		"@types/expand-tilde": "^2.0.0",
 		"@types/jsdom": "^12.2.4",
 		"@types/mocha": "^5.2.7",
 		"@types/node": "^12.11.1",

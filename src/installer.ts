@@ -4,14 +4,14 @@ import * as path from "path"
 import * as fs from "fs"
 import { req } from "./util"
 import { config } from "./extension"
-import { platform } from "os";
+import expandTilde = require("expand-tilde");
+
 var rimraf = require("rimraf");
 var AdmZip = require("adm-zip");
 var progress = require("request-progress");
 var async = require("async");
 var rmdir = require("rmdir");
 var mkdirp = require("mkdirp");
-const expandTilde = require("expand-tilde");
 
 var extensionContext: vscode.ExtensionContext;
 
@@ -83,77 +83,6 @@ export function downloadFileInteractive(url: string, title: string, aborted: Fun
 		installationLog.appendLine("Finished downloading");
 	});
 	return ret;
-}
-
-export function downloadDub(env: any, done: (installed: boolean) => void) {
-	var url = "";
-	var ext = "";
-	if (process.platform == "linux" && process.arch == "x64") {
-		url = "https://github.com/dlang/dub/releases/download/v1.17.0/dub-v1.17.0-linux-x86_64.tar.gz";
-		ext = ".tar.gz";
-	}
-	else if (process.platform == "linux" && process.arch == "ia32") {
-		url = "https://github.com/dlang/dub/releases/download/v1.17.0/dub-v1.17.0-linux-x86.tar.gz";
-		ext = ".tar.gz";
-	}
-	else if (process.platform == "linux" && process.arch == "arm") {
-		url = "https://code.dlang.org/files/dub-1.1.0-linux-arm.tar.gz";
-		ext = ".tar.gz";
-	}
-	else if (process.platform == "win32") {
-		url = "https://github.com/dlang/dub/releases/download/v1.17.0/dub-v1.17.0-windows-x86.zip";
-		ext = ".zip";
-	}
-	else if (process.platform == "darwin" && process.arch == "x64") {
-		url = "https://github.com/dlang/dub/releases/download/v1.17.0/dub-v1.17.0-osx-x86_64.tar.gz";
-		ext = ".tar.gz";
-	}
-	else
-		return vscode.window.showErrorMessage("dub is not available for your platform");
-	getInstallOutput().show(true);
-	var outputFolder = determineOutputFolder();
-	mkdirp.sync(outputFolder);
-	var finalDestination = path.join(outputFolder, "dub" + (process.platform == "win32" ? ".exe" : ""));
-	installationLog.appendLine("Installing into " + outputFolder);
-	fs.exists(outputFolder, function (exists) {
-		if (!exists)
-			fs.mkdirSync(outputFolder);
-		installationLog.appendLine("Downloading from " + url + " into " + outputFolder);
-		var outputPath = path.join(outputFolder, "dub" + ext);
-		downloadFileInteractive(url, "Dub Download", () => {
-			installationLog.appendLine("Aborted download");
-			fs.unlink(outputPath, function () { });
-		}).pipe(fs.createWriteStream(outputPath)).on("finish", () => {
-			installationLog.appendLine("Extracting dub");
-			if (ext == ".zip") {
-				new AdmZip(outputPath).extractAllTo(outputFolder);
-				config(null).update("dubPath", finalDestination, true);
-				installationLog.appendLine("Deleting " + outputPath);
-				fs.unlink(outputPath, (err) => {
-					if (err)
-						installationLog.appendLine("Failed to delete " + outputPath);
-				});
-				done(true);
-			}
-			else if (ext == ".tar.gz") {
-				installationLog.appendLine("> tar -zxvf dub" + ext);
-				ChildProcess.spawn("tar", ["-zxvf", "dub" + ext], {
-					cwd: outputFolder
-				}).on("exit", function (code) {
-					if (code != 0)
-						return vscode.window.showErrorMessage("Failed to extract .tar.gz release");
-					config(null).update("dubPath", finalDestination, true);
-					installationLog.appendLine("Deleting " + outputPath);
-					fs.unlink(outputPath, (err) => {
-						if (err)
-							installationLog.appendLine("Failed to delete " + outputPath);
-					});
-					return done(true);
-				});
-			}
-		});
-	});
-	return undefined;
 }
 
 export interface ReleaseAsset {

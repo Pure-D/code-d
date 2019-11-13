@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import * as path from "path";
 import { JSDOM } from "jsdom";
 import { req } from "./util";
-import { served, config } from "./extension";
+import { served } from "./extension";
 import { DubDependencyInfo } from "./dub-view";
 var DOMParser = require("xmldom").DOMParser;
 
@@ -160,11 +160,11 @@ export function showDpldocsSearch(query?: string) {
 			var panel = vscode.window.createWebviewPanel("dpldocs", selection.label, {
 				viewColumn: vscode.ViewColumn.Active
 			}, {
-					enableCommandUris: false,
-					enableFindWidget: true,
-					enableScripts: true,
-					localResourceRoots: []
-				});
+				enableCommandUris: false,
+				enableFindWidget: true,
+				enableScripts: true,
+				localResourceRoots: []
+			});
 			var baseUri = selection.href;
 			panel.webview.onDidReceiveMessage((msg) => {
 				switch (msg.type) {

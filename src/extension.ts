@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
 import { LanguageClient, LanguageClientOptions, ServerOptions, DocumentFilter, NotificationType, CloseAction, ErrorAction, ErrorHandler, Message } from "vscode-languageclient";
-import { setContext, downloadDub, installServeD, compileServeD, getInstallOutput, downloadFileInteractive, findLatestServeD, cmpSemver, extractServedBuiltDate, ReleaseAsset, Release, updateAndInstallServeD } from "./installer"
+import { setContext, installServeD, compileServeD, getInstallOutput, downloadFileInteractive, findLatestServeD, cmpSemver, extractServedBuiltDate, Release, updateAndInstallServeD } from "./installer"
 import { EventEmitter } from "events"
 import * as ChildProcess from "child_process"
 import * as which from "which"
@@ -16,7 +16,7 @@ import { CoverageAnalyzer } from "./coverage";
 import { registerCommands, registerClientCommands } from "./commands";
 import { DubDependency, DubDependencyInfo } from "./dub-view";
 
-const expandTilde = require("expand-tilde");
+import expandTilde = require("expand-tilde");
 
 class CustomErrorHandler implements ErrorHandler {
 	private restarts: number[];

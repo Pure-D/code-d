@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { D_MODE } from "./dmode"
 import { ServeD, config } from "./extension";
 
 var dubLoaded = false;
