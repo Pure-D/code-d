@@ -1,7 +1,17 @@
 import * as vscode from "vscode"
 import { parseSDL, Tag, Value } from "./sdlparse"
 
-export function getLocationInfo(document: vscode.TextDocument, position: vscode.Position) {
+export type SDLLocationType = "block" | "value" | "attribute";
+export interface SDLCompletionInfo {
+	currentSDLObject: Tag;
+	type: SDLLocationType;
+	namespace: string[];
+	name: string[];
+	value: string;
+	partial: string;
+}
+
+export function getLocationInfo(document: vscode.TextDocument, position: vscode.Position): SDLCompletionInfo {
 	var root = parseSDL(document.getText());
 	var pos = document.offsetAt(position);
 	var current: Tag[] = [root];
@@ -45,10 +55,11 @@ export function getLocationInfo(document: vscode.TextDocument, position: vscode.
 		}
 	})();
 
-	var locationType = "block";
+	var locationType: SDLLocationType = "block";
 	var namespaceStack = currentNamespace;
 	var nameStack = currentName;
 	var valueContent = "";
+	var partialContent = "";
 
 	function findInValues(values: Value[], attribName?: string) {
 		values.forEach(value => {
@@ -61,12 +72,14 @@ export function getLocationInfo(document: vscode.TextDocument, position: vscode.
 					namespaceStack.push(value.namespace);
 					nameStack.push(attribName || "");
 					valueContent = "";
+					partialContent = valueContent;
 				}
 				else {
 					locationType = "attribute";
 					namespaceStack.push(value.namespace);
 					nameStack.push(attribName || "");
 					valueContent = "";
+					partialContent = valueContent;
 				}
 			}
 			else if (pos >= value.range[0] && pos < value.range[1]) {
@@ -74,6 +87,7 @@ export function getLocationInfo(document: vscode.TextDocument, position: vscode.
 				namespaceStack.push(value.namespace);
 				nameStack.push(attribName || "");
 				valueContent = value.value;
+				partialContent = valueContent.substr(0, value.range[0] - pos);
 			}
 		});
 	}
@@ -88,6 +102,7 @@ export function getLocationInfo(document: vscode.TextDocument, position: vscode.
 			namespaceStack.push("");
 			nameStack.push("");
 			valueContent = "";
+			partialContent = valueContent;
 		}
 	}
 	return {
@@ -95,6 +110,7 @@ export function getLocationInfo(document: vscode.TextDocument, position: vscode.
 		type: locationType,
 		namespace: namespaceStack,
 		name: nameStack,
-		value: valueContent
+		value: valueContent,
+		partial: partialContent
 	};
 }
