@@ -7,6 +7,12 @@ export interface Value {
 	parent: Tag;
 }
 
+export interface TagParseError {
+	range: [number, number];
+	message: string;
+	type: "error" | "warning";
+}
+
 export interface Tag {
 	tags: { [index: string]: Tag[]; };
 	namespaces: { [index: string]: Tag; };
@@ -16,7 +22,7 @@ export interface Tag {
 	isNamespace?: boolean;
 	range?: [number, number];
 	attributesRange?: [number, number];
-	errors?: any;
+	errors?: TagParseError[];
 }
 
 var unicodeChar = /^'(.*?)'/;
@@ -272,7 +278,7 @@ export function parseSDL(sdl: string): Tag {
 			currNamespace = "";
 		} else if (token.type == "namespace") {
 			if (currNamespace != "")
-				root.errors.push({ range: token.range, message: "Can't stack namespaces", type: "error" });
+				root.errors!.push({ range: token.range, message: "Can't stack namespaces", type: "error" });
 			currNamespace = token.namespace;
 		} else if (token.type == "identifier") {
 			if (inIdentifier) {
@@ -280,7 +286,7 @@ export function parseSDL(sdl: string): Tag {
 					currTag.attributes[token.name] = [];
 				currTag.attributes[token.name].push({ namespace: currNamespace, ownerRange: token.range, parent: currTag, range: [token.range[1], token.range[1]], type: "none", value: null });
 				currNamespace = "";
-				root.errors.push({ range: token.range, message: "An identifier doesn't belong here", type: "error" });
+				root.errors!.push({ range: token.range, message: "An identifier doesn't belong here", type: "error" });
 			}
 			else {
 				if (currNamespace) {
@@ -356,7 +362,7 @@ export function parseSDL(sdl: string): Tag {
 			if (currTag.parent)
 				currTag = currTag.parent;
 			else
-				root.errors.push({ range: [token.marker - 1, token.marker], message: "Invalid block end", type: "error" });
+				root.errors!.push({ range: [token.marker - 1, token.marker], message: "Invalid block end", type: "error" });
 			if (currTag.isNamespace)
 				currTag = currTag.parent;
 		} else throw "Unknown token type '" + token.type + "'";
