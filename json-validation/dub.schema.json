@@ -242,6 +242,32 @@
                     "type": "string",
                     "description": "Brief description of the package"
                 },
+                "toolchainRequirements": {
+                    "type": "object",
+                    "description": "Set of version requirements for DUB, for compilers and for language frontend.",
+                    "properties": {
+                        "dub": {
+                            "description": "DUB version requirement",
+                            "type": "string"
+                        },
+                        "frontend": {
+                            "description": "D frontend version requirement",
+                            "type": "string"
+                        },
+                        "dmd": {
+                            "description": "DMD version requirement",
+                            "type": "string"
+                        },
+                        "ldc": {
+                            "description": "LDC version requirement",
+                            "type": "string"
+                        },
+                        "gdc": {
+                            "description": "GDC version requirement",
+                            "type": "string"
+                        }
+                    }
+                },
                 "homepage": {
                     "type": "string",
                     "format": "uri",

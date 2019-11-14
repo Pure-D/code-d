@@ -1,5 +1,19 @@
 Don't forget to join our discord server [![Join on Discord](https://discordapp.com/api/guilds/242094594181955585/widget.png?style=shield)](https://discord.gg/Bstj9bx)
 
+# 0.x.y
+
+## `dub.sdl` Files
+
+Platform attributes on supported values in dub.sdl are now autocompleted. This includes all the [current](https://github.com/dlang/dub/blob/8ffc09ed6fb9625837161ffbbda2d926f490196c/source/dub/platform.d#L24) platforms, architectures and compilers.
+
+Furthermore dependencies complete better now when completing in the middle of a word.
+
+## Other things
+
+* `~~deprecated~~` and `unused` variables warnings will now be rendered using the standard vscode formatting
+* Removed upload code selection feature. Use a dedicated extension for this instead. (for example "Share Code" `rolandgreim.sharecode
+`)
+
 # 0.21.0
 
 ## New release mechanism

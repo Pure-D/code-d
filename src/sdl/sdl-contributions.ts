@@ -608,6 +608,47 @@ let dubSchema = {
 			minValues: 1,
 			maxValues: 1
 		},
+		toolchainRequirements: {
+			description: "Set of version requirements for DUB, for compilers and for language frontend.",
+			attributes: {
+				dub: {
+					description: "DUB version requirement",
+					values: {
+						type: "string"
+					}
+				},
+				frontend: {
+					description: "D frontend version requirement",
+					values: {
+						type: "string"
+					}
+				},
+				dmd: {
+					description: "DMD version requirement",
+					values: {
+						type: "string",
+						enum: ["no"],
+						enumOptional: true
+					}
+				},
+				ldc: {
+					description: "LDC version requirement",
+					values: {
+						type: "string",
+						enum: ["no"],
+						enumOptional: true
+					}
+				},
+				gdc: {
+					description: "GDC version requirement",
+					values: {
+						type: "string",
+						enum: ["no"],
+						enumOptional: true
+					}
+				}
+			}
+		},
 		homepage: {
 			description: "URL of the project website",
 			values: {
