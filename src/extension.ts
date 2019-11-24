@@ -123,7 +123,7 @@ export class ServeD extends EventEmitter implements vscode.TreeDataProvider<DubD
 
 function startClient(context: vscode.ExtensionContext) {
 	let servedPath = expandTilde(config(null).get("servedPath", "serve-d"));
-	let args = ["--require", "D", "--lang", vscode.env.language, "--provide", "http", "--provide", "implement-snippets"];
+	let args = ["--require", "D", "--lang", vscode.env.language, "--provide", "http", "--provide", "implement-snippets", "--provide", "context-snippets"];
 	let executable: ServerOptions = {
 		run: {
 			command: servedPath,
