@@ -17,6 +17,9 @@ import { registerCommands, registerClientCommands } from "./commands";
 import { DubDependency, DubDependencyInfo } from "./dub-view";
 
 import expandTilde = require("expand-tilde");
+import { CodedAPI, Snippet } from "code-d-api";
+import { builtinPlugins } from "./builtin_plugins";
+import { CodedAPIServedImpl } from "./api_impl";
 
 class CustomErrorHandler implements ErrorHandler {
 	private restarts: number[];
@@ -113,6 +116,10 @@ export class ServeD extends EventEmitter implements vscode.TreeDataProvider<DubD
 		return this.client.sendRequest("served/findFilesByModule", query);
 	}
 
+	addDependencySnippet(params: { requiredDependencies: string[], snippet: Snippet }): Thenable<boolean> {
+		return this.client.sendRequest("served/addDependencySnippet", params);
+	}
+
 	private static taskGroups: vscode.TaskGroup[] = [
 		vscode.TaskGroup.Build,
 		vscode.TaskGroup.Clean,
@@ -197,12 +204,14 @@ function startClient(context: vscode.ExtensionContext) {
 				});
 			});
 		});
+
+		CodedAPIServedImpl.getInstance().started(served);
 	});
 
 	registerClientCommands(context, client, served);
 }
 
-export function activate(context: vscode.ExtensionContext) {
+export function activate(context: vscode.ExtensionContext): CodedAPI {
 	// TODO: Port to serve-d
 	/*{
 		var phobosPath = config().getStdlibPath();
@@ -292,6 +301,10 @@ export function activate(context: vscode.ExtensionContext) {
 			});
 		}
 	}
+
+	const instance = CodedAPIServedImpl.getInstance();
+	builtinPlugins(instance);
+	return instance;
 }
 
 export function config(resource: vscode.Uri | null): vscode.WorkspaceConfiguration {

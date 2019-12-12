@@ -161,10 +161,6 @@
 		],
 		"snippets": [
 			{
-				"language": "d",
-				"path": "./snippets/d.json"
-			},
-			{
 				"language": "diet",
 				"path": "./snippets/diet.json"
 			}
@@ -933,6 +929,7 @@
 	"dependencies": {
 		"adm-zip": "^0.4.13",
 		"async": "^3.1.0",
+		"code-d-api": "^0.1.0",
 		"expand-tilde": "^2.0.2",
 		"jsdom": "^15.2.0",
 		"jsonc-parser": "^2.1.1",
