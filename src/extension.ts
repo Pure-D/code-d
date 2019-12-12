@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
-import { LanguageClient, LanguageClientOptions, ServerOptions, DocumentFilter, NotificationType, CloseAction, ErrorAction, ErrorHandler, Message } from "vscode-languageclient";
+import { LanguageClient, LanguageClientOptions, ServerOptions, DocumentFilter, NotificationType, CloseAction, ErrorAction, ErrorHandler, Message, State } from "vscode-languageclient";
 import { setContext, installServeD, compileServeD, getInstallOutput, downloadFileInteractive, findLatestServeD, cmpSemver, extractServedBuiltDate, Release, updateAndInstallServeD } from "./installer"
 import { EventEmitter } from "events"
 import * as ChildProcess from "child_process"
@@ -205,7 +205,15 @@ function startClient(context: vscode.ExtensionContext) {
 			});
 		});
 
+		// this code is run on every restart too
 		CodedAPIServedImpl.getInstance().started(served);
+		client.onDidChangeState((event) => {
+			if (event.newState == State.Starting) {
+				client.onReady().then(() => {
+					CodedAPIServedImpl.getInstance().started(served);
+				});
+			}
+		});
 	});
 
 	registerClientCommands(context, client, served);

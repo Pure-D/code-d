@@ -12,7 +12,7 @@ Furthermore dependencies complete better now when completing in the middle of a 
 
 Snippets have been completely overhauled and now complete properly based on code grammar. Additionally some snippets (foreach, foreach_revese) can automatically determine default variables now to iterate over which can help you typing the name of big arrays and lists.
 
-There are also new snippets specific to dub packages. These snippets will only be suggested if the workspace has the required dub dependencies installed. Built-in dependency based snippets are the vibe-d snippets `viberouter`, `vibeserver`, `vibeget`, `vibegettext`, `vibegetjson` and `vibepost`. Additionally there is a new API in code-d for other VSCode extensions to provide their own dependency based snippets.
+There are also new snippets specific to dub packages. These snippets will only be suggested if the workspace has the required dub dependencies installed. Built-in dependency based snippets are the vibe-d snippets `viberouter`, `vibeserver`, `vibeget`, `vibegettext`, `vibegetjson` and `vibepost`. Additionally there is a [new API in code-d](https://github.com/Pure-D/code-d-api) for other third party VSCode extensions to provide their own dependency based D snippets.
 
 ## Other things
 
