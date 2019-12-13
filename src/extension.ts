@@ -154,7 +154,11 @@ function startClient(context: vscode.ExtensionContext) {
 		documentSelector: <DocumentFilter[]>[mode.D_MODE, mode.DUB_MODE, mode.DIET_MODE, mode.DML_MODE, mode.DSCANNER_INI_MODE],
 		synchronize: {
 			configurationSection: ["d", "dfmt", "dscanner", "editor", "git"],
-			fileEvents: vscode.workspace.createFileSystemWatcher("**/*.d")
+			fileEvents: [
+				vscode.workspace.createFileSystemWatcher("**/*.d"),
+				vscode.workspace.createFileSystemWatcher("**/dub.json"),
+				vscode.workspace.createFileSystemWatcher("**/dub.sdl")
+			]
 		},
 		outputChannel: outputChannel,
 		errorHandler: new CustomErrorHandler(outputChannel)
