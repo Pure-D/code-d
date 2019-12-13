@@ -101,7 +101,7 @@ export class ServeD extends EventEmitter implements vscode.TreeDataProvider<DubD
 	}
 
 	triggerDscanner(uri: vscode.Uri) {
-		this.client.sendNotification("coded/doDscanner", {
+		this.client.sendNotification("served/doDscanner", {
 			textDocument: {
 				uri: uri.toString()
 			}
