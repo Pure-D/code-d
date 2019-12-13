@@ -480,6 +480,12 @@
 					"default": false,
 					"description": "Enables parsing of //-context= in diet files to import local variables shared with the opened diet template."
 				},
+				"d.showUpdateChangelogs": {
+					"type": "boolean",
+					"scope": "application",
+					"default": true,
+					"description": "Open CHANGELOG.md on every code-d update (which also includes serve-d updates) to see new features."
+				},
 				"dfmt.alignSwitchStatements": {
 					"type": "boolean",
 					"scope": "resource",
@@ -827,6 +833,11 @@
 					"light": "./images/dub-convert-inverse.svg",
 					"dark": "./images/dub-convert.svg"
 				}
+			},
+			{
+				"command": "code-d.viewUserGuide",
+				"title": "Open User Guide / Documentation",
+				"category": "code-d"
 			}
 		],
 		"jsonValidation": [

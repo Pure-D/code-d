@@ -2,6 +2,12 @@
 
 <h2 align="center">code-d User Guide</h2>
 
+Welcome! Thank you for installing code-d.
+
+This document describes how you can effectively use code-d and D in Visual Studio Code from the ground up.
+
+**To open this at any later point, run `Ctrl-Shift-P -> code-d: Open User Guide / Documentation`**
+
 <!-- #include sponsor.md -->
 
 <table align="right" style="position: relative; z-index: 10;">
@@ -24,7 +30,7 @@ Development
 </td>
 <td align="center">
 
-[![Sponsor me on GitHub Sponsors](../images/sponsor.png)](https://github.com/sponsors/WebFreak001)
+[![Sponsor me on GitHub Sponsors](images/sponsor.png)](https://github.com/sponsors/WebFreak001)
 
 Donate for faster
 <br>

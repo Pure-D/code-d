@@ -18,7 +18,7 @@ Development
 </td>
 <td align="center">
 
-[![Sponsor me on GitHub Sponsors](../images/sponsor.png)](https://github.com/sponsors/WebFreak001)
+[![Sponsor me on GitHub Sponsors](images/sponsor.png)](https://github.com/sponsors/WebFreak001)
 
 Donate for faster
 <br>

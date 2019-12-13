@@ -270,6 +270,8 @@ export function activate(context: vscode.ExtensionContext): CodedAPI {
 
 	registerCommands(context);
 
+	greetNewUsers(context);
+
 	if (vscode.workspace.workspaceFolders) {
 		{
 			let gcprofiler = new GCProfiler();
@@ -660,6 +662,54 @@ function preStartup(context: vscode.ExtensionContext) {
 			}
 			console.log("Checking if compiler is present");
 			checkCompilers(gotCompiler);
+		}
+	}
+}
+
+function greetNewUsers(context: vscode.ExtensionContext) {
+	let packageFile = context.asAbsolutePath("package.json");
+	fs.readFile(packageFile, (err, data) => {
+		if (err) {
+			console.error("Failed getting current code-d version: ", err);
+			doGreetNewUsers(context, undefined);
+		} else {
+			let currentVersion: string | undefined;
+			try {
+				currentVersion = JSON.parse(data.toString()).version;
+			}
+			catch (e) {
+				console.error("Failed getting current code-d version: ", e);
+			}
+			doGreetNewUsers(context, currentVersion);
+		}
+	});
+	try {
+	}
+	catch (e) {
+	}
+}
+
+function doGreetNewUsers(context: vscode.ExtensionContext, currentVersion: string | undefined) {
+	if (!context.globalState.get("greetedNewCodeDUser", false)) {
+		context.globalState.update("greetedNewCodeDUser", true);
+		context.globalState.update("lastCheckedCodedVersion", currentVersion);
+
+		vscode.commands.executeCommand("code-d.viewUserGuide");
+	} else if (currentVersion) {
+		let oldVersion = context.globalState.get("lastCheckedCodedVersion", "");
+		if (oldVersion != currentVersion) {
+			context.globalState.update("lastCheckedCodedVersion", currentVersion);
+
+			if (config(null).get("showUpdateChangelogs", true)) {
+				vscode.commands.executeCommand("markdown.showPreview", vscode.Uri.file(context.asAbsolutePath("CHANGELOG.md")), { locked: true });
+				let disableChangelog = "Never show changelog";
+				let close = "Close";
+				vscode.window.showInformationMessage("Welcome to code-d " + currentVersion + "! See what has changed since " + (oldVersion || "last version") + "...", disableChangelog, close).then(action => {
+					if (action == disableChangelog) {
+						config(null).update("showUpdateChangelogs", false, vscode.ConfigurationTarget.Global);
+					}
+				});
+			}
 		}
 	}
 }

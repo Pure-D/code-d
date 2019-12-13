@@ -499,4 +499,8 @@ static_if_else_check="enabled"
 lambda_return_check="enabled"`);
 		});
 	}));
+
+	subscriptions.push(vscode.commands.registerCommand("code-d.viewUserGuide", () => {
+		vscode.commands.executeCommand("markdown.showPreview", vscode.Uri.file(context.asAbsolutePath("docs/index.md")), { locked: true });
+	}));
 }
