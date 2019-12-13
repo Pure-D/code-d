@@ -61,7 +61,13 @@
 		"keybindings": [
 			{
 				"command": "code-d.searchDocs",
-				"key": "ctrl-q ctrl-q"
+				"key": "ctrl-q ctrl-q",
+				"when": "editorTextFocus"
+			},
+			{
+				"command": "code-d.sortImports",
+				"key": "ctrl-q ctrl-s",
+				"when": "editorTextFocus"
 			}
 		],
 		"languages": [

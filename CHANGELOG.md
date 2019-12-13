@@ -29,11 +29,13 @@ code-d and serve-d
 
 # 0.x.y
 
-## `dub.sdl` Files
+## dub
 
 Platform attributes on supported values in dub.sdl are now autocompleted. This includes all the [current](https://github.com/dlang/dub/blob/8ffc09ed6fb9625837161ffbbda2d926f490196c/source/dub/platform.d#L24) platforms, architectures and compilers.
 
 Furthermore dependencies complete better now when completing in the middle of a word.
+
+When creating new dub.json and dub.sdl files, the name and syntax boilerplate will be inserted.
 
 ## Snippets
 
@@ -43,9 +45,13 @@ There are also new snippets specific to dub packages. These snippets will only b
 
 ## Other things
 
+Minor Changes:
 * `~~deprecated~~` and `unused` variables warnings will now be rendered using the standard vscode formatting
-* Removed upload code selection feature. Use a dedicated extension for this instead. (for example "Share Code" `rolandgreim.sharecode
-`)
+* Removed upload code selection feature. Use a dedicated extension for this instead. (for example "Share Code" `rolandgreim.sharecode`)
+* Sort imports is now bound to `Ctrl-Q Ctrl-S` by default.
+
+Bug Fixes:
+* Fixed sorting imports inside functions sometimes replacing commented imports.
 
 # 0.21.0
 
