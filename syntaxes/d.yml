@@ -540,7 +540,7 @@ repository:
     - match: ((\.\s*)?[_\w][_\d\w]*)(\s*\.\s*[_\w][_\d\w]*)*\s*(?=\()
       name: entity.name.function.d
   function-parameters:
-    begin: \((?=.*(\{|=>))
+    begin: \((?=.*\)\s*(\{|=>))
     beginCaptures: entity.name.function.d
     end: \)
     endCaptures: entity.name.function.d
