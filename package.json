@@ -42,6 +42,7 @@
 		"onCommand:code-d.createProject",
 		"onCommand:code-d.addImport",
 		"onCommand:code-d.searchDocs",
+		"onCommand:code-d.openDocsAtCursor",
 		"onCommand:code-d.convertDubRecipe"
 	],
 	"main": "./out/src/extension",
@@ -620,6 +621,13 @@
 			}
 		},
 		"menus": {
+			"editor/context": [
+				{
+					"when": "resourceLangId == d",
+					"command": "code-d.openDocsAtCursor",
+					"group": "navigation"
+				}
+			],
 			"explorer/context": [
 				{
 					"when": "resourceLangId == d",
@@ -686,6 +694,10 @@
 				{
 					"command": "code-d.convertDubRecipe",
 					"when": "resourceFilename =~ /dub\\.json|dub\\.sdl/"
+				},
+				{
+					"command": "code-d.openDocsAtCursor",
+					"when": "false"
 				}
 			]
 		},
@@ -823,6 +835,11 @@
 			{
 				"command": "code-d.searchDocs",
 				"title": "Search dpldocs for Phobos & Dependency documentation",
+				"category": "code-d"
+			},
+			{
+				"command": "code-d.openDocsAtCursor",
+				"title": "Search in dpldocs",
 				"category": "code-d"
 			},
 			{

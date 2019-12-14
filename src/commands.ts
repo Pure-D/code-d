@@ -10,6 +10,8 @@ import { DubDependency } from "./dub-view";
 import { DubTasksProvider } from "./dub-tasks";
 import { showDpldocsSearch } from "./dpldocs";
 
+const multiTokenWordPattern = /[^\`\~\!\@\#\%\^\&\*\(\)\=\+\[\{\]\}\\\|\;\:\'\"\,\.\<\>\/\?\s]+(?:\.[^\`\~\!\@\#\%\^\&\*\(\)\=\+\[\{\]\}\\\|\;\:\'\"\,\.\<\>\/\?\s]+)*/;
+
 var gClient: LanguageClient;
 
 export function registerClientCommands(context: vscode.ExtensionContext, client: LanguageClient, served: ServeD) {
@@ -419,6 +421,20 @@ export function registerCommands(context: vscode.ExtensionContext) {
 		if (vscode.window.activeTextEditor)
 			query = vscode.window.activeTextEditor.document.getText(vscode.window.activeTextEditor.selection);
 		showDpldocsSearch(query);
+	}));
+
+	subscriptions.push(vscode.commands.registerTextEditorCommand("code-d.openDocsAtCursor", (editor, edit) => {
+		// TODO: we can probably add local ddoc rendering if we can jump to the symbol anyway
+		var query = "";
+		if (editor.selection.isEmpty) {
+			const range = editor.document.getWordRangeAtPosition(editor.selection.active, multiTokenWordPattern);
+			if (range)
+				showDpldocsSearch(editor.document.getText(range), true);
+			else
+				showDpldocsSearch("");
+		}
+		else
+			showDpldocsSearch(editor.document.getText(editor.selection), true);
 	}));
 
 	subscriptions.push(vscode.commands.registerCommand("code-d.insertDscanner", () => {

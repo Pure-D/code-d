@@ -12,40 +12,143 @@ class WorkState {
 	working: number = 0;
 	items: DocItem[] = [];
 	depItems: { [index: string]: DocItem[] } = {};
+	visible: boolean = false;
+	done: boolean = false;
 
-	constructor(public quickPick: vscode.QuickPick<any>) {
+	private resolve?: Function;
+
+	constructor(public quickPick: vscode.QuickPick<any>, public query: string | undefined, public fastOpen: boolean) {
+		if (fastOpen)
+			vscode.window.withProgress({
+				location: vscode.ProgressLocation.Notification,
+				cancellable: true
+			}, (progress, token) => {
+				progress.report({ message: "Looking up documentation" });
+				return new Promise((resolve, reject) => {
+					token.onCancellationRequested((e) => {
+						this.done = true;
+						reject();
+					});
+					this.resolve = resolve;
+				});
+			}).then((result) => {
+				// done
+			});
 	}
 
 	startWork() {
+		if (this.done)
+			return;
+
 		this.working++;
 		this.quickPick.busy = this.working > 0;
 	}
 
 	finishWork() {
+		if (this.done)
+			return;
+
 		this.working--;
 		this.quickPick.busy = this.working > 0;
 	}
 
 	refreshItems() {
+		if (this.done)
+			return;
+
 		var ret: DocItem[] = this.items.slice();
 		for (var key in this.depItems)
 			if (this.depItems.hasOwnProperty(key))
 				ret.push.apply(ret, this.depItems[key]);
+		ret.sort((a, b) => b.score - a.score);
 		this.quickPick.items = ret;
+
+		if (!this.visible && this.working <= 0) {
+			if (!this.finishQuick()) {
+				this.quickPick.show();
+				if (this.resolve)
+					this.resolve();
+			}
+
+			this.visible = true;
+		}
+	}
+
+	show() {
+		this.quickPick.items = this.items;
+		if (this.fastOpen) {
+			this.finishQuick();
+		}
+		else {
+			this.quickPick.show();
+			this.visible = true;
+		}
+
+		this.quickPick.onDidHide((e) => {
+			if (this.resolve)
+				this.resolve();
+			this.done = true;
+		});
+	}
+
+	finishQuick(): boolean {
+		if (!this.items || !this.items.length)
+			return false;
+
+		let singleItem: DocItem | undefined;
+
+		if (this.items.length == 1) {
+			singleItem = this.items[0];
+		} else if (this.query) {
+			let perfect = [];
+			let bestScore = 60;
+			for (let i = 0; i < this.items.length; i++) {
+				const item = this.items[i];
+				if (item.label === this.query || item.label.endsWith("/" + this.query)) {
+					perfect.push(item);
+					bestScore = 100;
+				} else if (item.label.endsWith(this.query) && item.score > bestScore) {
+					singleItem = item;
+					bestScore = item.score;
+				}
+			}
+
+			if (perfect.length == 1) {
+				singleItem = perfect[0];
+			} else if (perfect.length > 1) {
+				singleItem = undefined;
+				this.items = perfect;
+			}
+		}
+
+		if (singleItem) {
+			showDocItemUI(singleItem);
+			this.quickPick.dispose();
+			this.done = true;
+		} else {
+			this.quickPick.show();
+		}
+
+		this.visible = true;
+
+		if (this.resolve)
+			this.resolve();
+
+		return true;
 	}
 }
 
-export function showDpldocsSearch(query?: string) {
+export function showDpldocsSearch(query?: string, fastOpen: boolean = false) {
 	var quickpick = vscode.window.createQuickPick<DocItem>();
-	const state = new WorkState(quickpick);
+	const state = new WorkState(quickpick, query, fastOpen);
 
 	loadDependencyPackageDocumentations(state);
 
 	var timeout: NodeJS.Timer | undefined;
-	function updateSearch(query: string) {
-		timeout = updateRootSearchQuery(timeout, query, state);
+	function updateSearch(query: string, delay: number = 500) {
+		timeout = updateRootSearchQuery(timeout, query, state, delay);
 	}
-	quickpick.onDidChangeValue((value) => updateSearch);
+	quickpick.onDidChangeValue((value) => updateSearch(value));
 
 	quickpick.placeholder = "Enter search term for symbol...";
 	quickpick.onDidAccept(() => {
@@ -53,12 +156,11 @@ export function showDpldocsSearch(query?: string) {
 		if (selection)
 			showDocItemUI(selection);
 	});
-	quickpick.items = state.items;
-	quickpick.show();
+	state.show();
 
 	if (query) {
 		quickpick.value = query;
-		updateSearch(query);
+		updateSearch(query, 0);
 	}
 }
 
@@ -290,6 +392,9 @@ async function loadDependencyPackageDocumentations(state: WorkState) {
 				return;
 			checked.push(strippedName);
 
+			if (state.done)
+				return;
+
 			state.startWork();
 			loadDependencySymbolsOnline(dep.info, strippedName, strippedVersion).then(docs => {
 				state.finishWork();
@@ -327,10 +432,13 @@ export function loadDependencySymbolsOnline(
 }
 
 
-function updateRootSearchQuery(timeout: NodeJS.Timer | undefined, value: string, state: WorkState): NodeJS.Timer {
+function updateRootSearchQuery(timeout: NodeJS.Timer | undefined, value: string, state: WorkState, delay: number = 500): NodeJS.Timer {
 	if (timeout !== undefined)
 		clearTimeout(timeout);
 	return setTimeout(() => {
+		if (state.done)
+			return;
+
 		state.startWork();
 		req()("https://dpldocs.info/locate?q=" + encodeURIComponent(value), function (error: any, response: any, body: any) {
 			state.finishWork();
@@ -346,7 +454,7 @@ function updateRootSearchQuery(timeout: NodeJS.Timer | undefined, value: string,
 			}
 			state.refreshItems();
 		});
-	}, 500);
+	}, delay);
 }
 
 function parseDependencySearchResult(
@@ -394,7 +502,6 @@ interface DocEntry {
 }
 
 function parseDocEntry(declElem: Element): DocEntry {
-	console.log(declElem.childNodes.length);
 	let name: Element | null = null;
 	let link: Element | null = null;
 	let desc: Element | null = null;
@@ -426,7 +533,7 @@ function parseDocItem(dt: Element): DocItem | undefined {
 
 	let score = parseInt(dt.getAttribute("data-score") || "0");
 	let obj: DocItem = {
-		label: (a.textContent || "").replace(/\s+/g, ""),
+		label: (a.innerText || a.textContent || "").replace(/[\s\u2000-\u200F]+/g, ""),
 		href: href,
 		score: score
 	};
@@ -435,13 +542,13 @@ function parseDocItem(dt: Element): DocItem | undefined {
 		obj.description = "Search Score: " + score;
 
 	if (dt.nextElementSibling)
-		obj.detail = (dt.nextElementSibling.textContent || "").replace(/([^\S\n]*\n[^\S\n]*\n[^\S\n]*)+/g, "\n\n");
+		obj.detail = ((<any>dt.nextElementSibling).innerText || dt.nextElementSibling.textContent || "").replace(/[\u2000-\u200F]+/g, "").replace(/([^\S\n]*\n[^\S\n]*\n[^\S\n]*)+/g, "\n\n");
 
 	return obj;
 }
 
 function getCleanSimpleTextContent(elem: Element | null): string | null {
-	return elem ? (elem.textContent || "").replace(/<\/?.*?>/g, "").trim() : elem;
+	return elem ? ((<any>elem).innerText || elem.textContent || "").replace(/<\/?.*?>/g, "").replace(/[\u2000-\u200F]+/g, "").trim() : elem;
 }
 
 function showDocItemUI(docItem: DocItem) {
