@@ -43,15 +43,21 @@ Snippets have been completely overhauled and now complete properly based on code
 
 There are also new snippets specific to dub packages. These snippets will only be suggested if the workspace has the required dub dependencies installed. Built-in dependency based snippets are the vibe-d snippets `viberouter`, `vibeserver`, `vibeget`, `vibegettext`, `vibegetjson` and `vibepost`. Additionally there is a [new API in code-d](https://github.com/Pure-D/code-d-api) for other third party VSCode extensions to provide their own dependency based D snippets.
 
+## User Guide
+
+There is a new user guide including tutorials and information about all the code-d features. Use `Ctrl-Shift-P -> Open User Guide` to open. (will open automatically for new users first time)
+
 ## Other things
 
 Minor Changes:
 * `~~deprecated~~` and `unused` variables warnings will now be rendered using the standard vscode formatting
 * Removed upload code selection feature. Use a dedicated extension for this instead. (for example "Share Code" `rolandgreim.sharecode`)
 * Sort imports is now bound to `Ctrl-Q Ctrl-S` by default.
+* The changelog now opens in every new version. Add `"d.showUpdateChangelogs": false` to disable.
 
 Bug Fixes:
 * Fixed sorting imports inside functions sometimes replacing commented imports.
+* Fixes build tasks on windows with CMD
 
 # 0.21.0
 

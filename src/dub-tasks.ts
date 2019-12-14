@@ -39,20 +39,12 @@ export class DubTasksProvider implements vscode.TaskProvider {
 				// workaround to weird behavior that vscode seems to ignore build tasks if the same as user task definition
 				task.definition._generated = true;
 
-				let options: vscode.ShellExecutionOptions | undefined = cwd ? { cwd: cwd } : undefined;
-
 				if (!dubLint && !Array.isArray(task.problemMatchers) || task.problemMatchers.length == 0)
 					task.problemMatchers = ["$dmd"];
 
 				var t = new vscode.Task(
 					task.definition, target, task.name, task.source,
-					new vscode.ShellExecution({
-						value: proc,
-						quoting: vscode.ShellQuoting.Strong
-					}, args.map(arg => <vscode.ShellQuotedString>{
-						value: arg,
-						quoting: vscode.ShellQuoting.Strong
-					}), options),
+					makeExecutor(proc, args, cwd),
 					task.problemMatchers);
 				t.isBackground = task.isBackground;
 				(<any>t).detail = "dub " + args.join(" ");
@@ -114,18 +106,7 @@ export class DubTasksProvider implements vscode.TaskProvider {
 			args.push.apply(args, task.definition.args);
 
 		let options: any = task.scope && (<vscode.WorkspaceFolder>task.scope).uri;
-		options = options ? <vscode.ShellExecutionOptions>{ cwd: options.fsPath } : undefined;
-
-		if (task.definition.cwd)
-			options = <vscode.ShellExecutionOptions>{ cwd: task.definition.cwd };
-
-		let exec = new vscode.ShellExecution({
-			value: args.shift() || "exit",
-			quoting: vscode.ShellQuoting.Strong
-		}, args.map(arg => <vscode.ShellQuotedString>{
-			value: arg,
-			quoting: vscode.ShellQuoting.Strong
-		}), options);
+		let exec = makeExecutor(args.shift() || "exit", args, (options && options.fsPath) || task.definition.cwd || undefined);
 
 		let ret = new vscode.Task(
 			task.definition,
@@ -136,4 +117,16 @@ export class DubTasksProvider implements vscode.TaskProvider {
 		(<any>ret).detail = "dub " + args.join(" ");
 		return ret;
 	}
+}
+
+function makeExecutor(proc: string, args: string[], cwd: string): vscode.ProcessExecution | vscode.ShellExecution {
+	let options: vscode.ShellExecutionOptions | undefined = cwd ? { cwd: cwd } : undefined;
+	return new vscode.ProcessExecution(proc, args, options);
+	// return new vscode.ShellExecution({
+	// 	value: proc,
+	// 	quoting: vscode.ShellQuoting.Strong
+	// }, args.map(arg => <vscode.ShellQuotedString>{
+	// 	value: arg,
+	// 	quoting: vscode.ShellQuoting.Strong
+	// }), options);
 }
