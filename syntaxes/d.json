@@ -84,7 +84,7 @@
       ]
     },
     "typeof": {
-      "begin": "typeof\\s+\\(",
+      "begin": "typeof\\s*\\(",
       "end": "\\)",
       "name": "storage.type.typeof.d",
       "patterns": [
@@ -680,8 +680,24 @@
     "if-statement": {
       "patterns": [
         {
-          "match": "\\bif\\s*(?=\\()",
-          "name": "keyword.control.if.d"
+          "begin": "\\b(if)\\b\\s*",
+          "captures": {
+            "1": {
+              "name": "keyword.control.if.d"
+            }
+          },
+          "end": "(?<=\\))",
+          "patterns": [
+            {
+              "begin": "\\(",
+              "end": "\\)",
+              "patterns": [
+                {
+                  "include": "source.d"
+                }
+              ]
+            }
+          ]
         },
         {
           "match": "\\belse\\b\\s*",
@@ -692,8 +708,24 @@
     "while-statement": {
       "patterns": [
         {
-          "match": "\\bwhile\\s*(?=\\()",
-          "name": "keyword.control.while.d"
+          "begin": "\\b(while)\\b\\s*",
+          "captures": {
+            "1": {
+              "name": "keyword.control.while.d"
+            }
+          },
+          "end": "(?<=\\))",
+          "patterns": [
+            {
+              "begin": "\\(",
+              "end": "\\)",
+              "patterns": [
+                {
+                  "include": "source.d"
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -708,24 +740,72 @@
     "for-statement": {
       "patterns": [
         {
-          "match": "\\bfor\\s*(?=\\()",
-          "name": "keyword.control.for.d"
+          "begin": "\\b(for)\\b\\s*",
+          "captures": {
+            "1": {
+              "name": "keyword.control.for.d"
+            }
+          },
+          "end": "(?<=\\))",
+          "patterns": [
+            {
+              "begin": "\\(",
+              "end": "\\)",
+              "patterns": [
+                {
+                  "include": "source.d"
+                }
+              ]
+            }
+          ]
         }
       ]
     },
     "foreach-statement": {
       "patterns": [
         {
-          "match": "\\bforeach\\s*(?=\\()",
-          "name": "keyword.control.foreach.d"
+          "begin": "\\b(foreach)\\b\\s*",
+          "captures": {
+            "1": {
+              "name": "keyword.control.foreach.d"
+            }
+          },
+          "end": "(?<=\\))",
+          "patterns": [
+            {
+              "begin": "\\(",
+              "end": "\\)",
+              "patterns": [
+                {
+                  "include": "source.d"
+                }
+              ]
+            }
+          ]
         }
       ]
     },
     "switch-statement": {
       "patterns": [
         {
-          "match": "\\bswitch\\s*(?=\\()",
-          "name": "keyword.control.switch.d"
+          "begin": "\\b(switch)\\b\\s*",
+          "captures": {
+            "1": {
+              "name": "keyword.control.switch.d"
+            }
+          },
+          "end": "(?<=\\))",
+          "patterns": [
+            {
+              "begin": "\\(",
+              "end": "\\)",
+              "patterns": [
+                {
+                  "include": "source.d"
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -769,8 +849,24 @@
     "final-switch-statement": {
       "patterns": [
         {
-          "match": "\\bfinal\\s+switch\\s*(?=\\()",
-          "name": "keyword.control.final.switch.d"
+          "begin": "\\b(final\\s+switch)\\b\\s*",
+          "captures": {
+            "1": {
+              "name": "keyword.control.final.switch.d"
+            }
+          },
+          "end": "(?<=\\))",
+          "patterns": [
+            {
+              "begin": "\\(",
+              "end": "\\)",
+              "patterns": [
+                {
+                  "include": "source.d"
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -817,16 +913,48 @@
     "with-statement": {
       "patterns": [
         {
-          "match": "\\bwith\\s*(?=\\()",
-          "name": "keyword.control.with.d"
+          "begin": "\\b(with)\\b\\s*",
+          "captures": {
+            "1": {
+              "name": "keyword.control.with.d"
+            }
+          },
+          "end": "(?<=\\))",
+          "patterns": [
+            {
+              "begin": "\\(",
+              "end": "\\)",
+              "patterns": [
+                {
+                  "include": "source.d"
+                }
+              ]
+            }
+          ]
         }
       ]
     },
     "synchronized-statement": {
       "patterns": [
         {
-          "match": "\\bsynchronized\\s*(?=\\()",
-          "name": "keyword.other.synchronized.d"
+          "begin": "\\b(synchronized)\\b\\s*",
+          "captures": {
+            "1": {
+              "name": "keyword.control.synchronized.d"
+            }
+          },
+          "end": "(?<=\\))",
+          "patterns": [
+            {
+              "begin": "\\(",
+              "end": "\\)",
+              "patterns": [
+                {
+                  "include": "source.d"
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -848,8 +976,24 @@
     "catch": {
       "patterns": [
         {
-          "match": "\\bcatch\\s*(?=\\()",
-          "name": "keyword.control.catch.d"
+          "begin": "\\b(catch)\\b\\s*",
+          "captures": {
+            "1": {
+              "name": "keyword.control.catch.d"
+            }
+          },
+          "end": "(?<=\\))",
+          "patterns": [
+            {
+              "begin": "\\(",
+              "end": "\\)",
+              "patterns": [
+                {
+                  "include": "source.d"
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -880,22 +1024,33 @@
     "asm-statement": {
       "patterns": [
         {
-          "begin": "\\basm\\s*\\{",
-          "end": "\\}",
-          "beginCaptures": {
-            "0": {
-              "name": "keyword.control.asm.begin.d"
+          "begin": "\\b(asm)\\b\\s*",
+          "captures": {
+            "1": {
+              "name": "keyword.control.switch.d"
             }
           },
-          "endCaptures": {
-            "0": {
-              "name": "keyword.control.asm.end.d"
-            }
-          },
-          "contentName": "gfm.markup.raw.assembly.d",
+          "end": "(?<=\\})",
           "patterns": [
             {
-              "include": "#asm-instruction"
+              "begin": "\\{",
+              "end": "\\}",
+              "beginCaptures": {
+                "0": {
+                  "name": "keyword.control.asm.begin.d"
+                }
+              },
+              "endCaptures": {
+                "0": {
+                  "name": "keyword.control.asm.end.d"
+                }
+              },
+              "contentName": "gfm.markup.raw.assembly.d",
+              "patterns": [
+                {
+                  "include": "#asm-instruction"
+                }
+              ]
             }
           ]
         }

@@ -54,6 +54,10 @@ Minor Changes:
 * Removed upload code selection feature. Use a dedicated extension for this instead. (for example "Share Code" `rolandgreim.sharecode`)
 * Sort imports is now bound to `Ctrl-Q Ctrl-S` by default.
 * The changelog now opens in every new version. Add `"d.showUpdateChangelogs": false` to disable.
+* Syntax highlighting was improved
+	* otbs style D code was improved a lot. (fixes `if`, `while`, `for`, `foreach`, `switch`, `final switch`, `with`, `synchronized` and `catch` blocks)
+	* `typeof` highlighting
+	* `asm` block fixes
 
 Bug Fixes:
 * Fixed sorting imports inside functions sometimes replacing commented imports.
