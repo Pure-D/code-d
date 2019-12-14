@@ -108,6 +108,10 @@ It's also possible to select a symbol and then press `Ctrl-Q Ctrl-Q` to automati
 
 The result will then be embedded into the editor. It's possible to click "See Implementation" to jump to the source code in VSCode and click all the types to navigate around on the embedded dpldocs page.
 
+It's also possible to rightclick at any point in code and lookup the documentation of the identifier at a given location.
+
+![dpldocs on context menu](images/dpldocs_context_menu.png)
+
 ### Refactoring
 
 #### Sorting Imports
