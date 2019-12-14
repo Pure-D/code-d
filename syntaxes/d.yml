@@ -93,7 +93,7 @@ repository:
     - include: '#lexical'
   assign-expression:
     patterns:
-    - match: '>>>=|\^\^=|>>=|<<=|~=|\^=|\|=|&=|%=|/=|\*=|-=|\+=|='
+    - match: '>>>=|\^\^=|>>=|<<=|~=|\^=|\|=|&=|%=|/=|\*=|-=|\+=|=(?!>)'
       name: keyword.operator.assign.d
   conditional-expression:
     patterns:
@@ -159,6 +159,8 @@ repository:
   function-literal:
     patterns:
     - include: '#lambda-expression'
+    - match: '=>'
+      name: keyword.operator.lambda.d
     - match: \b(function|delegate)\b
       name: keyword.other.function-literal.d
   lambda-expression:
@@ -516,7 +518,7 @@ repository:
           name: support.type.alias.d
       patterns:
       - include: '#type'
-      - match: =
+      - match: =(?![=>])
         name: keyword.operator.equal.alias.d
       - include: '#expression'
   storage-class:
@@ -931,7 +933,7 @@ repository:
       name: support.type.colon.d
   equal:
     patterns:
-    - match: =
+    - match: =(?![=>])
       name: keyword.operator.equal.d
   semi-colon:
     patterns:
@@ -1145,7 +1147,7 @@ repository:
     - include: '#integer-literal'
     - include: '#float-literal'
     - include: '#keyword'
-    - match: /|/=|\.|\.\.|\.\.\.|&|&=|&&|\||\|=|\|\||-|-=|--|\+|\+=|\+\+|<|<=|<<|<>|>|>=|>>=|>>|>>>|\!|\!=|\!<>|\!<>=|\!<|\!<=|\!>|\!>=|\(|\)|\[|\]|\{|\}|\?|,|;|:|$|=|==|\*|\*=|%|%=|\^|\^=|\^\^|\^\^=|~|~=|@|=>|#
+    - match: ~=|~|>>>|>>=|>>|>=|>|=>|==|=|<>|<=|<<|<|%=|%|#|&=|&&|&|\$|\|=|\|\||\||\+=|\+\+|\+|\^=|\^\^=|\^\^|\^|\*=|\*|\}|\{|\]|\[|\)|\(|\.\.\.|\.\.|\.|\?|\!>=|\!>|\!=|\!<>=|\!<>|\!<=|\!<|\!|/=|/|@|:|;|,|-=|--|-
       name: meta.lexical.token.symbolic.d
     - include: '#identifier'
   keyword:
