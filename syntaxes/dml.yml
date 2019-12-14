@@ -1,0 +1,89 @@
+fileTypes:
+- dml
+name: DlangUI Markup Language
+scopeName: source.dml
+patterns:
+- match: \b(true|false|null)\b
+  name: constant.language.dml
+- match: \b__(FILE|LINE|MODULE|(PRETTY_)?FUNCTION)__\b
+  name: keyword.other.traits.dml
+- match: \b(this|super)\b
+  name: variable.language.dml
+- match: \b(?=[^a-z]*[a-z])[A-Z]\w+\b
+  name: storage.type.class.dml
+- comment: decimal integers
+  match: \b(?<!\.)\d[\d_]*(?:[LuU]|L[uU]|[uU]L)?(?!\.)\b
+  name: constant.numeric.integer.decimal.dml
+- comment: binary integers
+  match: \b0[bB]_*[01][01_]*(?:[iLuU]|L[uU]|[uU]L)?\b
+  name: constant.numeric.integer.binary.dml
+- comment: hex integers
+  match: \b0[xX](?![^\.]*\.)(?=_*\h)[\h_]+(?:[iLuU]|L[uU]|[uU]L)?\b
+  name: constant.numeric.integer.hex.dml
+- comment: decimal floats
+  match: (?<![\.\w])(?=[\.\d])(?=[_\.]*\d)\d*\.\d*([eE][\+-]?\d+)?[ifFL]?\b
+  name: constant.numeric.float.decimal.dml
+- comment: hex floats
+  match: \b0[xX](?=\H*\h)[\h_]*(\.[\h_]*)?[pP][\+-]?\d+[ifFL]?\b
+  name: constant.numeric.float.hex.dml
+- match: \'.\'
+  name: constant.character.dml
+- match: \'\\.\'
+  name: constant.character.escape.dml
+- begin: '"'
+  beginCaptures:
+    0:
+      name: punctuation.definition.string.begin.dml
+  end: (")([cwd])?
+  endCaptures:
+    1:
+      name: punctuation.definition.string.end.dml
+    2:
+      name: punctuation.definition.string.postfix.dml
+  name: string.quoted.double.dml
+  patterns:
+  - match: \\[^u]
+    name: constant.character.escape.dml
+  - match: \\u\h{4}
+    name: constant.character.escape.dml
+- begin: r"
+  beginCaptures:
+    0:
+      name: punctuation.definition.string.begin.dml
+  end: '"([cwd])?'
+  endCaptures:
+    1:
+      name: punctuation.definition.string.end.dml
+    2:
+      name: punctuation.definition.string.postfix.dml
+  name: string.regex.dml
+  patterns:
+  - include: source.regexp.python
+- begin: '`'
+  beginCaptures:
+    0:
+      name: punctuation.definition.string.begin.dml
+  end: '`([cwd])?'
+  endCaptures:
+    1:
+      name: punctuation.definition.string.end.dml
+    2:
+      name: punctuation.definition.string.postfix.dml
+  name: string.regex.dml
+  patterns:
+  - include: source.js.regexp
+- begin: /\*
+  beginCaptures:
+    0:
+      name: punctuation.definition.comment.begin.dml
+  end: \*/
+  endCaptures:
+    0:
+      name: punctuation.definition.comment.end.dml
+  name: comment.block.dml
+- begin: //
+  beginCaptures:
+    0:
+      name: punctuation.definition.comment.dml
+  end: \n
+  name: comment.line.double-slash.dml

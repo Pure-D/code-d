@@ -8,4 +8,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ---
 
-Taken from https://github.com/ysgard/d-struct & converted using cson2json
+Taken from https://github.com/ysgard/d-struct
+	converted using cson2json
+	then converted using github.com/sjmulder/json-yaml (gave optimal output with no unneccesary quotes)
