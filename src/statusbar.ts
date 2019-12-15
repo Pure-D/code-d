@@ -130,3 +130,70 @@ class CompilerSelector extends GenericSelector {
 		super(served, 0.92142, "code-d.switchCompiler", "Switch Compiler", "compiler-change", "served/getCompiler");
 	}
 }
+
+export class StartupProgress {
+	startedGlobal: boolean = false;
+	workspace: string | undefined;
+
+	progress: vscode.Progress<{ message?: string, increment?: number }> | undefined;
+	resolve: Function | undefined;
+	reject: Function | undefined;
+
+	constructor() {
+	}
+
+	async startGlobal() {
+		if (this.startedGlobal)
+			return;
+
+		this.startedGlobal = true;
+
+		vscode.window.withProgress({
+			cancellable: false,
+			location: vscode.ProgressLocation.Window,
+			title: "D"
+		}, (progress, token) => {
+			this.progress = progress;
+			return new Promise((resolve, reject) => {
+				this.resolve = resolve;
+				this.reject = reject;
+			});
+		});
+	}
+
+	finishGlobal() {
+		if (!this.startedGlobal)
+			return;
+
+		this.startedGlobal = false;
+		if (this.resolve)
+			this.resolve();
+		this.progress = undefined;
+		this.resolve = undefined;
+		this.reject = undefined;
+	}
+
+	globalStep(step: number, max: number, title: string, msg: string) {
+		if (!this.startedGlobal || !this.progress)
+			return;
+
+		let percent = step / (max || 1);
+
+		this.progress.report({
+			message: title + " (" + formatPercent(percent) + "): " + msg
+		});
+	}
+
+	setWorkspace(name: string) {
+		this.workspace = name;
+		this.globalStep(0, 1, "workspace " + name, "starting up...");
+	}
+
+	workspaceStep(step: number, max: number, msg: string) {
+		this.globalStep(step, max, "workspace " + this.workspace, msg);
+	}
+}
+
+function formatPercent(p: number) {
+	return (p * 100).toFixed(1) + " %";
+}

@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
-import { LanguageClient, LanguageClientOptions, ServerOptions, DocumentFilter, NotificationType, CloseAction, ErrorAction, ErrorHandler, Message, State } from "vscode-languageclient";
+import { LanguageClient, LanguageClientOptions, ServerOptions, DocumentFilter, NotificationType, CloseAction, ErrorAction, ErrorHandler, Message, State, MessageType } from "vscode-languageclient";
 import { setContext, installServeD, compileServeD, getInstallOutput, downloadFileInteractive, findLatestServeD, cmpSemver, extractServedBuiltDate, Release, updateAndInstallServeD } from "./installer"
 import { EventEmitter } from "events"
 import * as ChildProcess from "child_process"
@@ -197,6 +197,50 @@ function startClient(context: vscode.ExtensionContext) {
 		client.onNotification("coded/changedSelectedWorkspace", function () {
 			served.emit("workspace-change");
 			served.refreshDependencies();
+		});
+
+		const startupProgress = new statusbar.StartupProgress();
+		client.onNotification("window/logMessage", function (info: { type: MessageType, message: string }) {
+			if (info.type == MessageType.Log && info.message.startsWith("[progress]")) {
+				let m = /^\[progress\] \[(\d+\.\d+)\] \[(\w+)\](?:\s*(\d+)?\s*(?:\/\s*(\d+))?:\s)?(.*)/.exec(info.message);
+				if (!m) return;
+				const time = parseFloat(m[1]);
+				const type = m[2];
+				const step = m[3] ? parseInt(m[3]) : undefined;
+				const max = m[4] ? parseInt(m[4]) : undefined;
+				const args = m[5] || undefined;
+
+				if (type == "configLoad") {
+					startupProgress.startGlobal();
+					const p = vscode.Uri.parse(args || "").fsPath;
+					startupProgress.setWorkspace(shortenPath(p));
+				}
+				else if (type == "configFinish") {
+					startupProgress.finishGlobal();
+				}
+				else if (type == "workspaceStartup" && step !== undefined && max) {
+					startupProgress.workspaceStep(step * 0.5, max, "updating");
+				}
+				else if (type == "completionStartup" && step !== undefined && max) {
+					startupProgress.workspaceStep(step * 0.5 + max * 0.5, max, "indexing");
+				}
+				else if ((type == "importReload" || type == "importUpgrades") && step !== undefined && max) {
+					if (step == max)
+						startupProgress.finishGlobal();
+					else {
+						startupProgress.startGlobal();
+						const p = vscode.Uri.parse(args || "").fsPath;
+						let label = step == 0 ? "updating" : "indexing";
+						if (type == "importUpgrades") {
+							if (step == 0) label = "downloading dependencies";
+							else if (step == 6) label = "updating";
+						}
+						startupProgress.globalStep(step, max, shortenPath(p), label)
+					}
+				}
+
+				// console.log("progress:", time, type, step, max, args);
+			}
 		});
 
 		client.onRequest<boolean, { url: string, title?: string, output: string }>("coded/interactiveDownload", function (e, token): Thenable<boolean> {
@@ -712,4 +756,16 @@ function doGreetNewUsers(context: vscode.ExtensionContext, currentVersion: strin
 			}
 		}
 	}
+}
+
+function shortenPath(p: string) {
+	let short: string = p;
+	if (vscode.workspace.workspaceFolders)
+		vscode.workspace.workspaceFolders.forEach(element => {
+			const dir = element.uri.fsPath;
+			if (dir.startsWith(p)) {
+				short = path.relative(path.dirname(dir), p);
+			}
+		});
+	return short;
 }
