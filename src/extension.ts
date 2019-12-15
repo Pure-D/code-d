@@ -20,6 +20,7 @@ import expandTilde = require("expand-tilde");
 import { CodedAPI, Snippet } from "code-d-api";
 import { builtinPlugins } from "./builtin_plugins";
 import { CodedAPIServedImpl } from "./api_impl";
+import { restoreCreateProjectPackageBackup } from "./project-creator";
 
 class CustomErrorHandler implements ErrorHandler {
 	private restarts: number[];
@@ -391,345 +392,322 @@ export function config(resource: vscode.Uri | null): vscode.WorkspaceConfigurati
 	return vscode.workspace.getConfiguration("d", resource);
 }
 
-function preStartup(context: vscode.ExtensionContext) {
+async function preStartup(context: vscode.ExtensionContext) {
 	const userConfig = "Open User Settings";
 
 	setContext(context);
-	let env = process.env;
 	let proxy = vscode.workspace.getConfiguration("http").get("proxy", "");
 	if (proxy)
 		process.env["http_proxy"] = proxy;
 
-	if (context.globalState.get("restorePackageBackup", false)) {
-		context.globalState.update("restorePackageBackup", false);
-		var pkgPath = path.join(context.extensionPath, "package.json");
-		fs.readFile(pkgPath + ".bak", function (err, data) {
-			if (err)
-				return vscode.window.showErrorMessage("Failed to restore after reload! Please reinstall code-d if problems occur before reporting!");
-			return fs.writeFile(pkgPath, data, function (err) {
-				if (err)
-					return vscode.window.showErrorMessage("Failed to restore after reload! Please reinstall code-d if problems occur before reporting!");
-				return fs.unlink(pkgPath + ".bak", function (err: any) {
-					console.error(err.toString());
-				});
+	await restoreCreateProjectPackageBackup(context);
+
+	let presentCompiler: { has: string | false, path?: string } | undefined;
+	if (!context.globalState.get("checkedCompiler", false)) {
+		console.log("Checking if compiler is present");
+		presentCompiler = await checkCompilers();
+		context.globalState.update("checkedCompiler", true);
+		if (!presentCompiler.has)
+			vscode.env.openExternal(vscode.Uri.parse("https://dlang.org/download.html")).then(() => {
+				vscode.window.showInformationMessage("Please install a D compiler from dlang.org and reload the window once done.");
 			});
-		});
 	}
-	{
-		function checkDub(dubPath: string | undefined, done: (available: boolean) => any, updateSetting: boolean = false) {
-			let tryCompiler = !!dubPath;
-			if (!dubPath)
-				dubPath = <string>expandTilde(config(null).get("dubPath", "dub"));
-			let errored = false;
-			let exited = false;
 
-			function errorCallback(err: any) {
-				console.error(err);
-				errored = true;
-				if (!exited) {
-					if (!tryCompiler)
-						return done(false);
-					checkCompilers((has, dmdPath) => {
-						if (!has || !dmdPath)
-							return done(false);
-						else {
-							let ext = process.platform == "win32" ? ".exe" : "";
-							checkDub(path.join(path.dirname(dmdPath), "dub" + ext), done, true);
-						}
-					});
-				}
+	async function checkDub(dubPath: string | undefined, updateSetting: boolean = false): Promise<boolean> {
+		let tryCompiler = !!dubPath;
+		if (!dubPath)
+			dubPath = <string>expandTilde(config(null).get("dubPath", "dub"));
+
+		try {
+			await spawnOneShotCheck(dubPath, ["--version"], false, { cwd: vscode.workspace.rootPath });
+		} catch (e) {
+			// for example invalid executable error
+			if (!tryCompiler)
+				return false;
+
+			if (!presentCompiler)
+				presentCompiler = await checkCompilers();
+
+			if (!presentCompiler.has || !presentCompiler.path)
+				return false;
+			else {
+				let ext = process.platform == "win32" ? ".exe" : "";
+				return await checkDub(path.join(path.dirname(presentCompiler.path), "dub" + ext), true);
 			}
-
-			let proc: ChildProcess.ChildProcessWithoutNullStreams;
-			try {
-				proc = ChildProcess.spawn(dubPath, ["--version"], { cwd: vscode.workspace.rootPath, env: env });
-			} catch (e) {
-				// for example invalid executable error
-				return errorCallback(e);
-			}
-			proc.on("error", errorCallback).on("exit", function () {
-				exited = true;
-				if (!errored) {
-					if (updateSetting)
-						config(null).update("dubPath", path).then(() => done(true));
-					else
-						done(true);
-				}
-			});
-		}
-		function checkProgram(configName: string, defaultPath: string, name: string, installFunc: (env: NodeJS.ProcessEnv, done: (installed: boolean) => void) => any, btn: string, done?: (installed: boolean) => void, outdatedCheck?: (log: string) => (boolean | [boolean, string])) {
-			var version = "";
-			var errored = false;
-
-			function errorCallback(err: any) {
-				console.error(err);
-				const fullConfigName = "d." + configName;
-				if (btn == "Install" || btn == "Download") btn = "Reinstall";
-				const reinstallBtn = btn + " " + name;
-				const userSettingsBtn = "Open User Settings";
-
-				let defaultHandler = (s: string | undefined) => {
-					if (s == userSettingsBtn)
-						vscode.commands.executeCommand("workbench.action.openGlobalSettings");
-					else if (s == reinstallBtn)
-						installFunc(env, done || (() => { }));
-				};
-
-				errored = true;
-				if (err && err.code == "ENOENT") {
-					if (config(null).get("aggressiveUpdate", true)) {
-						installFunc(env, done || (() => { }));
-					}
-					else {
-						var isDirectory = false;
-						try {
-							var testPath = config(null).get(configName, "");
-							isDirectory = path.isAbsolute(testPath) && fs.statSync(testPath).isDirectory();
-						} catch (e) { }
-						if (isDirectory) {
-							vscode.window.showErrorMessage(name + " from setting " + fullConfigName + " points to a directory", reinstallBtn, userSettingsBtn).then(defaultHandler);
-						} else {
-							vscode.window.showErrorMessage(name + " from setting " + fullConfigName + " is not installed or couldn't be found", reinstallBtn, userSettingsBtn).then(defaultHandler);
-						}
-					}
-				} else if (err && err.code == "EACCES") {
-					vscode.window.showErrorMessage(name + " from setting " + fullConfigName + " is not marked as executable or is in a non-executable directory.", reinstallBtn, userSettingsBtn).then(defaultHandler);
-				} else if (err && err.code) {
-					vscode.window.showErrorMessage(name + " from setting " + fullConfigName + " failed executing: " + err.code, reinstallBtn, userSettingsBtn).then(defaultHandler);
-				} else if (err) {
-					vscode.window.showErrorMessage(name + " from setting " + fullConfigName + " failed executing: " + err, reinstallBtn, userSettingsBtn).then(defaultHandler);
-				}
-			}
-
-			try {
-				var proc = ChildProcess.spawn(expandTilde(config(null).get(configName, defaultPath)), ["--version"], { cwd: vscode.workspace.rootPath, env: env });
-			} catch (e) {
-				// for example invalid executable error
-				return errorCallback(e);
-			}
-			if (proc.stderr)
-				proc.stderr.on("data", function (chunk) {
-					version += chunk;
-				});
-			if (proc.stdout)
-				proc.stdout.on("data", function (chunk) {
-					version += chunk;
-				});
-			proc.on("error", errorCallback).on("exit", function () {
-				let outdatedResult = outdatedCheck && outdatedCheck(version);
-				let isOutdated = typeof outdatedResult == "boolean" ? outdatedResult
-					: typeof outdatedResult == "object" && Array.isArray(outdatedResult) ? outdatedResult[0]
-						: false;
-				let msg = typeof outdatedResult == "object" && Array.isArray(outdatedResult) ? outdatedResult[1] : undefined;
-				if (isOutdated) {
-					if (config(null).get("aggressiveUpdate", true)) {
-						installFunc(env, done || (() => { }));
-					}
-					else {
-						vscode.window.showErrorMessage(name + " is outdated. " + (msg || ""), btn + " " + name, "Continue Anyway").then(s => {
-							if (s == "Continue Anyway") {
-								if (done)
-									done(false);
-							}
-							else if (s == btn + " " + name)
-								installFunc(env, done || (() => { }));
-						});
-					}
-					return;
-				}
-				if (!errored && done)
-					done(false);
-			});
 		}
 
-		// disable dub checks for now because precompiled dub binaries on windows are broken
-		checkDub(undefined, (available) => {
-			if (!available) {
-				console.error("Failed to automatically find dub or execute it! Please set d.dubPath properly.");
+		if (updateSetting)
+			await config(null).update("dubPath", path);
+		return true;
+	}
 
-				if (config(null).get("dubPath", "dub") != "dub")
-					vscode.window.showErrorMessage("The dub path specified in your user settings via d.dubPath is not a"
-						+ " valid dub executable. Please unset it to automatically find it through your compiler or manually"
-						+ " point it to a valid executable file.\n\nIssues building projects might occur.",
-						userConfig).then((item) => {
-							if (item == userConfig)
-								vscode.commands.executeCommand("workbench.action.openGlobalSettings");
-						});
-			}
+	async function checkProgram(configName: string, defaultPath: string, name: string, installFunc: (env: NodeJS.ProcessEnv) => Thenable<boolean | undefined>, btn: string, outdatedCheck?: (log: string) => (boolean | [boolean, string])): Promise<boolean | undefined> {
+		var version = "";
 
-			let isLegacyBeta = config(null).get("betaStream", false);
-			let servedReleaseChannel = config(null).inspect("servedReleaseChannel");
-			let channelString = config(null).get("servedReleaseChannel", "stable");
+		try {
+			version = await spawnOneShotCheck(expandTilde(config(null).get(configName, defaultPath)), ["--version"], true, { cwd: vscode.workspace.rootPath });
+		} catch (err) {
+			// for example invalid executable error
+			console.error(err);
+			const fullConfigName = "d." + configName;
+			if (btn == "Install" || btn == "Download") btn = "Reinstall";
+			const reinstallBtn = btn + " " + name;
+			const userSettingsBtn = "Open User Settings";
 
-			let reloading = false;
-			let started = false;
-			let outdated = false;
+			let defaultHandler = (s: string | undefined) => {
+				if (s == userSettingsBtn)
+					vscode.commands.executeCommand("workbench.action.openGlobalSettings");
+				else if (s == reinstallBtn)
+					return installFunc(process.env);
+				return Promise.resolve(undefined);
+			};
 
-			function didChangeReleaseChannel(updated: Thenable<any>) {
-				if (started && !reloading) {
-					reloading = true;
-					// make sure settings get updated
-					updated.then(() => {
-						vscode.commands.executeCommand("workbench.action.reloadWindow");
-					});
-				} else
-					outdated = true;
-			}
-
-			function isServedOutdated(current: Release | undefined): (log: string) => (boolean | [boolean, string]) {
-				return (log: string) => {
-					if (!current || !current.asset)
-						return false; // network failure or frozen release channel, let's not bother the user
-					else if (current.name == "nightly") {
-						let date = new Date(current.asset.created_at);
-						let installed = extractServedBuiltDate(log);
-						if (!installed)
-							return [true, "(target=nightly, installed=none)"];
-
-						date.setUTCHours(0);
-						date.setUTCMinutes(0);
-						date.setUTCSeconds(0);
-
-						installed.setUTCHours(12);
-						installed.setUTCMinutes(0);
-						installed.setUTCSeconds(0);
-
-						return installed < date;
-					}
-
-					let installedChannel = context.globalState.get("serve-d-downloaded-release-channel");
-					if (installedChannel && channelString != installedChannel)
-						return [true, "(target channel=" + channelString + ", installed channel=" + installedChannel + ")"];
-
-					var m = /serve-d v(\d+\.\d+\.\d+(?:-[-.a-zA-Z0-9]+)?)/.exec(log);
-					var target = current.name;
-					if (target.startsWith("v")) target = target.substr(1);
-
-					if (m) {
-						try {
-							return [cmpSemver(m[1], target) < 0, "(target=" + target + ", installed=" + m[1] + ")"];
-						} catch (e) {
-							getInstallOutput().show(true);
-							getInstallOutput().appendLine("ERROR: could not compare current serve-d version with release");
-							getInstallOutput().appendLine(e.toString());
-						}
-					}
-					return false;
-				};
-			}
-
-			if (isLegacyBeta && servedReleaseChannel && !servedReleaseChannel.globalValue) {
-				config(null).update("servedReleaseChannel", "nightly", vscode.ConfigurationTarget.Global);
-				channelString = "nightly";
-
-				let stable = "Switch to Stable";
-				let beta = "Switch to Beta";
-				vscode.window.showInformationMessage("Hey! The setting 'd.betaStream' no longer exists and has been replaced with "
-					+ "'d.servedReleaseChannel'. Your settings have been automatically updated to fetch nightly builds, but you "
-					+ "probably want to remove the old setting.\n\n"
-					+ "Stable and beta releases are planned more frequently now, so they might be a better option for you.",
-					stable, beta, userConfig).then(item => {
-						if (item == userConfig) {
-							vscode.commands.executeCommand("workbench.action.openGlobalSettings");
-						} else if (item == stable) {
-							let done = config(null).update("servedReleaseChannel", "stable", vscode.ConfigurationTarget.Global);
-							didChangeReleaseChannel(done);
-						} else if (item == beta) {
-							let done = config(null).update("servedReleaseChannel", "beta", vscode.ConfigurationTarget.Global);
-							didChangeReleaseChannel(done);
-						}
-					});
-			}
-
-			let force = true; // force release lookup before first install
-			if (context.globalState.get("serve-d-downloaded-release-channel"))
-				force = false;
-
-			findLatestServeD(force, channelString).then(version => {
-				checkProgram("servedPath", "serve-d", "serve-d",
-					version ? (version.asset
-						? installServeD([{ url: version.asset.browser_download_url, title: "Serve-D" }], version.name)
-						: compileServeD(version ? version.name : undefined))
-						: updateAndInstallServeD,
-					version ? (version.asset ? "Download" : "Compile") : "Install", () => {
-						context.globalState.update("serve-d-downloaded-release-channel", channelString).then(() => {
-							if (outdated) {
-								if (!reloading) {
-									reloading = true;
-									// just to be absolutely sure all settings have been written
-									setTimeout(() => {
-										vscode.commands.executeCommand("workbench.action.reloadWindow");
-									}, 500);
-								}
-							} else {
-								startClient(context);
-								started = true;
-							}
-						});
-					}, isServedOutdated(version));
-			});
-		});
-		function checkCompiler(compiler: string, callback: Function | undefined) {
-			which(compiler, function (err: any, compilerPath: string | undefined) {
-				if (err || !compilerPath) {
-					if (callback)
-						callback(false);
-				} else {
-					function errorCallback(err: any) {
-						if (err && err.code == "ENOENT") {
-							if (callback)
-								callback(false, compilerPath);
-							callback = undefined;
-						}
-						else console.error(err);
-					}
-
-					let proc: ChildProcess.ChildProcessWithoutNullStreams;
+			if (err && err.code == "ENOENT") {
+				if (config(null).get("aggressiveUpdate", true)) {
+					return installFunc(process.env);
+				}
+				else {
+					var isDirectory = false;
 					try {
-						proc = ChildProcess.spawn(compilerPath, ["--version"]);
-					} catch (e) {
-						return errorCallback(e);
+						var testPath = config(null).get(configName, "");
+						isDirectory = path.isAbsolute(testPath) && fs.statSync(testPath).isDirectory();
+					} catch (e) { }
+					if (isDirectory) {
+						return await vscode.window.showErrorMessage(name + " from setting " + fullConfigName + " points to a directory", reinstallBtn, userSettingsBtn).then(defaultHandler);
+					} else {
+						return await vscode.window.showErrorMessage(name + " from setting " + fullConfigName + " is not installed or couldn't be found", reinstallBtn, userSettingsBtn).then(defaultHandler);
 					}
-					proc.on("error", errorCallback).on("exit", function () {
-						if (callback)
-							callback(true, compilerPath);
-						callback = undefined;
-					});
+				}
+			} else if (err && err.code == "EACCES") {
+				return await vscode.window.showErrorMessage(name + " from setting " + fullConfigName + " is not marked as executable or is in a non-executable directory.", reinstallBtn, userSettingsBtn).then(defaultHandler);
+			} else if (err && err.code) {
+				return await vscode.window.showErrorMessage(name + " from setting " + fullConfigName + " failed executing: " + err.code, reinstallBtn, userSettingsBtn).then(defaultHandler);
+			} else if (err) {
+				return await vscode.window.showErrorMessage(name + " from setting " + fullConfigName + " failed executing: " + err, reinstallBtn, userSettingsBtn).then(defaultHandler);
+			}
+			return false;
+		}
+
+		let outdatedResult = outdatedCheck && outdatedCheck(version);
+		let isOutdated: boolean = false;
+		let msg: string | undefined;
+		if (typeof outdatedResult == "boolean")
+			isOutdated = outdatedResult;
+		else if (Array.isArray(outdatedResult))
+			[isOutdated, msg] = outdatedResult;
+
+		if (isOutdated) {
+			if (config(null).get("aggressiveUpdate", true)) {
+				return await installFunc(process.env);
+			}
+			else {
+				let s = await vscode.window.showErrorMessage(name + " is outdated. " + (msg || ""), btn + " " + name, "Continue Anyway");
+				if (s == "Continue Anyway")
+					return false;
+				else if (s == btn + " " + name)
+					return await installFunc(process.env);
+				return undefined;
+			}
+		}
+		return false;
+	}
+
+	// disable dub checks for now because precompiled dub binaries on windows are broken
+	if (!await checkDub(undefined)) {
+		console.error("Failed to automatically find dub or execute it! Please set d.dubPath properly.");
+
+		if (config(null).get("dubPath", "dub") != "dub")
+			vscode.window.showErrorMessage("The dub path specified in your user settings via d.dubPath is not a"
+				+ " valid dub executable. Please unset it to automatically find it through your compiler or manually"
+				+ " point it to a valid executable file.\n\nIssues building projects might occur.",
+				userConfig).then((item) => {
+					if (item == userConfig)
+						vscode.commands.executeCommand("workbench.action.openGlobalSettings");
+				});
+	}
+
+	let isLegacyBeta = config(null).get("betaStream", false);
+	let servedReleaseChannel = config(null).inspect("servedReleaseChannel");
+	let channelString = config(null).get("servedReleaseChannel", "stable");
+
+	let reloading = false;
+	let started = false;
+	let outdated = false;
+
+	function didChangeReleaseChannel(updated: Thenable<any>) {
+		if (started && !reloading) {
+			reloading = true;
+			// make sure settings get updated
+			updated.then(() => {
+				vscode.commands.executeCommand("workbench.action.reloadWindow");
+			});
+		} else
+			outdated = true;
+	}
+
+	function isServedOutdated(current: Release | undefined): (log: string) => (boolean | [boolean, string]) {
+		return (log: string) => {
+			if (!current || !current.asset)
+				return false; // network failure or frozen release channel, let's not bother the user
+			else if (current.name == "nightly") {
+				let date = new Date(current.asset.created_at);
+				let installed = extractServedBuiltDate(log);
+				if (!installed)
+					return [true, "(target=nightly, installed=none)"];
+
+				date.setUTCHours(0);
+				date.setUTCMinutes(0);
+				date.setUTCSeconds(0);
+
+				installed.setUTCHours(12);
+				installed.setUTCMinutes(0);
+				installed.setUTCSeconds(0);
+
+				return [installed < date, `(target from ${date.toDateString()}, installed ${installed.toDateString()})`];
+			}
+
+			let installedChannel = context.globalState.get("serve-d-downloaded-release-channel");
+			if (installedChannel && channelString != installedChannel)
+				return [true, "(target channel=" + channelString + ", installed channel=" + installedChannel + ")"];
+
+			var m = /serve-d v(\d+\.\d+\.\d+(?:-[-.a-zA-Z0-9]+)?)/.exec(log);
+			var target = current.name;
+			if (target.startsWith("v")) target = target.substr(1);
+
+			if (m) {
+				try {
+					return [cmpSemver(m[1], target) < 0, "(target=" + target + ", installed=" + m[1] + ")"];
+				} catch (e) {
+					getInstallOutput().show(true);
+					getInstallOutput().appendLine("ERROR: could not compare current serve-d version with release");
+					getInstallOutput().appendLine(e.toString());
+				}
+			}
+			return false;
+		};
+	}
+
+	if (isLegacyBeta && servedReleaseChannel && !servedReleaseChannel.globalValue) {
+		config(null).update("servedReleaseChannel", "nightly", vscode.ConfigurationTarget.Global);
+		channelString = "nightly";
+
+		let stable = "Switch to Stable";
+		let beta = "Switch to Beta";
+		vscode.window.showInformationMessage("Hey! The setting 'd.betaStream' no longer exists and has been replaced with "
+			+ "'d.servedReleaseChannel'. Your settings have been automatically updated to fetch nightly builds, but you "
+			+ "probably want to remove the old setting.\n\n"
+			+ "Stable and beta releases are planned more frequently now, so they might be a better option for you.",
+			stable, beta, userConfig).then(item => {
+				if (item == userConfig) {
+					vscode.commands.executeCommand("workbench.action.openGlobalSettings");
+				} else if (item == stable) {
+					let done = config(null).update("servedReleaseChannel", "stable", vscode.ConfigurationTarget.Global);
+					didChangeReleaseChannel(done);
+				} else if (item == beta) {
+					let done = config(null).update("servedReleaseChannel", "beta", vscode.ConfigurationTarget.Global);
+					didChangeReleaseChannel(done);
 				}
 			});
-		}
-		function checkCompilers(done: (has: string | false, path: string | undefined) => any) {
-			checkCompiler("dmd", (has: boolean, path: string | undefined) => {
-				if (has)
-					return done("dmd", path);
-				checkCompiler("ldc", (has: boolean, path: string | undefined) => {
-					if (has)
-						return done("ldc", path);
-					checkCompiler("ldc2", (has: boolean, path: string | undefined) => {
-						if (has)
-							return done("ldc2", path);
-						checkCompiler("gdc", (has: boolean, path: string | undefined) => {
-							if (has)
-								return done("gdc", path);
-							else
-								return done(false, path);
-						});
-					});
-				});
-			});
-		}
-		if (!context.globalState.get("checkedCompiler", false)) {
-			function gotCompiler(compiler: string | false) {
-				context.globalState.update("checkedCompiler", true);
-				if (!compiler)
-					vscode.env.openExternal(vscode.Uri.parse("https://dlang.org/download.html")).then(() => {
-						vscode.window.showInformationMessage("Please install a D compiler from dlang.org and reload the window once done.");
-					});
-			}
-			console.log("Checking if compiler is present");
-			checkCompilers(gotCompiler);
-		}
 	}
+
+	let force = true; // force release lookup before first install
+	if (context.globalState.get("serve-d-downloaded-release-channel"))
+		force = false;
+
+	let version = await findLatestServeD(force, channelString);
+	let upToDate = await checkProgram("servedPath", "serve-d", "serve-d",
+		version ? (version.asset
+			? installServeD([{ url: version.asset.browser_download_url, title: "Serve-D" }], version.name)
+			: compileServeD((version && version.name != "nightly") ? version.name : undefined))
+			: updateAndInstallServeD,
+		version ? (version.asset ? "Download" : "Compile") : "Install", isServedOutdated(version));
+	if (upToDate === undefined)
+		return; /* user dismissed install dialogs, don't continue startup */
+
+	await context.globalState.update("serve-d-downloaded-release-channel", channelString);
+
+	if (outdated) {
+		if (!reloading) {
+			reloading = true;
+			// just to be absolutely sure all settings have been written
+			setTimeout(() => {
+				vscode.commands.executeCommand("workbench.action.reloadWindow");
+			}, 500);
+		}
+	} else {
+		startClient(context);
+		started = true;
+	}
+}
+
+async function checkCompiler(compiler: string): Promise<{ has: boolean, path?: string }> {
+	let compilerPath: string;
+	try {
+		compilerPath = await which(compiler);
+	} catch (e) {
+		return { has: false };
+	}
+
+	if (!compilerPath)
+		return { has: false };
+
+	let proc: ChildProcess.ChildProcessWithoutNullStreams;
+	try {
+		proc = ChildProcess.spawn(compilerPath, ["--version"]);
+	} catch (err) {
+		return { has: false, path: compilerPath };
+	}
+
+	return await new Promise((resolve) => {
+		proc.on("error", function () {
+			resolve({ has: false, path: compilerPath });
+		}).on("exit", function () {
+			resolve({ has: true, path: compilerPath });
+		});
+	});
+}
+
+async function checkCompilers(): Promise<{ has: string | false, path?: string }> {
+	const compilers = ["dmd", "ldc", "ldc2", "gdc"];
+	let fallbackPath: string | undefined = undefined;
+	for (let i = 0; i < compilers.length; i++) {
+		const check = compilers[i];
+		let result = await checkCompiler(check);
+		fallbackPath = fallbackPath || result.path;
+		if (result && result.has)
+			return { has: check, path: result.path };
+	}
+	return { has: false, path: fallbackPath };
+}
+
+function spawnOneShotCheck(program: string, args: string[], captureOutput: boolean = false, options: any = undefined): Promise<string> {
+	let proc: ChildProcess.ChildProcessWithoutNullStreams;
+	try {
+		proc = ChildProcess.spawn(program, args, options);
+	} catch (err) {
+		return Promise.reject(err);
+	}
+
+	let result = "";
+	if (captureOutput) {
+		if (proc.stderr)
+			proc.stderr.on("data", (chunk) => result += chunk);
+		if (proc.stdout)
+			proc.stdout.on("data", (chunk) => result += chunk);
+	}
+
+	return new Promise((resolve, reject) => {
+		let returned = false;
+		proc.on("error", function (e) {
+			if (returned) return;
+			returned = true;
+			reject(e);
+		}).on("exit", function () {
+			if (returned) return;
+			returned = true;
+			resolve(result);
+		});
+	});
 }
 
 function greetNewUsers(context: vscode.ExtensionContext) {

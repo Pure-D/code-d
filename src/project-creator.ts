@@ -93,6 +93,34 @@ export function openFolderWithExtension(context: vscode.ExtensionContext) {
 	});
 }
 
+export function restoreCreateProjectPackageBackup(context: vscode.ExtensionContext): Promise<boolean | undefined> {
+	return new Promise<boolean | undefined>((resolve) => {
+		if (context.globalState.get("restorePackageBackup", false)) {
+			context.globalState.update("restorePackageBackup", false);
+			var pkgPath = path.join(context.extensionPath, "package.json");
+			fs.readFile(pkgPath + ".bak", function (err, data) {
+				if (err) {
+					resolve(false);
+					return vscode.window.showErrorMessage("Failed to restore after reload! Please reinstall code-d if problems occur before reporting!");
+				}
+				return fs.writeFile(pkgPath, data, function (err) {
+					if (err) {
+						resolve(false);
+						return vscode.window.showErrorMessage("Failed to restore after reload! Please reinstall code-d if problems occur before reporting!");
+					}
+
+					return fs.unlink(pkgPath + ".bak", function (err: any) {
+						resolve(!err);
+						console.error(err.toString());
+					});
+				});
+			});
+		} else {
+			resolve(undefined);
+		}
+	});
+}
+
 function createDubName(folderName: string) {
 	var res = folderName[0].toLowerCase();
 	for (var i = 1; i < folderName.length; i++) {
