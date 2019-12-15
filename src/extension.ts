@@ -255,11 +255,14 @@ function startClient(context: vscode.ExtensionContext) {
 
 		client.onRequest<boolean, { url: string, title?: string, output: string }>("coded/interactiveDownload", function (e, token): Thenable<boolean> {
 			return new Promise((resolve, reject) => {
+				let aborted = false;
 				downloadFileInteractive(e.url, e.title || "Dependency Download", () => {
+					aborted = true;
 					resolve(false);
-				}).pipe(fs.createWriteStream(e.output)).on("finish", () => {
-					resolve(true);
-				});
+				}).then(stream => stream.pipe(fs.createWriteStream(e.output)).on("finish", () => {
+					if (!aborted)
+						resolve(true);
+				}));
 			});
 		});
 
@@ -276,6 +279,8 @@ function startClient(context: vscode.ExtensionContext) {
 
 	registerClientCommands(context, client, served);
 }
+
+export var currentVersion: string | undefined;
 
 export function activate(context: vscode.ExtensionContext): CodedAPI {
 	// TODO: Port to serve-d
@@ -316,6 +321,13 @@ export function activate(context: vscode.ExtensionContext): CodedAPI {
 		};
 		fn();
 	}*/
+
+	try {
+		let data = fs.readFileSync(context.asAbsolutePath("package.json"));
+		currentVersion = JSON.parse(data.toString()).version;
+	} catch (e) {
+		console.error("Failed reading current code-d version from package manifest: ", e);
+	}
 
 	preStartup(context);
 
@@ -386,7 +398,7 @@ function preStartup(context: vscode.ExtensionContext) {
 	let env = process.env;
 	let proxy = vscode.workspace.getConfiguration("http").get("proxy", "");
 	if (proxy)
-		env["http_proxy"] = proxy;
+		process.env["http_proxy"] = proxy;
 
 	if (context.globalState.get("restorePackageBackup", false)) {
 		context.globalState.update("restorePackageBackup", false);
@@ -636,7 +648,7 @@ function preStartup(context: vscode.ExtensionContext) {
 			findLatestServeD(force, channelString).then(version => {
 				checkProgram("servedPath", "serve-d", "serve-d",
 					version ? (version.asset
-						? installServeD([version.asset.browser_download_url], version.name)
+						? installServeD([{ url: version.asset.browser_download_url, title: "Serve-D" }], version.name)
 						: compileServeD(version ? version.name : undefined))
 						: updateAndInstallServeD,
 					version ? (version.asset ? "Download" : "Compile") : "Install", () => {
@@ -721,29 +733,6 @@ function preStartup(context: vscode.ExtensionContext) {
 }
 
 function greetNewUsers(context: vscode.ExtensionContext) {
-	let packageFile = context.asAbsolutePath("package.json");
-	fs.readFile(packageFile, (err, data) => {
-		if (err) {
-			console.error("Failed getting current code-d version: ", err);
-			doGreetNewUsers(context, undefined);
-		} else {
-			let currentVersion: string | undefined;
-			try {
-				currentVersion = JSON.parse(data.toString()).version;
-			}
-			catch (e) {
-				console.error("Failed getting current code-d version: ", e);
-			}
-			doGreetNewUsers(context, currentVersion);
-		}
-	});
-	try {
-	}
-	catch (e) {
-	}
-}
-
-function doGreetNewUsers(context: vscode.ExtensionContext, currentVersion: string | undefined) {
 	if (!context.globalState.get("greetedNewCodeDUser", false)) {
 		context.globalState.update("greetedNewCodeDUser", true);
 		context.globalState.update("lastCheckedCodedVersion", currentVersion);

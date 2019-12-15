@@ -2,13 +2,14 @@ import * as ChildProcess from "child_process"
 import * as vscode from "vscode"
 import * as path from "path"
 import * as fs from "fs"
-import { req } from "./util"
+import { reqJson, reqType } from "./util"
 import { config } from "./extension"
 import expandTilde = require("expand-tilde");
+import { AxiosResponse } from "axios"
+import { Readable } from "stream"
 
 var rimraf = require("rimraf");
 var AdmZip = require("adm-zip");
-var progress = require("request-progress");
 var async = require("async");
 var rmdir = require("rmdir");
 var mkdirp = require("mkdirp");
@@ -50,39 +51,64 @@ export function getInstallOutput(): vscode.OutputChannel {
 	return installationLog;
 }
 
-export function downloadFileInteractive(url: string, title: string, aborted: Function): any {
-	var ret = progress(req()(url), {
-		throttle: 100,
-		delay: 100
+export function downloadFileInteractive(url: string, title: string, aborted: Function): Thenable<Readable> {
+	let progress: vscode.Progress<any> | undefined;
+	let cancel: vscode.CancellationToken | undefined;
+	let done: Function | false | undefined;
+
+	let stream = reqType("stream").get<Readable>(url).then((body): Readable => {
+		// manually aborting request object because we are consuming a stream, otherwise it would try to "reject" an already resolved promise
+		if (cancel) {
+			cancel.onCancellationRequested(() => {
+				if (body.request.aborted) return;
+				body.request.abort();
+				aborted();
+			});
+		} else {
+			console.error("failed registering cancel token");
+		}
+
+		let len = parseInt(body.headers["Content-Length"] || body.headers["content-length"] || 0);
+		if (len == 0)
+			return body.data;
+
+		let totalPercent: number = 0;
+		console.log(typeof (body.data));
+		console.log(body.data.constructor.name);
+		console.log(body.data);
+		return body.data.on("data", (chunk) => {
+			let increment = chunk.length / len;
+			totalPercent += increment;
+			if (progress)
+				progress.report({
+					message: `Downloaded ${(totalPercent * 100).toFixed(2)}%`,
+					increment: increment * 100
+				});
+		}).on("end", () => {
+			if (done)
+				done();
+			else
+				done = false;
+
+			installationLog.appendLine("Finished downloading");
+		});
 	});
-	var lastProgress = 0;
+
 	vscode.window.withProgress({
 		cancellable: true,
 		location: vscode.ProgressLocation.Notification,
 		title: title
-	}, (progress, cancel) => {
-		cancel.onCancellationRequested(() => {
-			ret.abort();
-			aborted();
-		});
-		ret.on("progress", (state: any) => {
-			if (!isNaN(state.percent)) {
-				var msg = "Downloaded " + (state.percent * 100).toFixed(2) + "%" + (state.time.remaining ? " (ETA " + state.time.remaining.toFixed(1) + "s)" : "");
-				var increment = state.percent * 100 - lastProgress;
-				lastProgress = state.percent * 100;
-				progress.report({
-					message: msg,
-					increment: increment
-				});
-			}
-		});
+	}, (_progress, _cancel) => {
+		progress = _progress;
+		cancel = _cancel;
 		return new Promise((resolve) => {
-			ret.on("end", resolve);
+			if (done === false)
+				return resolve();
+			done = resolve;
 		});
-	}).then(function () {
-		installationLog.appendLine("Finished downloading");
 	});
-	return ret;
+
+	return stream;
 }
 
 export interface ReleaseAsset {
@@ -144,104 +170,92 @@ export function findLatestServeD(force: boolean = false, channel?: string): Then
 	}
 }
 
-function fetchNightlyRelease(timeout: number): Thenable<Release | undefined> {
-	return new Promise((resolve) => {
-		req().get({
-			url: "https://api.github.com/repos/Pure-D/serve-d/releases/" + nightlyReleaseId,
+async function fetchNightlyRelease(timeout: number): Promise<Release | undefined> {
+	let res: AxiosResponse;
+	try {
+		res = await reqJson().get("https://api.github.com/repos/Pure-D/serve-d/releases/" + nightlyReleaseId, {
 			headers: {
 				"User-Agent": "https://github.com/Pure-D/code-d"
 			},
 			timeout: timeout
-		}, (err: any, httpResponse: any, body: any) => {
-			if (err)
-				return resolve(undefined);
-
-			try {
-				if (typeof body == "string")
-					body = JSON.parse(body);
-			}
-			catch (e) {
-				return resolve(undefined);
-			}
-
-			if (typeof body != "object")
-				return resolve(undefined);
-
-			var assets = <ReleaseAsset[]>body.assets;
-			// reverse sort (largest date first)
-			assets.sort((a, b) => b.name.localeCompare(a.name));
-
-			let targetAsset = findFirstMatchingAsset("nightly", assets);
-			let ret: Release = {
-				name: "nightly",
-				asset: targetAsset
-			};
-
-			servedVersionCache.release = ret;
-			servedVersionCache.channel = "nightly";
-			return resolve(ret);
 		});
-	});
+	} catch (e) {
+		console.error("Error fetching nightly code-d release: ", e);
+		return undefined;
+	}
+
+	let body = res.data;
+
+	if (typeof body != "object")
+		return undefined;
+
+	var assets = <ReleaseAsset[]>body.assets;
+	// reverse sort (largest date first)
+	assets.sort((a, b) => b.name.localeCompare(a.name));
+
+	let targetAsset = findFirstMatchingAsset("nightly", assets);
+	let ret: Release = {
+		name: "nightly",
+		asset: targetAsset
+	};
+
+	servedVersionCache.release = ret;
+	servedVersionCache.channel = "nightly";
+	return ret;
 }
 
-function fetchLatestTaggedRelease(channel: "stable" | "beta", timeout: number): Thenable<Release | undefined> {
-	return new Promise((resolve) => {
-		req().get({
-			url: "https://api.github.com/repos/Pure-D/serve-d/releases",
+async function fetchLatestTaggedRelease(channel: "stable" | "beta", timeout: number): Promise<Release | undefined> {
+	let res: AxiosResponse;
+	try {
+		res = await reqJson().get("https://api.github.com/repos/Pure-D/serve-d/releases", {
 			headers: {
 				"User-Agent": "https://github.com/Pure-D/code-d"
 			},
 			timeout: timeout
-		}, (err: any, httpResponse: any, body: any) => {
-			if (err)
-				return resolve(undefined);
-
-			try {
-				if (typeof body == "string")
-					body = JSON.parse(body);
-			}
-			catch (e) {
-				return resolve(undefined);
-			}
-
-			if (!Array.isArray(body))
-				return resolve(undefined);
-
-			let numMatching = 0;
-
-			let ret: Release = {
-				name: "master"
-			};
-
-			for (let i = 0; i < body.length; i++) {
-				const release = body[i];
-				if (release.id == nightlyReleaseId)
-					continue;
-
-				if (channel == "stable" && release.prerelease)
-					continue;
-
-				let targetAsset = findFirstMatchingAsset(release.name, release.assets);
-				if (!targetAsset) {
-					if (ret.name == "master") {
-						ret.name = release.tag_name;
-					}
-				} else {
-					ret.name = release.tag_name;
-					ret.asset = targetAsset;
-					break;
-				}
-
-				// search last 3 releases for binaries
-				if (numMatching++ >= 3)
-					break;
-			}
-
-			servedVersionCache.release = ret;
-			servedVersionCache.channel = channel!;
-			return resolve(ret);
 		});
-	});
+	} catch (e) {
+		console.error("Error fetching nightly code-d release: ", e);
+		return undefined;
+	}
+
+	let body = res.data;
+
+	if (!Array.isArray(body))
+		return undefined;
+
+	let numMatching = 0;
+
+	let ret: Release = {
+		name: "master"
+	};
+
+	for (let i = 0; i < body.length; i++) {
+		const release = body[i];
+		if (release.id == nightlyReleaseId)
+			continue;
+
+		if (channel == "stable" && release.prerelease)
+			continue;
+
+		let targetAsset = findFirstMatchingAsset(release.name, release.assets);
+		if (!targetAsset) {
+			if (ret.name == "master") {
+				ret.name = release.tag_name;
+			}
+		} else {
+			ret.name = release.tag_name;
+			ret.asset = targetAsset;
+			break;
+		}
+
+		// search last 3 releases for binaries
+		if (numMatching++ >= 3)
+			break;
+	}
+
+	servedVersionCache.release = ret;
+	servedVersionCache.channel = channel!;
+	return ret;
 }
 
 function findFirstMatchingAsset(name: string | "nightly", assets: ReleaseAsset[]): ReleaseAsset | undefined {
@@ -328,13 +342,13 @@ export function updateAndInstallServeD(env: any, done: Function): any {
 			} else if (!version.asset) {
 				compileServeD("master")(env, done);
 			} else {
-				installServeD([version.asset.browser_download_url], version.name)(env, done);
+				installServeD([{ url: version.asset.browser_download_url, title: "Serve-D" }], version.name)(env, done);
 			}
 		});
 	});
 }
 
-export function installServeD(urls: string[], ref: string): (env: any, done: Function) => any {
+export function installServeD(urls: { url: string, title: string }[], ref: string): (env: any, done: Function) => any {
 	if (urls.length == 0)
 		return (env: any, done: Function) => {
 			vscode.window.showErrorMessage("No precompiled serve-d binary for this platform/architecture", "Compile from source").then((r?: string) => {
@@ -345,16 +359,16 @@ export function installServeD(urls: string[], ref: string): (env: any, done: Fun
 
 	// add DCD binaries here as well
 	if (process.platform == "linux" && process.arch == "x64") {
-		urls.push("https://github.com/dlang-community/DCD/releases/download/v0.11.1/dcd-v0.11.1-linux-x86_64.tar.gz");
+		urls.push({ url: "https://github.com/dlang-community/DCD/releases/download/v0.11.1/dcd-v0.11.1-linux-x86_64.tar.gz", title: "DCD" });
 	}
 	else if (process.platform == "darwin" && process.arch == "x64") {
-		urls.push("https://github.com/dlang-community/DCD/releases/download/v0.11.1/dcd-v0.11.1-osx-x86_64.tar.gz");
+		urls.push({ url: "https://github.com/dlang-community/DCD/releases/download/v0.11.1/dcd-v0.11.1-osx-x86_64.tar.gz", title: "DCD" });
 	}
 	else if (process.platform == "win32") {
 		if (process.arch == "x64")
-			urls.push("https://github.com/dlang-community/DCD/releases/download/v0.11.1/dcd-v0.11.1-windows-x86_64.zip");
+			urls.push({ url: "https://github.com/dlang-community/DCD/releases/download/v0.11.1/dcd-v0.11.1-windows-x86_64.zip", title: "DCD" });
 		// else
-		// 	urls.push("https://github.com/dlang-community/DCD/releases/download/v0.11.0/dcd-v0.11.0-windows-x86.zip");
+		// 	urls.push({ url: "https://github.com/dlang-community/DCD/releases/download/v0.11.0/dcd-v0.11.0-windows-x86.zip", title: "DCD" });
 	}
 
 	return (env: any, done: Function) => {
@@ -386,16 +400,21 @@ export function installServeD(urls: string[], ref: string): (env: any, done: Fun
 	};
 }
 
-function installServeDEntry(outputFolder: string): (url: string, cb: Function) => any {
-	return (url: string, cb: Function) => {
+function installServeDEntry(outputFolder: string): (data: { url: string, title: string }, cb: Function) => any {
+	return async ({ url, title }, cb: Function) => {
 		installationLog.appendLine("Downloading from " + url + " into " + outputFolder);
 		var ext = url.endsWith(".tar.xz") ? ".tar.xz" : url.endsWith(".tar.gz") ? ".tar.gz" : path.extname(url);
 		var fileName = path.basename(url);
 		var outputPath = path.join(outputFolder, fileName);
-		downloadFileInteractive(url, "Serve-D Download", () => {
+		let aborted = false;
+		let stream = await downloadFileInteractive(url, title + " Download", () => {
+			aborted = true;
 			installationLog.appendLine("Aborted download");
 			fs.unlink(outputPath, function () { });
-		}).pipe(fs.createWriteStream(outputPath)).on("finish", () => {
+		});
+
+		stream.pipe(fs.createWriteStream(outputPath)).on("finish", () => {
+			if (aborted) return;
 			installationLog.appendLine("Extracting " + fileName);
 			if (ext == ".zip") {
 				try {
@@ -440,55 +459,6 @@ function installServeDEntry(outputFolder: string): (url: string, cb: Function) =
 			}
 		});
 	};
-}
-
-export function checkBetaServeD(callback: Function) {
-	let proc: ChildProcess.ChildProcessWithoutNullStreams;
-	try {
-		proc = ChildProcess.spawn(expandTilde(config(null).get("servedPath", "serve-d")), ["--version"]);
-	} catch (e) {
-		console.error("Failed spawning serve-d: ", e);
-		return callback(false);
-	}
-	proc.on("error", () => {
-		callback(false);
-	});
-	let output = "";
-	if (proc.stdout)
-		proc.stdout.on('data', function (data) {
-			output += data;
-		});
-	if (proc.stderr)
-		proc.stderr.on('data', function (data) {
-			output += data;
-		});
-	proc.on("exit", (code) => {
-		if (code == 0) {
-			req().get({
-				url: "https://api.github.com/repos/Pure-D/serve-d/commits/master",
-				headers: {
-					"User-Agent": "https://github.com/Pure-D/code-d"
-				}
-			}, (err: any, httpResponse: any, body: any) => {
-				if (err)
-					return callback(true);
-				try {
-					if (typeof body == "string")
-						body = JSON.parse(body);
-				}
-				catch (e) {
-					return callback(true);
-				}
-				var latest = new Date(body.commit.author.date);
-				var current = extractServedBuiltDate(output);
-				if (!current)
-					return callback(false);
-				callback(current.getTime() >= latest.getTime());
-			});
-		}
-		else
-			callback(false);
-	});
 }
 
 export function extractServedBuiltDate(log: string): Date | false {

@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import { JSDOM } from "jsdom";
-import { req } from "./util";
+import { reqText } from "./util";
 import { served } from "./extension";
 import { DubDependencyInfo } from "./dub-view";
 var DOMParser = require("xmldom").DOMParser;
@@ -164,212 +164,212 @@ export function showDpldocsSearch(query?: string, fastOpen: boolean = false) {
 	}
 }
 
-export function fillDplDocs(panel: vscode.WebviewPanel, label: string, href: string) {
+export async function fillDplDocs(panel: vscode.WebviewPanel, label: string, href: string) {
 	panel.webview.html = "<h1>" + label + "</h1>";
 
 	if (!href.startsWith("http:") && !href.startsWith("https:"))
 		return;
 
-	req()(href, function (error: any, response: any, body: string) {
-		var content = new JSDOM(body);
-		var page = content.window.document.getElementById("page-body");
-		if (page) {
-			var nonce = Math.random().toString(36).substr(2) + Math.random().toString(36).substr(2) + Math.random().toString(36).substr(2);
-			var font = vscode.workspace.getConfiguration("editor").get("fontFamily") || "monospace";
-			panel.webview.html = `<!DOCTYPE html>
-				<html lang="en">
-				<head>
-					<meta charset="UTF-8">
-					<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}'">
-					<meta name="viewport" content="width=device-width, initial-scale=1.0">
-					<title>${label}</title>
-					<script nonce="${nonce}">
-					(function() {
-						var vscode = acquireVsCodeApi();
-						window.onload = function() {
-							var links = document.getElementsByTagName('a');
-							for (var i = 0; i < links.length; i++) {
-								links[i].onclick = function() {
-									var href = this.href || this.getAttribute("href");
-									if (href.startsWith("http:") || href.startsWith("https:") || href.startsWith("#"))
-										return;
-									if (/^\\w+(\\.\\w+)*\\.html$/.test(href))
-									{
-										vscode.postMessage({ type: "handle-link", href: href, title: this.title });
-										return false;
-									}
-									else if (href.startsWith("source/") && /\\.d\\.html(#L\\d+)?$/.test(href))
-									{
-										href = href.substr("source/".length);
-										var lno = 0;
-										if (href.indexOf("L") != -1)
-											lno = parseInt(href.substr(href.lastIndexOf("L") + 1));
-										var module_ = href.substr(0, href.lastIndexOf(".d.html"));
-										vscode.postMessage({ type: "open-module", module_: module_, line: lno });
-										return false;
-									}
-								};
-							}
-						};
-					})();
-					</script>
-					<style nonce="${nonce}">
-						body {
-							display: flex;
+	let body = (await reqText().get(href)).data;
+
+	var content = new JSDOM(body);
+	var page = content.window.document.getElementById("page-body");
+	if (page) {
+		var nonce = Math.random().toString(36).substr(2) + Math.random().toString(36).substr(2) + Math.random().toString(36).substr(2);
+		var font = vscode.workspace.getConfiguration("editor").get("fontFamily") || "monospace";
+		panel.webview.html = `<!DOCTYPE html>
+			<html lang="en">
+			<head>
+				<meta charset="UTF-8">
+				<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}'">
+				<meta name="viewport" content="width=device-width, initial-scale=1.0">
+				<title>${label}</title>
+				<script nonce="${nonce}">
+				(function() {
+					var vscode = acquireVsCodeApi();
+					window.onload = function() {
+						var links = document.getElementsByTagName('a');
+						for (var i = 0; i < links.length; i++) {
+							links[i].onclick = function() {
+								var href = this.href || this.getAttribute("href");
+								if (href.startsWith("http:") || href.startsWith("https:") || href.startsWith("#"))
+									return;
+								if (/^\\w+(\\.\\w+)*\\.html$/.test(href))
+								{
+									vscode.postMessage({ type: "handle-link", href: href, title: this.title });
+									return false;
+								}
+								else if (href.startsWith("source/") && /\\.d\\.html(#L\\d+)?$/.test(href))
+								{
+									href = href.substr("source/".length);
+									var lno = 0;
+									if (href.indexOf("L") != -1)
+										lno = parseInt(href.substr(href.lastIndexOf("L") + 1));
+									var module_ = href.substr(0, href.lastIndexOf(".d.html"));
+									vscode.postMessage({ type: "open-module", module_: module_, line: lno });
+									return false;
+								}
+							};
 						}
-						pre, code {
-							font-family: ${font};
-						}
-						a {
-							text-decoration: none;
-						}
-						a:hover {
-							text-decoration: underline;
-						}
-						#page-nav {
-							box-sizing: border-box;
-							width: 16em;
-							flex-grow: 0;
-							flex-shrink: 0;
-							order: 1;
-							padding: 1em;
-							border-right: 1px solid var(--vscode-editorGroup-border);
-						}
-						#page-nav a {
-							display: block;
-						}
-						#page-nav a.parent {
-							font-weight: bold;
-						}
-						#page-nav .type-separator {
-							text-transform: capitalize;
-							display: block;
-							margin-top: 1em;
-							border-bottom: 1px solid var(--vscode-editorGroup-border);
-						}
-						#page-nav ul {
-							padding: 0;
-							list-style: none;
-						}
-						#page-content {
-							box-sizing: border-box;
-							flex-grow: 1;
-							flex-shrink: 1;
-							order: 2;
-							padding: 1em;
-							padding-left: 2em;
-						}
-						a.header-anchor {
-							text-decoration: none;
-							color: var(--vscode-sideBarSectionHeader-foreground);
-						}
-						.breadcrumbs:empty {
-							display: none;
-						}
-						.breadcrumbs {
-							margin: 1em;
-							background-color: var(--vscode-editorWidget-background);
-							border: 1px solid var(--vscode-editorWidget-border);
-							box-shadow: 0 2px 8px var(--vscode-widget-shadow);
-						}
-						.breadcrumbs a:before {
-							content: ' \\00bb\\a0';
-						}
-						.breadcrumbs a {
-							display: inline-block;
-							padding: 0.5em;
-							color: var(--vscode-breadcrumb-foreground);
-							text-decoration: none;
-						}
-						.breadcrumbs a:hover {
-							color: var(--vscode-breadcrumb-focusForeground);
-						}
-						.function-prototype {
-							padding: 2em;
-							margin: 1em;
-						}
-						.inline-code, .d_code, .function-prototype {
-							background-color: var(--vscode-editor-background);
-							color: var(--vscode-editor-foreground);
-							font-family: ${font};
-						}
-						.d_code {
-							padding: 1em;
-						}
-						.d_code, .function-prototype {
-							border: 1px solid var(--vscode-editorGroup-border);
-						}
-						.toplevel.parameters-list {
-							display: table;
-						}
-						.toplevel.parameters-list > .parameter-item {
-							display: table-row;
-						}
-						.toplevel.parameters-list > .parameter-item > *:first-child {
-							padding-left: 2em !important;
-						}
-						.toplevel.parameters-list > .parameter-item + .comma {
-							display: none;
-						}
-						.toplevel.parameters-list > .parameter-item > *:last-child::after {
-							content: ",";
-						}
-						.toplevel.parameters-list > .parameter-item:last-child > *:last-child::after {
-							content: "";
-						}
-						.toplevel.parameters-list > .parameter-item .parameter-type-holder,
-						.toplevel.parameters-list > .parameter-item .parameter-name,
-						.toplevel.parameters-list > .parameter-item .parameter-default-value {
-							display: table-cell;
-							padding: 0px 0.25em;
-						}
-						.toplevel.parameters-list > .parameter-item:hover {
-							background-color: var(--vscode-editor-lineHighlightBackground);
-							border: 2px solid var(--vscode-editor-lineHighlightBorder);
-						}
-						.parameter-attribute {
-							padding-left: 1em;
-						}
-						.aggregate-declaration {
-							margin: 1em;
-						}
-						.aggregate-member {
-							padding-left: 2em;
-						}
-						.template-constraint-expression,
-						.parameter-item {
-							padding-left: 2em;
-						}
-						.with-line-wrappers .br {
-							-webkit-user-select: none;
-							-moz-user-select: none;
-							-ms-user-select: none;
-							user-select: none;
-							width: 3em;
-							width: 4ch;
-							display: inline-block;
-							color: var(--vscode-editorLineNumber-foreground);
-							padding: 0px;
-							margin: 0px;
-							margin-right: 3px;
-							padding-right: 3px;
-							font-style: normal;
-							font-weight: normal;
-							background-color: transparent;
-							text-align: right;
-							white-space: pre;
-						}
-						.aggregate-members:empty::after {
-							content: "This aggregate has no documented members available.";
-						}
-					</style>
-				</head>
-				<body>
-					${page.innerHTML}
-				</body>
-				</html>`;
-		}
-	});
+					};
+				})();
+				</script>
+				<style nonce="${nonce}">
+					body {
+						display: flex;
+					}
+					pre, code {
+						font-family: ${font};
+					}
+					a {
+						text-decoration: none;
+					}
+					a:hover {
+						text-decoration: underline;
+					}
+					#page-nav {
+						box-sizing: border-box;
+						width: 16em;
+						flex-grow: 0;
+						flex-shrink: 0;
+						order: 1;
+						padding: 1em;
+						border-right: 1px solid var(--vscode-editorGroup-border);
+					}
+					#page-nav a {
+						display: block;
+					}
+					#page-nav a.parent {
+						font-weight: bold;
+					}
+					#page-nav .type-separator {
+						text-transform: capitalize;
+						display: block;
+						margin-top: 1em;
+						border-bottom: 1px solid var(--vscode-editorGroup-border);
+					}
+					#page-nav ul {
+						padding: 0;
+						list-style: none;
+					}
+					#page-content {
+						box-sizing: border-box;
+						flex-grow: 1;
+						flex-shrink: 1;
+						order: 2;
+						padding: 1em;
+						padding-left: 2em;
+					}
+					a.header-anchor {
+						text-decoration: none;
+						color: var(--vscode-sideBarSectionHeader-foreground);
+					}
+					.breadcrumbs:empty {
+						display: none;
+					}
+					.breadcrumbs {
+						margin: 1em;
+						background-color: var(--vscode-editorWidget-background);
+						border: 1px solid var(--vscode-editorWidget-border);
+						box-shadow: 0 2px 8px var(--vscode-widget-shadow);
+					}
+					.breadcrumbs a:before {
+						content: ' \\00bb\\a0';
+					}
+					.breadcrumbs a {
+						display: inline-block;
+						padding: 0.5em;
+						color: var(--vscode-breadcrumb-foreground);
+						text-decoration: none;
+					}
+					.breadcrumbs a:hover {
+						color: var(--vscode-breadcrumb-focusForeground);
+					}
+					.function-prototype {
+						padding: 2em;
+						margin: 1em;
+					}
+					.inline-code, .d_code, .function-prototype {
+						background-color: var(--vscode-editor-background);
+						color: var(--vscode-editor-foreground);
+						font-family: ${font};
+					}
+					.d_code {
+						padding: 1em;
+					}
+					.d_code, .function-prototype {
+						border: 1px solid var(--vscode-editorGroup-border);
+					}
+					.toplevel.parameters-list {
+						display: table;
+					}
+					.toplevel.parameters-list > .parameter-item {
+						display: table-row;
+					}
+					.toplevel.parameters-list > .parameter-item > *:first-child {
+						padding-left: 2em !important;
+					}
+					.toplevel.parameters-list > .parameter-item + .comma {
+						display: none;
+					}
+					.toplevel.parameters-list > .parameter-item > *:last-child::after {
+						content: ",";
+					}
+					.toplevel.parameters-list > .parameter-item:last-child > *:last-child::after {
+						content: "";
+					}
+					.toplevel.parameters-list > .parameter-item .parameter-type-holder,
+					.toplevel.parameters-list > .parameter-item .parameter-name,
+					.toplevel.parameters-list > .parameter-item .parameter-default-value {
+						display: table-cell;
+						padding: 0px 0.25em;
+					}
+					.toplevel.parameters-list > .parameter-item:hover {
+						background-color: var(--vscode-editor-lineHighlightBackground);
+						border: 2px solid var(--vscode-editor-lineHighlightBorder);
+					}
+					.parameter-attribute {
+						padding-left: 1em;
+					}
+					.aggregate-declaration {
+						margin: 1em;
+					}
+					.aggregate-member {
+						padding-left: 2em;
+					}
+					.template-constraint-expression,
+					.parameter-item {
+						padding-left: 2em;
+					}
+					.with-line-wrappers .br {
+						-webkit-user-select: none;
+						-moz-user-select: none;
+						-ms-user-select: none;
+						user-select: none;
+						width: 3em;
+						width: 4ch;
+						display: inline-block;
+						color: var(--vscode-editorLineNumber-foreground);
+						padding: 0px;
+						margin: 0px;
+						margin-right: 3px;
+						padding-right: 3px;
+						font-style: normal;
+						font-weight: normal;
+						background-color: transparent;
+						text-align: right;
+						white-space: pre;
+					}
+					.aggregate-members:empty::after {
+						content: "This aggregate has no documented members available.";
+					}
+				</style>
+			</head>
+			<body>
+				${page.innerHTML}
+			</body>
+			</html>`;
+	}
 }
 
 async function loadDependencyPackageDocumentations(state: WorkState) {
@@ -408,24 +408,22 @@ async function loadDependencyPackageDocumentations(state: WorkState) {
 export function loadDependencySymbolsOnline(
 	dep: DubDependencyInfo | undefined,
 	strippedDependencyName: string,
-	strippedDependencyVersion: string): Thenable<DocItem[]> {
+	strippedDependencyVersion: string): Promise<DocItem[]> {
 	let url = `https://${encodeURIComponent(strippedDependencyName)}.dpldocs.info/${encodeURIComponent(strippedDependencyVersion)}/search-results.html`;
 
 	let retried = false;
-	let doTry = function (url: string) {
-		return new Promise<DocItem[]>((resolve, reject) => {
-			req()({ method: "GET", uri: url, gzip: true }, function (error: any, response: any, body: string) {
-				if (!error && response.statusCode == 200) {
-					if (response.headers["content-length"] || response.headers["Content-Length"]) {
-						resolve(parseDependencySearchResult(body, dep, strippedDependencyName, strippedDependencyVersion));
-					}
-					else if (!retried) {
-						retried = true;
-						return doTry(url);
-					}
-					else reject();
-				} else reject();
-			});
+	let doTry = function (url: string): Promise<DocItem[]> {
+		return reqText().get(url, { headers: { "Accept-Encoding": "gzip" } }).then((body) => {
+			if (body.status == 200) {
+				if ((body.headers["content-length"] || body.headers["Content-Length"])) {
+					return parseDependencySearchResult(body.data, dep, strippedDependencyName, strippedDependencyVersion);
+				} else if (!retried) {
+					retried = true;
+					return doTry(url);
+				} else {
+					throw body;
+				}
+			} else throw body;
 		});
 	}
 	return doTry(url);
@@ -435,25 +433,29 @@ export function loadDependencySymbolsOnline(
 function updateRootSearchQuery(timeout: NodeJS.Timer | undefined, value: string, state: WorkState, delay: number = 500): NodeJS.Timer {
 	if (timeout !== undefined)
 		clearTimeout(timeout);
-	return setTimeout(() => {
+	return setTimeout(async () => {
 		if (state.done)
 			return;
 
 		state.startWork();
-		req()("https://dpldocs.info/locate?q=" + encodeURIComponent(value), function (error: any, response: any, body: any) {
+		try {
+			let body = (await reqText().get("https://dpldocs.info/locate?q=" + encodeURIComponent(value))).data;
 			state.finishWork();
 			state.items = [];
-			if (!error && response.statusCode == 200) {
-				let dom = new JSDOM(body);
-				let results = <Element[]><any>dom.window.document.querySelectorAll("dt.search-result");
-				results.forEach(dt => {
-					let item = parseDocItem(dt);
-					if (item)
-						state.items.push(item);
-				});
-			}
-			state.refreshItems();
-		});
+			let dom = new JSDOM(body);
+			let results = <Element[]><any>dom.window.document.querySelectorAll("dt.search-result");
+			results.forEach(dt => {
+				let item = parseDocItem(dt);
+				if (item)
+					state.items.push(item);
+			});
+		}
+		catch (e) {
+			console.error("Failed searching dpldocs: ", e);
+			state.finishWork();
+			state.items = [];
+		}
+		state.refreshItems();
 	}, delay);
 }
 
