@@ -104,7 +104,8 @@ let servedVersionCache = {
 	release: <Release | undefined>undefined,
 	channel: ""
 };
-export function findLatestServeD(callback: (version: Release | undefined) => any, force: boolean = false, channel?: string) {
+
+export function findLatestServeD(force: boolean = false, channel?: string): Thenable<Release | undefined> {
 	if (!channel)
 		channel = config(null).get("servedReleaseChannel", "stable");
 
@@ -112,29 +113,39 @@ export function findLatestServeD(callback: (version: Release | undefined) => any
 		channel = "stable";
 
 	if (channel == "frozen")
-		return callback(undefined);
+		return Promise.resolve(undefined);
 
 	if (servedVersionCache.channel == channel)
-		return callback(servedVersionCache.release);
+		return Promise.resolve(servedVersionCache.release);
 
 	let randomUpdateReduction = config(null).get("smartServedUpdates", true);
 	if (randomUpdateReduction && channel == "stable" && !force) {
 		if (Math.floor(Math.random() * 4) == 0) {
 			// only update approximately every 4th user/time running on stable.
 			// Lowers bandwidth and startup delay to check not-so-frequent stable releases
-			return callback(undefined);
+			return Promise.resolve(undefined);
 		}
 
 		if ((new Date()).getDay() == 5
 			&& Math.floor(Math.random() * 3) == 0) {
 			// furthermore reduce updates on fridays
 			// avoids breaking peoples workflow right at the end of their work week
-			return callback(undefined);
+			return Promise.resolve(undefined);
 		}
 	}
 	let timeout = force ? 8000 : 3000;
 
 	if (channel == "nightly") {
+		return fetchNightlyRelease(timeout);
+	} else if (channel == "stable" || channel == "beta") {
+		return fetchLatestTaggedRelease(channel, timeout);
+	} else {
+		return Promise.resolve(undefined);
+	}
+}
+
+function fetchNightlyRelease(timeout: number): Thenable<Release | undefined> {
+	return new Promise((resolve) => {
 		req().get({
 			url: "https://api.github.com/repos/Pure-D/serve-d/releases/" + nightlyReleaseId,
 			headers: {
@@ -143,18 +154,18 @@ export function findLatestServeD(callback: (version: Release | undefined) => any
 			timeout: timeout
 		}, (err: any, httpResponse: any, body: any) => {
 			if (err)
-				return callback(undefined);
+				return resolve(undefined);
 
 			try {
 				if (typeof body == "string")
 					body = JSON.parse(body);
 			}
 			catch (e) {
-				return callback(undefined);
+				return resolve(undefined);
 			}
 
 			if (typeof body != "object")
-				return callback(undefined);
+				return resolve(undefined);
 
 			var assets = <ReleaseAsset[]>body.assets;
 			// reverse sort (largest date first)
@@ -167,10 +178,14 @@ export function findLatestServeD(callback: (version: Release | undefined) => any
 			};
 
 			servedVersionCache.release = ret;
-			servedVersionCache.channel = channel!;
-			return callback(ret);
+			servedVersionCache.channel = "nightly";
+			return resolve(ret);
 		});
-	} else {
+	});
+}
+
+function fetchLatestTaggedRelease(channel: "stable" | "beta", timeout: number): Thenable<Release | undefined> {
+	return new Promise((resolve) => {
 		req().get({
 			url: "https://api.github.com/repos/Pure-D/serve-d/releases",
 			headers: {
@@ -179,18 +194,18 @@ export function findLatestServeD(callback: (version: Release | undefined) => any
 			timeout: timeout
 		}, (err: any, httpResponse: any, body: any) => {
 			if (err)
-				return callback(undefined);
+				return resolve(undefined);
 
 			try {
 				if (typeof body == "string")
 					body = JSON.parse(body);
 			}
 			catch (e) {
-				return callback(undefined);
+				return resolve(undefined);
 			}
 
 			if (!Array.isArray(body))
-				return callback(undefined);
+				return resolve(undefined);
 
 			let numMatching = 0;
 
@@ -224,9 +239,9 @@ export function findLatestServeD(callback: (version: Release | undefined) => any
 
 			servedVersionCache.release = ret;
 			servedVersionCache.channel = channel!;
-			return callback(ret);
+			return resolve(ret);
 		});
-	}
+	});
 }
 
 function findFirstMatchingAsset(name: string | "nightly", assets: ReleaseAsset[]): ReleaseAsset | undefined {
@@ -298,26 +313,23 @@ export function updateAndInstallServeD(env: any, done: Function): any {
 		location: vscode.ProgressLocation.Notification,
 		title: "Searching for updates..."
 	}, (progress, token) => {
-		return new Promise((resolve, reject) => {
-			findLatestServeD((version) => {
-				resolve();
-				if (version === undefined) {
-					const compile = "Compile";
-					const userSettings = "Open User Settings";
-					vscode.window.showInformationMessage("Updates can currently not be determined. Would you like "
-						+ "to try and compile serve-d from source or specify a path to the serve-d executable in your user settings?",
-						compile, userSettings).then(option => {
-							if (option == compile)
-								compileServeD("master")(env, done);
-							else if (userSettings)
-								vscode.commands.executeCommand("workbench.action.openGlobalSettings");
-						});
-				} else if (!version.asset) {
-					compileServeD("master")(env, done);
-				} else {
-					installServeD([version.asset.browser_download_url], version.name)(env, done);
-				}
-			}, true);
+		return findLatestServeD(true).then((version) => {
+			if (version === undefined) {
+				const compile = "Compile";
+				const userSettings = "Open User Settings";
+				vscode.window.showInformationMessage("Updates can currently not be determined. Would you like "
+					+ "to try and compile serve-d from source or specify a path to the serve-d executable in your user settings?",
+					compile, userSettings).then(option => {
+						if (option == compile)
+							compileServeD("master")(env, done);
+						else if (userSettings)
+							vscode.commands.executeCommand("workbench.action.openGlobalSettings");
+					});
+			} else if (!version.asset) {
+				compileServeD("master")(env, done);
+			} else {
+				installServeD([version.asset.browser_download_url], version.name)(env, done);
+			}
 		});
 	});
 }
@@ -481,6 +493,7 @@ export function checkBetaServeD(callback: Function) {
 
 export function extractServedBuiltDate(log: string): Date | false {
 	var parsed = /Built: \w+\s+(\w+)\s+(\d+)\s+(\d+:\d+:\d+)\s+(\d+)/.exec(log);
+	console.log("built serve-d: ", parsed);
 	if (!parsed)
 		return false;
 	var month = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"].indexOf(parsed[1].toLowerCase());

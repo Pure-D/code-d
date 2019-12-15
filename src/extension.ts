@@ -633,7 +633,7 @@ function preStartup(context: vscode.ExtensionContext) {
 			if (context.globalState.get("serve-d-downloaded-release-channel"))
 				force = false;
 
-			let targetRelease = findLatestServeD(version => {
+			findLatestServeD(force, channelString).then(version => {
 				checkProgram("servedPath", "serve-d", "serve-d",
 					version ? (version.asset
 						? installServeD([version.asset.browser_download_url], version.name)
@@ -655,7 +655,7 @@ function preStartup(context: vscode.ExtensionContext) {
 							}
 						});
 					}, isServedOutdated(version));
-			}, force, channelString);
+			});
 		});
 		function checkCompiler(compiler: string, callback: Function | undefined) {
 			which(compiler, function (err: any, compilerPath: string | undefined) {
