@@ -26,13 +26,13 @@ export function setContext(context: vscode.ExtensionContext) {
 
 function determineOutputFolder(): string {
 	if (process.platform == "linux") {
-		if (fs.existsSync(path.join((<any>process.env).HOME, ".local", "share")))
-			return path.join((<any>process.env).HOME, ".local", "share", "code-d", "bin");
+		if (fs.existsSync(path.join(process.env.HOME!, ".local", "share")))
+			return path.join(process.env.HOME!, ".local", "share", "code-d", "bin");
 		else
-			return path.join((<any>process.env).HOME, ".code-d", "bin");
+			return path.join(process.env.HOME!, ".code-d", "bin");
 	}
 	else if (process.platform == "win32") {
-		return path.join((<any>process.env).APPDATA, "code-d", "bin");
+		return path.join(process.env.APPDATA!, "code-d", "bin");
 	}
 	else {
 		return path.join(extensionContext.extensionPath, "bin");
