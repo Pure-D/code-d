@@ -224,16 +224,26 @@ function startClient(context: vscode.ExtensionContext) {
 				else if (type == "completionStartup" && step !== undefined && max) {
 					startupProgress.workspaceStep(step * 0.5 + max * 0.5, max, "indexing");
 				}
-				else if ((type == "importReload" || type == "importUpgrades") && step !== undefined && max) {
+				else if ((type == "dubReload" || type == "importReload" || type == "importUpgrades") && step !== undefined && max) {
 					if (step == max)
 						startupProgress.finishGlobal();
 					else {
 						startupProgress.startGlobal();
 						const p = vscode.Uri.parse(args || "").fsPath;
-						let label = step == 0 ? "updating" : "indexing";
-						if (type == "importUpgrades") {
-							if (step == 0) label = "downloading dependencies";
-							else if (step == 6) label = "updating";
+						let label: string;
+						switch (type) {
+							case "dubReload":
+								label = "updating";
+								break;
+							case "importReload":
+								label = "indexing";
+								break;
+							case "importUpgrades":
+								label = "downloading dependencies";
+								break;
+							default:
+								label = "loading";
+								break;
 						}
 						startupProgress.globalStep(step, max, shortenPath(p), label)
 					}
