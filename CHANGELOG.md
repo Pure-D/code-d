@@ -27,7 +27,7 @@ code-d and serve-d
 </tr>
 </table>
 
-# 0.x.y
+# 0.22.0
 
 ## dub
 
@@ -36,6 +36,8 @@ Platform attributes on supported values in dub.sdl are now autocompleted. This i
 Furthermore dependencies complete better now when completing in the middle of a word.
 
 When creating new dub.json and dub.sdl files, the name and syntax boilerplate will be inserted.
+
+User experience when saving dub.json/dub.sdl files has been improved.
 
 ## Snippets
 
@@ -47,17 +49,30 @@ There are also new snippets specific to dub packages. These snippets will only b
 
 There is a new user guide including tutorials and information about all the code-d features. Use `Ctrl-Shift-P -> Open User Guide` to open. (will open automatically for new users first time)
 
+## Quality of Life improvements
+
+There is a new startup progress bar in the status bar while serve-d is initializing all projects and dependencies.
+
+You can now right-click on symbols and press `Search in dpldocs` to look up documentation for anything online much quicker. You can also bind this to a keyboard shortcut in your keyboard bindings and quickly search wherever the code cursor is.
+
+Syntax highlighting was improved
+
+* otbs style D code was improved a lot. (fixes `if`, `while`, `for`, `foreach`, `switch`, `final switch`, `with`, `synchronized` and `catch` blocks with braces on same line)
+* `typeof` highlighting
+* `asm` block fixes
+* fixed delegate highlighting without arguments
+
 ## Other things
+
+The custom serve-d commands and initialization have all been documented in the README for custom LSP clients in other editors.
+
+The serve-d installer has been refactored a lot, please report any issues in case of any failures with OS & release information!
 
 Minor Changes:
 * `~~deprecated~~` and `unused` variables warnings will now be rendered using the standard vscode formatting
 * Removed upload code selection feature. Use a dedicated extension for this instead. (for example "Share Code" `rolandgreim.sharecode`)
 * Sort imports is now bound to `Ctrl-Q Ctrl-S` by default.
 * The changelog now opens in every new version. Add `"d.showUpdateChangelogs": false` to disable.
-* Syntax highlighting was improved
-	* otbs style D code was improved a lot. (fixes `if`, `while`, `for`, `foreach`, `switch`, `final switch`, `with`, `synchronized` and `catch` blocks)
-	* `typeof` highlighting
-	* `asm` block fixes
 
 Bug Fixes:
 * Fixed sorting imports inside functions sometimes replacing commented imports.
