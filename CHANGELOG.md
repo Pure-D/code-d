@@ -27,6 +27,12 @@ code-d and serve-d
 </tr>
 </table>
 
+# 0.x.y
+
+## Documentation
+
+The [Debugging section](docs/debugging.md) in the User Guide has been updated to include the selection and installation of a debugger used for D.
+
 # 0.22.0
 
 ## dub
