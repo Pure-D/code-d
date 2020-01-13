@@ -371,7 +371,7 @@ export function registerCommands(context: vscode.ExtensionContext) {
 				var uri = vscode.Uri.file(readme);
 				var extension = path.extname(readme).toLowerCase();
 				if (extension == ".md" || extension == ".markdown")
-					vscode.commands.executeCommand("markdown.showPreview", uri);
+					vscode.commands.executeCommand("markdown.showPreview", uri, { locked: true });
 				else if (extension == ".html" || extension == ".htm")
 					vscode.commands.executeCommand("vscode.previewHtml", uri);
 				else
