@@ -24,13 +24,17 @@
 
 ### Opening a Workspace
 
-To start with code-d you will first have to open a folder to work in. It's best if you select an empty folder for each project you are going to create. You can add multiple folders to your workspace in VSCode using `File -> Add Folder to Workspace...` too.
+To start with code-d you best want to open a folder to work in. It's best if you select an empty folder for each project you are going to create. You can add multiple folders to your workspace in VSCode using `File -> Add Folder to Workspace...` too.
 
 For a simple project opening a normal folder using the `Open Folder...` button is good enough.
 
 Click `File -> Open Folder...` or `Ctrl-Shift-P -> Open Folder...` to open an empty folder as workspace for your project.
 
 ![example video](video_open_folder.gif)
+
+### Working without workspace
+
+It is also possible to have projects with very few files and no dependencies whatsoever. For this you can also open a workspace as described above to have full feature access (such as build tasks and dependencies) but for quickly editing singular D files it is also possible to simply open them in VSCode. However auto completion is limited to only the standard library in this case, so it's not a good idea to work like this for bigger projects.
 
 ### Generating a Project using a Template
 

@@ -29,7 +29,57 @@ code-d and serve-d
 
 # 0.x.y
 
-## Documentation
+## Single-File editing
+
+code-d can now be used without open workspace to edit singular D files.
+
+## DDoc
+
+A regression that auto completion was missing formatting has been fixed.
+
+Additionally now a lot of phobos functions look a lot better and references `$(LREF localSymbol)` and `$(REF symbol, std,package)` properly display now. Also all unknown macros are now visible.
+
+Example of full `writeln` ddoc detail now:
+
+<div style="padding: 0.2em 1.5em; background-color: rgba(0, 0, 0, 0.2)">
+
+Equivalent to `write(args, '\n')`.  Calling `writeln` without
+arguments is valid and just prints a newline to the standard
+output.
+
+
+
+**Params**
+
+`args` the items to write to `stdout`
+
+**Throws** — In case of an I/O error, throws an `StdioException`.
+
+**Example**
+
+Reads `stdin` and writes it to `stdout` with a argument
+       counter.
+
+
+
+
+```d
+import std.stdio;
+
+void main()
+{
+    string line;
+
+    for (size_t count = 0; (line = readln) !is null; count++)
+    {
+         writeln("Input ", count, ": ", line);
+    }
+}
+```
+
+</div>
+
+## Tutorial
 
 The [Debugging section](docs/debugging.md) in the User Guide has been updated to include the selection and installation of a debugger used for D.
 
