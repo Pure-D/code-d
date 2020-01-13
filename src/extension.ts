@@ -737,6 +737,8 @@ function greetNewUsers(context: vscode.ExtensionContext) {
 
 function shortenPath(p: string) {
 	let short: string = p;
+	if (short.endsWith("serve-d-dummy-workspace"))
+		return "[dummy workspace]";
 	if (vscode.workspace.workspaceFolders)
 		vscode.workspace.workspaceFolders.forEach(element => {
 			const dir = element.uri.fsPath;
