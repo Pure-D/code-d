@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-import { parseSDL, tokenizeSDL } from '../src/sdl/sdlparse';
+import { parseSDL, tokenizeSDL } from '../../sdl/sdlparse';
 
 let backslash = "\\";
 

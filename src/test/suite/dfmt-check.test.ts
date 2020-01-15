@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-import { lintDfmt } from '../src/dfmt-check';
+import { lintDfmt } from '../../dfmt-check';
 
 // Defines a Mocha test suite to group tests of similar kind together
 suite("dfmt lint", () => {

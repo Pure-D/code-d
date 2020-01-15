@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { cmpSemver, parseSimpleSemver } from '../src/installer';
+import { cmpSemver, parseSimpleSemver } from '../../installer';
 
 // Defines a Mocha test suite to group tests of similar kind together
 suite("semver", () => {

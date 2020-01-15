@@ -24,3 +24,6 @@ jobs:
 
     - name: npm test
       run: npm test
+
+    - name: test grammar
+      run: npm run grammar

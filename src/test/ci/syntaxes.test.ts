@@ -5,8 +5,12 @@ import * as paths from 'path';
 import * as vsctm from 'vscode-textmate';
 import { suite, test } from 'mocha';
 
+/**
+ * Resolves a package relative path (relative to root folder / package.json folder) to the actual path
+ * @param path the package relative path to resolve to an actual path
+ */
 function res(path: string): string {
-	return paths.join(__dirname, "../../ci", path);
+	return paths.join(__dirname, "../../../", path);
 }
 
 function readFile(path: string): Promise<Buffer> {
@@ -18,20 +22,20 @@ function readFile(path: string): Promise<Buffer> {
 const registry = new vsctm.Registry({
 	loadGrammar: async (scopeName): Promise<vsctm.IRawGrammar | undefined | null> => {
 		if (scopeName === 'source.diet') {
-			const data = await readFile('../syntaxes/diet.json');
-			return vsctm.parseRawGrammar(data.toString(), '../syntaxes/diet.json');
+			const data = await readFile('syntaxes/diet.json');
+			return vsctm.parseRawGrammar(data.toString(), 'syntaxes/diet.json');
 		}
 		else if (scopeName === 'source.d') {
-			const data = await readFile('../syntaxes/d.json');
-			return vsctm.parseRawGrammar(data.toString(), '../syntaxes/d.json');
+			const data = await readFile('syntaxes/d.json');
+			return vsctm.parseRawGrammar(data.toString(), 'syntaxes/d.json');
 		}
 		else if (scopeName === 'source.dml') {
-			const data = await readFile('../syntaxes/dml.json');
-			return vsctm.parseRawGrammar(data.toString(), '../syntaxes/dml.json');
+			const data = await readFile('syntaxes/dml.json');
+			return vsctm.parseRawGrammar(data.toString(), 'syntaxes/dml.json');
 		}
 		else if (scopeName === 'source.sdl') {
-			const data = await readFile('../syntaxes/sdl.json');
-			return vsctm.parseRawGrammar(data.toString(), '../syntaxes/sdl.json');
+			const data = await readFile('syntaxes/sdl.json');
+			return vsctm.parseRawGrammar(data.toString(), 'syntaxes/sdl.json');
 		}
 		console.error(`Unknown scope name: ${scopeName}`);
 		return null;
@@ -87,17 +91,26 @@ function testSyntaxes(grammar: vsctm.IGrammar, folder: string, ext: string) {
 suite("syntax tests", () => {
 	test("diet", () => {
 		return registry.loadGrammar('source.diet').then(grammar => {
-			return testSyntaxes(grammar, "syntax/diet", ".dt");
+			if (!grammar)
+				throw new Error("grammar didn't load");
+
+			return testSyntaxes(grammar, "src/test/ci/syntax/diet", ".dt");
 		});
 	});
 	test("d", () => {
 		return registry.loadGrammar('source.d').then(grammar => {
-			return testSyntaxes(grammar, "syntax/d", ".d");
+			if (!grammar)
+				throw new Error("grammar didn't load");
+
+			return testSyntaxes(grammar, "src/test/ci/syntax/d", ".d");
 		});
 	});
 	test("dml", () => {
 		return registry.loadGrammar('source.dml').then(grammar => {
-			return testSyntaxes(grammar, "syntax/dml", ".dml");
+			if (!grammar)
+				throw new Error("grammar didn't load");
+
+			return testSyntaxes(grammar, "src/test/ci/syntax/dml", ".dml");
 		});
 	});
 });
