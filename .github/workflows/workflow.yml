@@ -33,4 +33,5 @@ jobs:
       run: npm test
 
     - name: test grammar
+      if: startsWith(matrix.os, 'ubuntu')
       run: npm run grammar
