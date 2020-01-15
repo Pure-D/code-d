@@ -4,12 +4,16 @@ on: [push]
 jobs:
   npm_test:
     name: Run npm tests
-    runs-on: ${{ matrix.operating-system }}
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        operating-system: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest]
     steps:
     - uses: actions/checkout@master
+
+    - name: Start xvfb
+      if: startsWith(matrix.os, 'ubuntu')
+      run: /usr/bin/Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
     
     - name: Set Node.js 10.x
       uses: actions/setup-node@master
@@ -23,6 +27,9 @@ jobs:
       run: npx tsc
 
     - name: npm test
+      env:
+        CODE_VERSION: ''
+        DISPLAY: ':99.0'
       run: npm test
 
     - name: test grammar
