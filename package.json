@@ -481,6 +481,12 @@
 					"default": false,
 					"description": "Enables parsing of //-context= in diet files to import local variables shared with the opened diet template."
 				},
+				"d.generateModuleNames": {
+					"type": "boolean",
+					"scope": "resource",
+					"default": true,
+					"description": "Automatically insert/replace the module name definition in the current file when creating or renaming a file."
+				},
 				"d.showUpdateChangelogs": {
 					"type": "boolean",
 					"scope": "application",
