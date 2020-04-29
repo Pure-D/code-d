@@ -497,7 +497,7 @@
 					"type": "boolean",
 					"scope": "resource",
 					"default": true,
-					"description": "Not yet implemented (on dfmt side)"
+					"description": "Align labels, cases, and defaults with their enclosing switch. (Not yet implemented)"
 				},
 				"dfmt.braceStyle": {
 					"type": "string",
@@ -513,19 +513,19 @@
 						"Curly braces on the same line as for example if or while statements, but a new line after the closing curly brace, even if there is an else"
 					],
 					"default": "allman",
-					"description": "See Wikipedia https://en.wikipedia.org/wiki/Brace_style"
+					"description": "[See Wikipedia](https://en.wikipedia.org/wiki/Brace_style)"
 				},
 				"dfmt.outdentAttributes": {
 					"type": "boolean",
 					"scope": "resource",
 					"default": true,
-					"description": "Not yet implemented (on dfmt side)"
+					"description": "Decrease the indentation level of attributes. (Not yet implemented)"
 				},
 				"dfmt.spaceAfterCast": {
 					"type": "boolean",
 					"scope": "resource",
 					"default": true,
-					"description": "Insert space after the closing paren of a cast expression."
+					"description": "Insert space after the closing paren of a `cast` expression."
 				},
 				"dfmt.splitOperatorAtLineEnd": {
 					"type": "boolean",
@@ -537,13 +537,13 @@
 					"type": "boolean",
 					"scope": "resource",
 					"default": true,
-					"description": "Insert space after the module name and before the : for selective imports."
+					"description": "Insert space after the module name and before the `:` for selective imports."
 				},
 				"dfmt.compactLabeledStatements": {
 					"type": "boolean",
 					"scope": "resource",
 					"default": true,
-					"description": "Place labels on the same line as the labeled switch, for, foreach, or while statement."
+					"description": "Place labels on the same line as the labeled `switch`, `for`, `foreach`, or `while` statement."
 				},
 				"dfmt.templateConstraintStyle": {
 					"type": "string",
@@ -561,7 +561,7 @@
 						"always add newline and indent the constraint"
 					],
 					"default": "conditional_newline_indent",
-					"description": "Control the formatting of template constraints. See https://github.com/dlang-community/dfmt/issues/215"
+					"description": "Control the formatting of template constraints."
 				},
 				"dscanner.ignoredKeys": {
 					"type": "array",
@@ -623,6 +623,42 @@
 						]
 					},
 					"description": "DScanner warnings to ignore in this project."
+				},
+				"dfmt.softMaxLineLength": {
+					"type": "number",
+					"default": "80",
+					"scope": "resource",
+					"description": "The formatting process will usually keep lines below this length, but they may be up to *max_line_length* columns long."
+				},
+				"dfmt.spaceAfterKeywords": {
+					"type": "boolean",
+					"default": true,
+					"scope": "resource",
+					"description": "Insert space after `if`, `while`, `foreach`, etc, and before the `(`. (Not yet implemented)"
+				},
+				"dfmt.spaceBeforeFunctionParameters": {
+					"type": "boolean",
+					"default": false,
+					"scope": "resource",
+					"description": "Insert space before the opening paren of a function parameter list."
+				},
+				"dfmt.singleTemplateConstraintIndent": {
+					"type": "boolean",
+					"default": false,
+					"scope": "resource",
+					"description": "Set if the constraints are indented by a single tab instead of two. Has only an effect if the style set to `always_newline_indent` or `conditional_newline_indent`."
+				},
+				"dfmt.spaceBeforeAaColon": {
+					"type": "boolean",
+					"default": false,
+					"scope": "resource",
+					"description": "Adds a space after an associative array key before the `:` like in older dfmt versions."
+				},
+				"dfmt.keepLineBreaks": {
+					"type": "boolean",
+					"default": false,
+					"scope": "resource",
+					"description": "Keep existing line breaks if these don't violate other formatting rules."
 				}
 			}
 		},
