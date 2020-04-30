@@ -2378,11 +2378,20 @@
     },
     "token-string": {
       "begin": "q\\{",
-      "end": "\\}",
-      "name": "string.token.d",
+      "end": "\\}[cdw]?",
+      "beginCaptures": {
+        "0": {
+          "name": "string.quoted.token.d"
+        }
+      },
+      "endCaptures": {
+        "0": {
+          "name": "string.quoted.token.d"
+        }
+      },
       "patterns": [
         {
-          "include": "#tokens"
+          "include": "#token-string-content"
         }
       ]
     },
@@ -2590,6 +2599,22 @@
               "include": "#nesting-block-comment"
             }
           ]
+        }
+      ]
+    },
+    "token-string-content": {
+      "patterns": [
+        {
+          "begin": "{",
+          "end": "}",
+          "patterns": [
+            {
+              "include": "#token-string-content"
+            }
+          ]
+        },
+        {
+          "include": "#tokens"
         }
       ]
     },
