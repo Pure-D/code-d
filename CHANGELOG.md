@@ -83,6 +83,10 @@ void main()
 
 The [Debugging section](docs/debugging.md) in the User Guide has been updated to include the selection and installation of a debugger used for D.
 
+## Other Things
+
+DCD upgrade to 0.12.0
+
 # 0.22.0
 
 ## dub
