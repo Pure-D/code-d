@@ -53,6 +53,9 @@ class CustomErrorHandler implements ErrorHandler {
 
 export var served: ServeD;
 
+export type DScannerIniFeature = { description: string, name: string, enabled: "disabled" | "enabled" | "skip-unittest" };
+export type DScannerIniSection = { description: string, name: string, features: DScannerIniFeature[] };
+
 export class ServeD extends EventEmitter implements vscode.TreeDataProvider<DubDependency> {
 	constructor(public client: LanguageClient) {
 		super();
@@ -107,6 +110,14 @@ export class ServeD extends EventEmitter implements vscode.TreeDataProvider<DubD
 				uri: uri.toString()
 			}
 		});
+	}
+
+	listDScannerConfig(uri?: vscode.Uri): Thenable<DScannerIniSection[]> {
+		return this.client.sendRequest("served/getDscannerConfig", uri ? {
+			textDocument: {
+				uri: uri.toString()
+			}
+		} : {});
 	}
 
 	findFiles(query: string): Thenable<string[]> {
