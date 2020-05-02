@@ -47,6 +47,9 @@ export class DubTasksProvider implements vscode.TaskProvider {
 					makeExecutor(proc, args, cwd),
 					task.problemMatchers);
 				t.isBackground = task.isBackground;
+				t.presentationOptions = {
+					focus: !!task.definition.run
+				};
 				(<any>t).detail = "dub " + args.join(" ");
 				switch (task.group) {
 					case "clean":
@@ -114,13 +117,21 @@ export class DubTasksProvider implements vscode.TaskProvider {
 			task.name || `dub ${task.definition.test ? "Test" : task.definition.run ? "Run" : "Build"}`,
 			"dub", exec, dubLint ? task.problemMatchers : ["$dmd"]
 		);
+		ret.isBackground = task.isBackground;
+		if (task.presentationOptions) {
+			ret.presentationOptions = task.presentationOptions;
+		} else {
+			ret.presentationOptions = {
+				focus: !!task.definition.run
+			};
+		}
 		(<any>ret).detail = "dub " + args.join(" ");
 		return ret;
 	}
 }
 
 function makeExecutor(proc: string, args: string[], cwd: string): vscode.ProcessExecution | vscode.ShellExecution {
-	let options: vscode.ShellExecutionOptions | undefined = cwd ? { cwd: cwd } : undefined;
+	let options: vscode.ProcessExecutionOptions | undefined = cwd ? { cwd: cwd } : undefined;
 	return new vscode.ProcessExecution(proc, args, options);
 	// return new vscode.ShellExecution({
 	// 	value: proc,

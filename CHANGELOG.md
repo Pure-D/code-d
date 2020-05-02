@@ -33,6 +33,42 @@ code-d and serve-d
 
 code-d can now be used without open workspace to edit singular D files.
 
+## Usability
+
+Several improvements to warning/error diagnostics have been made. While editing syntax errors are now properly marked as error instead of as warning and have better locations.
+
+Improved examples:
+```d
+void foo() {
+    writeln("hello")
+}
+```
+will now show the missing semicolon error at the end of the line.
+
+```d
+if (myObject == null) {}
+```
+will now mark the `==` as error for the "use `is` instead of `==` when comparing with `null`" error message. There is also now a quick fix available to automatically fix this issue quickly.
+
+```d
+foreach (auto key; value) {}
+```
+while looking nice is not valid D code. The syntax error will now properly explain that the `auto` is wrong and suggest removing it with a quick fix.
+
+Among several other improvements of error locations, without any new quick fixes. The experience for newcomers has especially been improved by this.
+
+## D-Scanner
+
+The following D-Scanner warnings have been disabled by default:
+- Public declaration '...' is undocumented
+- Variable ... is never modified and could have been declared const or immutable.
+
+For big projects these fields are still recommended and this only applies to projects without any dscanner.ini.
+
+To revert to the old behavior, edit or create a file called `dscanner.ini` in your project root and run the "Insert default dscanner.ini content" command (Ctrl-Shift-P) to be able to enable/disable all fields.
+
+The "Insert default dscanner.ini content" command now dumps the currently used settings for code linting instead of a static file. This is useful to start off with the current settings instead of overriding to some different values.
+
 ## DDoc
 
 A regression that auto completion was missing formatting has been fixed.
@@ -86,6 +122,10 @@ The [Debugging section](docs/debugging.md) in the User Guide has been updated to
 ## Other Things
 
 DCD upgrade to 0.12.0
+
+Minor Changes:
+* the "insert dscanner.ini" command now inserts the exact current D-Scanner config for the document instead of some hardcoded one to simplify changing it.
+* Running the predefined tasks will auto focus the console now. If you want to do this to your own tasks as well, set `"presentation": {"focus": true}`
 
 # 0.22.0
 
