@@ -178,7 +178,7 @@
 			"properties": {
 				"d.servedPath": {
 					"type": "string",
-					"scope": "window",
+					"scope": "machine",
 					"default": "serve-d",
 					"description": "Path of the serve-d executable. Path can be omitted if in $PATH or installed using code-d"
 				},
@@ -233,26 +233,26 @@
 				"d.dcdClientPath": {
 					"title": "DCD Client Path",
 					"type": "string",
-					"scope": "resource",
+					"scope": "machine-overridable",
 					"default": "dcd-client",
 					"description": "Path of the dcd-client executable. Path can be omitted if in $PATH or installed using code-d"
 				},
 				"d.dcdServerPath": {
 					"title": "DCD Server Path",
 					"type": "string",
-					"scope": "resource",
+					"scope": "machine-overridable",
 					"default": "dcd-server",
 					"description": "Path of the dcd-server executable. Path can be omitted if in $PATH or installed using code-d"
 				},
 				"d.dubPath": {
 					"type": "string",
-					"scope": "resource",
+					"scope": "machine-overridable",
 					"default": "dub",
 					"description": "Path of the dub executable. Path can be omitted if in $PATH or installed using code-d"
 				},
 				"d.dmdPath": {
 					"type": "string",
-					"scope": "resource",
+					"scope": "machine-overridable",
 					"default": "dmd",
 					"description": "Path of the dmd executable. Path can be omitted if in $PATH"
 				},
