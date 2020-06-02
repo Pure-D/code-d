@@ -121,8 +121,6 @@ The [Debugging section](docs/debugging.md) in the User Guide has been updated to
 
 ## Other Things
 
-DCD upgrade to 0.12.0
-
 Minor Changes:
 * the "insert dscanner.ini" command now inserts the exact current D-Scanner config for the document instead of some hardcoded one to simplify changing it.
 * Running the predefined tasks will auto focus the console now. If you want to do this to your own tasks as well, set `"presentation": {"focus": true}`

@@ -362,16 +362,16 @@ export function installServeD(urls: { url: string, title: string }[], ref: strin
 
 	// add DCD binaries here as well
 	if (process.platform == "linux" && process.arch == "x64") {
-		urls.push({ url: "https://github.com/dlang-community/DCD/releases/download/v0.12.0/dcd-v0.12.0-linux-x86_64.tar.gz", title: "DCD" });
+		urls.push({ url: "https://github.com/dlang-community/DCD/releases/download/v0.11.1/dcd-v0.11.1-linux-x86_64.tar.gz", title: "DCD" });
 	}
 	else if (process.platform == "darwin" && process.arch == "x64") {
-		urls.push({ url: "https://github.com/dlang-community/DCD/releases/download/v0.12.0/dcd-v0.12.0-osx-x86_64.tar.gz", title: "DCD" });
+		urls.push({ url: "https://github.com/dlang-community/DCD/releases/download/v0.11.1/dcd-v0.11.1-osx-x86_64.tar.gz", title: "DCD" });
 	}
 	else if (process.platform == "win32") {
 		if (process.arch == "x64")
-			urls.push({ url: "https://github.com/dlang-community/DCD/releases/download/v0.12.0/dcd-v0.12.0-windows-x86_64.zip", title: "DCD" });
+			urls.push({ url: "https://github.com/dlang-community/DCD/releases/download/v0.11.1/dcd-v0.11.1-windows-x86_64.zip", title: "DCD" });
 		else
-			urls.push({ url: "https://github.com/dlang-community/DCD/releases/download/v0.12.0/dcd-v0.12.0-windows-x86.zip", title: "DCD" });
+			urls.push({ url: "https://github.com/dlang-community/DCD/releases/download/v0.11.0/dcd-v0.11.0-windows-x86.zip", title: "DCD" });
 	}
 
 	return (env: any) => new Promise((done) => {
