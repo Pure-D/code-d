@@ -913,7 +913,7 @@
     "with-statement": {
       "patterns": [
         {
-          "begin": "\\b(with)\\b\\s*",
+          "begin": "\\b(with)\\b\\s*(?=\\()",
           "captures": {
             "1": {
               "name": "keyword.control.with.d"
@@ -937,7 +937,7 @@
     "synchronized-statement": {
       "patterns": [
         {
-          "begin": "\\b(synchronized)\\b\\s*",
+          "begin": "\\b(synchronized)\\b\\s*(?=\\()",
           "captures": {
             "1": {
               "name": "keyword.control.synchronized.d"
@@ -976,7 +976,7 @@
     "catch": {
       "patterns": [
         {
-          "begin": "\\b(catch)\\b\\s*",
+          "begin": "\\b(catch)\\b\\s*(?=\\()",
           "captures": {
             "1": {
               "name": "keyword.control.catch.d"
@@ -1024,7 +1024,7 @@
     "asm-statement": {
       "patterns": [
         {
-          "begin": "\\b(asm)\\b\\s*",
+          "begin": "\\b(asm)\\b\\s*(?=\\{)",
           "captures": {
             "1": {
               "name": "keyword.control.switch.d"
