@@ -77,7 +77,7 @@ function testSyntaxes(grammar: vsctm.IGrammar, folder: string, ext: string) {
 					const expectedLines = expectedText.toString().split(/\r?\n/g);
 					const expectedTokens = expectedLines.map(line => JSON.parse(line));
 
-					assert.deepStrictEqual(tokens, expectedTokens);
+					assert.deepStrictEqual(tokens, expectedTokens, "error in " + file);
 				}
 				resolve();
 			}
