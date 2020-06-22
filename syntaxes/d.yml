@@ -389,15 +389,19 @@ repository:
       end: ':'
       endCaptures:
         0:
-          name: keyword.control.case.colon.d
+          name: meta.case.end.d
       patterns:
       - include: '#comment'
       - include: '#nesting-expression'
       - include: '#comma'
   default-statement:
     patterns:
-    - match: '\bdefault\s*:'
-      name: keyword.control.case.default.d
+    - match: '\b(default)\s*(:)'
+      captures:
+        1:
+          name: keyword.control.case.default.d
+        2:
+          name: meta.default.colon.d
   final-switch-statement:
     patterns:
     - begin: \b(final\s+switch)\b\s*
@@ -606,7 +610,7 @@ repository:
       end: ;
       endCaptures:
         0:
-          name: support.type.alias.d
+          name: meta.alias.end.d
       patterns:
       - include: '#type'
       - match: =(?![=>])
@@ -980,7 +984,7 @@ repository:
           name: keyword.package.module.d
       endCaptures:
         0:
-          name: keyword.operator.semi-colon.d
+          name: meta.module.end.d
       patterns:
       - include: '#module-identifier'
       - include: '#comment'
@@ -995,7 +999,7 @@ repository:
           name: keyword.package.import.d
       endCaptures:
         0:
-          name: keyword.operator.semi-colon.d
+          name: meta.import.end.d
       patterns:
       - include: '#import-identifier'
       - include: '#comma'

@@ -848,7 +848,7 @@
           "end": ":",
           "endCaptures": {
             "0": {
-              "name": "keyword.control.case.colon.d"
+              "name": "meta.case.end.d"
             }
           },
           "patterns": [
@@ -868,8 +868,15 @@
     "default-statement": {
       "patterns": [
         {
-          "match": "\\bdefault\\s*:",
-          "name": "keyword.control.case.default.d"
+          "match": "\\b(default)\\s*(:)",
+          "captures": {
+            "1": {
+              "name": "keyword.control.case.default.d"
+            },
+            "2": {
+              "name": "meta.default.colon.d"
+            }
+          }
         }
       ]
     },
@@ -1301,7 +1308,7 @@
           "end": ";",
           "endCaptures": {
             "0": {
-              "name": "support.type.alias.d"
+              "name": "meta.alias.end.d"
             }
           },
           "patterns": [
@@ -2086,7 +2093,7 @@
           },
           "endCaptures": {
             "0": {
-              "name": "keyword.operator.semi-colon.d"
+              "name": "meta.module.end.d"
             }
           },
           "patterns": [
@@ -2115,7 +2122,7 @@
           },
           "endCaptures": {
             "0": {
-              "name": "keyword.operator.semi-colon.d"
+              "name": "meta.import.end.d"
             }
           },
           "patterns": [
