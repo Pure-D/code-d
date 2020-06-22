@@ -270,6 +270,7 @@ repository:
     - include: '#do-statement'
     - include: '#for-statement'
     - include: '#foreach-statement'
+    - include: '#foreach-reverse-statement'
     - include: '#switch-statement'
     - include: '#final-switch-statement'
     - include: '#case-statement'
@@ -349,6 +350,18 @@ repository:
       captures:
         1:
           name: keyword.control.foreach.d
+      end: (?<=\))
+      patterns:
+      - begin: \(
+        end: \)
+        patterns:
+        - include: 'source.d'
+  foreach-reverse-statement:
+    patterns:
+    - begin: \b(foreach_reverse)\b\s*
+      captures:
+        1:
+          name: keyword.control.foreach_reverse.d
       end: (?<=\))
       patterns:
       - begin: \(
