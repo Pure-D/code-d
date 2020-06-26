@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
-import { LanguageClient, LanguageClientOptions, ServerOptions, DocumentFilter, NotificationType, CloseAction, ErrorAction, ErrorHandler, Message, State, MessageType } from "vscode-languageclient";
+import { LanguageClient, LanguageClientOptions, ServerOptions, DocumentFilter, NotificationType, CloseAction, ErrorAction, ErrorHandler, Message, State, MessageType, RevealOutputChannelOn } from "vscode-languageclient";
 import { setContext, installServeD, compileServeD, getInstallOutput, downloadFileInteractive, findLatestServeD, cmpSemver, extractServedBuiltDate, Release, updateAndInstallServeD } from "./installer"
 import { EventEmitter } from "events"
 import * as ChildProcess from "child_process"
@@ -172,6 +172,7 @@ function startClient(context: vscode.ExtensionContext) {
 				vscode.workspace.createFileSystemWatcher("**/dub.sdl")
 			]
 		},
+		revealOutputChannelOn: RevealOutputChannelOn.Never,
 		outputChannel: outputChannel,
 		errorHandler: new CustomErrorHandler(outputChannel)
 	};
