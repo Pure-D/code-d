@@ -3,6 +3,7 @@ import { parseSDL, Tag, Value, TagParseError } from "./sdlparse"
 import * as path from "path"
 import * as vscode from "vscode"
 import { listPackages, getPackageInfo, getLatestPackageInfo } from "../dub-api"
+import { cmpSemver } from "../installer"
 
 export function addSDLProviders(): vscode.Disposable {
 	let subscriptions: vscode.Disposable[] = [];
@@ -27,8 +28,6 @@ export function addSDLProviders(): vscode.Disposable {
 	return vscode.Disposable.from(...subscriptions);
 }
 
-var semverRegex = /(\d+)\.(\d+)\.(\d+)/;
-
 function pad3(n: number) {
 	if (n >= 100)
 		return n.toString();
@@ -48,19 +47,16 @@ function completeDubVersion(info: SDLCompletionInfo): SDLCompletionResult {
 				return resolve([]);
 			}
 			let results: vscode.CompletionItem[] = [];
-			for (var i = versions.length - 1; i >= 0; i--) {
-				var item = new vscode.CompletionItem(versions[i].version);
+			for (let i = versions.length - 1; i >= 0; i--) {
+				let item = new vscode.CompletionItem(versions[i].version);
 				item.detail = "Released on " + new Date(versions[i].date).toLocaleDateString();
 				item.kind = vscode.CompletionItemKind.Class;
 				item.insertText = new vscode.SnippetString().appendPlaceholder("").appendText(versions[i].version);
-				var sortText = "999999999";
-				var semverMatch = semverRegex.exec(versions[i].version);
-				if (semverMatch) {
-					sortText = pad3(999 - parseInt(semverMatch[1])) + pad3(999 - parseInt(semverMatch[2])) + pad3(999 - parseInt(semverMatch[3]));
-				}
-				item.sortText = sortText;
 				results.push(item);
 			}
+			results.sort((a, b) => cmpSemver(b.label, a.label));
+			for (let i = 0; i < results.length; i++)
+				results[i].sortText = (10000000 + i).toString(); // lazy 0 pad
 			resolve(results);
 		}, error => {
 			console.log("Error searching for versions");

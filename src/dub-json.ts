@@ -2,8 +2,7 @@ import { IJSONContribution, ISuggestionsCollector } from "./json-contributions";
 import * as vscode from "vscode";
 import { Location } from "jsonc-parser";
 import { searchDubPackages, listPackages, getPackageInfo, getLatestPackageInfo } from "./dub-api"
-
-var semverRegex = /(\d+)\.(\d+)\.(\d+)/;
+import { cmpSemver } from "./installer";
 
 function pad3(n: number) {
 	if (n >= 100)
@@ -130,18 +129,19 @@ export class DubJSONContribution implements IJSONContribution {
 						result.error("No versions found");
 						return resolve();
 					}
+					var items: vscode.CompletionItem[] = [];
 					for (var i = versions.length - 1; i >= 0; i--) {
 						var item = new vscode.CompletionItem(versions[i].version);
 						item.detail = "Released on " + new Date(versions[i].date).toLocaleDateString();
 						item.kind = vscode.CompletionItemKind.Class;
 						item.insertText = new vscode.SnippetString().appendPlaceholder("").appendText(versions[i].version);
-						var sortText = "999999999";
-						var semverMatch = semverRegex.exec(versions[i].version);
-						if (semverMatch) {
-							sortText = pad3(999 - parseInt(semverMatch[1])) + pad3(999 - parseInt(semverMatch[2])) + pad3(999 - parseInt(semverMatch[3]));
-						}
-						item.sortText = sortText;
-						result.add(item);
+						item.sortText = "0";
+						items.push(item);
+					}
+					items.sort((a, b) => cmpSemver(b.label, a.label));
+					for (let i = 0; i < items.length; i++) {
+						items[i].sortText = (10000000 + i).toString(); // lazy 0 pad
+						result.add(items[i]);
 					}
 					resolve();
 				}, error => {

@@ -615,6 +615,7 @@ export function compileDependency(cwd: string, name: string, gitURI: string, com
 }
 
 export function parseSimpleSemver(a: string): [number, number, number, (string | number)[]] {
+	if (a.startsWith("~")) return [0, 0, 0, [a]];
 	if (a.startsWith("v")) a = a.substr(1);
 
 	const plus = a.indexOf('+');
