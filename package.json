@@ -563,6 +563,30 @@
 					"default": "conditional_newline_indent",
 					"description": "Control the formatting of template constraints. See https://github.com/dlang-community/dfmt/issues/215"
 				},
+				"dfmt.spaceBeforeFunctionParameters": {
+					"type": "boolean",
+					"scope": "resource",
+					"default": false,
+					"description": "Insert space before the opening paren of a function parameter list."
+				},
+				"dfmt.singleTemplateConstraintIndent": {
+					"type": "boolean",
+					"scope": "resource",
+					"default": false,
+					"description": "Set if the constraints are indented by a single tab instead of two. Has only an effect if the style set to `always_newline_indent` or `conditional_newline_indent`."
+				},
+				"dfmt.spaceBeforeAAColon": {
+					"type": "boolean",
+					"scope": "resource",
+					"default": false,
+					"description": "Adds a space after an associative array key before the `:` like in older dfmt versions."
+				},
+				"dfmt.keepLineBreaks": {
+					"type": "boolean",
+					"scope": "resource",
+					"default": true,
+					"description": "Keep existing line breaks if these don't violate other formatting rules."
+				},
 				"dscanner.ignoredKeys": {
 					"type": "array",
 					"scope": "resource",
