@@ -497,7 +497,7 @@
 					"type": "boolean",
 					"scope": "resource",
 					"default": true,
-					"description": "Not yet implemented (on dfmt side)"
+					"description": "Align labels, cases, and defaults with their enclosing switch."
 				},
 				"dfmt.braceStyle": {
 					"type": "string",
