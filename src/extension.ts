@@ -430,7 +430,7 @@ export function activate(context: vscode.ExtensionContext): CodedAPI {
 
 			vscode.workspace.onDidOpenTextDocument(coverageanal.populateCurrent, coverageanal, context.subscriptions);
 
-			vscode.workspace.findFiles("*.lst", "").then(files => {
+			vscode.workspace.findFiles("**/*.lst", "").then(files => {
 				files.forEach(file => {
 					coverageanal.updateCache(file);
 				});
