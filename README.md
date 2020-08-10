@@ -16,6 +16,14 @@ Also [available for Atom](https://github.com/Pure-D/atomize-d)!
 * Outlining and searching for symbols
 * and [much more](https://github.com/Pure-D/code-d/wiki)
 
+## Special Thanks
+
+**Thanks to the following big GitHub sponsors** financially supporting the code-d/serve-d tools:
+
+* Jaen ([@jaens](https://github.com/jaens))
+
+_[become a sponsor](https://github.com/sponsors/WebFreak001)_
+
 ## Installation
 
 ### Prerequirements:
