@@ -64,7 +64,7 @@ Depending on extension you choose to use you will need to check their documentat
 
 ### Windows
 
-* Visual Studio Debugger
+* **Visual Studio Debugger** (recommended)
 
   This will use the debugger bundled with Visual Studio, which works great for D. This is a great option if you want a zero-hassle configuration that quickly is going to work.
 
@@ -74,7 +74,7 @@ Depending on extension you choose to use you will need to check their documentat
 
   * `"type": "cppvsdbg"` (C/C++ extension)
 
-* GDB
+* **GDB**
 
   In order to use GDB on Windows, you will need to install Cygwin or MinGW, which might be difficult for your environment and is not the easiest way to setup.
 
@@ -86,7 +86,7 @@ Depending on extension you choose to use you will need to check their documentat
 
   * `"type": "gdb"` (Native Debug extension)
 
-* LLDB
+* **LLDB**
 
   In order to use LLDB on Windows, you will need to compile LLDB from source or obtain an executable from somewhere reliable. This is not the easiest way to setup.
 
@@ -94,7 +94,7 @@ Depending on extension you choose to use you will need to check their documentat
 
   * `"type": "lldb-mi"` (Native Debug extension)
 
-* Mago
+* **Mago**
 
   Mago is a debugging engine designed especially for debugging D code. When not having Visual Studio installed this might be a great alternative to use.
 
@@ -110,7 +110,7 @@ Official documentation for the C/C++ extension: https://code.visualstudio.com/do
 
 ### Linux
 
-* GDB
+* **GDB**
 
   GDB is a very reliable debugger on linux and should just work out of the box with D. Refer to your distribution's documentation to learn how to install GDB.
 
@@ -120,7 +120,7 @@ Official documentation for the C/C++ extension: https://code.visualstudio.com/do
 
   * `"type": "gdb"` (Native Debug extension)
 
-* LLDB
+* **LLDB**
 
   LLDB is an alternative debugger which will work especially well when your program is compiled with LDC and might function a little bit differently here and there. Refer to your distribution's documentation to learn how to install LLDB.
 
@@ -136,7 +136,7 @@ in order not to enter your password or get a permission denied error whenever us
 
 ### Mac
 
-* LLDB
+* **LLDB** (recommended)
 
   LLDB is the recommended debugger on Mac. It comes **installed with Xcode** but requires an additional step to be fully usable:
 
@@ -152,7 +152,7 @@ in order not to enter your password or get a permission denied error whenever us
 
   * `"type": "lldb-mi"` (Native Debug extension)
 
-* GDB
+* **GDB**
 
   GDB on Mac must be separately installed and might not function correctly in every case. It should be used as fallback but can be made to work.
 
