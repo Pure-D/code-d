@@ -149,7 +149,7 @@ export function tokenizeSDL(sdl: string) {
 			tokens.push({ type: "value", range: [index, index + match[0].length], valuetype: "boolean", value: match[1] == "true" || match[1] == "on" });
 			sdl = sdl.substr(match[0].length);
 		} else if (match = binaryValue.exec(sdl)) {
-			tokens.push({ type: "value", range: [index, index + match[0].length], valuetype: "binary", value: new Buffer(match[1].replace(/\s/g, ""), "base64") });
+			tokens.push({ type: "value", range: [index, index + match[0].length], valuetype: "binary", value: Buffer.from(match[1].replace(/\s/g, ""), "base64") });
 			sdl = sdl.substr(match[0].length);
 		} else if (match = nullValue.exec(sdl)) {
 			tokens.push({ type: "value", range: [index, index + match[0].length], valuetype: "null", value: null });
