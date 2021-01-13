@@ -363,22 +363,52 @@ export function registerCommands(context: vscode.ExtensionContext) {
 		subscriptions.push(vscode.commands.registerCommand("dub.closeSettingsEditor", editor.close, editor));
 	}
 
-	let rdmdTerminal: vscode.Terminal;
-	subscriptions.push(vscode.commands.registerCommand("code-d.rdmdCurrent", (file: vscode.Uri) => {
-		var args = [];
+	var evalCounter = 0;
+	subscriptions.push(vscode.commands.registerCommand("code-d.rdmdCurrent", async (file: vscode.Uri) => {
+		var args: vscode.ShellQuotedString[] = [];
 		if (!vscode.window.activeTextEditor)
 			return vscode.window.showErrorMessage("No text editor active");
-		if (file)
-			args = [file.fsPath];
-		else if (!vscode.window.activeTextEditor.document.fileName)
-			args = ["--eval=\"" + vscode.window.activeTextEditor.document.getText().replace(/\\/g, "\\\\").replace(/"/g, "\\\"") + "\""];
-		else
-			args = [vscode.window.activeTextEditor.document.fileName];
 
-		if (!rdmdTerminal)
-			rdmdTerminal = vscode.window.createTerminal("rdmd Output");
-		rdmdTerminal.show();
-		rdmdTerminal.sendText("rdmd " + args.join(" "));
+		const doc = vscode.window.activeTextEditor.document;
+		if (!file && doc.isDirty && !doc.isUntitled) {
+			const btnSave = "Save file";
+			const btnDisk = "Run from disk";
+			const btnCancel = "Abort";
+
+			const choice = await vscode.window.showWarningMessage("The file is not saved, do you want to proceed?", btnSave, btnDisk, btnCancel);
+			switch (choice) {
+				case btnSave:
+					if (!await vscode.window.activeTextEditor.document.save()) {
+						vscode.window.showErrorMessage("Aborting RDMD run because save failed");
+						return;
+					}
+					break;
+				case btnDisk:
+					break;
+				case btnCancel:
+				default:
+					return;
+			}
+		}
+
+		file = file || (doc.isUntitled ? undefined : doc.uri);
+
+		var cwd = file ? path.dirname(file.fsPath) : vscode.workspace.workspaceFolders ? vscode.workspace.workspaceFolders[0].uri.fsPath : undefined;
+		if (file)
+			args = [{ value: file.fsPath, quoting: vscode.ShellQuoting.Strong }];
+		else
+			args = [{
+				value: "--eval=" + doc.getText(),
+				quoting: vscode.ShellQuoting.Strong
+			}];
+
+		const shell = new vscode.ShellExecution({ value: "rdmd", quoting: vscode.ShellQuoting.Strong }, args, { cwd: cwd });
+		const task = new vscode.Task({ type: "rdmd" }, vscode.TaskScope.Workspace, "RDMD " + (file || ("eval code " + (++evalCounter))), "code-d", shell);
+
+		task.isBackground = false;
+		task.presentationOptions = { echo: !!file };
+
+		vscode.tasks.executeTask(task);
 	}));
 
 	subscriptions.push(vscode.commands.registerCommand("code-d.createProject", () => {
