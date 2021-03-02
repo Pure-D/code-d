@@ -40,7 +40,7 @@ export class DubJSONContribution implements IJSONContribution {
 	public collectPropertySuggestions(fileName: string, location: Location, currentWord: string, addValue: boolean, isLast: boolean, result: ISuggestionsCollector): Thenable<any> {
 		if (location.path[location.path.length - 1] != "dependencies" && location.path[location.path.length - 2] != "dependencies")
 			return Promise.resolve(null);
-		return new Promise((resolve, reject) => {
+		return new Promise<void>((resolve, reject) => {
 			if (currentWord.length > 0) {
 				var colonIdx = currentWord.indexOf(":");
 				if (colonIdx == -1) {
@@ -122,7 +122,7 @@ export class DubJSONContribution implements IJSONContribution {
 		else
 			return Promise.resolve(null);
 		if (typeof currentKey === "string") {
-			return new Promise((resolve, reject) => {
+			return new Promise<void>((resolve, reject) => {
 				getPackageInfo(currentKey).then(json => {
 					var versions = json.versions;
 					if (!versions || !versions.length) {

@@ -43,9 +43,9 @@ const registry = new vsctm.Registry({
 });
 
 function testSyntaxes(grammar: vsctm.IGrammar, folder: string, ext: string) {
-	return new Promise((resolve, reject) => {
+	return new Promise<void>((resolve, reject) => {
 		if (!fs.existsSync(res(folder)))
-			return resolve(null);
+			return resolve();
 
 		fs.readdir(res(folder), async (err, files) => {
 			if (err)
