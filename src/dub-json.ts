@@ -58,11 +58,11 @@ export class DubJSONContribution implements IJSONContribution {
 							item.documentation = element.description;
 							result.add(item);
 						});
-						resolve();
+						resolve(undefined);
 					}, err => {
 						console.log("Error searching for packages");
 						console.log(err);
-						resolve();
+						resolve(undefined);
 					});
 				} else {
 					var pkgName = currentWord.substr(0, colonIdx);
@@ -82,10 +82,10 @@ export class DubJSONContribution implements IJSONContribution {
 								item.documentation = info.description;
 								result.add(item);
 							});
-						resolve();
+						resolve(undefined);
 					}, err => {
 						result.error("Package not found");
-						resolve();
+						resolve(undefined);
 					});
 				}
 			}
@@ -103,11 +103,11 @@ export class DubJSONContribution implements IJSONContribution {
 						item.insertText = insertText;
 						result.add(item);
 					});
-					resolve();
+					resolve(undefined);
 				}, err => {
 					console.log("Error searching for packages");
 					console.log(err);
-					resolve();
+					resolve(undefined);
 				});
 			}
 		});
@@ -127,7 +127,7 @@ export class DubJSONContribution implements IJSONContribution {
 					var versions = json.versions;
 					if (!versions || !versions.length) {
 						result.error("No versions found");
-						return resolve();
+						return resolve(undefined);
 					}
 					var items: vscode.CompletionItem[] = [];
 					for (var i = versions.length - 1; i >= 0; i--) {
@@ -143,10 +143,10 @@ export class DubJSONContribution implements IJSONContribution {
 						items[i].sortText = (10000000 + i).toString(); // lazy 0 pad
 						result.add(items[i]);
 					}
-					resolve();
+					resolve(undefined);
 				}, error => {
 					result.error(error.toString());
-					resolve();
+					resolve(undefined);
 				});
 			});
 		}

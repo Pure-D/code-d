@@ -103,7 +103,7 @@ export function downloadFileInteractive(url: string, title: string, aborted: Fun
 		cancel = _cancel;
 		return new Promise((resolve) => {
 			if (done === false)
-				return resolve();
+				return resolve(undefined);
 			done = resolve;
 		});
 	});
@@ -597,7 +597,7 @@ export function compileDependency(cwd: string, name: string, gitURI: string, com
 					if (err)
 						return error(err);
 					installationLog.appendLine("Done compiling");
-					callback();
+					callback(undefined);
 				});
 			});
 		};
