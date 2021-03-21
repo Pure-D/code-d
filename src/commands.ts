@@ -3,7 +3,7 @@ import * as path from "path";
 import * as fs from "fs";
 import { DubEditor } from "./dub-editor";
 import { LanguageClient, TextEdit } from "vscode-languageclient";
-import { ServeD } from "./extension";
+import { served, ServeD } from "./extension";
 import { showProjectCreator, performTemplateCopy, openFolderWithExtension } from "./project-creator";
 import { listPackageOptions, getLatestPackageInfo } from "./dub-api"
 import { DubDependency } from "./dub-view";
@@ -17,7 +17,8 @@ var gClient: LanguageClient;
 export function registerClientCommands(context: vscode.ExtensionContext, client: LanguageClient, served: ServeD) {
 	var subscriptions = context.subscriptions;
 
-	subscriptions.push(vscode.tasks.registerTaskProvider("dub", new DubTasksProvider(client)));
+	served.tasksProvider = new DubTasksProvider(client);
+	subscriptions.push(vscode.tasks.registerTaskProvider("dub", served.tasksProvider));
 
 	gClient = client;
 
@@ -363,6 +364,7 @@ export function registerCommands(context: vscode.ExtensionContext) {
 		subscriptions.push(vscode.commands.registerCommand("dub.closeSettingsEditor", editor.close, editor));
 	}
 
+	vscode.commands.executeCommand("setContext", "d.isActive", true);
 	var evalCounter = 0;
 	subscriptions.push(vscode.commands.registerCommand("code-d.rdmdCurrent", async (file: vscode.Uri) => {
 		var args: vscode.ShellQuotedString[] = [];
@@ -410,6 +412,39 @@ export function registerCommands(context: vscode.ExtensionContext) {
 
 		vscode.tasks.executeTask(task);
 	}));
+
+	function withProject(fn: (...args: any[]) => any) {
+		return async function(this: any, config: any) {
+			if (!served)
+				throw new Error("serve-d is not yet started, can't read DUB config");
+			const project = await served.getActiveDubConfig();
+			return fn.apply(this, [config, project]);
+		};
+	}
+
+	subscriptions.push(vscode.commands.registerCommand("code-d.getActiveDubPackageName", withProject((config, project) => {
+		return project.packageName;
+	})));
+
+	subscriptions.push(vscode.commands.registerCommand("code-d.getActiveDubPackagePath", withProject((config, project) => {
+		return project.packagePath;
+	})));
+
+	subscriptions.push(vscode.commands.registerCommand("code-d.getActiveDubWorkingDirectory", withProject((config, project) => {
+		return path.join(project.packagePath, project.workingDirectory);
+	})));
+
+	subscriptions.push(vscode.commands.registerCommand("code-d.getActiveDubTarget", withProject((config, project) => {
+		return path.join(project.targetPath, project.targetName);
+	})));
+
+	subscriptions.push(vscode.commands.registerCommand("code-d.getActiveDubTargetPath", withProject((config, project) => {
+		return project.targetPath;
+	})));
+
+	subscriptions.push(vscode.commands.registerCommand("code-d.getActiveDubTargetName", withProject((config, project) => {
+		return project.targetName;
+	})));
 
 	subscriptions.push(vscode.commands.registerCommand("code-d.createProject", () => {
 		showProjectCreator(context);

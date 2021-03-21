@@ -33,6 +33,18 @@ code-d and serve-d
 
 code-d can now be used without open workspace to edit singular D files.
 
+## Debugging
+
+code-d now ships with a debug launch type, which is a wrapper for various debugging extensions. Currently supported debugging extensions are:
+
+- Native Debug (webfreak.code-debug)
+- C/C++ (ms-vscode.cpptools)
+- CodeLLDB (vadimcn.vscode-lldb)
+
+Through this it is possible to create a single platform-independent, extension-independent debug configuration, which can be used and shared in most projects without changes.
+
+Refer to the new [Debugging section](docs/debugging.md) in the user guide to see how to use this new feature.
+
 ## Usability
 
 Several improvements to warning/error diagnostics have been made. While editing syntax errors are now properly marked as error instead of as warning and have better locations.
@@ -118,6 +130,12 @@ void main()
 ## Tutorial
 
 The [Debugging section](docs/debugging.md) in the User Guide has been updated to include the selection and installation of a debugger used for D.
+
+## Settings Contexts
+
+You can now use new context variables in `when` clauses in vscode settings like keyboard shortcuts. Added are:
+
+- `d.isActive` which is true once code-d has been started (user ran some code-d command, opened a D file, wants to debug, has dub.json/dub.sdl, etc.)
 
 ## Other Things
 

@@ -23,6 +23,8 @@ import { builtinPlugins } from "./builtin_plugins";
 import { CodedAPIServedImpl } from "./api_impl";
 import { restoreCreateProjectPackageBackup } from "./project-creator";
 import { TestAdapterGenerator, UnittestProject } from "./testprovider";
+import { registerDebuggers, linkDebuggersWithServed } from "./debug";
+import { DubTasksProvider } from "./dub-tasks";
 
 class CustomErrorHandler implements ErrorHandler {
 	private restarts: number[];
@@ -57,17 +59,47 @@ export var served: ServeD;
 
 export type DScannerIniFeature = { description: string, name: string, enabled: "disabled" | "enabled" | "skip-unittest" };
 export type DScannerIniSection = { description: string, name: string, features: DScannerIniFeature[] };
+export interface ActiveDubConfig {
+	packagePath: string;
+	packageName: string;
+	targetPath: string;
+	targetName: string;
+	workingDirectory: string;
+	mainSourceFile: string;
+
+	dflags: string[];
+	lflags: string[];
+	libs: string[];
+	linkerFiles: string[];
+	sourceFiles: string[];
+	copyFiles: string[];
+	versions: string[];
+	debugVersions: string[];
+	importPaths: string[];
+	stringImportPaths: string[];
+	importFiles: string[];
+	stringImportFiles: string[];
+	preGenerateCommands: string[];
+	postGenerateCommands: string[];
+	preBuildCommands: string[];
+	postBuildCommands: string[];
+	preRunCommands: string[];
+	postRunCommands: string[];
+	[unstableExtras: string]: any
+};
 
 export class ServeD extends EventEmitter implements vscode.TreeDataProvider<DubDependency> {
-	constructor(public client: LanguageClient) {
+	constructor(public client: LanguageClient, public outputChannel: vscode.OutputChannel) {
 		super();
 	}
 
 	private _onDidChangeTreeData: vscode.EventEmitter<DubDependency | undefined> = new vscode.EventEmitter<DubDependency | undefined>();
 	readonly onDidChangeTreeData: vscode.Event<DubDependency | undefined> = this._onDidChangeTreeData.event;
 
+	public tasksProvider?: DubTasksProvider;
+
 	refreshDependencies(): void {
-		this._onDidChangeTreeData.fire();
+		this._onDidChangeTreeData.fire(undefined);
 	}
 
 	getTreeItem(element: DubDependency): vscode.TreeItem {
@@ -134,6 +166,10 @@ export class ServeD extends EventEmitter implements vscode.TreeDataProvider<DubD
 		return this.client.sendRequest("served/addDependencySnippet", params);
 	}
 
+	getActiveDubConfig(): Thenable<ActiveDubConfig> {
+		return this.client.sendRequest("served/getActiveDubConfig");
+	}
+
 	private static taskGroups: vscode.TaskGroup[] = [
 		vscode.TaskGroup.Build,
 		vscode.TaskGroup.Clean,
@@ -186,7 +222,7 @@ function startClient(context: vscode.ExtensionContext) {
 	};
 	let client = new LanguageClient("serve-d", "code-d & serve-d", executable, clientOptions);
 	client.start();
-	served = new ServeD(client);
+	served = new ServeD(client, outputChannel);
 
 	context.subscriptions.push({
 		dispose() {
@@ -309,6 +345,7 @@ function startClient(context: vscode.ExtensionContext) {
 	});
 
 	registerClientCommands(context, client, served);
+	linkDebuggersWithServed(served);
 }
 
 export var currentVersion: string | undefined;
@@ -366,6 +403,8 @@ export function activate(context: vscode.ExtensionContext): CodedAPI {
 	context.subscriptions.push(addJSONProviders());
 
 	registerCommands(context);
+
+	registerDebuggers(context);
 
 	greetNewUsers(context);
 
