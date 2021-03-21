@@ -6,6 +6,7 @@ docs-src/**
 test/**
 src/**
 ci/**
+private/**
 **/*.map
 .gitignore
 tsconfig.json

@@ -1,0 +1,3 @@
+[submodule "dlang-debug"]
+	path = dlang-debug
+	url = https://github.com/Pure-D/dlang-debug.git

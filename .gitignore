@@ -1,6 +1,7 @@
 out
 node_modules
 .vscode-test/
+private/
 *.vsix
 bin
 package-lock.json
