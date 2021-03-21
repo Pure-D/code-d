@@ -79,7 +79,7 @@ function testSyntaxes(grammar: vsctm.IGrammar, folder: string, ext: string) {
 
 					assert.deepStrictEqual(tokens, expectedTokens, "error in " + file);
 				}
-				resolve();
+				resolve(undefined);
 			}
 			catch (e) {
 				reject(e);
