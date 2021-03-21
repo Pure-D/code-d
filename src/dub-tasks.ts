@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { config } from "./extension";
+import { config, served } from "./extension";
 import { LanguageClient } from "vscode-languageclient/lib/main";
 
 export class DubTasksProvider implements vscode.TaskProvider {
@@ -71,7 +71,7 @@ export class DubTasksProvider implements vscode.TaskProvider {
 		});
 	}
 
-	resolveTask(task: vscode.Task & {
+	async resolveTask(task: vscode.Task & {
 		definition: {
 			run?: boolean,
 			test?: boolean,
@@ -85,9 +85,16 @@ export class DubTasksProvider implements vscode.TaskProvider {
 			configuration?: string,
 			args?: string[]
 		}
-	}, token?: vscode.CancellationToken | undefined): vscode.ProviderResult<vscode.Task> {
-		let dubLint = config(null).get("enableDubLinting", true);
-		var args: string[] = [config(null).get("dubPath", "dub")];
+	}, token?: vscode.CancellationToken | undefined): Promise<vscode.Task> {
+		function replaceCurrent(str: string, servedFetchCommand: string): string | Promise<string> {
+			if (str == "$current")
+				return served.client.sendRequest<string>(servedFetchCommand);
+			else
+				return str;
+		}
+
+		const dubLint = config(null).get("enableDubLinting", true);
+		const args: string[] = [config(null).get("dubPath", "dub")];
 		args.push(task.definition.test ? "test" : task.definition.run ? "run" : "build");
 		if (task.definition.root)
 			args.push("--root=" + task.definition.root);
@@ -98,13 +105,13 @@ export class DubTasksProvider implements vscode.TaskProvider {
 		if (task.definition.force)
 			args.push("--force");
 		if (task.definition.compiler)
-			args.push("--compiler=" + task.definition.compiler);
+			args.push("--compiler=" + await replaceCurrent(task.definition.compiler, "served/getCompiler"));
 		if (task.definition.archType)
-			args.push("--arch=" + task.definition.archType);
+			args.push("--arch=" + await replaceCurrent(task.definition.archType, "served/getArchType"));
 		if (task.definition.buildType)
-			args.push("--build=" + task.definition.buildType);
+			args.push("--build=" + await replaceCurrent(task.definition.buildType, "served/getBuildType"));
 		if (task.definition.configuration)
-			args.push("--config=" + task.definition.configuration);
+			args.push("--config=" + await replaceCurrent(task.definition.configuration, "served/getConfig"));
 		if (Array.isArray(task.definition.args))
 			args.push.apply(args, task.definition.args);
 
@@ -132,12 +139,12 @@ export class DubTasksProvider implements vscode.TaskProvider {
 
 function makeExecutor(proc: string, args: string[], cwd: string): vscode.ProcessExecution | vscode.ShellExecution {
 	let options: vscode.ProcessExecutionOptions | undefined = cwd ? { cwd: cwd } : undefined;
-	return new vscode.ProcessExecution(proc, args, options);
-	// return new vscode.ShellExecution({
-	// 	value: proc,
-	// 	quoting: vscode.ShellQuoting.Strong
-	// }, args.map(arg => <vscode.ShellQuotedString>{
-	// 	value: arg,
-	// 	quoting: vscode.ShellQuoting.Strong
-	// }), options);
+	//return new vscode.ProcessExecution(proc, args, options);
+	return new vscode.ShellExecution({
+		value: proc,
+		quoting: vscode.ShellQuoting.Strong
+	}, args.map(arg => <vscode.ShellQuotedString>{
+		value: arg,
+		quoting: vscode.ShellQuoting.Strong
+	}), options);
 }

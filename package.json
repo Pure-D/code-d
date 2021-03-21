@@ -934,18 +934,22 @@
 					},
 					"compiler": {
 						"type": "string",
+						"examples": ["$current"],
 						"description": "Common name or path to compiler executable"
 					},
 					"archType": {
 						"type": "string",
+						"examples": ["$current"],
 						"description": "Arch type to compile with"
 					},
 					"buildType": {
 						"type": "string",
+						"examples": ["$current"],
 						"description": "Build type to compile with"
 					},
 					"configuration": {
 						"type": "string",
+						"examples": ["$current"],
 						"description": "Configuration to run"
 					},
 					"args": {
