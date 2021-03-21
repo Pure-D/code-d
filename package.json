@@ -1092,22 +1092,30 @@
 					},
 					"compiler": {
 						"type": "string",
-						"examples": ["$current"],
+						"examples": [
+							"$current"
+						],
 						"description": "Common name or path to compiler executable"
 					},
 					"archType": {
 						"type": "string",
-						"examples": ["$current"],
+						"examples": [
+							"$current"
+						],
 						"description": "Arch type to compile with"
 					},
 					"buildType": {
 						"type": "string",
-						"examples": ["$current"],
+						"examples": [
+							"$current"
+						],
 						"description": "Build type to compile with"
 					},
 					"configuration": {
 						"type": "string",
-						"examples": ["$current"],
+						"examples": [
+							"$current"
+						],
 						"description": "Configuration to run"
 					},
 					"args": {
@@ -1163,8 +1171,8 @@
 	"dependencies": {
 		"adm-zip": "^0.4.13",
 		"async": "^3.1.0",
-		"axios": "^0.19.0",
-		"code-d-api": "^0.1.0",
+		"axios": "^0.21.1",
+		"code-d-api": "^0.2.0",
 		"expand-tilde": "^2.0.2",
 		"jsdom": "^15.2.0",
 		"jsonc-parser": "^2.1.1",
@@ -1172,12 +1180,12 @@
 		"mkdirp": "^0.5.1",
 		"ncp": "^2.0.0",
 		"rimraf": "^3.0.0",
-		"rmdir": "^1.2.0",
+		"rmdir": "^1.0.0",
 		"string-argv": "^0.3.1",
 		"vscode-languageclient": "^6.0.0",
 		"vscode-test-adapter-api": "^1.9.0",
 		"which": "^2.0.1",
-		"xmldom": "^0.1.27"
+		"xmldom": "^0.5.0"
 	},
 	"devDependencies": {
 		"@types/expand-tilde": "^2.0.0",
