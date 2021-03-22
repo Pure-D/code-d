@@ -11,6 +11,7 @@ export interface UnittestProject
 	workspaceUri: DocumentUri;
 	name: string;
 	modules: UnittestModule[];
+	needsLoad: boolean;
 }
 
 export interface UnittestModule
@@ -38,6 +39,9 @@ export class TestAdapterGenerator implements vscode.Disposable {
 	}
 
 	updateTests(tests: UnittestProject) {
+		if (tests.needsLoad)
+			return; // no lazy load in TestAdapter API
+
 		let adapter = this.adapters[tests.workspaceUri];
 		if (!adapter) {
 			const uri = vscode.Uri.parse(tests.workspaceUri);
@@ -45,11 +49,13 @@ export class TestAdapterGenerator implements vscode.Disposable {
 				this.served,
 				tests.workspaceUri,
 				tests.name || path.basename(uri.fsPath),
-				vscode.workspace.getWorkspaceFolder(uri)
+				vscode.workspace.getWorkspaceFolder(uri),
+				tests.needsLoad
 			);
 			this.testHub.registerTestAdapter(adapter);
 		}
-		adapter.updateModules(tests.modules);
+
+		adapter.updateModules(tests.needsLoad, tests.modules);
 	}
 
 	dispose() {
@@ -69,16 +75,20 @@ export class ServeDTestProvider implements TestAdapter, vscode.Disposable {
 	get autorun(): vscode.Event<void> | undefined { return this.autorunEmitter.event; }
 
 	private modules: UnittestModule[] = [];
+	private firstLoad: boolean;
 
 	constructor(
 		public served: ServeD,
 		public folderId: string,
 		public folderName: string,
-		public workspace?: vscode.WorkspaceFolder
+		public workspace?: vscode.WorkspaceFolder,
+		public needsLoad?: boolean
 	) {
+		this.firstLoad = true;
 	}
 
-	updateModules(modules: UnittestModule[]) {
+	updateModules(needsLoad: boolean, modules: UnittestModule[]) {
+		this.needsLoad = needsLoad;
 		this.modules = modules;
 		let suite: TestSuiteInfo = {
 			id: "project_" + this.folderId,
@@ -125,6 +135,14 @@ export class ServeDTestProvider implements TestAdapter, vscode.Disposable {
 	}
 
 	async load(): Promise<void> {
+		if (this.firstLoad) {
+			this.firstLoad = false;
+			// skip first load (already emitting loaded)
+			// only do reloads
+			return;
+		}
+
+		this.served.client.sendRequest("served/rescanTests", { uri: this.folderId });
 	}
 
 	async run(tests: string[]): Promise<void> {
