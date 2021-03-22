@@ -173,6 +173,7 @@ class DDebugProvider implements vscode.DebugConfigurationProvider {
 
 	async makeDebugConfiguration(debugConfiguration: vscode.DebugConfiguration): Promise<vscode.DebugConfiguration> {
 		const overwrite = debugConfiguration.config;
+		const platform = debugConfiguration.platform || process.platform;
 
 		if (!path.isAbsolute(debugConfiguration.program) && debugConfiguration.cwd)
 			debugConfiguration.program = path.join(debugConfiguration.cwd, debugConfiguration.program);
@@ -183,7 +184,7 @@ class DDebugProvider implements vscode.DebugConfigurationProvider {
 		if (debugType == "autodetect") {
 			debugType = <any>"no-ext";
 
-			if (this.hasCodeLLDB && debugType.startsWith("no-")) {
+			if (this.hasCodeLLDB && debugType.startsWith("no-") && platform != "win32") {
 				debugType = "code-lldb";
 			}
 			if (this.hasCppDebug && debugType.startsWith("no-")) {
@@ -248,7 +249,7 @@ class DDebugProvider implements vscode.DebugConfigurationProvider {
 		}
 
 		if (debugType == "lldb") {
-			if (this.hasCodeLLDB) {
+			if (this.hasCodeLLDB && platform != "win32") {
 				debugType = "code-lldb";
 			} else if (this.hasCppDebug) {
 				debugType = "cpp-lldb";

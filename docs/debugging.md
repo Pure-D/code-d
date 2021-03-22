@@ -203,9 +203,7 @@ You can now also debug using the button in the status bar:
 
 ### Recommendation Summary
 
-* **Windows**: VS debugger through C/C++ (ms-vscode.cpptools)
-
-  or LLDB through CodeLLDB (vadimcn.vscode-lldb)
+* **Windows**: VS debugger or GDB through C/C++ (ms-vscode.cpptools)
 
 * **Linux**: GDB or LLDB from usual distribution sources
 
@@ -226,20 +224,6 @@ You can now also debug using the button in the status bar:
   Manual Extension configuration:
 
   * `"type": "cppvsdbg"` (C/C++ extension)
-
-* **LLDB** (recommended)
-
-  In order to use LLDB on Windows, you will need to compile LLDB from source or obtain an executable from somewhere reliable.
-
-  The CodeLLDB extension can be used to automatically download a LLDB binary to debug with.
-
-  Manual Extension configuration:
-
-  * `"type": "lldb"` (CodeLLDB, recommended)
-
-  * `"type": "lldb-mi"` (Native Debug extension, needs lldb-mi also shipped with LLDB)
-
-  * `"type": "cppdbg", "MIMode": "lldb"` (C/C++ extension, needs lldb-mi also shipped with LLDB)
 
 * **GDB**
 
