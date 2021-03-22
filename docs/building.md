@@ -56,9 +56,9 @@ See https://dub.pm/package-format-json.html#configurations
 
 The architecture determines for which platform architecture the binary is going to be generated. Commonly these include:
 
-* `x86` for 32-bit apps on an Intel (based) CPU
+* `x86` for 32-bit apps on an Intel-based CPU
 
-* `x86_64` for 64-bit apps on an Intel (based) CPU
+* `x86_64` for 64-bit apps on an Intel-based CPU
 
 Depending on the selected compiler this might include more architectures for cross compiling.
 

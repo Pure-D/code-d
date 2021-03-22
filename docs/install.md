@@ -20,17 +20,17 @@
 
 </div>
 
-First you have to install code-d in VSCode like any other extension from the side panel.
+First you have to install code-d in VSCode like any other extension from the side panel in VSCode.
+
+It's possible to manually download the vsix for manual installation from the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=webfreak.code-d) or the [Open VSX Registry](https://open-vsx.org/extension/webfreak/code-d).
 
 ## First time installing D
 
 If you don't have D installed, code-d will open the [D compiler download page](https://dlang.org/download.html) for you where you simply select your compiler of choice and install it for your OS.
 
-If you are on Windows, you will probably need to restart your PC after D is installed so it is accessible in the PATH from within VSCode and its extensions.
+On Windows it's a good idea to restart your PC after D is installed so it is accessible from PATH from within VSCode and its extensions.
 
-After you are done, reload VSCode (F1 -> Developer: Reload Window) and open a D project, everything should work now.
-
-![vscode reload button](images/vscode_reload_button.png)
+After D has been installed, restart VSCode and open a D project, everything should work now.
 
 ## Verifying functionality
 

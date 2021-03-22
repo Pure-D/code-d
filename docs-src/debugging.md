@@ -10,7 +10,7 @@ However code-d does provide build tasks which can be used before debugging so th
 
 There exist multiple extension options for debugging. Installing all of them is possible to make code-d choose the best available, but may increase startup time of VSCode.
 
-C/C++ extension by Microsoft: (ms-vscode.cpptools)
+### C/C++ extension by Microsoft: (ms-vscode.cpptools)
 
 ![C/C++](images/ext_cpp.png)
 
@@ -26,7 +26,7 @@ C/C++ extension by Microsoft: (ms-vscode.cpptools)
 
 * Can show more variables/scope
 
-Native Debug extension by WebFreak: (webfreak.code-debug)
+### Native Debug extension by WebFreak: (webfreak.code-debug)
 
 ![native debug](images/ext_native_debug.png)
 
@@ -34,7 +34,7 @@ Native Debug extension by WebFreak: (webfreak.code-debug)
 
 * Some better remote debugging support
 
-CodeLLDB extension by vadimcn: (vadimcn.vscode-lldb)
+### CodeLLDB extension by vadimcn: (vadimcn.vscode-lldb)
 
 ![CodeLLDB](images/ext_code_lldb.png)
 
@@ -54,7 +54,7 @@ CodeLLDB extension by vadimcn: (vadimcn.vscode-lldb)
 
 code-d ships with debug wrappers, which automatically loads the best installed recommended debug extension for the current system. To start out using code-d, start with the following debug configuration:
 
-```json
+```js
 // DUB
 {
 	"type": "code-d",
@@ -65,7 +65,7 @@ code-d ships with debug wrappers, which automatically loads the best installed r
 }
 ```
 
-```json
+```js
 // Other D enabled debugging
 {
 	"type": "code-d",
@@ -151,7 +151,7 @@ First you will need to add a label to your [task definition](building.md#custom-
 
 ```js
 {
-	"label": "dub build", // <-- add a good name here
+	"label": "dub build default", // <-- add a good name here
 	"type": "dub",
 	"run": false,
 	"problemMatcher": [
@@ -229,6 +229,8 @@ You can now also debug using the button in the status bar:
 
   You will need to install GDB to be accessible from `PATH` or manually configure the path to your executable in the debugger configuration. (Depending on the extension `miDebuggerPath` or `gdbpath`)
 
+  GDB versions 9.1 and above add support for D which includes demangling of function names, so having an up-to-date installation is recommended.
+
   Manual Extension configuration:
 
   * `"type": "cppdbg", "MIMode": "gdb"` (C/C++ extension)
@@ -268,6 +270,8 @@ Official documentation for the C/C++ extension: https://code.visualstudio.com/do
 * **GDB**
 
   GDB is a very reliable debugger on linux and should just work out of the box with D. Refer to your distribution's documentation to learn how to install GDB.
+
+  GDB versions 9.1 and above add support for D which includes demangling of function names, so having an up-to-date installation is recommended.
 
   Manual Extension configuration:
 
@@ -312,6 +316,8 @@ See https://linux-audit.com/protect-ptrace-processes-kernel-yama-ptrace_scope/
 * **GDB**
 
   GDB on Mac must be separately installed and might not function correctly in every case. It should be used as fallback but can be made to work.
+
+  GDB versions 9.1 and above add support for D which includes demangling of function names, so having an up-to-date installation is recommended.
 
   Manual Extension configuration:
 

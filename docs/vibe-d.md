@@ -56,7 +56,7 @@ You can now open [http://127.0.0.1:3000/](http://127.0.0.1:3000/) in your browse
 
 You can explore around in the source code and do modifications. Once done, close the server using `Ctrl-C` in the terminal and rebuild and start it again.
 
-### Diet Files
+### Diet Template Files
 
 vibe.d uses a template format called [Diet](https://vibed.org/templates/diet) which is based off [pugjs](https://pugjs.org/api/getting-started.html). It is an indentation based language emitting HTML or XML code which can contain D code which is compiled in and run at runtime.
 
@@ -76,5 +76,5 @@ html
 		a(href="/api/users") Example REST API
 ```
 
-code-d provides full auto completion support for HTML5 tags and attributes. Additionally it fully supports auto completing inline D code inside diet files.
+code-d provides full auto completion support for HTML5 tags and attributes. Additionally it fully supports auto completing inline D code inside diet template files.
 
