@@ -617,6 +617,12 @@
 					"minimum": 0,
 					"description": "For how many projects to start triggering the manyProjectsAction to load or not load further projects."
 				},
+				"d.ignoreDebugHints": {
+					"type": "boolean",
+					"scope": "window",
+					"default": false,
+					"description": "If true, no hints will be shown when a project may be wrongly configured when trying to start debugging."
+				},
 				"d.lintOnFileOpen": {
 					"type": "string",
 					"scope": "resource",

@@ -61,6 +61,10 @@ class DDebugProvider implements vscode.DebugConfigurationProvider {
 		return this.context.asAbsolutePath("dlang-debug/gdb_dlang.py");
 	}
 
+	get vsdbgNatvis(): string {
+		return this.context.asAbsolutePath("dlang-debug/dlang_cpp.natvis");
+	}
+
 	makeNativeDebugConfiguration(type: string, debugConfiguration: vscode.DebugConfiguration): vscode.DebugConfiguration {
 		const platform = debugConfiguration.platform || process.platform;
 		const args = debugConfiguration.args;
@@ -159,7 +163,8 @@ class DDebugProvider implements vscode.DebugConfigurationProvider {
 			request: "launch",
 			type: "cppvsdbg",
 			program: debugConfiguration.program,
-			cwd: debugConfiguration.cwd
+			cwd: debugConfiguration.cwd,
+			visualizerFile: this.vsdbgNatvis
 		};
 	
 		if (Array.isArray(args) && args.length > 0) {
@@ -224,6 +229,9 @@ class DDebugProvider implements vscode.DebugConfigurationProvider {
 					else if (await hasDebugger("lldb-mi"))
 						debugType = "nd-lldb";
 				}
+			}
+			if (this.hasCodeLLDB && debugType.startsWith("no-") && platform == "win32") {
+				debugType = "code-lldb";
 			}
 
 			if (<any>debugType == "no-ext") {
@@ -319,8 +327,54 @@ class DDebugProvider implements vscode.DebugConfigurationProvider {
 		if (!debugConfiguration.dubBuild)
 			return config;
 
+		var dubconfig = await this.served?.getActiveDubConfig();
+		var hasCDebugInfo = (dubconfig?.buildOptions?.indexOf("debugInfoC") ?? -1) != -1
+			|| (dubconfig?.dflags?.indexOf("-gc") ?? -1) != -1;
+		var isSDL = dubconfig?.recipePath?.endsWith(".sdl") == true;
+		console.log(dubconfig);
+
+		function warnBuildSettings(msg: string): boolean | Thenable<boolean>
+		{
+			let ignore = "Ignore";
+			let edit = isSDL ? "Edit dub.sdl" : "Edit dub.json";
+			let workspace = vscode.workspace.workspaceFolders ? vscode.workspace.workspaceFolders[0] : undefined;
+			let config = vscode.workspace.getConfiguration("d", workspace);
+			let ignoreAlways = workspace ? "Always Ignore (Workspace)" : "Always Ignore (Global)";
+			if (config.get("ignoreDebugHints", false))
+				return true;
+
+			return vscode.window.showWarningMessage(msg, ignore, edit, ignoreAlways).then((btn: string | undefined) => {
+				if (btn == ignoreAlways) {
+					config.update("ignoreDebugHints", true);
+					btn = ignore;
+				}
+
+				if (btn == edit) {
+					if (dubconfig?.recipePath == undefined)
+						throw new Error("Unable to open recipe, please open manually");
+					var path = dubconfig.recipePath;
+					vscode.workspace.openTextDocument(path).then(vscode.window.showTextDocument);
+				}
+
+				return btn == ignore;
+			}, undefined);
+		}
+
+		if (config.type == "cppvsdbg" && !hasCDebugInfo)
+		{
+			if (!await warnBuildSettings(isSDL
+				? "C Debug Information (`-gc`) has not been enabled. This is however recommended for use with the C++ VSDBG debugger.\n\nPlease add `buildOptions \"debugInfoC\" platform=\"windows\"` to your dub.sdl (globally or best placed inside the debug configuration or a special configuration) and retry debugging or disable dub building."
+				: "C Debug Information (`-gc`) has not been enabled. This is however recommended for use with the C++ VSDBG debugger.\n\nPlease add `\"buildOptions-windows\": [\"debugInfoC\"]` to your dub.json (globally or best placed inside the debug configuration or a special configuration) and retry debugging or disable dub building."))
+				return undefined;
+		}
+		else if ((config.type == "cppdbg" || config.type == "gdb" || config.type == "lldb" || config.type == "lldb-mi") && hasCDebugInfo)
+		{
+			if (!await warnBuildSettings("C Debug Information (`-gc`) has been enabled. For the best experience with GDB/LLDB debuggers it is recommended to omit this option.\n\nTo fix this, remove or restrict the affecting `buildOptions` (debugInfoC) or `dflags` to e.g. Windows only, create a new build configuration or disable dub building."))
+				return undefined;
+		}
+
 		let exitCode = await new Promise<number>(async (done) => {
-			let task = <vscode.Task>await served.tasksProvider?.resolveTask(
+			let task = <vscode.Task>await this.served?.tasksProvider?.resolveTask(
 				{
 					definition: {
 						type: "dub",

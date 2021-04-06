@@ -62,6 +62,7 @@ export type DScannerIniSection = { description: string, name: string, features: 
 export interface ActiveDubConfig {
 	packagePath: string;
 	packageName: string;
+	recipePath: string;
 	targetPath: string;
 	targetName: string;
 	workingDirectory: string;
@@ -85,6 +86,8 @@ export interface ActiveDubConfig {
 	postBuildCommands: string[];
 	preRunCommands: string[];
 	postRunCommands: string[];
+	buildOptions: string[];
+	buildRequirements: string[];
 	[unstableExtras: string]: any
 };
 
