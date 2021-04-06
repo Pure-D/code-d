@@ -393,12 +393,15 @@ export function activate(context: vscode.ExtensionContext): CodedAPI {
 		fn();
 	}*/
 
-	try {
-		let data = fs.readFileSync(context.asAbsolutePath("package.json"));
+	fs.readFile(context.asAbsolutePath("package.json"), (err, data) => {
+		if (err) {
+			console.error("Failed reading current code-d version from package manifest: ", err);
+			return;
+		}
 		currentVersion = JSON.parse(data.toString()).version;
-	} catch (e) {
-		console.error("Failed reading current code-d version from package manifest: ", e);
-	}
+
+		greetNewUsers(context);
+	});
 
 	preStartup(context);
 
@@ -408,8 +411,6 @@ export function activate(context: vscode.ExtensionContext): CodedAPI {
 	registerCommands(context);
 
 	registerDebuggers(context);
-
-	greetNewUsers(context);
 
 	if (vscode.workspace.workspaceFolders) {
 		{
