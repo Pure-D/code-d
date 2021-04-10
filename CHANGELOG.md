@@ -81,6 +81,12 @@ To revert to the old behavior, edit or create a file called `dscanner.ini` in yo
 
 The "Insert default dscanner.ini content" command now dumps the currently used settings for code linting instead of a static file. This is useful to start off with the current settings instead of overriding to some different values.
 
+## Formatting
+
+You can now format just the current selection of code. Thanks to @ryuukk for implementing this. ([Pure-D/serve-d#120](https://github.com/Pure-D/serve-d/pull/120))
+
+Additionally dfmt (the included formatter tool) was upgraded from 0.11.0 (last serve-d stable) to 0.13.4, introducing a lot of fixes and improvements.
+
 ## DDoc
 
 A regression that auto completion was missing formatting has been fixed.
