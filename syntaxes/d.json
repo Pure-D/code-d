@@ -23,13 +23,13 @@
     "type": {
       "patterns": [
         {
+          "include": "#typeof"
+        },
+        {
           "include": "#base-type"
         },
         {
           "include": "#type-ctor"
-        },
-        {
-          "include": "#typeof"
         }
       ]
     },
@@ -86,45 +86,11 @@
     "typeof": {
       "begin": "typeof\\s*\\(",
       "end": "\\)",
-      "name": "storage.type.typeof.d",
+      "name": "keyword.token.typeof.d",
       "patterns": [
         {
           "match": "return",
           "name": "keyword.control.return.d"
-        },
-        {
-          "include": "#expression"
-        }
-      ]
-    },
-    "nesting-expression": {
-      "patterns": [
-        {
-          "begin": "\\(",
-          "end": "\\)",
-          "patterns": [
-            {
-              "include": "#nesting-expression"
-            }
-          ]
-        },
-        {
-          "begin": "\\[",
-          "end": "\\]",
-          "patterns": [
-            {
-              "include": "#nesting-expression"
-            }
-          ]
-        },
-        {
-          "begin": "{",
-          "end": "}",
-          "patterns": [
-            {
-              "include": "#nesting-expression"
-            }
-          ]
         },
         {
           "include": "#expression"
@@ -160,6 +126,9 @@
         },
         {
           "include": "#traits-expression"
+        },
+        {
+          "include": "#is-expression"
         },
         {
           "include": "#typeid-expression"
@@ -208,6 +177,12 @@
         },
         {
           "include": "#functions"
+        },
+        {
+          "include": "#type"
+        },
+        {
+          "include": "#parentheses-expression"
         },
         {
           "include": "#lexical"
@@ -375,10 +350,7 @@
           },
           "patterns": [
             {
-              "include": "#comment"
-            },
-            {
-              "include": "#expression"
+              "include": "source.d"
             }
           ]
         }
@@ -404,7 +376,7 @@
               "include": "#comment"
             },
             {
-              "include": "#nesting-expression"
+              "include": "#expression"
             },
             {
               "include": "#comma"
@@ -465,7 +437,7 @@
               "include": "#comment"
             },
             {
-              "include": "#nesting-expression"
+              "include": "#expression"
             },
             {
               "include": "#comma"
@@ -644,9 +616,6 @@
         },
         {
           "include": "#mixin-statement"
-        },
-        {
-          "include": "#is-statement"
         },
         {
           "include": "#conditional-statement"
@@ -856,7 +825,7 @@
               "include": "#comment"
             },
             {
-              "include": "#nesting-expression"
+              "include": "#expression"
             },
             {
               "include": "#comma"
@@ -1117,7 +1086,7 @@
               "include": "#comment"
             },
             {
-              "include": "#nesting-expression"
+              "include": "#expression"
             },
             {
               "include": "#comma"
@@ -1126,19 +1095,19 @@
         }
       ]
     },
-    "is-statement": {
+    "is-expression": {
       "patterns": [
         {
           "begin": "\\bis\\s*\\(",
           "beginCaptures": {
             "0": {
-              "name": "keyword.control.is.begin.d"
+              "name": "keyword.token.is.begin.d"
             }
           },
           "end": "\\)",
           "endCaptures": {
             "0": {
-              "name": "keyword.control.is.end.d"
+              "name": "keyword.token.is.end.d"
             }
           },
           "patterns": [
@@ -1146,10 +1115,23 @@
               "include": "#comment"
             },
             {
-              "include": "#nesting-expression"
+              "include": "#expression"
             },
             {
               "include": "#comma"
+            }
+          ]
+        }
+      ]
+    },
+    "parentheses-expression": {
+      "patterns": [
+        {
+          "begin": "\\(",
+          "end": "\\)",
+          "patterns": [
+            {
+              "include": "#expression"
             }
           ]
         }
@@ -1175,7 +1157,7 @@
               "include": "#comment"
             },
             {
-              "include": "#nesting-expression"
+              "include": "#expression"
             },
             {
               "include": "#comma"
@@ -1301,7 +1283,7 @@
         {
           "begin": "\\b(alias)\\b\\s*",
           "beginCaptures": {
-            "0": {
+            "1": {
               "name": "keyword.other.alias.d"
             }
           },
@@ -1367,7 +1349,7 @@
     "function-prelude": {
       "patterns": [
         {
-          "match": "((\\.\\s*)?[_\\w][_\\d\\w]*)(\\s*\\.\\s*[_\\w][_\\d\\w]*)*\\s*(?=\\()",
+          "match": "(?!typeof|typeid)((\\.\\s*)?[_\\w][_\\d\\w]*)(\\s*\\.\\s*[_\\w][_\\d\\w]*)*\\s*(?=\\()",
           "name": "entity.name.function.d"
         }
       ]
@@ -1901,9 +1883,6 @@
           "include": "#condition"
         },
         {
-          "include": "#declaration-block"
-        },
-        {
           "match": "\\belse\\b",
           "name": "keyword.control.else.d"
         },
@@ -2031,13 +2010,13 @@
           "begin": "\\bstatic\\s+if\\b\\s*\\(",
           "beginCaptures": {
             "0": {
-              "name": "keyword.other.static-if.begin.d"
+              "name": "keyword.control.static-if.begin.d"
             }
           },
           "end": "\\)",
           "endCaptures": {
             "0": {
-              "name": "keyword.other.static-if.end.d"
+              "name": "keyword.control.static-if.end.d"
             }
           },
           "patterns": [
@@ -2294,7 +2273,7 @@
       "patterns": [
         {
           "match": "\\b0[xX][0-9a-fA-F_]*(\\.[0-9a-fA-F_]*)?(p-|P-|p\\+|P\\+|p|P)[0-9][0-9_]*[LfF]?i?\\b",
-          "name": "constant.numeric.fload.hexadecimal.d"
+          "name": "constant.numeric.float.hexadecimal.d"
         }
       ]
     },
@@ -2608,16 +2587,26 @@
     "block-comment": {
       "patterns": [
         {
-          "begin": "/\\*",
-          "end": "\\*/",
-          "name": "comment.block.d"
+          "begin": "/((?!\\*/)\\*)+",
+          "beginCaptures": {
+            "0": {
+              "name": "comment.block.begin.d"
+            }
+          },
+          "end": "\\*+/",
+          "endCaptures": {
+            "0": {
+              "name": "comment.block.end.d"
+            }
+          },
+          "name": "comment.block.content.d"
         }
       ]
     },
     "line-comment": {
       "patterns": [
         {
-          "match": "//.*$",
+          "match": "//+.*$",
           "name": "comment.line.d"
         }
       ]
@@ -2625,9 +2614,19 @@
     "nesting-block-comment": {
       "patterns": [
         {
-          "begin": "/\\+",
-          "end": "\\+/",
-          "name": "comment.block.documentation.d",
+          "begin": "/((?!\\+/)\\+)+",
+          "beginCaptures": {
+            "0": {
+              "name": "comment.block.documentation.begin.d"
+            }
+          },
+          "end": "\\++/",
+          "endCaptures": {
+            "0": {
+              "name": "comment.block.documentation.end.d"
+            }
+          },
+          "name": "comment.block.documentation.content.d",
           "patterns": [
             {
               "include": "#nesting-block-comment"
@@ -2814,7 +2813,7 @@
         },
         {
           "match": "\\bfalse\\b",
-          "name": "keyword.token.false.d"
+          "name": "constant.language.boolean.false.d"
         },
         {
           "match": "\\bfinal\\b",
@@ -2926,7 +2925,7 @@
         },
         {
           "match": "\\bnull\\b",
-          "name": "keyword.token.null.d"
+          "name": "constant.language.null.d"
         },
         {
           "match": "\\bout\\b",
@@ -3018,7 +3017,7 @@
         },
         {
           "match": "\\btrue\\b",
-          "name": "keyword.token.true.d"
+          "name": "constant.language.boolean.true.d"
         },
         {
           "match": "\\btry\\b",

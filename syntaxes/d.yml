@@ -11,9 +11,9 @@ patterns:
 repository:
   type:
     patterns:
+    - include: '#typeof'
     - include: '#base-type'
     - include: '#type-ctor'
-    - include: '#typeof'
   base-type:
     patterns:
     - match: \b(auto|bool|byte|ubyte|short|ushort|int|uint|long|ulong|char|wchar|dchar|float|double|real|ifloat|idouble|ireal|cfloat|cdouble|creal|void)\b
@@ -42,25 +42,10 @@ repository:
   typeof:
     begin: typeof\s*\(
     end: \)
-    name: storage.type.typeof.d
+    name: keyword.token.typeof.d
     patterns:
     - match: return
       name: keyword.control.return.d
-    - include: '#expression'
-  nesting-expression:
-    patterns:
-    - begin: \(
-      end: \)
-      patterns:
-      - include: '#nesting-expression'
-    - begin: \[
-      end: \]
-      patterns:
-      - include: '#nesting-expression'
-    - begin: '{'
-      end: '}'
-      patterns:
-      - include: '#nesting-expression'
     - include: '#expression'
   expression:
     patterns:
@@ -74,6 +59,7 @@ repository:
     - include: '#mixin-expression'
     - include: '#import-expression'
     - include: '#traits-expression'
+    - include: '#is-expression'
     - include: '#typeid-expression'
     - include: '#shift-expression'
     - include: '#logical-expression'
@@ -90,6 +76,8 @@ repository:
     - include: '#comma'
     - include: '#special-keyword'
     - include: '#functions'
+    - include: '#type'
+    - include: '#parentheses-expression'
     - include: '#lexical'
   assign-expression:
     patterns:
@@ -173,8 +161,7 @@ repository:
         2:
           name: meta.lexical.token.symbolic.d
       patterns:
-      - include: '#comment'
-      - include: '#expression'
+      - include: 'source.d'
   assert-expression:
     patterns:
     - begin: \bassert\s*\(
@@ -187,7 +174,7 @@ repository:
           name: keyword.other.assert.end.d
       patterns:
       - include: '#comment'
-      - include: '#nesting-expression'
+      - include: '#expression'
       - include: '#comma'
   mixin-expression:
     patterns:
@@ -217,7 +204,7 @@ repository:
           name: keyword.other.import.end.d
       patterns:
       - include: '#comment'
-      - include: '#nesting-expression'
+      - include: '#expression'
       - include: '#comma'
   typeid-expression:
     patterns:
@@ -289,7 +276,6 @@ repository:
     - include: '#asm-statement'
     - include: '#pragma-statement'
     - include: '#mixin-statement'
-    - include: '#is-statement'
     - include: '#conditional-statement'
     - include: '#static-assert'
     - include: '#deprecated-statement'
@@ -392,7 +378,7 @@ repository:
           name: meta.case.end.d
       patterns:
       - include: '#comment'
-      - include: '#nesting-expression'
+      - include: '#expression'
       - include: '#comma'
   default-statement:
     patterns:
@@ -523,22 +509,28 @@ repository:
           name: keyword.control.mixin.end.d
       patterns:
       - include: '#comment'
-      - include: '#nesting-expression'
+      - include: '#expression'
       - include: '#comma'
-  is-statement:
+  is-expression:
     patterns:
     - begin: \bis\s*\(
       beginCaptures:
         0:
-          name: keyword.control.is.begin.d
+          name: keyword.token.is.begin.d
       end: \)
       endCaptures:
         0:
-          name: keyword.control.is.end.d
+          name: keyword.token.is.end.d
       patterns:
       - include: '#comment'
-      - include: '#nesting-expression'
+      - include: '#expression'
       - include: '#comma'
+  parentheses-expression:
+    patterns:
+    - begin: \(
+      end: \)
+      patterns:
+      - include: '#expression'
   deprecated-statement:
     patterns:
     - begin: \bdeprecated\s*\(
@@ -551,7 +543,7 @@ repository:
           name: keyword.other.deprecated.end.d
       patterns:
       - include: '#comment'
-      - include: '#nesting-expression'
+      - include: '#expression'
       - include: '#comma'
     - match: \bdeprecated\b\s*(?!\()
       name: keyword.other.deprecated.plain.d
@@ -605,7 +597,7 @@ repository:
     patterns:
     - begin: \b(alias)\b\s*
       beginCaptures:
-        0:
+        1:
           name: keyword.other.alias.d
       end: ;
       endCaptures:
@@ -634,7 +626,7 @@ repository:
     - include: '#function-parameters'
   function-prelude:
     patterns:
-    - match: ((\.\s*)?[_\w][_\d\w]*)(\s*\.\s*[_\w][_\d\w]*)*\s*(?=\()
+    - match: (?!typeof|typeid)((\.\s*)?[_\w][_\d\w]*)(\s*\.\s*[_\w][_\d\w]*)*\s*(?=\()
       name: entity.name.function.d
   function-parameters:
     begin: \((?=.*\)\s*(\{|=>))
@@ -890,7 +882,6 @@ repository:
   conditional-declaration:
     patterns:
     - include: '#condition'
-    - include: '#declaration-block'
     - match: \belse\b
       name: keyword.control.else.d
     - include: '#colon'
@@ -952,11 +943,11 @@ repository:
     - begin: \bstatic\s+if\b\s*\(
       beginCaptures:
         0:
-          name: keyword.other.static-if.begin.d
+          name: keyword.control.static-if.begin.d
       end: \)
       endCaptures:
         0:
-          name: keyword.other.static-if.end.d
+          name: keyword.control.static-if.end.d
       patterns:
       - include: '#comment'
       - include: '#expression'
@@ -1075,7 +1066,7 @@ repository:
   hexadecimal-float:
     patterns:
     - match: \b0[xX][0-9a-fA-F_]*(\.[0-9a-fA-F_]*)?(p-|P-|p\+|P\+|p|P)[0-9][0-9_]*[LfF]?i?\b
-      name: constant.numeric.fload.hexadecimal.d
+      name: constant.numeric.float.hexadecimal.d
   string-literal:
     patterns:
     - include: '#wysiwyg-string'
@@ -1226,18 +1217,30 @@ repository:
     - include: '#nesting-block-comment'
   block-comment:
     patterns:
-    - begin: /\*
-      end: \*/
-      name: comment.block.d
+    - begin: /((?!\*/)\*)+
+      beginCaptures:
+        0:
+          name: comment.block.begin.d
+      end: \*+/
+      endCaptures:
+        0:
+          name: comment.block.end.d
+      name: comment.block.content.d
   line-comment:
     patterns:
-    - match: //.*$
+    - match: //+.*$
       name: comment.line.d
   nesting-block-comment:
     patterns:
-    - begin: /\+
-      end: \+/
-      name: comment.block.documentation.d
+    - begin: /((?!\+/)\+)+
+      beginCaptures:
+        0:
+          name: comment.block.documentation.begin.d
+      end: \++/
+      endCaptures:
+        0:
+          name: comment.block.documentation.end.d
+      name: comment.block.documentation.content.d
       patterns:
       - include: '#nesting-block-comment'
   token-string-content:
@@ -1326,7 +1329,7 @@ repository:
     - match: '\bextern\b'
       name: 'keyword.token.extern.d'
     - match: '\bfalse\b'
-      name: 'keyword.token.false.d'
+      name: 'constant.language.boolean.false.d'
     - match: '\bfinal\b'
       name: 'keyword.token.final.d'
     - match: '\bfinally\b'
@@ -1382,7 +1385,7 @@ repository:
     - match: '\bnothrow\b'
       name: 'keyword.token.nothrow.d'
     - match: '\bnull\b'
-      name: 'keyword.token.null.d'
+      name: 'constant.language.null.d'
     - match: '\bout\b'
       name: 'keyword.token.out.d'
     - match: '\boverride\b'
@@ -1428,7 +1431,7 @@ repository:
     - match: '\bthrow\b'
       name: 'keyword.token.throw.d'
     - match: '\btrue\b'
-      name: 'keyword.token.true.d'
+      name: 'constant.language.boolean.true.d'
     - match: '\btry\b'
       name: 'keyword.token.try.d'
     - match: '\btypedef\b'
