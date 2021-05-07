@@ -283,7 +283,7 @@
                 },
                 "license": {
                     "type": "string",
-                    "enum": [
+                    "examples": [
                         "public domain",
                         "proprietary",
                         "AFL-3.0",
@@ -309,7 +309,7 @@
                         "SSLeay",
                         "Zlib"
                     ],
-                    "pattern": ".*",
+                    "minLength": 1,
                     "description": "License(s) under which the project can be used"
                 },
                 "subPackages": {
