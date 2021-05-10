@@ -22,7 +22,7 @@ export function builtinPlugins(instance: CodedAPI) {
 				+ 'auto ${4:router} = new URLRouter();\n'
 				+ '${4:router}.get("/", &${5:index});\n'
 				+ '\n'
-				+ 'listenHTTP(${3:settings, ${4:router});\n'
+				+ 'listenHTTP(${3:settings}, ${4:router});\n'
 		},
 		{
 			levels: [SnippetLevel.method],
