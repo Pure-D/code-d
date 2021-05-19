@@ -50,6 +50,24 @@ There exist multiple extension options for debugging. Installing all of them is 
 
 ## Creating a debugging configuration
 
+### Introduction to debugging
+
+To start off debugging your project, switch to the "Run and Debug" panel in the sidebar. (Ctrl-Shift-D)
+
+If you start off fresh in a new project without an existing debug configuration, use the [create a launch.json file](command:workbench.action.debug.configure) button and select D or DUB from the list:
+
+![click create a launch.json file](images/debug_fresh.png)
+
+![select a launch configuration preset](images/debug_fresh2.png)
+
+Alternatively if you already have a debug configuration, open `.vscode/launch.json` or click the cog in the debug panel to open it:
+
+![open launch.json by clicking the cog in the run and debug panel](images/debug_existing.png)
+
+From here, edit the launch.json and use auto-complete to read about documentation for fields and what you can insert.
+
+See the [Visual Studio Code documentation](https://code.visualstudio.com/docs/editor/debugging) for more information.
+
 ### Using code-d
 
 code-d ships with debug wrappers, which automatically loads the best installed recommended debug extension for the current system. To start out using code-d, start with the following debug configuration:

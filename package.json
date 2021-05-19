@@ -1131,6 +1131,16 @@
 						"description": "Configuration to run"
 					},
 					"args": {
+						"$comment": "This is only here because vscode otherwise doesn't send this argument to the extension. Sadly the \"deprecated\" field is not actually represented in the UI yet.",
+						"type": "array",
+						"default": [],
+						"items": {
+							"type": "string"
+						},
+						"description": "**DEPRECATED** - use dub_args instead",
+						"deprecated": true
+					},
+					"dub_args": {
 						"type": "array",
 						"default": [],
 						"items": {
@@ -1138,10 +1148,13 @@
 						},
 						"description": "Extra arguments to pass to dub"
 					},
-					"_generated": {
-						"type": "boolean",
-						"default": false,
-						"description": "Workaround for vscode not detecting bugs if task definition is the same as dub generated ones"
+					"target_args": {
+						"type": "array",
+						"default": [],
+						"items": {
+							"type": "string"
+						},
+						"description": "Extra arguments to pass to the program (implemented by passing the arguments after a special `--` argument for DUB), only passed when run or test is set to true."
 					},
 					"_id": {
 						"type": "string",

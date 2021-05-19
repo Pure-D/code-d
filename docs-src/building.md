@@ -6,11 +6,19 @@
 
 code-d transparently embeds DUB projects into the VSCode build tasks system.
 
-To build and run your project within VSCode, press `Ctrl-Shift-B` or `Run Build Task` in the command palette. This will bring up a list of supported build operations.
+To get a list of supported build and run operations for your project within VSCode click `Terminal` -> `Run Task...`.
+
+![Terminal -> Run Task button](images/run_task.png)
 
 ![build list](images/build_list.png)
 
-When you select a build task, for example `"Run <project name>"`, it will pop up in the integrated command line in VSCode:
+**(1)** A list of recently used tasks for repeated use.
+
+**(2)** A full list of all detected DUB tasks for this project.
+
+You can copy the tasks into the special `.vscode/tasks.json` file by pressing the cog icon on the detected tasks. To quickly launch one of the configured tasks, press `Ctrl-Shift-B` or `Run Build Task` in the command palette to immediately run the build task or select from your custom defined list of build tasks.
+
+When you select a build task, for example `"dub: Run <project name>"`, it will pop up in the integrated command line in VSCode:
 
 ![command run output](images/build_run_output.png)
 
@@ -76,9 +84,7 @@ A `tasks.json` file will be generated with the new task in there as placeholder.
 
 ![generated dub task](images/task_generated.png)
 
-Optionally to be able to disambiguate between automatically generated tasks and your custom specified task, remove the `"_generated": true` from the task definition to change the name from `dub-auto` to `dub`.
-
-You can use the built-in dub types to have a simple configuration for dub or you can also define custom shell commands which use the D problem matcher to show issues in code when running. You can check out the documentation by [Microsoft](https://go.microsoft.com/fwlink/?LinkId=733558) on this.
+You can use the built-in dub types to have a simple configuration for dub or you can also define custom shell commands which use the D problem matcher to show issues in code when running. You can check out the [documentation by Microsoft](https://go.microsoft.com/fwlink/?LinkId=733558) on this.
 
 Use the auto completion and validation to discover possible fields and values in the custom tasks.
 

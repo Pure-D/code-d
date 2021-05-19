@@ -45,6 +45,12 @@ Through this it is possible to create a single platform-independent, extension-i
 
 Refer to the new [Debugging section](docs/debugging.md) in the user guide to see how to use this new feature.
 
+## Building
+
+Tasks implementation has been improved and the documentation has been overhauled. The documentation now better shows that `Ctrl-Shift-B` is for configured tasks only and not to list all available DUB tasks. `_generated` has been removed.
+
+Building projects in subdirectories have been fixed.
+
 ## Usability
 
 Several improvements to warning/error diagnostics have been made. While editing syntax errors are now properly marked as error instead of as warning and have better locations.

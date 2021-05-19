@@ -73,7 +73,7 @@ void lintLinks(const(char)[] line, const(char)[] src, int lineNo)
 			break;
 		auto content = line[start + 1 .. i];
 
-		if (!content.startsWith("http:", "https:", "data:", "/") && line[start - 1] == ']')
+		if (!content.startsWith("http:", "https:", "data:", "command:", "/") && line[start - 1] == ']')
 		{
 			auto hash = content.indexOf('#');
 			if (hash != -1)

@@ -379,7 +379,6 @@ class DDebugProvider implements vscode.DebugConfigurationProvider {
 					definition: {
 						type: "dub",
 						run: false,
-						_generated: true,
 						compiler: "$current",
 						archType: "$current",
 						buildType: "$current",
