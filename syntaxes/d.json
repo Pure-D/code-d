@@ -1,7 +1,8 @@
 {
   "fileTypes": [
     "d",
-    "di"
+    "di",
+    "dpp"
   ],
   "name": "D",
   "scopeName": "source.d",
