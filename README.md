@@ -29,15 +29,7 @@ _[become a sponsor](https://github.com/sponsors/WebFreak001)_
 ### Prerequirements:
 D compiler with environment variables set. Downloads [here](https://dlang.org/download.html), details [here](https://wiki.dlang.org/Compilers)
 
-### Dependencies:
-
-code-d will install [serve-d](https://github.com/Pure-D/serve-d),
-[dcd](https://github.com/dlang-community/DCD) and [dub](https://code.dlang.org/download)
-if they are not already installed.
-
 ### code-d installation
-
-This assumes [serve-d](https://github.com/Pure-D/serve-d) is already installed.
 
 * Automatic:
   Open Visual Studio Code and install the _code-d_ extension the normal way:
@@ -60,6 +52,10 @@ This assumes [serve-d](https://github.com/Pure-D/serve-d) is already installed.
     # requires `npm install -g typescript` once
     tsc -p .
     ```
+
+code-d will automatically install [serve-d](https://github.com/Pure-D/serve-d),
+[dcd](https://github.com/dlang-community/DCD) and [dub](https://code.dlang.org/download)
+if they are not already installed.
 
 ## License
 
