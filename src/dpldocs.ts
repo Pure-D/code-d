@@ -179,16 +179,16 @@ export async function fillDplDocs(panel: vscode.WebviewPanel, label: string, hre
 
 	let body = (await reqText().get(href)).data;
 
-	var content = new JSDOM(body);
-	var page = content.window.document.getElementById("page-body");
+	let content = new JSDOM(body);
+	let page = content.window.document.getElementById("page-body");
 	if (page) {
-		var nonce = Math.random().toString(36).substr(2) + Math.random().toString(36).substr(2) + Math.random().toString(36).substr(2);
-		var font = vscode.workspace.getConfiguration("editor").get("fontFamily") || "monospace";
+		let nonce = Math.random().toString(36).substr(2) + Math.random().toString(36).substr(2) + Math.random().toString(36).substr(2);
+		let font = vscode.workspace.getConfiguration("editor").get("fontFamily") || "monospace";
 		panel.webview.html = `<!DOCTYPE html>
 			<html lang="en">
 			<head>
 				<meta charset="UTF-8">
-				<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}'">
+				<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}' ${panel.webview.cspSource}; script-src 'nonce-${nonce}' ${panel.webview.cspSource}; img-src ${panel.webview.cspSource} https:;">
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
 				<title>${label}</title>
 				<script nonce="${nonce}">
@@ -197,24 +197,52 @@ export async function fillDplDocs(panel: vscode.WebviewPanel, label: string, hre
 					window.onload = function() {
 						var links = document.getElementsByTagName('a');
 						for (var i = 0; i < links.length; i++) {
-							links[i].onclick = function() {
+							// change links starting with "//" to start with "coded-internal://" so they don't get the internal vscode-webview:// protocol
+							if (links[i].getAttribute("href").startsWith("//"))
+								links[i].setAttribute("href", "https:" + links[i].getAttribute("href"));
+
+							// make relative links have protocol "coded-internal:" so they don't trigger vscode trusted domains question / don't actually open any browser
+							var m;
+							if (m = /^(https?:)\\/\\/[^/?#]+\\.dpldocs\\.info(\\/|$)/.exec(links[i].getAttribute("href")))
+								links[i].setAttribute("href", "coded-internal:" + links[i].getAttribute("href").substr(m[1].length));
+
+							links[i].onclick = function(event) {
 								var href = this.href || this.getAttribute("href");
-								if (href.startsWith("http:") || href.startsWith("https:") || href.startsWith("#"))
+
+								// make relative links relative (happens with source code links)
+								if (href.startsWith(window.location.protocol + "//" + window.location.host + "/"))
+									href = href.substr((window.location.protocol + "//" + window.location.host).length);
+
+								// external links, don't handle them
+								if (!/^coded-internal:\\/\\/[^/?#]+\\.dpldocs\\.info(\\/|$)|^\\/[^/]/.test(href) || href.startsWith("#"))
+								{
+									console.log("link", href, "is external, letting vscode or electron handle it");
 									return;
-								if (/^\\w+(\\.\\w+)*\\.html$/.test(href))
-								{
-									vscode.postMessage({ type: "handle-link", href: href, title: this.title });
-									return false;
 								}
-								else if (href.startsWith("source/") && /\\.d\\.html(#L\\d+)?$/.test(href))
+
+								// open code in editor
+								if (href.indexOf("source/") != -1 && /\\.d\\.html(#L\\d+)?$/.test(href))
 								{
-									href = href.substr("source/".length);
+									href = href.substr(href.indexOf("source/") + "source/".length);
 									var lno = 0;
 									if (href.indexOf("L") != -1)
 										lno = parseInt(href.substr(href.lastIndexOf("L") + 1));
 									var module_ = href.substr(0, href.lastIndexOf(".d.html"));
 									vscode.postMessage({ type: "open-module", module_: module_, line: lno });
+									event.preventDefault();
 									return false;
+								}
+								// internal links, rewrite to RPC calls
+								else if (/\\w+(\\.\\w+)*\\.html$/.test(href))
+								{
+									console.log("handle-link", href);
+									vscode.postMessage({ type: "handle-link", href: href, title: this.title });
+									event.preventDefault();
+									return false;
+								}
+								else
+								{
+									console.log("don't know what to do with href ", href);
 								}
 							};
 						}
@@ -573,21 +601,27 @@ function showDocItemUI(docItem: DocItem) {
 	panel.webview.onDidReceiveMessage((msg) => {
 		switch (msg.type) {
 			case "handle-link":
-				let href = path.posix.normalize(msg.href);
-				let uri = vscode.Uri.parse(baseUri);
-				if (href.startsWith("/")) {
-					baseUri = uri.with({
-						path: href
-					}).toString();
+				if (/^coded-internal:\/\/[^/?#]+\.dpldocs\.info(\/|$)/.test(msg.href)) {
+					// absolute dpldocs link, possibly with different subdomain
+					baseUri = vscode.Uri.parse(msg.href).with({"scheme":"https"}).toString();
+					fillDplDocs(panel, msg.title, baseUri);
 				} else {
-					let file = uri.path;
-					let slash = file.lastIndexOf("/");
-					file = file.substring(0, slash + 1) + href;
-					baseUri = uri.with({
-						path: file
-					}).toString();
+					let href = path.posix.normalize(msg.href);
+					let uri = vscode.Uri.parse(baseUri);
+					if (href.startsWith("/")) {
+						baseUri = uri.with({
+							path: href
+						}).toString();
+					} else {
+						let file = uri.path;
+						let slash = file.lastIndexOf("/");
+						file = file.substring(0, slash + 1) + href;
+						baseUri = uri.with({
+							path: file
+						}).toString();
+					}
+					fillDplDocs(panel, msg.title, baseUri);
 				}
-				fillDplDocs(panel, msg.title, baseUri);
 				break;
 			case "open-module":
 				let module_ = <string>msg.module_;
