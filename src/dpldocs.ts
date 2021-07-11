@@ -167,8 +167,15 @@ export function showDpldocsSearch(query?: string, fastOpen: boolean = false) {
 export async function fillDplDocs(panel: vscode.WebviewPanel, label: string, href: string) {
 	panel.webview.html = "<h1>" + label + "</h1>";
 
+	if (href.startsWith("//"))
+		href = "https:" + href;
+
 	if (!href.startsWith("http:") && !href.startsWith("https:"))
+	{
+		panel.webview.html = `<h1>${label}</h1><p>Non-docs URL: <a href="${href}">${href}</a></p>`;
+
 		return;
+	}
 
 	let body = (await reqText().get(href)).data;
 
