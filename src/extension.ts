@@ -210,13 +210,14 @@ function startClient(context: vscode.ExtensionContext) {
 	};
 	var outputChannel = vscode.window.createOutputChannel("code-d & serve-d");
 	let clientOptions: LanguageClientOptions = {
-		documentSelector: <DocumentFilter[]>[mode.D_MODE, mode.DUB_MODE, mode.DIET_MODE, mode.DML_MODE, mode.DSCANNER_INI_MODE],
+		documentSelector: <DocumentFilter[]>[mode.D_MODE, mode.DUB_MODE, mode.DIET_MODE, mode.DML_MODE, mode.DSCANNER_INI_MODE, mode.PROFILEGC_MODE],
 		synchronize: {
 			configurationSection: ["d", "dfmt", "dscanner", "editor", "git"],
 			fileEvents: [
 				vscode.workspace.createFileSystemWatcher("**/*.d"),
 				vscode.workspace.createFileSystemWatcher("**/dub.json"),
-				vscode.workspace.createFileSystemWatcher("**/dub.sdl")
+				vscode.workspace.createFileSystemWatcher("**/dub.sdl"),
+				vscode.workspace.createFileSystemWatcher("**/profilegc.log")
 			]
 		},
 		revealOutputChannelOn: RevealOutputChannelOn.Never,
@@ -412,24 +413,11 @@ export function activate(context: vscode.ExtensionContext): CodedAPI {
 
 	registerDebuggers(context);
 
+	{
+		context.subscriptions.push(vscode.commands.registerCommand("code-d.showGCCalls", GCProfiler.listProfileCache));
+	}
+
 	if (vscode.workspace.workspaceFolders) {
-		{
-			let gcprofiler = new GCProfiler();
-			vscode.languages.registerCodeLensProvider(mode.D_MODE, gcprofiler);
-
-			let watcher = vscode.workspace.createFileSystemWatcher("**/profilegc.log", false, false, false);
-
-			watcher.onDidCreate(gcprofiler.updateProfileCache, gcprofiler, context.subscriptions);
-			watcher.onDidChange(gcprofiler.updateProfileCache, gcprofiler, context.subscriptions);
-			watcher.onDidDelete(gcprofiler.clearProfileCache, gcprofiler, context.subscriptions);
-			context.subscriptions.push(watcher);
-
-			let profileGCPath = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, "profilegc.log");
-			if (fs.existsSync(profileGCPath))
-				gcprofiler.updateProfileCache(vscode.Uri.file(profileGCPath));
-
-			context.subscriptions.push(vscode.commands.registerCommand("code-d.showGCCalls", gcprofiler.listProfileCache, gcprofiler));
-		}
 		{
 			let coverageanal = new CoverageAnalyzer();
 			context.subscriptions.push(coverageanal);
