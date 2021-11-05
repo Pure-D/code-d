@@ -1181,6 +1181,50 @@
 					"message": 5
 				}
 			}
+		],
+		"walkthroughs": [
+			{
+				"id": "code-d.welcome",
+				"title": "Get Started with D Development",
+				"description": "Setup your development experience for the D programming language.",
+				"steps": [
+					{
+						"id": "code-d.welcome.installCompiler",
+						"title": "Install and choose a D compiler (DMD, LDC or GCC)",
+						"description": "Run the 'Setup D Compiler' command to choose which D compiler to use with code-d and DUB. You can find available compilers on https://dlang.org/download.html",
+						"completionEvents": [
+							"onCommand:code-d.setupCompiler"
+						],
+						"media": {
+							"markdown": "res/walkthroughs/installCompiler.md"
+						}
+					},
+					{
+						"id": "code-d.welcome.userSettings",
+						"title": "Configure code-d",
+						"description": "Review some common user settings",
+						"media": {
+							"markdown": "res/walkthroughs/userSettings.md"
+						}
+					},
+					{
+						"id": "code-d.welcome.checkUserGuide",
+						"title": "Check out user guide",
+						"description": "The included code-d user guide contains tutorials and a description on all features of code-d. Make sure you read it!",
+						"completionEvents": [
+							"onCommand:code-d.viewUserGuide"
+						]
+					},
+					{
+						"id": "code-d.welcome.debugProject",
+						"title": "Run and Debug your first project",
+						"description": "Code-D includes debugging plugins to improve the D debugging experience. Get started with a project and debug it from code-d.",
+						"media": {
+							"markdown": "res/walkthroughs/debugProject.md"
+						}
+					}
+				]
+			}
 		]
 	},
 	"scripts": {
