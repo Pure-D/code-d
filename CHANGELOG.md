@@ -75,6 +75,14 @@ while looking nice is not valid D code. The syntax error will now properly expla
 
 Among several other improvements of error locations, without any new quick fixes. The experience for newcomers has especially been improved by this.
 
+## Completion
+
+Auto-completion now shows more information thanks to @RUSshy ([Pure-D/serve-d#155](https://github.com/Pure-D/serve-d/pull/155))
+
+It's recommended to enable `d.argumentSnippets` to have the arguments inserted into code easily and the overloads being shown in the auto completion list.
+
+The `d.completeNoDupes` setting has been removed as it is fully implemented by `d.argumentSnippets` now.
+
 ## D-Scanner
 
 The following D-Scanner warnings have been disabled by default:

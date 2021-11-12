@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
 import { DubEditor } from "./dub-editor";
-import { LanguageClient, TextEdit } from "vscode-languageclient";
+import { LanguageClient, TextEdit } from "vscode-languageclient/node";
 import { served, ServeD } from "./extension";
 import { showProjectCreator, performTemplateCopy, openFolderWithExtension } from "./project-creator";
 import { listPackageOptions, getLatestPackageInfo } from "./dub-api"

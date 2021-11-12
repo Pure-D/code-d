@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
-import { LanguageClient, LanguageClientOptions, ServerOptions, DocumentFilter, NotificationType, CloseAction, ErrorAction, ErrorHandler, Message, State, MessageType, RevealOutputChannelOn } from "vscode-languageclient";
+import { LanguageClient, LanguageClientOptions, ServerOptions, DocumentFilter, NotificationType, CloseAction, ErrorAction, ErrorHandler, Message, State, MessageType, RevealOutputChannelOn } from "vscode-languageclient/node";
 import { setContext, installServeD, compileServeD, getInstallOutput, downloadFileInteractive, findLatestServeD, cmpSemver, extractServedBuiltDate, Release, updateAndInstallServeD } from "./installer";
 import { EventEmitter } from "events";
 import * as ChildProcess from "child_process";
@@ -242,12 +242,12 @@ function startClient(context: vscode.ExtensionContext) {
 	});
 
 	client.onReady().then(() => {
-		var updateSetting = new NotificationType<{ section: string, value: any, global: boolean }, void>("coded/updateSetting");
+		var updateSetting = new NotificationType<{ section: string, value: any, global: boolean }>("coded/updateSetting");
 		client.onNotification(updateSetting, (arg: { section: string, value: any, global: boolean }) => {
 			config(null).update(arg.section, arg.value, arg.global);
 		});
 
-		var logInstall = new NotificationType<string, void>("coded/logInstall");
+		var logInstall = new NotificationType<string>("coded/logInstall");
 		client.onNotification(logInstall, (message: string) => {
 			getInstallOutput().appendLine(message);
 		});
@@ -514,7 +514,7 @@ async function preStartup(context: vscode.ExtensionContext) {
 
 		try {
 			version = await spawnOneShotCheck(expandTilde(config(null).get(configName, defaultPath)), ["--version"], true, { cwd: vscode.workspace.rootPath });
-		} catch (err) {
+		} catch (err: any) {
 			// for example invalid executable error
 			console.error(err);
 			const fullConfigName = "d." + configName;
@@ -645,7 +645,7 @@ async function preStartup(context: vscode.ExtensionContext) {
 			if (m) {
 				try {
 					return [cmpSemver(m[1], target) < 0, "(target=" + target + ", installed=" + m[1] + ")"];
-				} catch (e) {
+				} catch (e: any) {
 					getInstallOutput().show(true);
 					getInstallOutput().appendLine("ERROR: could not compare current serve-d version with release");
 					getInstallOutput().appendLine(e.toString());

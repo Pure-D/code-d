@@ -422,7 +422,7 @@ class DDebugProvider implements vscode.DebugConfigurationProvider {
 					finished = true;
 					waiter.dispose();
 					procWaiter.dispose();
-					done(e.exitCode);
+					done(typeof e.exitCode == "undefined" ? -1 : e.exitCode);
 				}
 			});
 

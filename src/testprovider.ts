@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import * as path from "path";
 import { ServeD, served } from "./extension";
 import { TestLoadStartedEvent, TestLoadFinishedEvent, TestRunStartedEvent, TestRunFinishedEvent, TestSuiteEvent, TestEvent, TestAdapter, TestHub, TestSuiteInfo } from "vscode-test-adapter-api";
-import { DocumentUri, Range } from "vscode-languageclient";
+import { DocumentUri, Range } from "vscode-languageclient/node";
 
 export interface UnittestProject
 {

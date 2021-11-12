@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { config, served } from "./extension";
-import { LanguageClient } from "vscode-languageclient/lib/main";
+import { LanguageClient } from "vscode-languageclient/node";
 
 export class DubTasksProvider implements vscode.TaskProvider {
 	constructor(public served: LanguageClient) { }

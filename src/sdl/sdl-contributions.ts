@@ -54,7 +54,10 @@ function completeDubVersion(info: SDLCompletionInfo): SDLCompletionResult {
 				item.insertText = new vscode.SnippetString().appendPlaceholder("").appendText(versions[i].version);
 				results.push(item);
 			}
-			results.sort((a, b) => cmpSemver(b.label, a.label));
+			results.sort((a, b) => cmpSemver(
+				typeof b.label == "string" ? b.label : b.label.label,
+				typeof a.label == "string" ? a.label : a.label.label
+			));
 			for (let i = 0; i < results.length; i++)
 				results[i].sortText = (10000000 + i).toString(); // lazy 0 pad
 			resolve(results);
@@ -866,7 +869,10 @@ export class SDLContributions implements vscode.CompletionItemProvider {
 
 	resolveCompletionItem(item: vscode.CompletionItem, token: vscode.CancellationToken): Thenable<vscode.CompletionItem | null> {
 		if (item.kind === vscode.CompletionItemKind.Property) {
-			let pack = item.label
+			let pack = item.label;
+			if (typeof pack != "string")
+				pack = pack.label;
+
 			return getLatestPackageInfo(pack).then(info => {
 				if (info.description) {
 					item.documentation = info.description;

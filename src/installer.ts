@@ -68,7 +68,7 @@ export function downloadFileInteractive(url: string, title: string, aborted: Fun
 			console.error("failed registering cancel token");
 		}
 
-		let len = parseInt(body.headers["Content-Length"] || body.headers["content-length"] || 0);
+		let len = parseInt(body.headers["Content-Length"] || body.headers["content-length"] || "0");
 		if (len == 0)
 			return body.data;
 
@@ -171,9 +171,9 @@ export function findLatestServeD(force: boolean = false, channel?: string): Then
 }
 
 async function fetchNightlyRelease(timeout: number): Promise<Release | undefined> {
-	let res: AxiosResponse;
+	let res: AxiosResponse<{assets:ReleaseAsset[]}>;
 	try {
-		res = await reqJson().get("https://api.github.com/repos/Pure-D/serve-d/releases/" + nightlyReleaseId, {
+		res = await reqJson().get<{assets:ReleaseAsset[]}>("https://api.github.com/repos/Pure-D/serve-d/releases/" + nightlyReleaseId, {
 			headers: {
 				"User-Agent": "https://github.com/Pure-D/code-d"
 			},
@@ -189,7 +189,7 @@ async function fetchNightlyRelease(timeout: number): Promise<Release | undefined
 	if (typeof body != "object")
 		return undefined;
 
-	var assets = <ReleaseAsset[]>body.assets;
+	var assets = body.assets;
 	// reverse sort (largest date first)
 	assets.sort((a, b) => b.name.localeCompare(a.name));
 
@@ -205,7 +205,7 @@ async function fetchNightlyRelease(timeout: number): Promise<Release | undefined
 }
 
 async function fetchLatestTaggedRelease(channel: "stable" | "beta", timeout: number): Promise<Release | undefined> {
-	let res: AxiosResponse;
+	let res: AxiosResponse<any>;
 	try {
 		res = await reqJson().get("https://api.github.com/repos/Pure-D/serve-d/releases", {
 			headers: {
