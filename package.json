@@ -541,12 +541,6 @@
 					"default": false,
 					"description": "When autocompleting functions automatically insert the signature as snippet which can be navigated using tab."
 				},
-				"d.completeNoDupes": {
-					"type": "boolean",
-					"scope": "resource",
-					"default": true,
-					"description": "Merge all symbols inside auto completion with the same name together."
-				},
 				"d.betaStream": {
 					"type": "boolean",
 					"scope": "application",
