@@ -1194,9 +1194,9 @@
 		"grammar": "js-yaml syntaxes/dml.yml > syntaxes/dml.json; js-yaml syntaxes/diet.yml > syntaxes/diet.json; js-yaml syntaxes/d.yml > syntaxes/d.json; js-yaml syntaxes/sdl.yml > syntaxes/sdl.json; mocha out/test/ci"
 	},
 	"dependencies": {
-		"adm-zip": "^0.5.5",
-		"async": "^3.2.1",
-		"axios": "^0.22.0",
+		"adm-zip": "^0.5.9",
+		"async": "^3.2.2",
+		"axios": "^0.24.0",
 		"code-d-api": "^0.2.1",
 		"expand-tilde": "^2.0.2",
 		"jsdom": "^17.0.0",
@@ -1205,7 +1205,6 @@
 		"mkdirp": "^1.0.4",
 		"ncp": "^2.0.0",
 		"rimraf": "^3.0.2",
-		"rmdir": "^1.0.0",
 		"string-argv": "^0.3.1",
 		"vscode-languageclient": "^8.0.0-next.2",
 		"vscode-test-adapter-api": "^1.9.0",

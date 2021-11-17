@@ -11,7 +11,6 @@ import { Readable } from "stream"
 var rimraf = require("rimraf");
 var AdmZip = require("adm-zip");
 var async = require("async");
-var rmdir = require("rmdir");
 var mkdirp = require("mkdirp");
 
 var extensionContext: vscode.ExtensionContext;
@@ -380,25 +379,23 @@ export function installServeD(urls: { url: string, title: string }[], ref: strin
 		mkdirp.sync(outputFolder);
 		var finalDestination = path.join(outputFolder, "serve-d" + (process.platform == "win32" ? ".exe" : ""));
 		installationLog.appendLine("Installing into " + outputFolder);
-		fs.exists(outputFolder, function (exists) {
-			if (!exists)
-				fs.mkdirSync(outputFolder);
-			if (fs.existsSync(finalDestination))
-				rimraf.sync(finalDestination);
-			async.each(urls, installServeDEntry(outputFolder), async function (err: any) {
-				if (err) {
-					let r: string | undefined = await vscode.window.showErrorMessage("Failed to download release", "Compile from source");
-					if (r == "Compile from source")
-						return done(compileServeD(ref)(env));
-					else
-						return done(undefined);
-				}
-				else {
-					await config(null).update("servedPath", finalDestination, true);
-					installationLog.appendLine("Finished installing into " + finalDestination);
-					done(true);
-				}
-			});
+		if (!fs.existsSync(outputFolder))
+			fs.mkdirSync(outputFolder);
+		if (fs.existsSync(finalDestination))
+			rimraf.sync(finalDestination);
+		async.each(urls, installServeDEntry(outputFolder), async function (err: any) {
+			if (err) {
+				let r: string | undefined = await vscode.window.showErrorMessage("Failed to download release", "Compile from source");
+				if (r == "Compile from source")
+					return done(compileServeD(ref)(env));
+				else
+					return done(undefined);
+			}
+			else {
+				await config(null).update("servedPath", finalDestination, true);
+				installationLog.appendLine("Finished installing into " + finalDestination);
+				done(true);
+			}
 		});
 	});
 }
@@ -603,9 +600,9 @@ export function compileDependency(cwd: string, name: string, gitURI: string, com
 		};
 		if (fs.existsSync(newCwd)) {
 			installationLog.appendLine("Removing old version");
-			rmdir(newCwd, function (err: Error, dirs: any, files: any) {
-				if (err)
-					installationLog.appendLine(err.toString());
+			rimraf(newCwd, function (e: any) {
+				if (e)
+					installationLog.appendLine(e.toString());
 				installationLog.appendLine("Removed old version");
 				startCompile();
 			});
