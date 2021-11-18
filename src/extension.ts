@@ -6,7 +6,6 @@ import { setContext, installServeD, compileServeD, getInstallOutput, downloadFil
 import { EventEmitter } from "events";
 import * as ChildProcess from "child_process";
 import * as which from "which";
-import { TestHub, testExplorerExtensionId, TestController, TestAdapter } from 'vscode-test-adapter-api';
 
 import * as mode from "./dmode";
 import * as statusbar from "./statusbar";
@@ -22,7 +21,6 @@ import { CodedAPI, Snippet } from "code-d-api";
 import { builtinPlugins } from "./builtin_plugins";
 import { CodedAPIServedImpl } from "./api_impl";
 import { restoreCreateProjectPackageBackup } from "./project-creator";
-import { TestAdapterGenerator, UnittestProject } from "./testprovider";
 import { registerDebuggers, linkDebuggersWithServed } from "./debug";
 import { DubTasksProvider } from "./dub-tasks";
 
@@ -192,11 +190,6 @@ function startClient(context: vscode.ExtensionContext) {
 		"--provide", "tasks-current",
 	];
 
-	// for integration with test explorer
-	const testExplorerExtension = vscode.extensions.getExtension<TestHub>(testExplorerExtensionId);
-	if (testExplorerExtension)
-		args.push("--provide", "test-runner");
-
 	let executable: ServerOptions = {
 		run: {
 			command: servedPath,
@@ -266,16 +259,6 @@ function startClient(context: vscode.ExtensionContext) {
 			served.emit("workspace-change");
 			served.refreshDependencies();
 		});
-
-		if (testExplorerExtension) {
-			const testHub = testExplorerExtension.exports;
-
-			const generator = new TestAdapterGenerator(served, testHub);
-			context.subscriptions.push(generator);
-			client.onNotification("coded/pushProjectTests", function (tests: UnittestProject) {
-				generator.updateTests(tests);
-			});
-		}
 
 		const startupProgress = new statusbar.StartupProgress();
 		client.onNotification("window/logMessage", function (info: { type: MessageType, message: string }) {
