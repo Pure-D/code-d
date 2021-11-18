@@ -2,7 +2,7 @@
 	"name": "code-d",
 	"displayName": "D Programming Language (code-d)",
 	"description": "auto-complete, snippets, linter and formatter for dlang",
-	"version": "0.22.0",
+	"version": "0.23.0-beta.3",
 	"publisher": "webfreak",
 	"repository": {
 		"type": "git",
@@ -46,7 +46,8 @@
 		"onCommand:code-d.addImport",
 		"onCommand:code-d.searchDocs",
 		"onCommand:code-d.openDocsAtCursor",
-		"onCommand:code-d.convertDubRecipe"
+		"onCommand:code-d.convertDubRecipe",
+		"onCommand:code-d.setupCompiler"
 	],
 	"main": "./out/extension",
 	"keywords": [
@@ -1055,6 +1056,11 @@
 				"command": "code-d.viewUserGuide",
 				"title": "Open User Guide / Documentation",
 				"category": "code-d"
+			},
+			{
+				"command": "code-d.setupCompiler",
+				"title": "Setup D Compiler",
+				"category": "code-d"
 			}
 		],
 		"jsonValidation": [
@@ -1184,14 +1190,14 @@
 		],
 		"walkthroughs": [
 			{
-				"id": "code-d.welcome",
+				"id": "welcome",
 				"title": "Get Started with D Development",
 				"description": "Setup your development experience for the D programming language.",
 				"steps": [
 					{
-						"id": "code-d.welcome.installCompiler",
-						"title": "Install and choose a D compiler (DMD, LDC or GCC)",
-						"description": "Run the 'Setup D Compiler' command to choose which D compiler to use with code-d and DUB. You can find available compilers on https://dlang.org/download.html",
+						"id": "welcome.installCompiler",
+						"title": "Install and choose a D compiler (DMD, LDC or GDC)",
+						"description": "Run the 'Setup D Compiler' command to choose which D compiler to use with code-d and DUB. You can find available compilers on [https://dlang.org/download.html](https://dlang.org/download.html)\n[Setup D Compiler](command:code-d.setupCompiler)",
 						"completionEvents": [
 							"onCommand:code-d.setupCompiler"
 						],
@@ -1200,7 +1206,7 @@
 						}
 					},
 					{
-						"id": "code-d.welcome.userSettings",
+						"id": "welcome.userSettings",
 						"title": "Configure code-d",
 						"description": "Review some common user settings",
 						"media": {
@@ -1208,15 +1214,19 @@
 						}
 					},
 					{
-						"id": "code-d.welcome.checkUserGuide",
-						"title": "Check out user guide",
-						"description": "The included code-d user guide contains tutorials and a description on all features of code-d. Make sure you read it!",
+						"id": "welcome.checkUserGuide",
+						"title": "Check out the user guide",
+						"description": "The included code-d user guide contains tutorials and a description on all features of code-d. Make sure you read it!\n[Open User Guide / Documentation](command:code-d.viewUserGuide)",
 						"completionEvents": [
-							"onCommand:code-d.viewUserGuide"
-						]
+							"onCommand:code-d.viewUserGuide",
+							"onStepSelected"
+						],
+						"media": {
+							"markdown": "docs/index.md"
+						}
 					},
 					{
-						"id": "code-d.welcome.debugProject",
+						"id": "welcome.debugProject",
 						"title": "Run and Debug your first project",
 						"description": "Code-D includes debugging plugins to improve the D debugging experience. Get started with a project and debug it from code-d.",
 						"media": {
