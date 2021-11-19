@@ -24,7 +24,7 @@ export function setContext(context: vscode.ExtensionContext) {
 	extensionContext = context;
 }
 
-function determineOutputFolder(): string {
+export function determineOutputFolder(): string {
 	if (process.platform == "linux") {
 		if (fs.existsSync(path.join(process.env.HOME!, ".local", "share")))
 			return path.join(process.env.HOME!, ".local", "share", "code-d", "bin");
@@ -90,7 +90,8 @@ export function downloadFileInteractive(url: string, title: string, aborted: Fun
 			else
 				done = false;
 
-			installationLog.appendLine("Finished downloading");
+			if (installationLog)
+				installationLog.appendLine("Finished downloading");
 		});
 	});
 

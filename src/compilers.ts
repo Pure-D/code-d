@@ -4,6 +4,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as ChildProcess from "child_process";
 import { config } from './extension';
+import { determineOutputFolder, downloadFileInteractive } from './installer';
 
 export interface DetectedCompiler {
 	/** 
@@ -18,7 +19,9 @@ export interface DetectedCompiler {
 	importPaths?: string[];
 };
 
-export function registerCompilerInstaller(): vscode.Disposable {
+let codedContext: vscode.ExtensionContext;
+export function registerCompilerInstaller(context: vscode.ExtensionContext): vscode.Disposable {
+	codedContext = context;
 	return vscode.commands.registerCommand("code-d.setupCompiler", (args) => {
 		setupCompilersUI();
 	});
@@ -95,19 +98,176 @@ export async function setupCompilersUI() {
 			showDetectedCompilerInstallPrompt(selection.installInfo);
 		} else {
 			switch (selection) {
-			case dmdItem:
-				break;
-			case ldcItem:
-				break;
-			case gdcItem:
-				break;
-			case manualSelect:
-				break;
-			default:
-				console.error("invalid selection");
-				introQuickPick.show();
-				break;
+				case dmdItem:
+					showCompilerInstallationPrompt("DMD", [
+						{ label: "See releases", website: "https://dlang.org/download.html#dmd" },
+						{ platform: "win32", label: "Run installer", downloadAndRun: "https://s3.us-west-2.amazonaws.com/downloads.dlang.org/releases/2021/dmd-2.098.0.exe" },
+						{ label: "Portable install", installSh: "install dmd,dub", binTest: "bash" },
+						{ platform: "linux", label: "System install", command: "pacman -S dlang-dmd", binTest: "pacman" },
+						{ platform: "linux", label: "System install", command: "layman -a dlang", binTest: "layman" },
+						{ platform: "darwin", label: "System install", command: "brew install dmd", binTest: "brew" },
+						{ platform: "linux", label: "System install", command: "nix-env -iA nixpkgs.dmd", binTest: "nix-env" },
+						{ platform: "linux", label: "System install", command: "zypper install dmd", binTest: "zypper" },
+					]);
+					break;
+				case ldcItem:
+					showCompilerInstallationPrompt("LDC", [
+						{ label: "See releases", website: "https://github.com/ldc-developers/ldc/releases" },
+						{ platform: "win32", label: "Run installer", downloadAndRun: "https://github.com/ldc-developers/ldc/releases/download/v1.28.0/ldc2-1.28.0-windows-multilib.exe" },
+						{ label: "Portable install", installSh: "install ldc,dub", binTest: "bash" },
+						{ label: "System install", command: "brew install ldc", binTest: "brew" },
+						{ platform: "linux", label: "System install", command: "apk add ldc", binTest: "apk" },
+						{ platform: "linux", label: "System install", command: "pacman -S dlang-ldc", binTest: "pacman" },
+						{ platform: "win32", label: "System install", command: "choco install ldc", binTest: "choco" },
+						{ platform: "linux", label: "System install", command: "apt install ldc", binTest: "apt" },
+						{ platform: "linux", label: "System install", command: "dnf install ldc", binTest: "dnf" },
+						{ platform: "freebsd", label: "System install", command: "pkg install ldc", binTest: "pkg" },
+						{ platform: "linux", label: "System install", command: "layman -a ldc", binTest: "layman" },
+						{ platform: "darwin", label: "System install", command: "brew install ldc", binTest: "brew" },
+						{ platform: "linux", label: "System install", command: "nix-env -i ldc", binTest: "nix-env" },
+					]);
+					break;
+				case gdcItem:
+					showCompilerInstallationPrompt("GDC", [
+						{ label: "View Project website", website: "https://gdcproject.org/downloads" },
+						{ platform: "win32", label: "Install through WinLibs", website: "https://winlibs.com" },
+						{ platform: "linux", label: "Portable install", installSh: "install gdc,dub" },
+						{ platform: "linux", label: "System install", command: "pacman -S gcc-d", binTest: "pacman" },
+						{ platform: "linux", label: "System install", command: "apt install gdc", binTest: "apt" },
+					]);
+					break;
+				case manualSelect:
+					break;
+				default:
+					console.error("invalid selection");
+					introQuickPick.show();
+					break;
 			}
+		}
+	});
+}
+
+type LabelWebsiteButton = { label: string, platform?: NodeJS.Platform | Function, binTest?: string, website: string };
+type LabelDownloadButton = { label: string, platform?: NodeJS.Platform | Function, binTest?: string, downloadAndRun: string };
+type LabelCommandButton = { label: string, platform?: NodeJS.Platform | Function, binTest?: string, command: string };
+type LabelInstallShButton = { label: string, platform?: NodeJS.Platform | Function, binTest?: string, installSh: string };
+
+type InstallButtonType = LabelWebsiteButton | LabelDownloadButton | LabelCommandButton | LabelInstallShButton;
+type InstallQuickPickItem = vscode.QuickPickItem & { button: InstallButtonType };
+
+async function showCompilerInstallationPrompt(name: string, buttons: InstallButtonType[]) {
+	const installPrompt = vscode.window.createQuickPick();
+	installPrompt.title = "Install " + name + " compiler";
+	let items: InstallQuickPickItem[] = [];
+	for (let i = 0; i < buttons.length; i++) {
+		const button = buttons[i];
+		if (button.platform) {
+			if (typeof button.platform == "function") {
+				if (!button.platform())
+					continue;
+			} else if (process.platform != button.platform) {
+				continue;
+			}
+		}
+		if (button.binTest && !await testBinExists(button.binTest))
+			continue;
+		let detail: string | undefined;
+		if ((<LabelWebsiteButton>button).website) {
+			detail = "$(ports-open-browser-icon) " + (<LabelWebsiteButton>button).website;
+		} else if ((<LabelDownloadButton>button).downloadAndRun) {
+			detail = "$(cloud-download) " + (<LabelDownloadButton>button).downloadAndRun;
+		} else if ((<LabelCommandButton>button).command) {
+			detail = "$(terminal) " + (<LabelCommandButton>button).command;
+		} else if ((<LabelInstallShButton>button).installSh) {
+			detail = "$(terminal) install.sh " + (<LabelInstallShButton>button).installSh;
+		}
+
+		items.push({
+			label: button.label,
+			description: detail,
+			button: button
+		});
+	}
+	installPrompt.items = items;
+	installPrompt.buttons = [vscode.QuickInputButtons.Back];
+	installPrompt.show();
+
+	installPrompt.onDidAccept(async (e) => {
+		function runTerminal(shell: string) {
+			let terminal = vscode.window.createTerminal("code-d compiler installation");
+			terminal.show();
+			terminal.sendText(shell, true);
+		}
+
+		let selection = (<InstallQuickPickItem>installPrompt.selectedItems[0])?.button;
+		installPrompt.hide();
+		if (selection) {
+			if ((<LabelWebsiteButton>selection).website) {
+				vscode.env.openExternal(vscode.Uri.parse((<LabelWebsiteButton>selection).website));
+			} else if ((<LabelDownloadButton>selection).downloadAndRun) {
+				let link = (<LabelDownloadButton>selection).downloadAndRun;
+				let aborted = false;
+				let outputFolder = determineOutputFolder();
+				let fileLocation = link.lastIndexOf('/');
+				let dstFile = path.join(outputFolder, fileLocation == -1 ? "compiler_dl.exe" : link.substr(fileLocation + 1));
+				console.log("Downloading " + link + " to " + dstFile);
+				downloadFileInteractive(link, "Downloading Compiler installer", () => {
+					aborted = true;
+				}).then(stream => stream.pipe(fs.createWriteStream(dstFile)).on("finish", () => {
+					if (!aborted) {
+						// note: if not using an information prompt, add a timeout so on windows it doesn't fail with EBUSY here
+						let installBtn = "Run Installer";
+						vscode.window.showInformationMessage("Executable is ready for install!", installBtn).then(btn => {
+							if (btn == installBtn) {
+								try {
+									let spawnProc = dstFile;
+									let args: string[] | undefined;
+									if (process.platform != "win32") {
+										fs.chmodSync(dstFile, 0o755);
+									} else {
+										spawnProc = "cmd.exe";
+										args = ["/c", dstFile];
+									}
+		
+									if (args?.length) {
+										ChildProcess.spawn(spawnProc, args, {
+											stdio: "ignore",
+											windowsHide: false
+										});
+									} else {
+										ChildProcess.spawn(spawnProc, {
+											stdio: "ignore",
+											windowsHide: false
+										});
+									}
+
+									let reloadBtn = "Reload Window";
+									vscode.window.showInformationMessage("When finished installing, reload the window and setup the compiler in the getting started guide.", reloadBtn)
+										.then(async btn => {
+											if (btn == reloadBtn) {
+												await vscode.commands.executeCommand("workbench.action.openWalkthrough", "webfreak.code-d#welcome");
+												vscode.commands.executeCommand("workbench.action.reloadWindow");
+											}
+										})
+								} catch (e) {
+									vscode.window.showErrorMessage("Installation failled " + e);
+								}
+							}
+						})
+					}
+				}));
+			} else if ((<LabelCommandButton>selection).command) {
+				runTerminal((<LabelCommandButton>selection).command);
+			} else if ((<LabelInstallShButton>selection).installSh) {
+				let installSh = codedContext.asAbsolutePath("res/exe/install.sh").replace(/\\/g, '\\\\');
+				runTerminal((await testBinExists("bash")) + " \"" + installSh + "\" " + (<LabelInstallShButton>selection).installSh);
+			}
+		}
+	});
+	installPrompt.onDidTriggerButton(async (e) => {
+		if (e == vscode.QuickInputButtons.Back) {
+			await setupCompilersUI();
+			installPrompt.hide();
 		}
 	});
 }
@@ -115,6 +275,32 @@ export async function setupCompilersUI() {
 export async function showDetectedCompilerInstallPrompt(compiler: DetectedCompiler) {
 	const installPrompt = vscode.window.createQuickPick();
 	installPrompt.title = "Configure " + compiler.has + " compiler";
+
+	let [items, checked] = makeCompilerInstallButtons(compiler);
+	installPrompt.items = items;
+	installPrompt.selectedItems = checked;
+	installPrompt.canSelectMany = true;
+	installPrompt.buttons = [vscode.QuickInputButtons.Back];
+	installPrompt.show();
+
+	installPrompt.onDidAccept((e) => {
+		let selection = installPrompt.selectedItems;
+		installPrompt.hide();
+		for (let i = 0; i < selection.length; i++) {
+			const btn = <UIQuickPickItem>selection[i];
+			if (btn.action)
+				btn.action();
+		}
+	});
+	installPrompt.onDidTriggerButton(async (e) => {
+		if (e == vscode.QuickInputButtons.Back) {
+			await setupCompilersUI();
+			installPrompt.hide();
+		}
+	});
+}
+
+export function makeCompilerInstallButtons(compiler: DetectedCompiler): [UIQuickPickItem[], UIQuickPickItem[]] {
 	let items: UIQuickPickItem[] = [];
 	let checked: UIQuickPickItem[] = [];
 
@@ -126,7 +312,7 @@ export async function showDetectedCompilerInstallPrompt(compiler: DetectedCompil
 			label: label,
 			description: "$(settings) " + settings.map(setting => "\"d." + setting[0] + "\": " + JSON.stringify(setting[1])).join(", "),
 			detail: detail,
-			action: function() {
+			action: function () {
 				settings.forEach(setting => {
 					config(null).update(setting[0], setting[1], vscode.ConfigurationTarget.Global);
 				});
@@ -162,27 +348,7 @@ export async function showDetectedCompilerInstallPrompt(compiler: DetectedCompil
 		));
 	}
 
-	installPrompt.items = items;
-	installPrompt.selectedItems = checked;
-	installPrompt.canSelectMany = true;
-	installPrompt.buttons = [vscode.QuickInputButtons.Back];
-	installPrompt.show();
-
-	installPrompt.onDidAccept((e) => {
-		let selection = installPrompt.selectedItems;
-		installPrompt.hide();
-		for (let i = 0; i < selection.length; i++) {
-			const btn = <UIQuickPickItem>selection[i];
-			if (btn.action)
-				btn.action();
-		}
-	});
-	installPrompt.onDidTriggerButton(async (e) => {
-		if (e == vscode.QuickInputButtons.Back) {
-			await setupCompilersUI();
-			installPrompt.hide();
-		}
-	})
+	return [items, checked];
 }
 
 export async function checkCompilers(): Promise<DetectedCompiler> {
@@ -343,3 +509,26 @@ async function checkCompiler(compiler: "dmd" | "ldc" | "ldc2" | "gdc" | "gcc", c
 		});
 	});
 }
+
+let binExistsCache: { [index: string]: string | false } = {};
+async function testBinExists(binary: string): Promise<string | false> {
+	if (binExistsCache[binary] !== undefined)
+		return binExistsCache[binary];
+
+	try {
+		let founds = await which(binary, {
+			all: true
+		});
+		for (let i = 0; i < founds.length; i++) {
+			const found = founds[i];
+
+			if (process.platform == "win32" && found.toUpperCase() == "C:\\WINDOWS\\SYSTEM32\\BASH.EXE")
+				continue; // this is WSL bash - not what we want!
+
+			return binExistsCache[binary] = found;
+		}
+	} catch (e) {
+	}
+	return binExistsCache[binary] = false;
+}
+
