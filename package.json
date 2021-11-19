@@ -246,7 +246,6 @@
 			{
 				"view": "debug",
 				"contents": "You can run any D files (or D statements in an untitled file) through RDMD using this button, the command palette or by right-clicking a D file. To run or debug complex projects use DUB.\n[Run File with RDMD](command:code-d.rdmdCurrent)",
-				"enablement": "editorLangId == d",
 				"when": "d.isActive"
 			}
 		],
