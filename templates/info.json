@@ -17,7 +17,7 @@
 		"path": "EmptyDlangUI",
 		"dub": {
 			"dependencies": {
-				"dlangui": "~>0.9.177"
+				"dlangui": "~>0.9.186"
 			}
 		}
 	},
@@ -27,7 +27,7 @@
 		"path": "EmptyGTKD",
 		"dub": {
 			"dependencies": {
-				"gtk-d:gtkd": "~>3.8.0"
+				"gtk-d:gtkd": "~>3.10.0"
 			}
 		}
 	},
@@ -37,7 +37,7 @@
 		"path": "EmptyVibeServer",
 		"dub": {
 			"dependencies": {
-				"vibe-d": "~>0.8.3"
+				"vibe-d": "~>0.9.4"
 			}
 		}
 	},
@@ -47,7 +47,7 @@
 		"path": "BasicVibeServer",
 		"dub": {
 			"dependencies": {
-				"vibe-d": "~>0.8.3"
+				"vibe-d": "~>0.9.4"
 			}
 		}
 	},
@@ -57,9 +57,13 @@
 		"path": "EmptyOpenGL_SDL",
 		"dub": {
 			"dependencies": {
-				"derelict-gl3": "~>1.0.24",
-				"derelict-sdl2": "~>2.1.4"
-			}
+				"bindbc-opengl": "~>1.0",
+				"bindbc-sdl": "~>1.0"
+			},
+			"versions": [
+				"SDL_204",
+				"GL_32"
+			]
 		}
 	},
 	{
@@ -68,9 +72,13 @@
 		"path": "EmptyLegacyOpenGL_SDL",
 		"dub": {
 			"dependencies": {
-				"derelict-gl3": "~>1.0.24",
-				"derelict-sdl2": "~>2.1.4"
-			}
+				"bindbc-opengl": "~>1.0",
+				"bindbc-sdl": "~>1.0"
+			},
+			"versions": [
+				"SDL_204",
+				"GL_AllowDeprecated"
+			]
 		}
 	},
 	{
@@ -85,7 +93,7 @@
 		"path": "EmptyX11",
 		"dub": {
 			"dependencies": {
-				"x11": "~>1.0.20"
+				"x11": "~>1.0.21"
 			}
 		}
 	},
@@ -96,7 +104,7 @@
 		"dub": {
 			"dependencies": {
 				"vibe-d": "~>0.8.3",
-				"diamond": "~>2.8.5",
+				"diamond": "~>3.0.0",
 				"mysql-native": "~>2.2.1"
 			},
 			"versions": [
@@ -122,7 +130,7 @@
 		"dub": {
 			"dependencies": {
 				"vibe-d": "~>0.8.3",
-				"diamond": "~>2.8.5",
+				"diamond": "~>3.0.0",
 				"mysql-native": "~>2.2.1"
 			},
 			"versions": [

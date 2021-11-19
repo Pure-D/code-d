@@ -1,23 +1,17 @@
-import derelict.sdl2.sdl;
-import derelict.opengl3.gl;
+import bindbc.sdl;
+import bindbc.opengl;
 
 import std.stdio;
 import std.string;
 
-/// Exception for SDL related issues
-class SDLException : Exception
+int main()
 {
-	/// Creates an exception from SDL_GetError()
-	this(string file = __FILE__, size_t line = __LINE__) nothrow @nogc
+	SDLSupport sdlStatus = loadSDL();
+	if (sdlStatus != sdlSupport)
 	{
-		super(cast(string) SDL_GetError().fromStringz, file, line);
+		writeln("Failed loading SDL: ", sdlStatus);
+		return 1;
 	}
-}
-
-void main()
-{
-	DerelictSDL2.load();
-	DerelictGL.load();
 
 	if (SDL_Init(SDL_INIT_VIDEO) < 0)
 		throw new SDLException();
@@ -36,6 +30,13 @@ void main()
 
 	if (SDL_GL_SetSwapInterval(1) < 0)
 		writeln("Failed to set VSync");
+
+	GLSupport glStatus = loadOpenGL();
+	if (glStatus < glSupport)
+	{
+		writeln("Failed loading OpenGL: ", glStatus);
+		return 1;
+	}
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
@@ -73,5 +74,17 @@ void main()
 		glEnd();
 
 		SDL_GL_SwapWindow(window);
+	}
+
+	return 0;
+}
+
+/// Exception for SDL related issues
+class SDLException : Exception
+{
+	/// Creates an exception from SDL_GetError()
+	this(string file = __FILE__, size_t line = __LINE__) nothrow @nogc
+	{
+		super(cast(string) SDL_GetError().fromStringz, file, line);
 	}
 }

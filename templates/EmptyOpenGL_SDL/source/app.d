@@ -1,23 +1,17 @@
-import derelict.sdl2.sdl;
-import derelict.opengl3.gl3;
+import bindbc.sdl;
+import bindbc.opengl;
 
 import std.stdio;
 import std.string;
 
-/// Exception for SDL related issues
-class SDLException : Exception
+int main()
 {
-	/// Creates an exception from SDL_GetError()
-	this(string file = __FILE__, size_t line = __LINE__) nothrow @nogc
+	SDLSupport sdlStatus = loadSDL();
+	if (sdlStatus != sdlSupport)
 	{
-		super(cast(string) SDL_GetError().fromStringz, file, line);
+		writeln("Failed loading SDL: ", sdlStatus);
+		return 1;
 	}
-}
-
-void main()
-{
-	DerelictSDL2.load();
-	DerelictGL3.load();
 
 	if (SDL_Init(SDL_INIT_VIDEO) < 0)
 		throw new SDLException();
@@ -37,9 +31,16 @@ void main()
 	if (SDL_GL_SetSwapInterval(1) < 0)
 		writeln("Failed to set VSync");
 
-	DerelictGL3.reload();
+	GLSupport glStatus = loadOpenGL();
+	if (glStatus < glSupport)
+	{
+		writeln("Failed loading minimum required OpenGL version: ", glStatus);
+		return 1;
+	}
 
 	loadScene();
+	scope (exit)
+		unloadScene();
 
 	bool quit = false;
 	SDL_Event event;
@@ -62,7 +63,7 @@ void main()
 		SDL_GL_SwapWindow(window);
 	}
 
-	unloadScene();
+	return 0;
 }
 
 //dfmt off
@@ -188,4 +189,14 @@ void renderScene()
 	glDrawArrays(GL_TRIANGLES, 0, 3); // Starting from vertex 0; 3 vertices total -> 1 triangle
 	glDisableVertexAttribArray(0);
 	glDisableVertexAttribArray(1);
+}
+
+/// Exception for SDL related issues
+class SDLException : Exception
+{
+	/// Creates an exception from SDL_GetError()
+	this(string file = __FILE__, size_t line = __LINE__) nothrow @nogc
+	{
+		super(cast(string) SDL_GetError().fromStringz, file, line);
+	}
 }
