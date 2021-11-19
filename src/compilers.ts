@@ -316,6 +316,7 @@ async function showCompilerInstallationPrompt(name: string, buttons: (InstallBut
 										});
 									}
 
+									listCompilersCache = undefined; // clear cache for next list
 									let reloadBtn = "Reload Window";
 									vscode.window.showInformationMessage("When finished installing, reload the window and setup the compiler in the getting started guide.", reloadBtn)
 										.then(async btn => {
@@ -336,7 +337,8 @@ async function showCompilerInstallationPrompt(name: string, buttons: (InstallBut
 			} else if ((<LabelInstallShButton>selection).installSh) {
 				let installSh = codedContext.asAbsolutePath("res/exe/install.sh").replace(/\\/g, '\\\\');
 				let installDir = getLocalCompilersDir().replace(/\\/g, '\\\\');
-				runTerminal(`${await testBinExists("bash")} \"${installSh}\" -p ${installDir} ${(<LabelInstallShButton>selection).installSh}`);
+				runTerminal(`${await testBinExists("bash")} \"${installSh}\" -p "${installDir}" ${(<LabelInstallShButton>selection).installSh}`);
+				listCompilersCache = undefined; // clear cache for next list
 			}
 		}
 	});
