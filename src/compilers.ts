@@ -5,6 +5,7 @@ import * as path from "path";
 import * as ChildProcess from "child_process";
 import { config } from './extension';
 import { determineOutputFolder, downloadFileInteractive } from './installer';
+import { reqText } from './util';
 
 export interface DetectedCompiler {
 	/** 
@@ -31,6 +32,9 @@ type UIQuickPickItem = vscode.QuickPickItem & { kind?: number, installInfo?: any
 export async function setupCompilersUI() {
 	const introQuickPick = vscode.window.createQuickPick();
 	introQuickPick.title = "Setup auto-detected compiler or manually configure compiler";
+	introQuickPick.busy = true;
+	introQuickPick.items = [{ label: "Detecting compilers..." }];
+	introQuickPick.show();
 	const compilers: DetectedCompiler[] = await listCompilers();
 	let items: UIQuickPickItem[] = [];
 	for (let i = 0; i < compilers.length; i++) {
@@ -52,6 +56,8 @@ export async function setupCompilersUI() {
 			}
 			if (compiler.frontendVersion && compiler.frontendVersion != compiler.version)
 				versionStrings.push("spec version " + compiler.frontendVersion);
+			if (!compiler.inPath && compiler.path)
+				versionStrings.push(compiler.path);
 			items.push({
 				label: compiler.has,
 				description: versionStrings.length > 0 ? versionStrings.join(" ・ ") : undefined,
@@ -82,13 +88,13 @@ export async function setupCompilersUI() {
 		description: "GCC-based D compiler ・ stable, great optimization"
 	});
 	items.push(manualSelect = {
-		label: "Select installation folder",
+		label: "Select installed executable",
 		description: "if you have already installed a D compiler that is not being picked up"
 	});
 	introQuickPick.items = items;
-	introQuickPick.show();
+	introQuickPick.busy = false;
 
-	introQuickPick.onDidAccept((e) => {
+	introQuickPick.onDidAccept(async (e) => {
 		let selection = <UIQuickPickItem>introQuickPick.selectedItems[0];
 		if (selection.kind === 2)
 			return;
@@ -97,23 +103,33 @@ export async function setupCompilersUI() {
 		if (selection.installInfo) {
 			showDetectedCompilerInstallPrompt(selection.installInfo);
 		} else {
+			function isGlobalInstallSh() {
+				let dir = getDefaultInstallShDir();
+				return dir && fs.existsSync(dir);
+			}
+			let latest;
 			switch (selection) {
 				case dmdItem:
+					latest = process.platform == "win32" && await readHTTP("http://downloads.dlang.org/releases/LATEST");
 					showCompilerInstallationPrompt("DMD", [
 						{ label: "See releases", website: "https://dlang.org/download.html#dmd" },
-						{ platform: "win32", label: "Run installer", downloadAndRun: "https://s3.us-west-2.amazonaws.com/downloads.dlang.org/releases/2021/dmd-2.098.0.exe" },
+						latest && { platform: "win32", label: "Run installer", downloadAndRun: "http://downloads.dlang.org/releases/2.x/" + latest + "/dmd-" + latest + ".exe" },
+						{ label: "Portable install (in existing ~/dlang)", installSh: "install dmd,dub", binTest: "bash", global: true, platform: isGlobalInstallSh },
 						{ label: "Portable install", installSh: "install dmd,dub", binTest: "bash" },
 						{ platform: "linux", label: "System install", command: "pacman -S dlang-dmd", binTest: "pacman" },
 						{ platform: "linux", label: "System install", command: "layman -a dlang", binTest: "layman" },
 						{ platform: "darwin", label: "System install", command: "brew install dmd", binTest: "brew" },
 						{ platform: "linux", label: "System install", command: "nix-env -iA nixpkgs.dmd", binTest: "nix-env" },
 						{ platform: "linux", label: "System install", command: "zypper install dmd", binTest: "zypper" },
+						{ platform: "linux", label: "System install", command: "xbps-install -S dmd", binTest: "xbps-install" },
 					]);
 					break;
 				case ldcItem:
+					latest = process.platform == "win32" && await readHTTP("http://ldc-developers.github.io/LATEST");
 					showCompilerInstallationPrompt("LDC", [
 						{ label: "See releases", website: "https://github.com/ldc-developers/ldc/releases" },
-						{ platform: "win32", label: "Run installer", downloadAndRun: "https://github.com/ldc-developers/ldc/releases/download/v1.28.0/ldc2-1.28.0-windows-multilib.exe" },
+						latest && { platform: "win32", label: "Run installer", downloadAndRun: "https://github.com/ldc-developers/ldc/releases/download/v" + latest + "/ldc2-" + latest + "-windows-multilib.exe" },
+						{ label: "Portable install (in existing ~/dlang)", installSh: "install ldc,dub", binTest: "bash", global: true, platform: isGlobalInstallSh },
 						{ label: "Portable install", installSh: "install ldc,dub", binTest: "bash" },
 						{ label: "System install", command: "brew install ldc", binTest: "brew" },
 						{ platform: "linux", label: "System install", command: "apk add ldc", binTest: "apk" },
@@ -125,18 +141,22 @@ export async function setupCompilersUI() {
 						{ platform: "linux", label: "System install", command: "layman -a ldc", binTest: "layman" },
 						{ platform: "darwin", label: "System install", command: "brew install ldc", binTest: "brew" },
 						{ platform: "linux", label: "System install", command: "nix-env -i ldc", binTest: "nix-env" },
+						{ platform: "linux", label: "System install", command: "xbps-install -S ldc", binTest: "xbps-install" },
 					]);
 					break;
 				case gdcItem:
 					showCompilerInstallationPrompt("GDC", [
 						{ label: "View Project website", website: "https://gdcproject.org/downloads" },
 						{ platform: "win32", label: "Install through WinLibs", website: "https://winlibs.com" },
-						{ platform: "linux", label: "Portable install", installSh: "install gdc,dub" },
+						// no install.sh for GDC because the version is ancient! (installing gcc 4.8.5, FE 2.068.2)
+						// { platform: () => isGlobalInstallSh() && process.platform == "linux", label: "Portable install (in existing ~/dlang)", installSh: "install gdc,dub", global: true },
+						// { platform: "linux", label: "Portable install", installSh: "install gdc,dub" },
 						{ platform: "linux", label: "System install", command: "pacman -S gcc-d", binTest: "pacman" },
 						{ platform: "linux", label: "System install", command: "apt install gdc", binTest: "apt" },
 					]);
 					break;
 				case manualSelect:
+					doManualSelect();
 					break;
 				default:
 					console.error("invalid selection");
@@ -147,20 +167,75 @@ export async function setupCompilersUI() {
 	});
 }
 
+async function readHTTP(uri: string): Promise<string | undefined> {
+	try {
+		return (await reqText(undefined, 3000).get(uri)).data;
+	} catch (e) {
+		console.log("could not fetch", uri, e);
+		return undefined;
+	}
+}
+
+async function doManualSelect(): Promise<void> {
+	let files = await vscode.window.showOpenDialog({
+		title: "Select compiler executable"
+	});
+	if (files && files.length > 0) {
+		if (files.length > 1) {
+			vscode.window.showWarningMessage("ignoring more than 1 file");
+		}
+		let selectedPath = files[0].fsPath;
+		let filename = path.basename(selectedPath);
+		let type = getCompilerTypeFromPrefix(filename);
+		if (!type) {
+			let tryAgain = "Try Again";
+			vscode.window.showErrorMessage("Could not detect compiler type from executable name (tested for DMD, LDC and GDC) - make sure you open the compiler executable and name it correctly!", tryAgain)
+				.then(b => {
+					if (b == tryAgain)
+						doManualSelect();
+				});
+		} else {
+			let result = await checkCompiler(type, selectedPath);
+			if (!result.has) {
+				let tryAgain = "Try Again";
+				vscode.window.showErrorMessage("The selected file was not executable or did not work with. Is the selected file a DMD, LDC or GDB executable?", tryAgain)
+					.then(b => {
+						if (b == tryAgain)
+							doManualSelect();
+					});
+				return;
+			}
+
+			if (!result.version && !result.frontendVersion) {
+				let tryAgain = "Try Again";
+				let ignore = "Ignore";
+				let choice = await vscode.window.showWarningMessage("Could not detect the compiler version from the executable. Is the selected file a DMD, LDC or GDB executable?", tryAgain);
+				if (choice == tryAgain)
+					return doManualSelect();
+				else if (choice != ignore)
+					return;
+			}
+
+			await showDetectedCompilerInstallPrompt(result);
+		}
+	}
+}
+
 type LabelWebsiteButton = { label: string, platform?: NodeJS.Platform | Function, binTest?: string, website: string };
 type LabelDownloadButton = { label: string, platform?: NodeJS.Platform | Function, binTest?: string, downloadAndRun: string };
 type LabelCommandButton = { label: string, platform?: NodeJS.Platform | Function, binTest?: string, command: string };
-type LabelInstallShButton = { label: string, platform?: NodeJS.Platform | Function, binTest?: string, installSh: string };
+type LabelInstallShButton = { label: string, platform?: NodeJS.Platform | Function, binTest?: string, installSh: string, global?: boolean };
 
 type InstallButtonType = LabelWebsiteButton | LabelDownloadButton | LabelCommandButton | LabelInstallShButton;
 type InstallQuickPickItem = vscode.QuickPickItem & { button: InstallButtonType };
 
-async function showCompilerInstallationPrompt(name: string, buttons: InstallButtonType[]) {
+async function showCompilerInstallationPrompt(name: string, buttons: (InstallButtonType | false | null | undefined | "")[]) {
 	const installPrompt = vscode.window.createQuickPick();
 	installPrompt.title = "Install " + name + " compiler";
 	let items: InstallQuickPickItem[] = [];
 	for (let i = 0; i < buttons.length; i++) {
 		const button = buttons[i];
+		if (!button) continue;
 		if (button.platform) {
 			if (typeof button.platform == "function") {
 				if (!button.platform())
@@ -260,7 +335,8 @@ async function showCompilerInstallationPrompt(name: string, buttons: InstallButt
 				runTerminal((<LabelCommandButton>selection).command);
 			} else if ((<LabelInstallShButton>selection).installSh) {
 				let installSh = codedContext.asAbsolutePath("res/exe/install.sh").replace(/\\/g, '\\\\');
-				runTerminal((await testBinExists("bash")) + " \"" + installSh + "\" " + (<LabelInstallShButton>selection).installSh);
+				let installDir = getLocalCompilersDir().replace(/\\/g, '\\\\');
+				runTerminal(`${await testBinExists("bash")} \"${installSh}\" -p ${installDir} ${(<LabelInstallShButton>selection).installSh}`);
 			}
 		}
 	});
@@ -360,10 +436,16 @@ export async function checkCompilers(): Promise<DetectedCompiler> {
 	for (let i = 0; i < compilers.length; i++) {
 		const compiler = compilers[i];
 		if (compiler.has) {
+			function isBetterVer(vs: number) {
+				if (vs == -1) return true;
+				var a = compilers[i].frontendVersion || compilers[i].version || "0";
+				var b = compilers[vs].frontendVersion || compilers[vs].version || "0";
+				return cmpVerGeneric(a, b) > 0;
+			}
 			switch (compiler.has) {
-				case "dmd": dmdIndex = i; break;
-				case "ldc": ldcIndex = i; break;
-				case "gdc": gdcIndex = i; break;
+				case "dmd": if (isBetterVer(dmdIndex)) dmdIndex = i; break;
+				case "ldc": if (isBetterVer(ldcIndex)) ldcIndex = i; break;
+				case "gdc": if (isBetterVer(gdcIndex)) gdcIndex = i; break;
 				default: console.error("unexpected state in code-d?!"); break;
 			}
 		}
@@ -379,6 +461,26 @@ export async function checkCompilers(): Promise<DetectedCompiler> {
 		return { has: false, path: fallbackPath };
 }
 
+function cmpVerGeneric(a: string, b: string): number {
+	var as = a.split(/[\s\.\-]+/g).map(i => parseInt(i)).filter(n => isFinite(n));
+	var bs = b.split(/[\s\.\-]+/g).map(i => parseInt(i)).filter(n => isFinite(n));
+	return as < bs ? -1 : as > bs ? 1 : 0;
+}
+
+function getDefaultInstallShDir(): string | undefined {
+	if (process.platform == "win32") {
+		return process.env.USERPROFILE;
+	} else if (process.env.HOME) {
+		return path.join(process.env.HOME, "dlang");
+	} else {
+		return undefined;
+	}
+}
+
+function getLocalCompilersDir(): string {
+	return path.join(determineOutputFolder(), "compilers");
+}
+
 let listCompilersCache: DetectedCompiler[] | undefined = undefined;
 export async function listCompilers(): Promise<DetectedCompiler[]> {
 	if (listCompilersCache !== undefined)
@@ -391,6 +493,8 @@ export async function listCompilersImpl(): Promise<DetectedCompiler[]> {
 	const compilers = ["dmd", "ldc2", "ldc", "gdc", "gcc"];
 	let ret: DetectedCompiler[] = [];
 	let fallbackPath: string | undefined = undefined;
+
+	// test compilers in $PATH
 	for (let i = 0; i < compilers.length; i++) {
 		const check = compilers[i];
 		let result = await checkCompiler(<any>check);
@@ -402,11 +506,109 @@ export async function listCompilersImpl(): Promise<DetectedCompiler[]> {
 				i++; // skip ldc / gcc
 		}
 	}
+
+	async function testInstallShPath(dir: string, type: "dmd" | "ldc" | "gdc") {
+		let activateFile = process.platform == "win32" ? "activate.bat" : "activate";
+		let activateContent: string | undefined = await new Promise((resolve) => {
+			fs.readFile(path.join(dir, activateFile), { encoding: "utf8" }, (err, data) => {
+				if (err)
+					return resolve(undefined);
+				resolve(data)
+			});
+		});
+
+		if (!activateContent)
+			return;
+
+		let foundPaths: string[] = [];
+		activatePathEnvironmentRegex.lastIndex = 0;
+		let m: RegExpMatchArray | null | undefined;
+		while (m = activatePathEnvironmentRegex.exec(activateContent)) {
+			// unshift because the scripts are prepending and we want 0 to be most specific
+			// at least on windows this will prefer the bin64 over bin folder
+			foundPaths.unshift.apply(foundPaths, m[1].split(process.platform == "win32" ? /;/g : /:/g));
+		}
+
+		for (var i = 0; i < foundPaths.length; i++) {
+			let exeName: string = type;
+			if (type == "ldc")
+				exeName += "2"; // ldc2.exe
+			if (process.platform == "win32")
+				exeName += ".exe";
+			let exePath = path.join(foundPaths[i], exeName);
+
+			if (!fs.existsSync(exePath))
+				continue;
+
+			let result = await checkCompiler(type, exePath);
+			fallbackPath = fallbackPath || result.path;
+			if (result && result.has) {
+				result.has = type;
+				ret.push(result);
+				break;
+			}
+		}
+	}
+
+	// test global install.sh based D compilers
+	let defaultDir = getDefaultInstallShDir();
+	if (defaultDir) {
+		await new Promise((resolve) => {
+			fs.readdir(defaultDir!, async (err, files) => {
+				try {
+					if (err)
+						return;
+					for (let i = 0; i < files.length; i++) {
+						const file = files[i];
+						const type = getCompilerTypeFromPrefix(file);
+						if (type)
+							await testInstallShPath(path.join(defaultDir!, file), type);
+					}
+				} finally {
+					resolve(undefined);
+				}
+			});
+		});
+	}
+
+	// test code-d install.sh based D compilers
+	await new Promise((resolve) => {
+		fs.readdir(defaultDir = getLocalCompilersDir(), async (err, files) => {
+			try {
+				if (err)
+					return;
+				for (let i = 0; i < files.length; i++) {
+					const file = files[i];
+					const type = getCompilerTypeFromPrefix(file);
+					if (type)
+						await testInstallShPath(path.join(defaultDir!, file), type);
+				}
+			} finally {
+				resolve(undefined);
+			}
+		});
+	});
+
 	if (ret.length == 0 && fallbackPath)
 		ret.push({ has: false, path: fallbackPath });
 	return ret;
 }
 
+// compiler type by checking if the file/foldername starts with ldc/dmd/gdc
+function getCompilerTypeFromPrefix(folderName: string): "ldc" | "dmd" | "gdc" | null {
+	if (folderName.startsWith("dmd"))
+		return "dmd";
+	else if (folderName.startsWith("gdc") || folderName.startsWith("gcc"))
+		return "gdc";
+	else if (folderName.startsWith("ldc"))
+		return "ldc";
+	else
+		return null;
+}
+
+const activatePathEnvironmentRegex = process.platform == "win32"
+	? /^set\s+PATH="?([^%"]+)"?/gim
+	: /^(?:export\s+)?PATH="?([^$"]+)"?/gm;
 const gdcVersionRegex = /^gcc version\s+v?(\d+(?:\.\d+)+)/gm;
 const gdcFeVersionRegex = /^version\s+v?(\d+(?:\.\d+)+)/gm;
 const gdcImportPathRegex = /^import path\s*\[\d+\]\s*=\s*(.+)/gm;
@@ -512,6 +714,8 @@ async function checkCompiler(compiler: "dmd" | "ldc" | "ldc2" | "gdc" | "gcc", c
 
 let binExistsCache: { [index: string]: string | false } = {};
 async function testBinExists(binary: string): Promise<string | false> {
+	// common bash install case for windows users
+	const win32GitBashPath = "C:\\Program Files\\Git\\usr\\bin\\bash.exe";
 	if (binExistsCache[binary] !== undefined)
 		return binExistsCache[binary];
 
@@ -519,6 +723,10 @@ async function testBinExists(binary: string): Promise<string | false> {
 		let founds = await which(binary, {
 			all: true
 		});
+		if (process.platform == "win32" && (binary.toUpperCase() == "BASH" || binary.toUpperCase() == "BASH.EXE")) {
+			if (fs.existsSync(win32GitBashPath))
+				return binExistsCache[binary] = win32GitBashPath;
+		}
 		for (let i = 0; i < founds.length; i++) {
 			const found = founds[i];
 
