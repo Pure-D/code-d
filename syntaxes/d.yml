@@ -243,7 +243,7 @@ repository:
     - include: '#type'
   special-keyword:
     patterns:
-    - match: \b(__FILE__|__MODULE__|__LINE__|__FUNCTION__|__PRETTY_FUNCTION__)\b
+    - match: \b(__FILE__|__FILE_FULL_PATH__|__MODULE__|__LINE__|__FUNCTION__|__PRETTY_FUNCTION__)\b
       name: constant.language.special-keyword.d
   statement:
     patterns:
@@ -1035,6 +1035,7 @@ repository:
     - include: '#character-literal'
     - include: '#float-literal'
     - include: '#integer-literal'
+    - include: '#eof'
     - include: '#special-tokens'
     - include: '#special-token-sequence'
     - include: '#keyword'
@@ -1211,6 +1212,14 @@ repository:
     patterns:
     - match: ([_a-zA-Z][_\d\w]*)(\s*\.\s*[_a-zA-Z][_\d\w]*)*
       name: variable.parameter.import.d
+  eof:
+    patterns:
+    - begin: __EOF__
+      beginCaptures:
+        0:
+          name: comment.block.documentation.eof.start.d
+      end: (?!__NEVER_MATCH__)__NEVER_MATCH__
+      name: text.eof.d
   comment:
     patterns:
     - include: '#block-comment'
@@ -1491,5 +1500,5 @@ repository:
       name: gfm.markup.italic.special-token-sequence.d
   special-tokens:
     patterns:
-    - match: \b(__DATE__|__EOF__|__TIME__|__TIMESTAMP__|__VENDOR__|__VERSION__)\b
+    - match: \b(__DATE__|__TIME__|__TIMESTAMP__|__VENDOR__|__VERSION__)\b
       name: gfm.markup.raw.special-tokens.d

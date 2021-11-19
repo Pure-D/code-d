@@ -57,7 +57,7 @@ export function getPackageInfo(pkg: string): Thenable<any> {
 }
 
 export function getLatestPackageInfo(pkg: string): Thenable<{ description?: string; version?: string; subPackages?: string[] }> {
-	return dubAPI().get("/api/packages/" + encodeURIComponent(pkg) + "/latest/info")
+	return dubAPI().get<any>("/api/packages/" + encodeURIComponent(pkg) + "/latest/info")
 		.then((body) => {
 			var json = body.data;
 			var subPackages: string[] = [];

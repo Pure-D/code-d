@@ -138,7 +138,10 @@ export class DubJSONContribution implements IJSONContribution {
 						item.sortText = "0";
 						items.push(item);
 					}
-					items.sort((a, b) => cmpSemver(b.label, a.label));
+					items.sort((a, b) => cmpSemver(
+						typeof b.label == "string" ? b.label : b.label.label,
+						typeof a.label == "string" ? a.label : a.label.label
+					));
 					for (let i = 0; i < items.length; i++) {
 						items[i].sortText = (10000000 + i).toString(); // lazy 0 pad
 						result.add(items[i]);
@@ -155,7 +158,9 @@ export class DubJSONContribution implements IJSONContribution {
 
 	public resolveSuggestion(item: vscode.CompletionItem): Thenable<vscode.CompletionItem> {
 		if (item.kind === vscode.CompletionItemKind.Property) {
-			let pack = item.label
+			let pack = item.label;
+			if (typeof pack != "string")
+				pack = pack.label;
 			return getLatestPackageInfo(pack).then((info: any) => {
 				if (info.description) {
 					item.documentation = info.description;

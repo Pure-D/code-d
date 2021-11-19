@@ -84,8 +84,8 @@ export class JSONProvider implements vscode.HoverProvider, vscode.CompletionItem
 		let proposed: { [key: string]: boolean } = {};
 		let collector: ISuggestionsCollector = {
 			add: (suggestion: vscode.CompletionItem) => {
-				if (!proposed[suggestion.label]) {
-					proposed[suggestion.label] = true;
+				if (!proposed[typeof suggestion.label == "string" ? suggestion.label : suggestion.label.label]) {
+					proposed[typeof suggestion.label == "string" ? suggestion.label : suggestion.label.label] = true;
 					if (overwriteRange) {
 						suggestion.range = overwriteRange;
 					}

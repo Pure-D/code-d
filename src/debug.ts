@@ -332,6 +332,7 @@ class DDebugProvider implements vscode.DebugConfigurationProvider {
 			|| (dubconfig?.dflags?.indexOf("-gc") ?? -1) != -1;
 		var isSDL = dubconfig?.recipePath?.endsWith(".sdl") == true;
 		console.log(dubconfig);
+		this.served?.outputChannel?.appendLine("Active DUB project info:\n\n" + JSON.stringify(dubconfig, null, "\t"));
 
 		function warnBuildSettings(msg: string): boolean | Thenable<boolean>
 		{
@@ -422,7 +423,7 @@ class DDebugProvider implements vscode.DebugConfigurationProvider {
 					finished = true;
 					waiter.dispose();
 					procWaiter.dispose();
-					done(e.exitCode);
+					done(typeof e.exitCode == "undefined" ? -1 : e.exitCode);
 				}
 			});
 

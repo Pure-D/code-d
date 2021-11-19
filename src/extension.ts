@@ -1,11 +1,10 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
-import { LanguageClient, LanguageClientOptions, ServerOptions, DocumentFilter, NotificationType, CloseAction, ErrorAction, ErrorHandler, Message, State, MessageType, RevealOutputChannelOn } from "vscode-languageclient";
+import { LanguageClient, LanguageClientOptions, ServerOptions, DocumentFilter, NotificationType, CloseAction, ErrorAction, ErrorHandler, Message, State, MessageType, RevealOutputChannelOn } from "vscode-languageclient/node";
 import { setContext, installServeD, compileServeD, getInstallOutput, downloadFileInteractive, findLatestServeD, cmpSemver, extractServedBuiltDate, Release, updateAndInstallServeD } from "./installer";
 import { EventEmitter } from "events";
 import * as ChildProcess from "child_process";
-import { TestHub, testExplorerExtensionId, TestController, TestAdapter } from 'vscode-test-adapter-api';
 
 import * as mode from "./dmode";
 import * as statusbar from "./statusbar";
@@ -21,7 +20,6 @@ import { CodedAPI, Snippet } from "code-d-api";
 import { builtinPlugins } from "./builtin_plugins";
 import { CodedAPIServedImpl } from "./api_impl";
 import { restoreCreateProjectPackageBackup } from "./project-creator";
-import { TestAdapterGenerator, UnittestProject } from "./testprovider";
 import { registerDebuggers, linkDebuggersWithServed } from "./debug";
 import { DubTasksProvider } from "./dub-tasks";
 import { checkCompilers, DetectedCompiler, makeCompilerInstallButtons, registerCompilerInstaller } from "./compilers";
@@ -192,11 +190,6 @@ function startClient(context: vscode.ExtensionContext) {
 		"--provide", "tasks-current",
 	];
 
-	// for integration with test explorer
-	const testExplorerExtension = vscode.extensions.getExtension<TestHub>(testExplorerExtensionId);
-	if (testExplorerExtension)
-		args.push("--provide", "test-runner");
-
 	let executable: ServerOptions = {
 		run: {
 			command: servedPath,
@@ -242,12 +235,12 @@ function startClient(context: vscode.ExtensionContext) {
 	});
 
 	client.onReady().then(() => {
-		var updateSetting = new NotificationType<{ section: string, value: any, global: boolean }, void>("coded/updateSetting");
+		var updateSetting = new NotificationType<{ section: string, value: any, global: boolean }>("coded/updateSetting");
 		client.onNotification(updateSetting, (arg: { section: string, value: any, global: boolean }) => {
 			config(null).update(arg.section, arg.value, arg.global);
 		});
 
-		var logInstall = new NotificationType<string, void>("coded/logInstall");
+		var logInstall = new NotificationType<string>("coded/logInstall");
 		client.onNotification(logInstall, (message: string) => {
 			getInstallOutput().appendLine(message);
 		});
@@ -266,16 +259,6 @@ function startClient(context: vscode.ExtensionContext) {
 			served.emit("workspace-change");
 			served.refreshDependencies();
 		});
-
-		if (testExplorerExtension) {
-			const testHub = testExplorerExtension.exports;
-
-			const generator = new TestAdapterGenerator(served, testHub);
-			context.subscriptions.push(generator);
-			client.onNotification("coded/pushProjectTests", function (tests: UnittestProject) {
-				generator.updateTests(tests);
-			});
-		}
 
 		const startupProgress = new statusbar.StartupProgress();
 		client.onNotification("window/logMessage", function (info: { type: MessageType, message: string }) {
@@ -542,12 +525,12 @@ async function preStartup(context: vscode.ExtensionContext) {
 		return true;
 	}
 
-	async function checkProgram(configName: string, defaultPath: string, name: string, installFunc: (env: NodeJS.ProcessEnv) => Thenable<boolean | undefined>, btn: string, outdatedCheck?: (log: string) => (boolean | [boolean, string])): Promise<boolean | undefined> {
+	async function checkProgram(forced: boolean, configName: string, defaultPath: string, name: string, installFunc: (env: NodeJS.ProcessEnv) => Thenable<boolean | undefined>, btn: string, outdatedCheck?: (log: string) => (boolean | [boolean, string])): Promise<boolean | undefined> {
 		var version = "";
 
 		try {
 			version = await spawnOneShotCheck(expandTilde(config(null).get(configName, defaultPath)), ["--version"], true, { cwd: vscode.workspace.rootPath });
-		} catch (err) {
+		} catch (err: any) {
 			// for example invalid executable error
 			console.error(err);
 			const fullConfigName = "d." + configName;
@@ -564,7 +547,7 @@ async function preStartup(context: vscode.ExtensionContext) {
 			};
 
 			if (err && err.code == "ENOENT") {
-				if (config(null).get("aggressiveUpdate", true)) {
+				if (config(null).get("aggressiveUpdate", true) && !forced) {
 					return installFunc(process.env);
 				}
 				else {
@@ -678,7 +661,7 @@ async function preStartup(context: vscode.ExtensionContext) {
 			if (m) {
 				try {
 					return [cmpSemver(m[1], target) < 0, "(target=" + target + ", installed=" + m[1] + ")"];
-				} catch (e) {
+				} catch (e: any) {
 					getInstallOutput().show(true);
 					getInstallOutput().appendLine("ERROR: could not compare current serve-d version with release");
 					getInstallOutput().appendLine(e.toString());
@@ -711,12 +694,16 @@ async function preStartup(context: vscode.ExtensionContext) {
 			});
 	}
 
-	let force = true; // force release lookup before first install
+	let firstTimeUser = true; // force release lookup before first install
+	let force = false;
+	const currentCodedServedIteration = 1; // bump on new code-d releases that want new serve-d
 	if (context.globalState.get("serve-d-downloaded-release-channel"))
-		force = false;
+		firstTimeUser = false;
+	if (context.globalState.get<number>("serve-d-wanted-download-iteration", 0) != currentCodedServedIteration)
+		force = true;
 
-	let version = await findLatestServeD(force, channelString);
-	let upToDate = await checkProgram("servedPath", "serve-d", "serve-d",
+	let version = await findLatestServeD(firstTimeUser || force, channelString);
+	let upToDate = await checkProgram(force, "servedPath", "serve-d", "serve-d",
 		version ? (version.asset
 			? installServeD([{ url: version.asset.browser_download_url, title: "Serve-D" }], version.name)
 			: compileServeD((version && version.name != "nightly") ? version.name : undefined))
@@ -726,6 +713,7 @@ async function preStartup(context: vscode.ExtensionContext) {
 		return; /* user dismissed install dialogs, don't continue startup */
 
 	await context.globalState.update("serve-d-downloaded-release-channel", channelString);
+	await context.globalState.update("serve-d-wanted-download-iteration", currentCodedServedIteration);
 
 	if (outdated) {
 		if (!reloading) {

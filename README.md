@@ -49,8 +49,7 @@ D compiler with environment variables set. Downloads [here](https://dlang.org/do
     git clone https://github.com/Pure-D/code-d.git
     cd code-d
     npm install
-    # requires `npm install -g typescript` once
-    tsc -p .
+    npx tsc -p .
     ```
 
 code-d will automatically install [serve-d](https://github.com/Pure-D/serve-d),
