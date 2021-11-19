@@ -492,7 +492,7 @@ async function preStartup(context: vscode.ExtensionContext) {
 		return true;
 	}
 
-	async function checkProgram(configName: string, defaultPath: string, name: string, installFunc: (env: NodeJS.ProcessEnv) => Thenable<boolean | undefined>, btn: string, outdatedCheck?: (log: string) => (boolean | [boolean, string])): Promise<boolean | undefined> {
+	async function checkProgram(forced: boolean, configName: string, defaultPath: string, name: string, installFunc: (env: NodeJS.ProcessEnv) => Thenable<boolean | undefined>, btn: string, outdatedCheck?: (log: string) => (boolean | [boolean, string])): Promise<boolean | undefined> {
 		var version = "";
 
 		try {
@@ -514,7 +514,7 @@ async function preStartup(context: vscode.ExtensionContext) {
 			};
 
 			if (err && err.code == "ENOENT") {
-				if (config(null).get("aggressiveUpdate", true)) {
+				if (config(null).get("aggressiveUpdate", true) && !forced) {
 					return installFunc(process.env);
 				}
 				else {
@@ -661,12 +661,16 @@ async function preStartup(context: vscode.ExtensionContext) {
 			});
 	}
 
-	let force = true; // force release lookup before first install
+	let firstTimeUser = true; // force release lookup before first install
+	let force = false;
+	const currentCodedServedIteration = 1; // bump on new code-d releases that want new serve-d
 	if (context.globalState.get("serve-d-downloaded-release-channel"))
-		force = false;
+		firstTimeUser = false;
+	if (context.globalState.get<number>("serve-d-wanted-download-iteration", 0) != currentCodedServedIteration)
+		force = true;
 
-	let version = await findLatestServeD(force, channelString);
-	let upToDate = await checkProgram("servedPath", "serve-d", "serve-d",
+	let version = await findLatestServeD(firstTimeUser || force, channelString);
+	let upToDate = await checkProgram(force, "servedPath", "serve-d", "serve-d",
 		version ? (version.asset
 			? installServeD([{ url: version.asset.browser_download_url, title: "Serve-D" }], version.name)
 			: compileServeD((version && version.name != "nightly") ? version.name : undefined))
@@ -676,6 +680,7 @@ async function preStartup(context: vscode.ExtensionContext) {
 		return; /* user dismissed install dialogs, don't continue startup */
 
 	await context.globalState.update("serve-d-downloaded-release-channel", channelString);
+	await context.globalState.update("serve-d-wanted-download-iteration", currentCodedServedIteration);
 
 	if (outdated) {
 		if (!reloading) {
