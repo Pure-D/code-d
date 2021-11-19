@@ -5,7 +5,6 @@ import { LanguageClient, LanguageClientOptions, ServerOptions, DocumentFilter, N
 import { setContext, installServeD, compileServeD, getInstallOutput, downloadFileInteractive, findLatestServeD, cmpSemver, extractServedBuiltDate, Release, updateAndInstallServeD } from "./installer";
 import { EventEmitter } from "events";
 import * as ChildProcess from "child_process";
-import * as which from "which";
 
 import * as mode from "./dmode";
 import * as statusbar from "./statusbar";
@@ -23,6 +22,7 @@ import { CodedAPIServedImpl } from "./api_impl";
 import { restoreCreateProjectPackageBackup } from "./project-creator";
 import { registerDebuggers, linkDebuggersWithServed } from "./debug";
 import { DubTasksProvider } from "./dub-tasks";
+import { checkCompilers, DetectedCompiler, makeCompilerInstallButtons, registerCompilerInstaller } from "./compilers";
 
 class CustomErrorHandler implements ErrorHandler {
 	private restarts: number[];
@@ -399,6 +399,8 @@ export function activate(context: vscode.ExtensionContext): CodedAPI {
 	context.subscriptions.push(addSDLProviders());
 	context.subscriptions.push(addJSONProviders());
 
+	context.subscriptions.push(registerCompilerInstaller(context));
+
 	registerCommands(context);
 
 	registerDebuggers(context);
@@ -453,15 +455,46 @@ async function preStartup(context: vscode.ExtensionContext) {
 
 	await restoreCreateProjectPackageBackup(context);
 
-	let presentCompiler: { has: string | false, path?: string } | undefined;
-	if (!context.globalState.get("checkedCompiler", false)) {
+	let presentCompiler: DetectedCompiler | undefined;
+	if (context.globalState.get<number>("checkedCompiler", 0) != 2) {
 		console.log("Checking if compiler is present");
 		presentCompiler = await checkCompilers();
-		context.globalState.update("checkedCompiler", true);
-		if (!presentCompiler.has)
-			vscode.env.openExternal(vscode.Uri.parse("https://dlang.org/download.html")).then(() => {
-				vscode.window.showInformationMessage("Please install a D compiler from dlang.org and reload the window once done.");
-			});
+		context.globalState.update("checkedCompiler", 2);
+		let setupDCompiler = "Change D Compiler";
+		let gettingStarted = "Getting Started";
+		if (presentCompiler && presentCompiler.has) {
+			let compilerSpec = presentCompiler.has;
+			if (presentCompiler.version)
+				compilerSpec += " " + presentCompiler.version;
+			let [_, checked] = makeCompilerInstallButtons(presentCompiler);
+			for (let i = 0; i < checked.length; i++) {
+				let action = checked[i].action;
+				if (action !== undefined)
+					action();
+			}
+			vscode.window.showInformationMessage("code-d has auto-detected " + compilerSpec + " and preconfigured it. "
+				+ "If you would like to use another compiler, please click the button below.",
+				setupDCompiler, gettingStarted)
+				.then(btn => {
+					if (btn == setupDCompiler) {
+						vscode.commands.executeCommand("code-d.setupCompiler");
+					} else if (btn == gettingStarted) {
+						vscode.commands.executeCommand("workbench.action.openWalkthrough", "webfreak.code-d#welcome");
+					}
+				});
+		} else {
+			gettingStarted = "First time setup";
+			vscode.window.showWarningMessage(
+				"code-d has not detected any compatible D compiler. Please click the button below to install and configure "
+				+ "a D compiler on your system or just for code-d. Auto completion will not contain any standard "
+				+ "library symbols and building projects will not work until then.",
+				gettingStarted)
+				.then(btn => {
+					if (btn == gettingStarted) {
+						vscode.commands.executeCommand("workbench.action.openWalkthrough", "webfreak.code-d#welcome");
+					}
+				});
+		}
 	}
 
 	async function checkDub(dubPath: string | undefined, updateSetting: boolean = false): Promise<boolean> {
@@ -694,46 +727,6 @@ async function preStartup(context: vscode.ExtensionContext) {
 		startClient(context);
 		started = true;
 	}
-}
-
-async function checkCompiler(compiler: string): Promise<{ has: boolean, path?: string }> {
-	let compilerPath: string;
-	try {
-		compilerPath = await which(compiler);
-	} catch (e) {
-		return { has: false };
-	}
-
-	if (!compilerPath)
-		return { has: false };
-
-	let proc: ChildProcess.ChildProcessWithoutNullStreams;
-	try {
-		proc = ChildProcess.spawn(compilerPath, ["--version"]);
-	} catch (err) {
-		return { has: false, path: compilerPath };
-	}
-
-	return await new Promise((resolve) => {
-		proc.on("error", function () {
-			resolve({ has: false, path: compilerPath });
-		}).on("exit", function () {
-			resolve({ has: true, path: compilerPath });
-		});
-	});
-}
-
-async function checkCompilers(): Promise<{ has: string | false, path?: string }> {
-	const compilers = ["dmd", "ldc", "ldc2", "gdc"];
-	let fallbackPath: string | undefined = undefined;
-	for (let i = 0; i < compilers.length; i++) {
-		const check = compilers[i];
-		let result = await checkCompiler(check);
-		fallbackPath = fallbackPath || result.path;
-		if (result && result.has)
-			return { has: check, path: result.path };
-	}
-	return { has: false, path: fallbackPath };
 }
 
 function spawnOneShotCheck(program: string, args: string[], captureOutput: boolean = false, options: any = undefined): Promise<string> {

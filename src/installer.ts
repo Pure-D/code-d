@@ -23,15 +23,15 @@ export function setContext(context: vscode.ExtensionContext) {
 	extensionContext = context;
 }
 
-function determineOutputFolder(): string {
-	if (process.platform == "linux") {
-		if (fs.existsSync(path.join(process.env.HOME!, ".local", "share")))
-			return path.join(process.env.HOME!, ".local", "share", "code-d", "bin");
+export function determineOutputFolder(): string {
+	if (process.platform == "linux" && process.env.HOME) {
+		if (fs.existsSync(path.join(process.env.HOME, ".local", "share")))
+			return path.join(process.env.HOME, ".local", "share", "code-d", "bin");
 		else
-			return path.join(process.env.HOME!, ".code-d", "bin");
+			return path.join(process.env.HOME, ".code-d", "bin");
 	}
-	else if (process.platform == "win32") {
-		return path.join(process.env.APPDATA!, "code-d", "bin");
+	else if (process.platform == "win32" && process.env.APPDATA) {
+		return path.join(process.env.APPDATA, "code-d", "bin");
 	}
 	else {
 		return path.join(extensionContext.extensionPath, "bin");
@@ -89,7 +89,8 @@ export function downloadFileInteractive(url: string, title: string, aborted: Fun
 			else
 				done = false;
 
-			installationLog.appendLine("Finished downloading");
+			if (installationLog)
+				installationLog.appendLine("Finished downloading");
 		});
 	});
 

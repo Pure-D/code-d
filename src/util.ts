@@ -3,7 +3,7 @@ import axiosLib = require("axios");
 import { currentVersion } from "./extension";
 export const axios = axiosLib.default;
 
-export function reqType(type: axiosLib.ResponseType, baseURL?: string | undefined): axiosLib.AxiosInstance {
+export function reqType(type: axiosLib.ResponseType, baseURL?: string | undefined, timeout: number = 10000): axiosLib.AxiosInstance {
 	let proxy = vscode.workspace.getConfiguration("http").get("proxy", "");
 	if (proxy)
 		process.env["http_proxy"] = proxy;
@@ -11,19 +11,19 @@ export function reqType(type: axiosLib.ResponseType, baseURL?: string | undefine
 	return axios.create({
 		baseURL,
 		responseType: type,
-		timeout: 10000,
+		timeout: timeout,
 		headers: {
 			"User-Agent": "code-d/" + currentVersion + " (github:Pure-D/code-d)"
 		}
 	});
 }
 
-export function reqJson(baseURL?: string | undefined): axiosLib.AxiosInstance {
-	return reqType("json", baseURL);
+export function reqJson(baseURL?: string | undefined, timeout: number = 10000): axiosLib.AxiosInstance {
+	return reqType("json", baseURL, timeout);
 }
 
-export function reqText(baseURL?: string | undefined): axiosLib.AxiosInstance {
-	return reqType("text", baseURL);
+export function reqText(baseURL?: string | undefined, timeout: number = 10000): axiosLib.AxiosInstance {
+	return reqType("text", baseURL, timeout);
 }
 
 // the shell quoting functions should only be used if really necessary! vscode
