@@ -492,22 +492,9 @@ export async function listCompilers(): Promise<DetectedCompiler[]> {
 }
 
 export async function listCompilersImpl(): Promise<DetectedCompiler[]> {
-	const compilers = ["dmd", "ldc2", "ldc", "gdc", "gcc"];
 	let ret: DetectedCompiler[] = [];
 	let fallbackPath: string | undefined = undefined;
-
-	// test compilers in $PATH
-	for (let i = 0; i < compilers.length; i++) {
-		const check = compilers[i];
-		let result = await checkCompiler(<any>check);
-		fallbackPath = fallbackPath || result.path;
-		if (result && result.has) {
-			result.has = check == "ldc2" ? "ldc" : <any>check;
-			ret.push(result);
-			if (check == "ldc2" || check == "gdc")
-				i++; // skip ldc / gcc
-		}
-	}
+	let defaultDir: string | undefined;
 
 	async function testInstallShPath(dir: string, type: "dmd" | "ldc" | "gdc") {
 		let activateFile = process.platform == "win32" ? "activate.bat" : "activate";
@@ -552,8 +539,40 @@ export async function listCompilersImpl(): Promise<DetectedCompiler[]> {
 		}
 	}
 
+	// test code-d install.sh based D compilers
+	await new Promise((resolve) => {
+		fs.readdir(defaultDir = getLocalCompilersDir(), async (err, files) => {
+			try {
+				if (err)
+					return;
+				for (let i = 0; i < files.length; i++) {
+					const file = files[i];
+					const type = getCompilerTypeFromPrefix(file);
+					if (type)
+						await testInstallShPath(path.join(defaultDir!, file), type);
+				}
+			} finally {
+				resolve(undefined);
+			}
+		});
+	});
+
+	// test compilers in $PATH
+	const compilers = ["dmd", "ldc2", "ldc", "gdc", "gcc"];
+	for (let i = 0; i < compilers.length; i++) {
+		const check = compilers[i];
+		let result = await checkCompiler(<any>check);
+		fallbackPath = fallbackPath || result.path;
+		if (result && result.has) {
+			result.has = check == "ldc2" ? "ldc" : <any>check;
+			ret.push(result);
+			if (check == "ldc2" || check == "gdc")
+				i++; // skip ldc / gcc
+		}
+	}
+
 	// test global install.sh based D compilers
-	let defaultDir = getDefaultInstallShDir();
+	defaultDir = getDefaultInstallShDir();
 	if (defaultDir) {
 		await new Promise((resolve) => {
 			fs.readdir(defaultDir!, async (err, files) => {
@@ -572,24 +591,6 @@ export async function listCompilersImpl(): Promise<DetectedCompiler[]> {
 			});
 		});
 	}
-
-	// test code-d install.sh based D compilers
-	await new Promise((resolve) => {
-		fs.readdir(defaultDir = getLocalCompilersDir(), async (err, files) => {
-			try {
-				if (err)
-					return;
-				for (let i = 0; i < files.length; i++) {
-					const file = files[i];
-					const type = getCompilerTypeFromPrefix(file);
-					if (type)
-						await testInstallShPath(path.join(defaultDir!, file), type);
-				}
-			} finally {
-				resolve(undefined);
-			}
-		});
-	});
 
 	if (ret.length == 0 && fallbackPath)
 		ret.push({ has: false, path: fallbackPath });
