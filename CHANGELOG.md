@@ -27,7 +27,21 @@ code-d and serve-d
 </tr>
 </table>
 
-# 0.x.y
+# 0.23.0
+
+*whew, has it really been 2 years already? Sorry for the delay, here is the update! (finally)*
+
+*I have often taken breaks while developing code-d/serve-d/workspace-d, so there will ~~probably~~ definitely be bugs and inconsistencies with features that were started but not properly finished. Be sure to report issues you find to https://github.com/Pure-D/code-d/issues!*
+
+## Getting Started
+
+There is a new getting started guide inside the default VSCode Getting Started page (available when you don't have anything open or through Help -> Get Started)
+
+With it comes a new compiler configuration prompt which helps you installing a compiler.
+
+Make sure you check out the getting started page if you haven't really used this extension before!
+
+The installer downloads and runs Windows setup executables or the official install.sh script on all other platforms. You can use it any time to install new updated DMD/LDC compilers locally just for code-d.
 
 ## Single-File editing
 
@@ -77,7 +91,7 @@ Among several other improvements of error locations, without any new quick fixes
 
 ## Completion
 
-Auto-completion now shows more information thanks to @RUSshy ([Pure-D/serve-d#155](https://github.com/Pure-D/serve-d/pull/155))
+Auto-completion now shows more information and is better sorted thanks to @RUSshy ([Pure-D/serve-d#155](https://github.com/Pure-D/serve-d/pull/155))
 
 It's recommended to enable `d.argumentSnippets` to have the arguments inserted into code easily and the overloads being shown in the auto completion list.
 
@@ -99,7 +113,16 @@ The "Insert default dscanner.ini content" command now dumps the currently used s
 
 You can now format just the current selection of code. Thanks to @ryuukk for implementing this. ([Pure-D/serve-d#120](https://github.com/Pure-D/serve-d/pull/120))
 
-Additionally dfmt (the included formatter tool) was upgraded from 0.11.0 (last serve-d stable) to 0.13.4, introducing a lot of fixes and improvements.
+Additionally dfmt (the included formatter tool) was upgraded from 0.11.0 (last serve-d stable) to 0.14.0, introducing a lot of fixes and improvements.
+
+This introduced 2 new settings, which have been turned on by default, possibly changing how existing code is formatted:
+
+- `dfmt.keepLineBreaks` - on by default, turn off to revert to old behavior
+- `dfmt.singleIndent` - on by default, turn off to revert to old behavior
+
+The keep line breaks setting will keep line breaks in code and inside function arguments, instead of replacing them, making the formatter work much more like other formatters inside the VSCode ecosystem.
+
+The single indent setting will make subsequent indentation of arguments be extended by a single tab instead of by two.
 
 ## DDoc
 
@@ -159,9 +182,27 @@ You can now use new context variables in `when` clauses in vscode settings like 
 
 ## Other Things
 
+* Many improvements in syntax highlighting
+* Updated DCD to 0.13.6
+  * Windows will download precompiled releases again
+* Updated D-Scanner to 0.11.1
+* Updated dfmt to 0.14.0
+* Enabled the extension in untrusted workspaces - secured user settings that could be used maliciously
+* `"d.stdlibPath": "auto"` now uses the `d.dubCompiler` setting first to detect stdlibs with the given compiler
+* added a highlight provider
+  * Highlights selected variable in scope
+  * Highlights which statement `return`, `break`, `continue` affects
+* Tasks can use `$current` to use the currently configured project compiler/buildType/configuration/architecture for DUB tasks instead of using the platform default
+
 Minor Changes:
 * the "insert dscanner.ini" command now inserts the exact current D-Scanner config for the document instead of some hardcoded one to simplify changing it.
 * Running the predefined tasks will auto focus the console now. If you want to do this to your own tasks as well, set `"presentation": {"focus": true}`
+* Several dub diagnostics improvements
+* Added auto completion for `else` blocks after `if`
+* Fixed many snippet issues
+* Fixed various crashes
+* dfmt on/off, profilegc and dlangui features are now part of serve-d instead of code-d (available in other editors as well now)
+* auto completion and syntax highlighting is off after the `__EOF__` token now
 
 # 0.22.0
 
