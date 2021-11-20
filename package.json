@@ -765,6 +765,12 @@
 					"default": true,
 					"description": "Keep existing line breaks if these don't violate other formatting rules."
 				},
+				"dfmt.singleIndent": {
+					"type": "boolean",
+					"scope": "resource",
+					"default": true,
+					"description": "Set if the code in parens is indented by a single tab instead of two."
+				},
 				"dscanner.ignoredKeys": {
 					"type": "array",
 					"scope": "resource",
