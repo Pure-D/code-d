@@ -138,7 +138,7 @@ export function findLatestServeD(force: boolean = false, channel?: string): Then
 	if (channel == "frozen" && force)
 		channel = "stable";
 
-	if (channel == "frozen")
+	if (channel == "frozen" || config(null).get("forceCompileServeD", false))
 		return Promise.resolve(undefined);
 
 	if (servedVersionCache.channel == channel)
@@ -340,7 +340,7 @@ export function updateAndInstallServeD(env: any): Thenable<boolean | undefined> 
 							vscode.commands.executeCommand("workbench.action.openGlobalSettings");
 						return Promise.resolve(undefined);
 					});
-			} else if (!version.asset) {
+			} else if (!version.asset || config(null).get("forceCompileServeD", false)) {
 				return compileServeD("master")(env);
 			} else {
 				return installServeD([{ url: version.asset.browser_download_url, title: "Serve-D" }], version.name)(env);
@@ -482,33 +482,33 @@ export function extractServedBuiltDate(log: string): Date | false {
 }
 
 export function compileServeD(ref?: string): (env: NodeJS.ProcessEnv) => Promise<boolean | undefined> {
-	return (env: any) => new Promise<boolean | undefined>((resolve) => {
+	return (env: any) => new Promise<boolean | undefined>(async() => {
 		var outputFolder = determineOutputFolder();
 		mkdirp.sync(outputFolder);
-		fs.exists(outputFolder, async function (exists) {
-			const dubPath = config(null).get("dubPath", "dub");
-			const dmdPath = config(null).get("dmdPath", undefined);
-			if (!exists)
-				fs.mkdirSync(outputFolder);
-			env["DFLAGS"] = "-O -release";
-			let buildArgs = ["build"];
-			if (process.platform == "win32") {
-				env["DFLAGS"] = "-release";
-				buildArgs.push("--arch=x86_mscoff");
-			}
-			if (dubPath != "dub" && dmdPath) {
-				// explicit dub path specified, it won't automatically find dmd if it's not in the same folder so we just pass the path if we have it
-				buildArgs.push("--compiler=" + dmdPath);
-			}
-			await compileDependency(outputFolder, "serve-d", "https://github.com/Pure-D/serve-d.git", [
-				[dubPath, ["upgrade"]],
-				[dubPath, buildArgs]
-			], env, ref);
-			var finalDestination = path.join(outputFolder, "serve-d", "serve-d" + (process.platform == "win32" ? ".exe" : ""));
+		const dubPath = config(null).get("dubPath", "dub");
+		const dmdPath = config(null).get("dmdPath", undefined);
+		const dubCompiler = config(null).get("dubCompiler", undefined);
+		env["DFLAGS"] = "-O -release";
+		let buildArgs = ["build"];
+		if (process.platform == "win32") {
+			env["DFLAGS"] = "-release";
+			buildArgs.push("--arch=x86_mscoff");
+		}
+		if (dubCompiler) {
+			buildArgs.push("--compiler=" + dubCompiler);
+		}
+		else if (dubPath != "dub" && dmdPath) {
+			// explicit dub path specified, it won't automatically find dmd if it's not in the same folder so we just pass the path if we have it
+			buildArgs.push("--compiler=" + dmdPath);
+		}
+		await compileDependency(outputFolder, "serve-d", "https://github.com/Pure-D/serve-d.git", [
+			[dubPath, ["upgrade"]],
+			[dubPath, buildArgs]
+		], env, ref);
+		var finalDestination = path.join(outputFolder, "serve-d", "serve-d" + (process.platform == "win32" ? ".exe" : ""));
 
-			await config(null).update("servedPath", finalDestination, true);
-			resolve(true);
-		});
+		await config(null).update("servedPath", finalDestination, true);
+		return true;
 	});
 }
 

@@ -73,3 +73,9 @@ for their great package manager and library "dub"
 ## Issues
 
 Please submit issues to [github](https://github.com/Pure-D/code-d)
+
+## Special developer config
+
+use `"d.forceUpdateServeD": true` to force an outdated prompt on startup.
+
+use `"d.forceCompileServeD": true` to force compilation of serve-d instead of downloading pre-compiled releases.

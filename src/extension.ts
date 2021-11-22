@@ -629,8 +629,10 @@ async function preStartup(context: vscode.ExtensionContext) {
 			outdated = true;
 	}
 
-	function isServedOutdated(current: Release | undefined): (log: string) => (boolean | [boolean, string]) {
+	function isServedOutdated(current: Release | undefined): (log: string) => (false | [boolean, string]) {
 		return (log: string) => {
+			if (config(null).get("forceUpdateServeD", false))
+				return [true, "(forced by d.forceUpdateServeD)"];
 			if (!current || !current.asset)
 				return false; // network failure or frozen release channel, let's not bother the user
 			else if (current.name == "nightly") {
