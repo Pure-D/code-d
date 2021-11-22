@@ -27,6 +27,12 @@ code-d and serve-d
 </tr>
 </table>
 
+# 0.23.1
+
+Prefers `"d.dubCompiler"` now as used compiler when compiling serve-d from source as part of the installer. If you never want to download precompiled releases and always build from source you can set the developer setting `"d.forceCompileServeD"` to true in your user settings (JSON) and ignore it being not found / being not documented.
+
+Adds debug settings `"d.forceUpdateServeD"` and `"d.forceCompileServeD"`.
+
 # 0.23.0
 
 *whew, has it really been 2 years already? Sorry for the delay, here is the update! (finally)*
