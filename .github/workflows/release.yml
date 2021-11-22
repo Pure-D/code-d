@@ -1,5 +1,7 @@
 name: Release vsix to OpenVSX and VSCode marketplace
-on: [release]
+on:
+  release:
+    types: [published]
 
 jobs:
   release:
