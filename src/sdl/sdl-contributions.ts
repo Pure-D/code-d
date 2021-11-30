@@ -39,6 +39,8 @@ function pad3(n: number) {
 function completeDubVersion(info: SDLCompletionInfo): SDLCompletionResult {
 	if (!info.currentSDLObject.values || info.currentSDLObject.values.length != 1)
 		return [];
+	if (info.currentSDLObject.attributes.repository)
+		return []; // no autocompletion of version when repository is set
 	var packageName = info.currentSDLObject.values[0].value;
 	return new Promise((resolve) => {
 		getPackageInfo(packageName).then(json => {
@@ -317,7 +319,7 @@ const buildSettings: CompletionTagMap = {
 		},
 		attributes: {
 			version: {
-				description: "The version specification as used for the simple form",
+				description: "The version specification as used for the simple form or the commit hash of the git repository specified in \"repository\"",
 				values: {
 					type: "string",
 					pattern: {
@@ -327,6 +329,12 @@ const buildSettings: CompletionTagMap = {
 			},
 			path: {
 				description: "Use a folder to source a package from",
+				values: {
+					type: "string"
+				}
+			},
+			repository: {
+				description: "Path to a git repository with a leading `git+` prefix like `git+https://github.com/dlang-community/gitcompatibledubpackage.git`",
 				values: {
 					type: "string"
 				}

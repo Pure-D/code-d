@@ -178,13 +178,28 @@
                                             },
                                             "version": {
                                                 "type": "string",
-                                                "description": "The version specification as used for the simple form"
+                                                "description": "The version specification as used for the simple form or the commit hash of the git repository specified in \"repository\""
                                             },
                                             "path": {
                                                 "type": "string",
                                                 "description": "Use a folder to source a package from"
+                                            },
+                                            "repository": {
+                                                "type": "string",
+                                                "description": "Path to a git repository with a leading `git+` prefix like `git+https://github.com/dlang-community/gitcompatibledubpackage.git`"
                                             }
-                                        }
+                                        },
+                                        "oneOf": [
+                                            {
+                                                "required": ["path"]
+                                            },
+                                            {
+                                                "required": ["version"]
+                                            },
+                                            {
+                                                "required": ["repository", "version"]
+                                            }
+                                        ]
                                     }
                                 ]
                             },
