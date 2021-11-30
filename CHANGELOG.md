@@ -27,6 +27,10 @@ code-d and serve-d
 </tr>
 </table>
 
+# 0.23.2
+
+Fixes CI generated .vsix files (and released extensions with that) not including debug plugins, possibly causing task debugging issues.
+
 # 0.23.1
 
 Prefers `"d.dubCompiler"` now as used compiler when compiling serve-d from source as part of the installer. If you never want to download precompiled releases and always build from source you can set the developer setting `"d.forceCompileServeD"` to true in your user settings (JSON) and ignore it being not found / being not documented.
