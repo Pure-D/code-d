@@ -29,6 +29,21 @@ code-d and serve-d
 
 # 0.23.2
 
+Adds linting support for dub.json/dub.sdl schema for dependency git commits:
+
+```json
+"dependencies": {
+  "dmd": {
+    "repository": "git+https://github.com/dlang/dmd.git",
+    "version": "c60fe8e075fb01c4fa510953c13d6e1e10f79671"
+  }
+}
+```
+
+```sdl
+dependency "dmd" repository="git+https://github.com/dlang/dmd.git" version="c60fe8e075fb01c4fa510953c13d6e1e10f79671"
+```
+
 Fixes CI generated .vsix files (and released extensions with that) not including debug plugins, possibly causing task debugging issues.
 
 # 0.23.1
