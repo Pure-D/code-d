@@ -84,7 +84,7 @@ function completeDubPackageName(info: SDLCompletionInfo): SDLCompletionResult {
 						var insertText = subPkgName;
 						item.insertText = new vscode.SnippetString().appendText(insertText);
 						item.kind = vscode.CompletionItemKind.Property;
-						item.documentation = info.description;
+						item.documentation = new vscode.MarkdownString(info.description);
 						results.push(item);
 					});
 				resolve(results);
@@ -577,6 +577,103 @@ const buildSettings: CompletionTagMap = {
 		attributes: platformAttributes,
 		minValues: 1
 	},
+	preRunCommands: {
+		description: "A list of shell commands that is executed always before the project is built",
+		values: {
+			type: "string"
+		},
+		attributes: platformAttributes,
+		minValues: 1
+	},
+	postRunCommands: {
+		description: "A list of shell commands that is executed always after the project is built",
+		values: {
+			type: "string"
+		},
+		attributes: platformAttributes,
+		minValues: 1
+	},
+	environments: {
+		description: "Environment variables to pass to every invoked build tool, program or script. (lowest precedence)\n\n```\nenvironments \"key\" \"value\"\n```",
+		values: {
+			type: "string"
+		},
+		attributes: platformAttributes,
+		minValues: 2,
+		maxValues: 2
+	},
+	buildEnvironments: {
+		description: "Environment variables to pass to every invoked build tool, preBuildCommands and postBuildCommands.\n\n```\nbuildEnvironments \"key\" \"value\"\n```",
+		values: {
+			type: "string"
+		},
+		attributes: platformAttributes,
+		minValues: 2,
+		maxValues: 2
+	},
+	runEnvironments: {
+		description: "Environment variables to pass to the run application, preRunCommands and postRunCommands.\n\n```\nrunEnvironments \"key\" \"value\"\n```",
+		values: {
+			type: "string"
+		},
+		attributes: platformAttributes,
+		minValues: 2,
+		maxValues: 2
+	},
+	preGenerateEnvironments: {
+		description: "Environment variables to pass to preGenerateCommands.\n\n```\npreGenerateEnvironments \"key\" \"value\"\n```",
+		values: {
+			type: "string"
+		},
+		attributes: platformAttributes,
+		minValues: 2,
+		maxValues: 2
+	},
+	postGenerateEnvironments: {
+		description: "Environment variables to pass to postGenerateCommands.\n\n```\npostGenerateEnvironments \"key\" \"value\"\n```",
+		values: {
+			type: "string"
+		},
+		attributes: platformAttributes,
+		minValues: 2,
+		maxValues: 2
+	},
+	preBuildEnvironments: {
+		description: "Environment variables to pass to preBuildCommands.\n\n```\npreBuildEnvironments \"key\" \"value\"\n```",
+		values: {
+			type: "string"
+		},
+		attributes: platformAttributes,
+		minValues: 2,
+		maxValues: 2
+	},
+	postBuildEnvironments: {
+		description: "Environment variables to pass to postBuildCommands.\n\n```\npostBuildEnvironments \"key\" \"value\"\n```",
+		values: {
+			type: "string"
+		},
+		attributes: platformAttributes,
+		minValues: 2,
+		maxValues: 2
+	},
+	preRunEnvironments: {
+		description: "Environment variables to pass to preRunCommands.\n\n```\npreRunEnvironments \"key\" \"value\"\n```",
+		values: {
+			type: "string"
+		},
+		attributes: platformAttributes,
+		minValues: 2,
+		maxValues: 2
+	},
+	postRunEnvironments: {
+		description: "Environment variables to pass to postRunCommands.\n\n```\npostRunEnvironments \"key\" \"value\"\n```",
+		values: {
+			type: "string"
+		},
+		attributes: platformAttributes,
+		minValues: 2,
+		maxValues: 2
+	},
 	dflags: {
 		description: "Additional flags passed to the D compiler - note that these flags are usually specific to the compiler in use, but a set of flags is automatically translated from DMD to the selected compiler",
 		values: {
@@ -796,7 +893,7 @@ export class SDLContributions implements vscode.CompletionItemProvider {
 				if (obj.tags)
 					Object.keys(obj.tags).forEach(key => {
 						let item = new vscode.CompletionItem(key);
-						item.documentation = obj.tags![key].description;
+						item.documentation = new vscode.MarkdownString(obj.tags![key].description);
 						item.kind = vscode.CompletionItemKind.Field;
 						if (obj.tags![key].namespace)
 							item.insertText = new vscode.SnippetString().appendText(obj.tags![key].namespace + ":" + key);
@@ -855,7 +952,7 @@ export class SDLContributions implements vscode.CompletionItemProvider {
 				if (obj.attributes) {
 					Object.keys(obj.attributes).forEach(attribute => {
 						let item = new vscode.CompletionItem(attribute);
-						item.documentation = obj.attributes![attribute].description;
+						item.documentation = new vscode.MarkdownString(obj.attributes![attribute].description);
 						item.kind = vscode.CompletionItemKind.Variable;
 						var insertText = new vscode.SnippetString().appendText(attribute + "=");
 						if (obj.attributes![attribute].values) {
@@ -883,7 +980,7 @@ export class SDLContributions implements vscode.CompletionItemProvider {
 
 			return getLatestPackageInfo(pack).then(info => {
 				if (info.description) {
-					item.documentation = info.description;
+					item.documentation = new vscode.MarkdownString(info.description);
 				}
 				if (info.version) {
 					item.detail = info.version;

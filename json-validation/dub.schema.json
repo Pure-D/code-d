@@ -145,6 +145,50 @@
                     "$ref": "#/definitions/stringArray",
                     "description": "A list of shell commands that is executed always after the project is built"
                 },
+                "preRunCommands": {
+                    "$ref": "#/definitions/stringArray",
+                    "description": "A list of shell commands that is executed always before the project is run"
+                },
+                "postRunCommands": {
+                    "$ref": "#/definitions/stringArray",
+                    "description": "A list of shell commands that is executed always after the project is run"
+                },
+                "environments": {
+                    "type": "object",
+                    "description": "Environment variables to pass to every invoked build tool, program or script. (lowest precedence)"
+                },
+                "buildEnvironments": {
+                    "type": "object",
+                    "description": "Environment variables to pass to every invoked build tool, preBuildCommands and postBuildCommands."
+                },
+                "runEnvironments": {
+                    "type": "object",
+                    "description": "Environment variables to pass to the run application, preRunCommands and postRunCommands."
+                },
+                "preGenerateEnvironments": {
+                    "type": "object",
+                    "description": "Environment variables to pass to preGenerateCommands."
+                },
+                "postGenerateEnvironments": {
+                    "type": "object",
+                    "description": "Environment variables to pass to postGenerateCommands."
+                },
+                "preBuildEnvironments": {
+                    "type": "object",
+                    "description": "Environment variables to pass to preBuildCommands."
+                },
+                "postBuildEnvironments": {
+                    "type": "object",
+                    "description": "Environment variables to pass to postBuildCommands."
+                },
+                "preRunEnvironments": {
+                    "type": "object",
+                    "description": "Environment variables to pass to preRunCommands."
+                },
+                "postRunEnvironments": {
+                    "type": "object",
+                    "description": "Environment variables to pass to postRunCommands."
+                },
                 "dflags": {
                     "$ref": "#/definitions/stringArray",
                     "description": "Additional flags passed to the D compiler - note that these flags are usually specific to the compiler in use, but a set of flags is automatically translated from DMD to the selected compiler"
