@@ -315,6 +315,9 @@
 					".dt"
 				],
 				"configuration": "./lang-configs/diet.json"
+			},
+			{
+				"id": "d-injection"
 			}
 		],
 		"grammars": [
@@ -342,6 +345,17 @@
 				"language": "diet",
 				"scopeName": "source.diet",
 				"path": "./syntaxes/diet.json"
+			},
+			{
+				"language": "d-injection",
+				"scopeName": "markdown.d.codeblock",
+				"path": "./syntaxes/codeblock.json",
+				"injectTo": [
+					"text.html.markdown"
+				],
+				"embeddedLanguages": {
+					"meta.embedded.block.d": "d"
+				}
 			}
 		],
 		"snippets": [
