@@ -525,14 +525,24 @@ async function preStartup(context: vscode.ExtensionContext) {
 		return true;
 	}
 
-	async function checkProgram(forced: boolean, configName: string, defaultPath: string, name: string, installFunc: (env: NodeJS.ProcessEnv) => Thenable<boolean | undefined>, btn: string, outdatedCheck?: (log: string) => (boolean | [boolean, string])): Promise<boolean | undefined> {
+	async function checkProgram(
+		forced: boolean,
+		configName: string,
+		defaultPath: string,
+		name: string,
+		installFunc: (env: NodeJS.ProcessEnv) => Thenable<boolean | undefined | "retry">,
+		btn: string,
+		outdatedCheck?: (log: string) => (boolean | [boolean, string])
+	): Promise<boolean | undefined | "retry"> {
 		var version = "";
 
 		try {
 			version = await spawnOneShotCheck(expandTilde(config(null).get(configName, defaultPath)), ["--version"], true, { cwd: vscode.workspace.rootPath });
 		} catch (err: any) {
 			// for example invalid executable error
-			console.error(err);
+			if (err && err.code != "ENOENT")
+				console.error(err);
+
 			const fullConfigName = "d." + configName;
 			if (btn == "Install" || btn == "Download") btn = "Reinstall";
 			const reinstallBtn = btn + " " + name;
@@ -705,22 +715,40 @@ async function preStartup(context: vscode.ExtensionContext) {
 		force = true;
 
 	let version = await findLatestServeD(firstTimeUser || force, channelString);
-	let lock = await acquireInstallLock("serve-d", context, force);
-	try {
-		context.subscriptions.push(lock);
-		let upToDate = await checkProgram(force, "servedPath", "serve-d", "serve-d",
-			version ? (version.asset
+	async function doUpdate(): Promise<boolean> {
+		let [isBlocked, lock] = await acquireInstallLock("serve-d", context);
+		let retry = false;
+		try {
+			context.subscriptions.push(lock);
+			let origUpdateFun = version ? (version.asset
 				? installServeD([{ url: version.asset.browser_download_url, title: "Serve-D" }], version.name)
 				: compileServeD((version && version.name != "nightly") ? version.name : undefined))
-				: updateAndInstallServeD,
-			version ? (version.asset ? "Download" : "Compile") : "Install", isServedOutdated(version));
-		if (upToDate === undefined)
-			return; /* user dismissed install dialogs, don't continue startup */
-	} finally {
-		let i = context.subscriptions.indexOf(lock);
-		context.subscriptions.splice(i, 1);
-		lock.dispose();
+				: updateAndInstallServeD;
+			let updateFun = origUpdateFun;
+			if (isBlocked) {
+				updateFun = function(env: NodeJS.ProcessEnv): Promise<boolean | undefined | "retry"> {
+					return waitForOtherInstanceInstall("serve-d", context, force)
+						.then((doUpdate) => doUpdate ? origUpdateFun(env) : "retry");
+				};
+			}
+			let upToDate = await checkProgram(force, "servedPath", "serve-d", "serve-d",
+				updateFun,
+				version ? (version.asset ? "Download" : "Compile") : "Install", isServedOutdated(version));
+			if (upToDate === undefined)
+				return false; /* user dismissed install dialogs, don't continue startup */
+			else if (upToDate === "retry")
+				retry = true;
+		} finally {
+			let i = context.subscriptions.indexOf(lock);
+			context.subscriptions.splice(i, 1);
+			lock.dispose();
+		}
+
+		return retry ? doUpdate() : true;
 	}
+
+	if (!await doUpdate())
+		return;
 
 	await context.globalState.update("serve-d-downloaded-release-channel", channelString);
 	await context.globalState.update("serve-d-wanted-download-iteration", currentCodedServedIteration);
@@ -739,20 +767,27 @@ async function preStartup(context: vscode.ExtensionContext) {
 	}
 }
 
-async function acquireInstallLock(depName: string, context: vscode.ExtensionContext, forced: boolean, showProgress: boolean = true): Promise<vscode.Disposable> {
+async function acquireInstallLock(depName: string, context: vscode.ExtensionContext): Promise<[boolean, vscode.Disposable]> {
 	const installInProgress = "installInProgress-" + depName;
 	var installing = context.globalState.get(installInProgress, undefined);
 	context.globalState.update(installInProgress, true);
+	return [!!installing, new vscode.Disposable(() => context.globalState.update(installInProgress, false))];
+}
+
+async function waitForOtherInstanceInstall(depName: string, context: vscode.ExtensionContext, forced: boolean, showProgress: boolean = true): Promise<boolean> {
+	// XXX: horrible polling code here because there is no other IPC API for vscode extensions
+	const installInProgress = "installInProgress-" + depName;
+	var installing = context.globalState.get(installInProgress, undefined);
 	if (installing) {
 		if (forced) {
-			let ret = new Promise<vscode.Disposable>((resolve) => {
+			let ret = new Promise<boolean>((resolve) => {
 				setTimeout(function() {
-					resolve(acquireInstallLock(depName, context, true, false));
+					resolve(waitForOtherInstanceInstall(depName, context, true, false));
 				}, 1000);
 			});
 
 			if (showProgress)
-				return vscode.window.withProgress<vscode.Disposable>({
+				return vscode.window.withProgress<boolean>({
 					location: vscode.ProgressLocation.Window,
 					title: "Waiting for other VSCode window installing " + depName + "..."
 				}, (progress, token) => ret);
@@ -767,16 +802,15 @@ async function acquireInstallLock(depName: string, context: vscode.ExtensionCont
 				continueAnyway,
 				wait);
 			if (!btn || btn == wait) {
-				return acquireInstallLock(depName, context, true);
+				return waitForOtherInstanceInstall(depName, context, true);
 			} else if (btn == continueAnyway) {
-				// continue
+				return true;
 			} else {
 				throw new Error("unexpected button");
 			}
 		}
 	}
-	
-	return new vscode.Disposable(() => context.globalState.update(installInProgress, false));
+	return false;
 }
 
 function spawnOneShotCheck(program: string, args: string[], captureOutput: boolean = false, options: any = undefined): Promise<string> {

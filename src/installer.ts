@@ -322,12 +322,12 @@ function findFirstMatchingAsset(name: string | "nightly", assets: ReleaseAsset[]
 	}
 }
 
-export function updateAndInstallServeD(env: any): Thenable<boolean | undefined> {
+export function updateAndInstallServeD(env: any): Thenable<boolean | undefined | "retry"> {
 	return vscode.window.withProgress({
 		location: vscode.ProgressLocation.Notification,
 		title: "Searching for updates..."
 	}, (progress, token) => {
-		return findLatestServeD(true).then((version): Thenable<boolean | undefined> => {
+		return findLatestServeD(true).then((version): Thenable<boolean | undefined | "retry"> => {
 			if (version === undefined) {
 				const compile = "Compile";
 				const userSettings = "Open User Settings";
@@ -349,7 +349,7 @@ export function updateAndInstallServeD(env: any): Thenable<boolean | undefined> 
 	});
 }
 
-export function installServeD(urls: { url: string, title: string }[], ref: string): (env: NodeJS.ProcessEnv) => Thenable<boolean | undefined> {
+export function installServeD(urls: { url: string, title: string }[], ref: string): (env: NodeJS.ProcessEnv) => Thenable<boolean | undefined | "retry"> {
 	if (urls.length == 0)
 		return (env: any) => {
 			return vscode.window.showErrorMessage("No precompiled serve-d binary for this platform/architecture", "Compile from source").then((r?: string) => {
@@ -481,8 +481,8 @@ export function extractServedBuiltDate(log: string): Date | false {
 	return new Date(Date.UTC(year, month, date, hour, minute, second));
 }
 
-export function compileServeD(ref?: string): (env: NodeJS.ProcessEnv) => Promise<boolean | undefined> {
-	return (env: any) => new Promise<boolean | undefined>(async() => {
+export function compileServeD(ref?: string): (env: NodeJS.ProcessEnv) => Promise<boolean | undefined | "retry"> {
+	return (env: any) => new Promise<boolean | undefined | "retry">(async() => {
 		var outputFolder = determineOutputFolder();
 		mkdirp.sync(outputFolder);
 		const dubPath = config(null).get("dubPath", "dub");
