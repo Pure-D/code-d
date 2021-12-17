@@ -233,15 +233,15 @@
                                                 "description": "Path to a git repository with a leading `git+` prefix like `git+https://github.com/dlang-community/gitcompatibledubpackage.git`"
                                             }
                                         },
-                                        "oneOf": [
+                                        "anyOf": [
+                                            {
+                                                "required": ["repository", "version"]
+                                            },
                                             {
                                                 "required": ["path"]
                                             },
                                             {
                                                 "required": ["version"]
-                                            },
-                                            {
-                                                "required": ["repository", "version"]
                                             }
                                         ]
                                     }
