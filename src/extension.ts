@@ -705,14 +705,22 @@ async function preStartup(context: vscode.ExtensionContext) {
 		force = true;
 
 	let version = await findLatestServeD(firstTimeUser || force, channelString);
-	let upToDate = await checkProgram(force, "servedPath", "serve-d", "serve-d",
-		version ? (version.asset
-			? installServeD([{ url: version.asset.browser_download_url, title: "Serve-D" }], version.name)
-			: compileServeD((version && version.name != "nightly") ? version.name : undefined))
-			: updateAndInstallServeD,
-		version ? (version.asset ? "Download" : "Compile") : "Install", isServedOutdated(version));
-	if (upToDate === undefined)
-		return; /* user dismissed install dialogs, don't continue startup */
+	let lock = await acquireInstallLock("serve-d", context, force);
+	try {
+		context.subscriptions.push(lock);
+		let upToDate = await checkProgram(force, "servedPath", "serve-d", "serve-d",
+			version ? (version.asset
+				? installServeD([{ url: version.asset.browser_download_url, title: "Serve-D" }], version.name)
+				: compileServeD((version && version.name != "nightly") ? version.name : undefined))
+				: updateAndInstallServeD,
+			version ? (version.asset ? "Download" : "Compile") : "Install", isServedOutdated(version));
+		if (upToDate === undefined)
+			return; /* user dismissed install dialogs, don't continue startup */
+	} finally {
+		let i = context.subscriptions.indexOf(lock);
+		context.subscriptions.splice(i, 1);
+		lock.dispose();
+	}
 
 	await context.globalState.update("serve-d-downloaded-release-channel", channelString);
 	await context.globalState.update("serve-d-wanted-download-iteration", currentCodedServedIteration);
@@ -729,6 +737,46 @@ async function preStartup(context: vscode.ExtensionContext) {
 		startClient(context);
 		started = true;
 	}
+}
+
+async function acquireInstallLock(depName: string, context: vscode.ExtensionContext, forced: boolean, showProgress: boolean = true): Promise<vscode.Disposable> {
+	const installInProgress = "installInProgress-" + depName;
+	var installing = context.globalState.get(installInProgress, undefined);
+	context.globalState.update(installInProgress, true);
+	if (installing) {
+		if (forced) {
+			let ret = new Promise<vscode.Disposable>((resolve) => {
+				setTimeout(function() {
+					resolve(acquireInstallLock(depName, context, true, false));
+				}, 1000);
+			});
+
+			if (showProgress)
+				return vscode.window.withProgress<vscode.Disposable>({
+					location: vscode.ProgressLocation.Window,
+					title: "Waiting for other VSCode window installing " + depName + "..."
+				}, (progress, token) => ret);
+			else
+				return ret;
+		} else {
+			let continueAnyway = "Continue Anyway";
+			let wait = "Wait";
+			let btn = await vscode.window.showWarningMessage("It looks like there is another vscode instance already installing "
+				+ depName + ". Click '" + continueAnyway + "' if you are sure there is no other vscode instance installing "
+				+ depName + " right now.",
+				continueAnyway,
+				wait);
+			if (!btn || btn == wait) {
+				return acquireInstallLock(depName, context, true);
+			} else if (btn == continueAnyway) {
+				// continue
+			} else {
+				throw new Error("unexpected button");
+			}
+		}
+	}
+	
+	return new vscode.Disposable(() => context.globalState.update(installInProgress, false));
 }
 
 function spawnOneShotCheck(program: string, args: string[], captureOutput: boolean = false, options: any = undefined): Promise<string> {
