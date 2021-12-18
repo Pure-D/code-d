@@ -100,7 +100,9 @@ export class JSONProvider implements vscode.HoverProvider, vscode.CompletionItem
 		let collectPromise: Thenable<any> | null = null;
 
 		if (location.isAtPropertyKey) {
-			let addValue = !location.previousNode || !location.previousNode.colonOffset && (offset == (location.previousNode.offset + location.previousNode.length));
+			let addValue = !location.previousNode
+				|| (!location.previousNode.colonOffset && (offset == (location.previousNode.offset + location.previousNode.length)))
+				 || (location.isAtPropertyKey && !location.previousNode?.colonOffset);
 			let scanner = createScanner(document.getText(), true);
 			scanner.setPosition(offset);
 			scanner.scan();
