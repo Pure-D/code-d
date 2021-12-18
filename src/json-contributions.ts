@@ -24,7 +24,7 @@ export function addJSONProviders(): vscode.Disposable {
 	contributions.forEach(contribution => {
 		var provider = new JSONProvider(contribution);
 		let selector = contribution.getDocumentSelector();
-		subscriptions.push(vscode.languages.registerCompletionItemProvider(selector, provider, '"', ':'));
+		subscriptions.push(vscode.languages.registerCompletionItemProvider(selector, provider, '"', ':', '/', '\\'));
 		subscriptions.push(vscode.languages.registerHoverProvider(selector, provider));
 	});
 
