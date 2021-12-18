@@ -50,54 +50,30 @@ export class DubJSONContribution implements IJSONContribution {
 
 		return new Promise((resolve, reject) => {
 			let keyString = location.previousNode?.value || currentWord;
-			if (keyString.length > 0) {
-				var colonIdx = keyString.indexOf(":");
-				if (colonIdx == -1) {
-					searchDubPackages(keyString).then(json => {
-						json.forEach(element => {
-							var item = new vscode.CompletionItem(element.name);
-							var insertText = new vscode.SnippetString().appendText(JSON.stringify(element.name));
+			var colonIdx = keyString.indexOf(":");
+			if (colonIdx != -1) {
+				var pkgName = keyString.substr(0, colonIdx);
+				getLatestPackageInfo(pkgName).then(info => {
+					if (info.subPackages)
+						info.subPackages.forEach(subPkgName => {
+							var completionName = pkgName + ":" + subPkgName;
+							var item = new vscode.CompletionItem(completionName);
+							var insertText = new vscode.SnippetString().appendText(JSON.stringify(completionName));
 							if (addValue) {
-								insertText.appendText(': "').appendPlaceholder(element.version).appendText('"');
+								insertText.appendText(': "').appendPlaceholder(info.version || "").appendText('"');
 								if (!isLast)
 									insertText.appendText(",");
 							}
 							item.insertText = insertText;
-							item.filterText = JSON.stringify(element.name);
 							item.kind = vscode.CompletionItemKind.Property;
-							item.documentation = element.description;
+							item.documentation = info.description;
 							result.add(item);
 						});
-						resolve(undefined);
-					}, err => {
-						console.log("Error searching for packages");
-						console.log(err);
-						resolve(undefined);
-					});
-				} else {
-					var pkgName = keyString.substr(0, colonIdx);
-					getLatestPackageInfo(pkgName).then(info => {
-						if (info.subPackages)
-							info.subPackages.forEach(subPkgName => {
-								var completionName = pkgName + ":" + subPkgName;
-								var item = new vscode.CompletionItem(completionName);
-								var insertText = new vscode.SnippetString().appendText(JSON.stringify(completionName));
-								if (addValue) {
-									insertText.appendText(': "').appendPlaceholder(info.version || "").appendText('"');
-									if (!isLast)
-										insertText.appendText(",");
-								}
-								item.insertText = insertText;
-								item.kind = vscode.CompletionItemKind.Property;
-								item.documentation = info.description;
-								result.add(item);
-							});
-						resolve(undefined);
-					}, err => {
-						result.error("Package not found");
-						resolve(undefined);
-					});
-				}
+					resolve(undefined);
+				}, err => {
+					result.error("Package not found");
+					resolve(undefined);
+				});
 			}
 			else {
 				listPackages().then(json => {
