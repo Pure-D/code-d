@@ -38,13 +38,20 @@ export class DubJSONContribution implements IJSONContribution {
 	}
 
 	public collectPropertySuggestions(fileName: string, location: Location, currentWord: string, addValue: boolean, isLast: boolean, result: ISuggestionsCollector): Thenable<any> {
+		if (location.isAtPropertyKey) {
+			if (location.path[location.path.length - 2] != "dependencies" && location.path[location.path.length - 3] != "dependencies")
+				return Promise.resolve(null);
+		} else {
 		if (location.path[location.path.length - 1] != "dependencies" && location.path[location.path.length - 2] != "dependencies")
 			return Promise.resolve(null);
+		}
+
 		return new Promise((resolve, reject) => {
-			if (currentWord.length > 0) {
-				var colonIdx = currentWord.indexOf(":");
+			let keyString = location.previousNode?.value || currentWord;
+			if (keyString.length > 0) {
+				var colonIdx = keyString.indexOf(":");
 				if (colonIdx == -1) {
-					searchDubPackages(currentWord).then(json => {
+					searchDubPackages(keyString).then(json => {
 						json.forEach(element => {
 							var item = new vscode.CompletionItem(element.name);
 							var insertText = new vscode.SnippetString().appendText(JSON.stringify(element.name));
@@ -54,6 +61,7 @@ export class DubJSONContribution implements IJSONContribution {
 									insertText.appendText(",");
 							}
 							item.insertText = insertText;
+							item.filterText = JSON.stringify(element.name);
 							item.kind = vscode.CompletionItemKind.Property;
 							item.documentation = element.description;
 							result.add(item);
@@ -65,7 +73,7 @@ export class DubJSONContribution implements IJSONContribution {
 						resolve(undefined);
 					});
 				} else {
-					var pkgName = currentWord.substr(0, colonIdx);
+					var pkgName = keyString.substr(0, colonIdx);
 					getLatestPackageInfo(pkgName).then(info => {
 						if (info.subPackages)
 							info.subPackages.forEach(subPkgName => {
@@ -101,6 +109,7 @@ export class DubJSONContribution implements IJSONContribution {
 								insertText.appendText(",");
 						}
 						item.insertText = insertText;
+						item.filterText = JSON.stringify(element);
 						result.add(item);
 					});
 					resolve(undefined);
@@ -134,7 +143,8 @@ export class DubJSONContribution implements IJSONContribution {
 						var item = new vscode.CompletionItem(versions[i].version);
 						item.detail = "Released on " + new Date(versions[i].date).toLocaleDateString();
 						item.kind = vscode.CompletionItemKind.Class;
-						item.insertText = new vscode.SnippetString().appendPlaceholder("").appendText(versions[i].version);
+						item.insertText = new vscode.SnippetString(JSON.stringify("${0}" + versions[i].version));
+						item.filterText = JSON.stringify(versions[i].version);
 						item.sortText = "0";
 						items.push(item);
 					}
