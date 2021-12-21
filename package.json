@@ -494,7 +494,7 @@
 					"type": "boolean",
 					"scope": "resource",
 					"default": true,
-					"description": "Automatically highlight tested/untested converage lines with light red/green backgrounds per line for *.lst files."
+					"description": "Automatically highlight tested/untested coverage lines with light red/green backgrounds per line for *.lst files."
 				},
 				"d.enableGCProfilerDecorations": {
 					"type": "boolean",
