@@ -237,7 +237,7 @@ async function fetchLatestTaggedRelease(channel: "stable" | "beta", timeout: num
 		if (channel == "stable" && release.prerelease)
 			continue;
 
-		let targetAsset = findFirstMatchingAsset(release.name, release.assets);
+		let targetAsset = findFirstMatchingAsset(release.tag_name, release.assets);
 		if (!targetAsset) {
 			if (ret.name == "master") {
 				ret.name = release.tag_name;
