@@ -27,6 +27,30 @@ code-d and serve-d
 </tr>
 </table>
 
+# 0.x.y
+
+## DUB improvements
+
+Auto completion of dub.json has been improved and the issues with quoting have been fixed.
+
+Auto completion of DUB dependencies in dub.json/dub.sdl now show license and copyright information.
+
+The DUB Dependencies view got a few improvements:
+* Action taken when clicking on dependencies now is configurable (see `d.dependencyClickBehavior` setting)
+* by default clicking on a dependency now lists all the README/CHANGES/LICENSE files (configurable with `d.dependencyTextDocumentFilter` setting)
+* added preview of .rst files if either (preferred) [reStructuredText](https://marketplace.visualstudio.com/items?itemName=lextudio.restructuredtext) (lextudio.restructuredtext) or [RST Preview](https://marketplace.visualstudio.com/items?itemName=tht13.rst-vscode) (tht13.rst-vscode) is installed.
+* other added options:
+  * open DUB recipe (dub.json/dub.sdl)
+  * do nothing
+  * open file (dialog) in dependency path
+* icons are fixed
+
+The new dependency click actions can also be accessed by right-clicking a dependency.
+
+## Other
+
+Installation/update of serve-d with multiple vscode windows now works properly.
+
 # 0.23.2
 
 Adds linting support for dub.json/dub.sdl schema for dependency git commits:
