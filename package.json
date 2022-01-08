@@ -936,17 +936,17 @@
 				},
 				{
 					"command": "code-d.openDubRecipe",
-					"when": "view == dubDependencies && viewItem == root",
+					"when": "view == dubDependencies && viewItem =~ /root|dependency/",
 					"group": "3_files"
 				},
 				{
 					"command": "code-d.listDubPackageDocuments",
-					"when": "view == dubDependencies && viewItem == root",
+					"when": "view == dubDependencies && viewItem =~ /root|dependency/",
 					"group": "3_files"
 				},
 				{
 					"command": "code-d.openDependencyFile",
-					"when": "view == dubDependencies && viewItem == root",
+					"when": "view == dubDependencies && viewItem =~ /root|dependency/",
 					"group": "3_files"
 				},
 				{
