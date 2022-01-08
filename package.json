@@ -132,7 +132,7 @@
 							},
 							"dubBuild": {
 								"type": "boolean",
-								"description": "Build the active dub project before launching.",
+								"description": "Build the active DUB project before launching.",
 								"default": false
 							},
 							"platform": {
@@ -506,7 +506,7 @@
 					"type": "boolean",
 					"scope": "resource",
 					"default": false,
-					"description": "If this is true then a custom workspace where you manually provide the import paths will always be used instead of dub. See d.projectImportPaths for setting import paths then. This is discouraged as it will remove most features like packages, building & compiler linting. If this is a standalone project with no external dependencies with a custom build system then this should be true."
+					"description": "If this is true then a custom workspace where you manually provide the import paths will always be used instead of DUB. See d.projectImportPaths for setting import paths then. This is discouraged as it will remove most features like packages, building & compiler linting. If this is a standalone project with no external dependencies with a custom build system then this should be true."
 				},
 				"d.projectImportPaths": {
 					"type": "array",
@@ -515,7 +515,7 @@
 						"type": "string"
 					},
 					"default": [],
-					"description": "Setting for import paths in your workspace if not using dub. This will replace other paths. Its recommended to set this in your workspace settings instead of your user settings to keep it separate for each project."
+					"description": "Setting for import paths in your workspace if not using DUB. This will replace other paths. Its recommended to set this in your workspace settings instead of your user settings to keep it separate for each project."
 				},
 				"d.dubConfiguration": {
 					"type": "string",
@@ -614,7 +614,7 @@
 					"type": "boolean",
 					"scope": "resource",
 					"default": false,
-					"description": "Switch to always show dub Configuration/Arch Type/Build Type/Compiler buttons in dub projects and not just when a D file is open."
+					"description": "Switch to always show DUB Configuration/Arch Type/Build Type/Compiler buttons in DUB projects and not just when a D file is open."
 				},
 				"d.alwaysShowCoverageStatus": {
 					"type": "boolean",
@@ -634,7 +634,7 @@
 					"enumDescriptions": [
 						"Open a dialog box each time there are too many projects. (recommended for user-settings)",
 						"Never load any more projects than the d.manyProjectsThreshold setting specified. (this or \"load\" recommended only per-project)",
-						"Load all projects even if there are more than the d.manyProjectsThreshold setting specified. (this or \"skip\" recommended only per-project; never recommended for user-settings or large projects with many dub test projects)"
+						"Load all projects even if there are more than the d.manyProjectsThreshold setting specified. (this or \"skip\" recommended only per-project; never recommended for user-settings or large projects with many DUB test projects)"
 					],
 					"description": "What to do when there are too many project roots to load from. The deepest folder paths are skipped for skip."
 				},
@@ -998,7 +998,7 @@
 			"explorer": [
 				{
 					"id": "dubDependencies",
-					"name": "Dub Dependencies",
+					"name": "DUB Dependencies",
 					"when": "d.hasDubProject"
 				}
 			]
@@ -1199,7 +1199,7 @@
 					"cwd": {
 						"type": "string",
 						"default": "",
-						"description": "Working directory where dub should be run relative to the workspace."
+						"description": "Working directory where DUB should be run relative to the workspace."
 					},
 					"overrides": {
 						"type": "array",
@@ -1213,7 +1213,7 @@
 					"force": {
 						"type": "boolean",
 						"default": false,
-						"description": "Set to true to add the --force flag to dub."
+						"description": "Set to true to add the --force flag to DUB."
 					},
 					"compiler": {
 						"type": "string",
@@ -1259,7 +1259,7 @@
 						"items": {
 							"type": "string"
 						},
-						"description": "Extra arguments to pass to dub"
+						"description": "Extra arguments to pass to DUB"
 					},
 					"target_args": {
 						"type": "array",
