@@ -1,5 +1,6 @@
 import * as vscode from "vscode"
-import * as p from "path"
+import * as path from "path"
+import { extensionContext } from "./extension";
 
 export interface DubDependencyInfo {
 	name: string;
@@ -24,8 +25,8 @@ export class DubDependency extends vscode.TreeItem {
 		if (typeof info == "object") {
 			this.info = info;
 			this.iconPath = {
-				light: p.join(__filename, "..", "..", "..", "images", "dependency-light.svg"),
-				dark: p.join(__filename, "..", "..", "..", "images", "dependency-dark.svg")
+				light: extensionContext.asAbsolutePath(path.join("images", "dependency-light.svg")),
+				dark: extensionContext.asAbsolutePath(path.join("images", "dependency-dark.svg"))
 			};
 			this.command = {
 				command: "code-d.viewDubPackage",
@@ -39,8 +40,8 @@ export class DubDependency extends vscode.TreeItem {
 			this.command = command;
 		if (icon)
 			this.iconPath = {
-				light: p.join(__filename, "..", "..", "..", "images", icon + "-light.svg"),
-				dark: p.join(__filename, "..", "..", "..", "images", icon + "-dark.svg")
+				light: extensionContext.asAbsolutePath(path.join("images", icon + "-light.svg")),
+				dark: extensionContext.asAbsolutePath(path.join("images", icon + "-dark.svg"))
 			};
 	}
 
