@@ -56,7 +56,7 @@ export function getPackageInfo(pkg: string): Thenable<any> {
 		});
 }
 
-export function getLatestPackageInfo(pkg: string): Thenable<{ description?: string; version?: string; subPackages?: string[] }> {
+export function getLatestPackageInfo(pkg: string): Thenable<{ description?: string; version?: string; subPackages?: string[], readme?: string, readmeMarkdown?: boolean, license?: string, copyright?: string }> {
 	return dubAPI().get<any>("/api/packages/" + encodeURIComponent(pkg) + "/latest/info")
 		.then((body) => {
 			var json = body.data;
@@ -68,7 +68,11 @@ export function getLatestPackageInfo(pkg: string): Thenable<{ description?: stri
 			return {
 				version: json.version,
 				description: json.info.description,
-				subPackages: subPackages
+				license: json.info.license,
+				copyright: json.info.copyright,
+				subPackages: subPackages,
+				readme: json.readme,
+				readmeMarkdown: json.readmeMarkdown
 			};
 		});
 }
