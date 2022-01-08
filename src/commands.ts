@@ -490,10 +490,15 @@ export function registerCommands(context: vscode.ExtensionContext) {
 		})
 	}));
 	subscriptions.push(vscode.commands.registerCommand("code-d.openDubRecipe", (root: string | DubDependency) => {
+		let explicit = root instanceof DubDependency;
+		let showError = function() {
+			if (explicit)
+				vscode.window.showErrorMessage("No recipe found");
+		};
 		if (typeof root != "string")
 			root = root.info?.path!;
 		if (!root)
-			return;
+			return showError();
 
 		const recipeFilenames = [
 			"dub.sdl",
@@ -504,9 +509,10 @@ export function registerCommands(context: vscode.ExtensionContext) {
 			const recipe = path.join(root, recipeFilenames[i]);
 			if (fs.existsSync(recipe)) {
 				vscode.commands.executeCommand("vscode.open", vscode.Uri.file(recipe));
-				break;
+				return;
 			}
 		}
+		showError();
 	}));
 
 	subscriptions.push(vscode.commands.registerCommand("code-d.listDubPackageDocuments", (
@@ -514,13 +520,31 @@ export function registerCommands(context: vscode.ExtensionContext) {
 		root?: string,
 		packageName?: string
 	) => {
+		let explicit = behavior instanceof DubDependency;
+		let showError = function(force?: boolean) {
+			if (explicit || force) {
+				if (root) {
+					let browseBtn = "Browse Files";
+					let openRecipe = "Open Recipe";
+					vscode.window.showErrorMessage("No viewable files found.", browseBtn, openRecipe).then(btn => {
+						if (btn == browseBtn)
+							vscode.commands.executeCommand("code-d.openDependencyFile", root);
+						else if (btn == openRecipe)
+							vscode.commands.executeCommand("code-d.openDubRecipe", root);
+					});
+				} else {
+					vscode.window.showErrorMessage("No viewable files found.");
+				}
+			}
+		};
+
 		if (behavior instanceof DubDependency) {
 			root = behavior.info?.path!;
 			packageName = behavior.info?.name;
 			behavior = "listDocumentsBoth";
 
 			if (!root)
-				return;
+				return showError();
 		}
 
 		// preview + view source if behavior is invalid value
@@ -530,7 +554,7 @@ export function registerCommands(context: vscode.ExtensionContext) {
 		if (root) {
 			fs.readdir(root, async (err, files) => {
 				if (err)
-					return;
+					return showError(true);
 				function isInterestingFilename(f: string): boolean {
 					f = f.toLowerCase();
 					let filter = <string[]>config(null).get("dependencyTextDocumentFilter");
@@ -542,7 +566,7 @@ export function registerCommands(context: vscode.ExtensionContext) {
 				}
 				let readmes = files.filter(isInterestingFilename);
 				if (!readmes.length)
-					return;
+					return showError(true);
 				readmes.sort();
 				readmes.reverse(); // README > LICENSE > CHANGELOG
 
@@ -582,6 +606,8 @@ export function registerCommands(context: vscode.ExtensionContext) {
 				let uri = vscode.Uri.file(readme);
 				previewDubReadme(vscode.Uri.file(root!), uri, args[1], packageName);
 			});
+		} else {
+			showError();
 		}
 	}));
 
