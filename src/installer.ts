@@ -3,7 +3,7 @@ import * as vscode from "vscode"
 import * as path from "path"
 import * as fs from "fs"
 import { reqJson, reqType } from "./util"
-import { config } from "./extension"
+import { config, extensionContext } from "./extension"
 import expandTilde = require("expand-tilde");
 import { AxiosResponse } from "axios"
 import { Readable } from "stream"
@@ -13,14 +13,8 @@ var AdmZip = require("adm-zip");
 var async = require("async");
 var mkdirp = require("mkdirp");
 
-var extensionContext: vscode.ExtensionContext;
-
 function gitPath() {
 	return vscode.workspace.getConfiguration("git").get("path", "git") || "git";
-}
-
-export function setContext(context: vscode.ExtensionContext) {
-	extensionContext = context;
 }
 
 export function determineOutputFolder(): string {

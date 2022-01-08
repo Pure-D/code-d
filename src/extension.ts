@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
 import { LanguageClient, LanguageClientOptions, ServerOptions, DocumentFilter, NotificationType, CloseAction, ErrorAction, ErrorHandler, Message, State, MessageType, RevealOutputChannelOn } from "vscode-languageclient/node";
-import { setContext, installServeD, compileServeD, getInstallOutput, downloadFileInteractive, findLatestServeD, cmpSemver, extractServedBuiltDate, Release, updateAndInstallServeD } from "./installer";
+import { installServeD, compileServeD, getInstallOutput, downloadFileInteractive, findLatestServeD, cmpSemver, extractServedBuiltDate, Release, updateAndInstallServeD } from "./installer";
 import { EventEmitter } from "events";
 import * as ChildProcess from "child_process";
 
@@ -343,8 +343,10 @@ function startClient(context: vscode.ExtensionContext) {
 }
 
 export var currentVersion: string | undefined;
-
+export var extensionContext: vscode.ExtensionContext;
 export function activate(context: vscode.ExtensionContext): CodedAPI {
+	extensionContext = context;
+
 	// TODO: Port to serve-d
 	/*{
 		var phobosPath = config().getStdlibPath();
@@ -448,7 +450,6 @@ export function config(resource: vscode.Uri | null): vscode.WorkspaceConfigurati
 async function preStartup(context: vscode.ExtensionContext) {
 	const userConfig = "Open User Settings";
 
-	setContext(context);
 	let proxy = vscode.workspace.getConfiguration("http").get("proxy", "");
 	if (proxy)
 		process.env["http_proxy"] = proxy;
