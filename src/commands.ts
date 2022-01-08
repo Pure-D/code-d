@@ -3,12 +3,13 @@ import * as path from "path";
 import * as fs from "fs";
 import { DubEditor } from "./dub-editor";
 import { LanguageClient, TextEdit } from "vscode-languageclient/node";
-import { served, ServeD } from "./extension";
+import { config, served, ServeD } from "./extension";
 import { showProjectCreator, performTemplateCopy, openFolderWithExtension } from "./project-creator";
 import { listPackageOptions, getLatestPackageInfo } from "./dub-api"
 import { DubDependency } from "./dub-view";
 import { DubTasksProvider } from "./dub-tasks";
 import { showDpldocsSearch } from "./dpldocs";
+import { simpleBytesToString } from "./util";
 
 const multiTokenWordPattern = /[^\`\~\!\@\#\%\^\&\*\(\)\=\+\[\{\]\}\\\|\;\:\'\"\,\.\<\>\/\?\s]+(?:\.[^\`\~\!\@\#\%\^\&\*\(\)\=\+\[\{\]\}\\\|\;\:\'\"\,\.\<\>\/\?\s]+)*/;
 
@@ -450,28 +451,136 @@ export function registerCommands(context: vscode.ExtensionContext) {
 		showProjectCreator(context);
 	}));
 
-	subscriptions.push(vscode.commands.registerCommand("code-d.viewDubPackage", (root: string) => {
+	subscriptions.push(vscode.commands.registerCommand("code-d.viewDubPackage", (root: string, packageName?: string) => {
+		const dependencyClickBehavior = config(null).get("dependencyClickBehavior");
+		switch (dependencyClickBehavior) {
+		case "listDocumentsPreview":
+		case "listDocumentsSource":
+		case "listDocumentsBoth":
+			vscode.commands.executeCommand("code-d.listDubPackageDocuments", dependencyClickBehavior, root, packageName);
+			break;
+		case "openRecipe":
+			vscode.commands.executeCommand("code-d.openDubRecipe", root);
+			break;
+		case "doNothing":
+			break;
+		case "openFileDialog":
+			vscode.commands.executeCommand("code-d.openDependencyFile", root);
+			break;
+		default:
+			vscode.window.showErrorMessage("Unknown d.dependencyClickBehavior setting: " + JSON.stringify(dependencyClickBehavior));
+			break;
+		}
+	}));
+
+	subscriptions.push(vscode.commands.registerCommand("code-d.openDependencyFile", (root: string | DubDependency) => {
+		if (typeof root != "string")
+			root = root.info?.path!;
+		if (!root)
+			return;
+
+		vscode.window.showOpenDialog({
+			defaultUri: vscode.Uri.file(root),
+			canSelectMany: true
+		}).then(uris => {
+			if (uris)
+				uris.forEach(uri => {
+					vscode.window.showTextDocument(uri);
+				});
+		})
+	}));
+	subscriptions.push(vscode.commands.registerCommand("code-d.openDubRecipe", (root: string | DubDependency) => {
+		if (typeof root != "string")
+			root = root.info?.path!;
+		if (!root)
+			return;
+
+		const recipeFilenames = [
+			"dub.sdl",
+			"dub.json",
+			"package.json"
+		];
+		for (let i = 0; i < recipeFilenames.length; i++) {
+			const recipe = path.join(root, recipeFilenames[i]);
+			if (fs.existsSync(recipe)) {
+				vscode.commands.executeCommand("vscode.open", vscode.Uri.file(recipe));
+				break;
+			}
+		}
+	}));
+
+	subscriptions.push(vscode.commands.registerCommand("code-d.listDubPackageDocuments", (
+		behavior: DubDependency | "listDocumentsPreview" | "listDocumentsSource" | "listDocumentsBoth",
+		root?: string,
+		packageName?: string
+	) => {
+		if (behavior instanceof DubDependency) {
+			root = behavior.info?.path!;
+			packageName = behavior.info?.name;
+			behavior = "listDocumentsBoth";
+
+			if (!root)
+				return;
+		}
+
+		// preview + view source if behavior is invalid value
+		const doPreview = behavior != "listDocumentsSource";
+		const doViewSource = behavior != "listDocumentsPreview";
+
 		if (root) {
-			fs.readdir(root, (err, files) => {
+			fs.readdir(root, async (err, files) => {
 				if (err)
 					return;
-				var mostLikely = "";
-				files.forEach(file => {
-					if (file.toLowerCase().startsWith("readme")) {
-						mostLikely = file;
+				function isInterestingFilename(f: string): boolean {
+					f = f.toLowerCase();
+					let filter = <string[]>config(null).get("dependencyTextDocumentFilter");
+					for (let i = 0; i < filter.length; i++) {
+						if (new RegExp(filter[i], "i").exec(f))
+							return true;
 					}
-				});
-				if (!mostLikely)
+					return false;
+				}
+				let readmes = files.filter(isInterestingFilename);
+				if (!readmes.length)
 					return;
-				var readme = path.join(root, mostLikely);
-				var uri = vscode.Uri.file(readme);
-				var extension = path.extname(readme).toLowerCase();
-				if (extension == ".md" || extension == ".markdown")
-					vscode.commands.executeCommand("markdown.showPreview", uri, { locked: true });
-				else if (extension == ".html" || extension == ".htm")
-					vscode.commands.executeCommand("vscode.previewHtml", uri);
-				else
-					vscode.commands.executeCommand("vscode.open", uri);
+				readmes.sort();
+				readmes.reverse(); // README > LICENSE > CHANGELOG
+
+				let items: (vscode.QuickPickItem & { args: [string, boolean] })[] = [];
+
+				for (let i = 0; i < readmes.length; i++) {
+					let previewable = isDubReadmePreviewable(readmes[i]);
+					if (doPreview || !previewable)
+						items.push({
+							label: readmes[i],
+							description: getDubPreviewDescription(readmes[i]),
+							args: [readmes[i], true]
+				});
+
+					if (!(doPreview || !previewable) || doViewSource && previewable) {
+						items.push({
+							label: readmes[i],
+							description: "$(file-code) source",
+							args: [readmes[i], false]
+						});
+					}
+				}
+
+				let args: [string, boolean] | undefined;
+				if (items.length == 1) {
+					args = items[0].args;
+				} else {
+					args = (await vscode.window.showQuickPick(items, {
+						placeHolder: "Select file to show",
+					}))?.args;
+				}
+
+				if (!args)
+					return;
+
+				let readme = path.join(root!, args[0]);
+				let uri = vscode.Uri.file(readme);
+				previewDubReadme(vscode.Uri.file(root!), uri, args[1], packageName);
 			});
 		}
 	}));
@@ -536,4 +645,119 @@ export function registerCommands(context: vscode.ExtensionContext) {
 	subscriptions.push(vscode.commands.registerCommand("code-d.viewUserGuide", () => {
 		vscode.commands.executeCommand("markdown.showPreview", vscode.Uri.file(context.asAbsolutePath("docs/index.md")), { locked: true });
 	}));
+}
+
+async function previewDubReadme(dir: vscode.Uri, uri: vscode.Uri, useRichPreview: boolean, packageName?: string) {
+	/*
+	README breakdown from 2022-01-08 out of all dub packages on dub registry:
+	filename               packages on dub
+	README.md              1958
+	README                 31
+	README.rst             16
+	README.markdown        13
+	readme.org             11
+	readme.txt             7
+	README.html            7
+	readme.adoc            3
+	README.EN              3
+	README.ja.md           3
+	README.RU              3
+	README-ja.md           2
+	readme-resources       2
+	Readme_APILookup       1
+	readme_screenshot.png  1
+	README_zh_CN.md        1
+	README-SDL.txt         1
+	README-SDL2_Image.txt  1
+	README-SDL2_ttf.txt    1
+	README.cn.md           1
+	readme.drawio.svg      1
+	README.md.dj           1
+	README.testing.md      1
+
+	Based on that I'm currently supporting:
+	- Markdown preview (builtin vscode extension)
+	- HTML (vscode web view)
+	- rst (needs lextudio.restructuredtext or tht13.rst-vscode installed)
+	- fallback (default vscode editor)
+	*/
+
+	if (!useRichPreview)
+		return openReadableTextFile(uri);
+
+	var extension = path.extname(uri.path).toLowerCase();
+	if (extension == ".md" || extension == ".markdown") {
+		// most packages have markdown or plaintext README
+		vscode.commands.executeCommand("markdown.showPreview", uri, { locked: true });
+	} else if (extension == ".html" || extension == ".htm") {
+		// some packages (e.g. tinyendian) have HTML READMEs
+		let panel = vscode.window.createWebviewPanel(
+			"dubReadme",
+			(packageName ? packageName + " " : "") + path.basename(uri.path),
+			vscode.ViewColumn.Active,
+			{
+				enableCommandUris: false,
+				enableFindWidget: true,
+				enableScripts: false,
+				localResourceRoots: [dir],
+				retainContextWhenHidden: false
+			}
+		);
+		let bytes = await vscode.workspace.fs.readFile(uri);
+		panel.webview.html = simpleBytesToString(bytes);
+	} else if (extension == ".rst") {
+		if (vscode.extensions.getExtension("lextudio.restructuredtext")) {
+			vscode.commands.executeCommand("restructuredtext.showPreview", uri);
+		} else if (vscode.extensions.getExtension("tht13.rst-vscode")) {
+			vscode.commands.executeCommand("rst.showPreview", uri);
+		} else {
+			openReadableTextFile(uri);
+		}
+	} else {
+		openReadableTextFile(uri);
+	}
+}
+
+function openReadableTextFile(uri: vscode.Uri) {
+	// TODO: might wanna force word wrap here
+	return vscode.window.showTextDocument(uri);
+}
+
+function getDubPreviewDescription(filename: string): string | undefined {
+	let extension = path.extname(filename).toLowerCase();
+	switch (extension) {
+	case ".md":
+	case ".markdown":
+		return "$(markdown) preview";
+	case ".html":
+	case ".htm":
+		return "$(preview) preview";
+	case ".rst":
+		if (vscode.extensions.getExtension("lextudio.restructuredtext")
+		 || vscode.extensions.getExtension("tht13.rst-vscode"))
+			return "$(preview) preview";
+		else
+			return "(plain text, missing RST extension)";
+	default:
+		return undefined;
+	}
+}
+
+function isDubReadmePreviewable(filename: string): boolean {
+	let extension = path.extname(filename).toLowerCase();
+	switch (extension) {
+	case ".md":
+	case ".markdown":
+	case ".html":
+	case ".htm":
+		return true;
+	case ".rst":
+		if (vscode.extensions.getExtension("lextudio.restructuredtext")
+		 || vscode.extensions.getExtension("tht13.rst-vscode"))
+			return true;
+		else
+			return false;
+	default:
+		return false;
+	}
 }

@@ -685,6 +685,42 @@
 					"default": true,
 					"description": "Open CHANGELOG.md on every code-d update (which also includes serve-d updates) to see new features."
 				},
+				"d.dependencyClickBehavior": {
+					"type": "string",
+					"scope": "window",
+					"enum": [
+						"listDocumentsPreview",
+						"listDocumentsSource",
+						"listDocumentsBoth",
+						"openRecipe",
+						"doNothing",
+						"openFileDialog"
+					],
+					"enumDescriptions": [
+						"Preview a readable document text file of the package",
+						"See source of a readable document text file of the package",
+						"Preview or view source of a readable document text file of the package",
+						"Open dub.json/dub.sdl file of the package",
+						"Do nothing",
+						"Open a file dialog in the dependency folder"
+					],
+					"default": "listDocumentsPreview",
+					"description": "Configures what happens when you click a dependency in the DUB Dependency view. For the listDocuments actions if only a single file matches, it is immediately opened. See 'd.dependencyTextDocumentFilter' setting to configure which files will be shown."
+				},
+				"d.dependencyTextDocumentFilter": {
+					"type": "array",
+					"scope": "window",
+					"items": {
+						"type": "string"
+					},
+					"default": [
+						"^README",
+						"^CHANGES",
+						"^CHANGELOG",
+						"^LICENSE"
+					],
+					"description": "Filenames that are considered readable documents for when viewing documents of a DUB dependency. You can use regular expressions, but it only matches on the filename (including extension) not on the path, case-insensitive."
+				},
 				"dfmt.alignSwitchStatements": {
 					"type": "boolean",
 					"scope": "resource",
@@ -894,12 +930,29 @@
 			],
 			"view/item/context": [
 				{
-					"command": "code-d.removeDependency",
-					"when": "view == dubDependencies && viewItem == root"
+					"command": "code-d.updateDependency",
+					"when": "view == dubDependencies && viewItem == root",
+					"group": "1_packageManagement"
 				},
 				{
-					"command": "code-d.updateDependency",
-					"when": "view == dubDependencies && viewItem == root"
+					"command": "code-d.openDubRecipe",
+					"when": "view == dubDependencies && viewItem == root",
+					"group": "3_files"
+				},
+				{
+					"command": "code-d.listDubPackageDocuments",
+					"when": "view == dubDependencies && viewItem == root",
+					"group": "3_files"
+				},
+				{
+					"command": "code-d.openDependencyFile",
+					"when": "view == dubDependencies && viewItem == root",
+					"group": "3_files"
+				},
+				{
+					"command": "code-d.removeDependency",
+					"when": "view == dubDependencies && viewItem == root",
+					"group": "9_danger"
 				}
 			],
 			"commandPalette": [
@@ -917,6 +970,18 @@
 				},
 				{
 					"command": "code-d.viewDubPackage",
+					"when": "false"
+				},
+				{
+					"command": "code-d.openDubRecipe",
+					"when": "false"
+				},
+				{
+					"command": "code-d.listDubPackageDocuments",
+					"when": "false"
+				},
+				{
+					"command": "code-d.openDependencyFile",
 					"when": "false"
 				},
 				{
@@ -960,7 +1025,22 @@
 			},
 			{
 				"command": "code-d.viewDubPackage",
-				"title": "View Dub Package",
+				"title": "Default DUB dependency click action",
+				"category": "code-d"
+			},
+			{
+				"command": "code-d.openDubRecipe",
+				"title": "Edit DUB recipe",
+				"category": "code-d"
+			},
+			{
+				"command": "code-d.listDubPackageDocuments",
+				"title": "Show text document",
+				"category": "code-d"
+			},
+			{
+				"command": "code-d.openDependencyFile",
+				"title": "Open File",
 				"category": "code-d"
 			},
 			{

@@ -66,3 +66,30 @@ export function win32EscapeShellParam(param: string): string {
 export function unixEscapeShellParam(param: string): string {
 	return `'${param.replace(/'/g, `'\\''`)}'`;
 }
+
+/**
+ * Converts a buffer (UTF-8 or UTF-16 LE with BOM) to a JS string.
+ * Contains code for other UTF encodings, which are not supported by NodeJS
+ * yet however.
+ */
+export function simpleBytesToString(bytes: Uint8Array): string {
+	let buffer = Buffer.from(bytes);
+	let encoding = "utf8";
+	if (bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF) {
+		buffer = buffer.slice(3);
+	} else if (bytes[0] === 0x00 && bytes[1] === 0x00 && bytes[2] === 0xFE && bytes[3] === 0xFF) {
+		buffer = buffer.slice(4);
+		encoding = "utf32be";
+	} else if (bytes[0] === 0xFF && bytes[1] === 0xFE && bytes[2] === 0x00 && bytes[3] === 0x00) {
+		buffer = buffer.slice(4);
+		encoding = "utf32le";
+	} else if (bytes[0] === 0xFE && bytes[1] === 0xFF) {
+		buffer = buffer.slice(2);
+		encoding = "utf16be";
+	} else if (bytes[0] === 0xFF && bytes[1] === 0xFE) {
+		buffer = buffer.slice(2);
+		encoding = "utf16le";
+	}
+
+	return buffer.toString(encoding);
+}

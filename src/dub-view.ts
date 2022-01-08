@@ -32,7 +32,7 @@ export class DubDependency extends vscode.TreeItem {
 				command: "code-d.viewDubPackage",
 				title: "Open README",
 				tooltip: "Open README",
-				arguments: [info.path]
+				arguments: [info.path, info.name]
 			};
 			this.contextValue = info.root ? "root" : "dependency";
 		}
