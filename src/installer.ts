@@ -464,7 +464,6 @@ function installServeDEntry(outputFolder: string): (data: { url: string, title: 
 
 export function extractServedBuiltDate(log: string): Date | false {
 	var parsed = /Built: \w+\s+(\w+)\s+(\d+)\s+(\d+:\d+:\d+)\s+(\d+)/.exec(log);
-	console.log("built serve-d: ", parsed);
 	if (!parsed)
 		return false;
 	var month = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"].indexOf(parsed[1].toLowerCase());
