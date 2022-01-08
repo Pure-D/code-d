@@ -19,19 +19,30 @@ export class DubJSONContribution implements IJSONContribution {
 		return [{ language: "json", pattern: "**/dub.json", scheme: "file" }];
 	}
 
-	public getInfoContribution(fileName: string, location: Location): Thenable<vscode.MarkedString[]> {
+	public getInfoContribution(fileName: string, location: Location): Thenable<vscode.MarkdownString[]> {
 		if (location.path.length < 2 || location.path[location.path.length - 2] != "dependencies")
 			return Promise.resolve([]);
 		let pack = location.path[location.path.length - 1];
 		if (typeof pack === "string") {
 			return getLatestPackageInfo(pack).then(info => {
-				let htmlContent: vscode.MarkedString[] = [];
-				htmlContent.push("Package " + pack);
+				let htmlContent: vscode.MarkdownString[] = [];
+				htmlContent.push(new vscode.MarkdownString("Package " + pack));
 				if (info.description) {
-					htmlContent.push(info.description);
+					let block = new vscode.MarkdownString(info.description);
+					block.isTrusted = false;
+					htmlContent.push(block);
+				}
+				if (info.license || info.copyright) {
+					let block = new vscode.MarkdownString();
+					if (info.license)
+						block.appendText("License: " + info.license + "\n");
+					if (info.copyright)
+						block.appendText("Copyright: " + info.copyright + "\n");
+					block.isTrusted = false;
+					htmlContent.push(block);
 				}
 				if (info.version) {
-					htmlContent.push("Latest version: " + info.version);
+					htmlContent.push(new vscode.MarkdownString("Latest version: " + info.version));
 				}
 				return htmlContent;
 			});
@@ -209,13 +220,35 @@ export class DubJSONContribution implements IJSONContribution {
 			let pack = item.label;
 			if (typeof pack != "string")
 				pack = pack.label;
-			return getLatestPackageInfo(pack).then((info: any) => {
+			return getLatestPackageInfo(pack).then(info => {
 				if (info.description) {
-					item.documentation = info.description;
+					let doc = new vscode.MarkdownString();
+					doc.isTrusted = false;
+					doc.appendMarkdown(info.description);
+					if (info.license || info.copyright) {
+						doc.appendText("\n");
+						if (info.license)
+							doc.appendText("\nLicense: " + info.license);
+						if (info.copyright) {
+							if (/copyright/i.exec(info.copyright))
+								doc.appendText("\n" + info.copyright);
+							else
+								doc.appendText("\nCopyright: " + info.copyright);
+						}
+					}
+					item.documentation = doc;
 				}
 				if (info.version) {
 					item.detail = info.version;
 					item.insertText = new vscode.SnippetString((<vscode.SnippetString>item.insertText).value.replace(/\{\{\}\}/, "{{" + info.version + "}}"));
+				}
+				if (typeof item.label == "string") {
+					item.label = {
+						label: item.label,
+						detail: " " + info.version
+					};
+					if (info.description)
+						item.label.description = info.description;
 				}
 				return item;
 			}, err => {

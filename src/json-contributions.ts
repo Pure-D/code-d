@@ -10,9 +10,9 @@ export interface ISuggestionsCollector {
 
 export interface IJSONContribution {
 	getDocumentSelector(): vscode.DocumentSelector;
-	getInfoContribution(fileName: string, location: Location): Thenable<vscode.MarkedString[]>;
-	collectPropertySuggestions(fileName: string, location: Location, currentWord: string, addValue: boolean, isLast: boolean, result: ISuggestionsCollector): Thenable<any>;
-	collectValueSuggestions(fileName: string, location: Location, result: ISuggestionsCollector): Thenable<any>;
+	getInfoContribution(fileName: string, location: Location): Thenable<vscode.MarkdownString[]>;
+	collectPropertySuggestions(fileName: string, location: Location, currentWord: string, addValue: boolean, isLast: boolean, result: ISuggestionsCollector): Thenable<void>;
+	collectValueSuggestions(fileName: string, location: Location, result: ISuggestionsCollector): Thenable<void>;
 	resolveSuggestion?(item: vscode.CompletionItem): Thenable<vscode.CompletionItem>;
 }
 
@@ -20,7 +20,7 @@ export function addJSONProviders(): vscode.Disposable {
 	let subscriptions: vscode.Disposable[] = [];
 
 	// register completion and hove providers for JSON setting file(s)
-	let contributions = [new DubJSONContribution()];
+	let contributions: IJSONContribution[] = [new DubJSONContribution()];
 	contributions.forEach(contribution => {
 		var provider = new JSONProvider(contribution);
 		let selector = contribution.getDocumentSelector();
