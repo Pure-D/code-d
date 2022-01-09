@@ -71,14 +71,15 @@ export class DubEditor implements vscode.CustomTextEditorProvider {
 				case "getInput":
 					let callbackId = <string>e.arg.callbackId;
 					let label = <string>e.arg.label;
-					let options = <{ error?: string } | undefined>e.arg.options;
+					let options = <{ error?: string, placeholder?: string } | undefined>e.arg.options;
 
 					if (options?.error) {
 						vscode.window.showErrorMessage(options.error);
 					}
 
 					let res = await vscode.window.showInputBox({
-						title: label
+						title: label,
+						placeHolder: options?.placeholder
 					});
 
 					webviewPanel.webview.postMessage({

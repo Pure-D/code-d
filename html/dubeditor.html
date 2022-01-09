@@ -355,7 +355,7 @@
 		<div class="child" id="pageBuildTypes">
 			<label class="label">
 				Build Types
-				<select multiple class="list-setting refresh-ui" has-config="false" json-path="buildTypes" json-default="{}">
+				<select multiple class="list-setting refresh-ui" has-config="false" json-path="buildTypes" json-default="{}" ui-setting-name="build type">
 				<p class="description">Defines additional custom build types or overrides the default ones (chosen on the command line using --build=...)</p>
 				</select>
 				<div class="buttonrow">
@@ -368,7 +368,7 @@
 		<div class="child" id="pageConfigurations">
 			<label class="label">
 				Configurations
-				<select multiple class="list-setting refresh-ui" has-config="false" json-array="true" json-array-key="name" json-path="configurations" json-default="{}">
+				<select multiple class="list-setting refresh-ui" has-config="false" json-array="true" json-array-key="name" json-path="configurations" json-default="{}" ui-setting-name="configuration">
 				<p class="description">Speficies an optional list of build configurations (chosen on the command line using --config=...)</p>
 				</select>
 				<div class="buttonrow">

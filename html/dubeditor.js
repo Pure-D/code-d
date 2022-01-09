@@ -25,6 +25,7 @@ function runCommand(/** @type {string} */ command, /** @type {any} */ argument) 
 /**
  * @typedef {Object} InputOptions
  * @property {string} [error]
+ * @property {string} [placeholder]
  */
 
 /**
@@ -814,10 +815,14 @@ function loadJsonIntoUI() {
 		let removeBtn = /** @type {HTMLButtonElement} */ (setting.parentElement.querySelector(".remove"));
 
 		addBtn.onclick = (async function (setting, path, arrayType, arrayProp) {
+			const settingName = setting.getAttribute("ui-setting-name");
 			let error = undefined;
 			while (true)
 			{
-				let name = await getInput("Enter Name", { "error": error });
+				let options = { "error": error };
+				if (settingName)
+					options.placeholder = settingName + " name";
+				let name = await getInput("Enter Name", options);
 				if (!name)
 					return;
 				if (!getPath(path))
