@@ -65,11 +65,20 @@ label.labelcb {
 	box-sizing: border-box;
 }
 
-label.label input,
-label.label textarea,
-label.label select {
+label.label > input,
+label.label > textarea,
+label.label > select {
 	display: block;
+}
+
+label.label > * {
 	width: 100%;
+}
+
+label.label > .description {
+	margin-top: 0;
+	font-size: 0.9em;
+	opacity: 0.8;
 }
 
 #filedialog {

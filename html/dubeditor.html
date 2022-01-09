@@ -6,6 +6,8 @@
 
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+	<script type="module" src="{{vscodeuiToolkitUri}}"></script>
+
 	<link rel="stylesheet" href="{{dubEditorStyleUri}}">
 </head>
 
@@ -13,94 +15,94 @@
 	<div class="configurationbar">
 		<label>
 			Configuration:
-			<select id="configurations" class="refresh-ui">
-				<option value="">Default</option>
-			</select>
+			<vscode-dropdown id="configurations" class="refresh-ui">
+				<vscode-option value="">Default</vscode-option>
+			</vscode-dropdown>
 		</label>
 		<label>
 			Build Type:
-			<select id="buildtypes" class="refresh-ui">
-				<option value="">Default</option>
-			</select>
+			<vscode-dropdown id="buildtypes" class="refresh-ui">
+				<vscode-option value="">Default</vscode-option>
+			</vscode-dropdown>
 		</label>
 		<label>
 			Platform:
-			<select id="platforms" class="refresh-ui">
+			<vscode-dropdown id="platforms" class="refresh-ui">
 				<!-- Source: https://github.com/dlang/dub/blob/master/source/dub/platform.d -->
-				<option value="">All</option>
-				<option value="windows">Windows</option>
-				<option value="linux">Linux</option>
-				<option value="posix">Posix</option>
-				<option value="osx">OSX</option>
-				<option value="freebsd">FreeBSD</option>
-				<option value="openbsd">OpenBSD</option>
-				<option value="netbsd">NetBSD</option>
-				<option value="dragonflybsd">DragonFlyBSD</option>
-				<option value="bsd">BSD</option>
-				<option value="solaris">Solaris</option>
-				<option value="aix">AIX</option>
-				<option value="haiku">Haiku</option>
-				<option value="skyos">SkyOS</option>
-				<option value="sysv3">SysV3</option>
-				<option value="sysv4">SysV4</option>
-				<option value="hurd">Hurd</option>
-				<option value="android">Android</option>
-				<option value="cygwin">Cygwin</option>
-				<option value="mingw">MinGW</option>
-			</select>
+				<vscode-option value="">All</vscode-option>
+				<vscode-option value="windows">Windows</vscode-option>
+				<vscode-option value="linux">Linux</vscode-option>
+				<vscode-option value="posix">Posix</vscode-option>
+				<vscode-option value="osx">OSX</vscode-option>
+				<vscode-option value="freebsd">FreeBSD</vscode-option>
+				<vscode-option value="openbsd">OpenBSD</vscode-option>
+				<vscode-option value="netbsd">NetBSD</vscode-option>
+				<vscode-option value="dragonflybsd">DragonFlyBSD</vscode-option>
+				<vscode-option value="bsd">BSD</vscode-option>
+				<vscode-option value="solaris">Solaris</vscode-option>
+				<vscode-option value="aix">AIX</vscode-option>
+				<vscode-option value="haiku">Haiku</vscode-option>
+				<vscode-option value="skyos">SkyOS</vscode-option>
+				<vscode-option value="sysv3">SysV3</vscode-option>
+				<vscode-option value="sysv4">SysV4</vscode-option>
+				<vscode-option value="hurd">Hurd</vscode-option>
+				<vscode-option value="android">Android</vscode-option>
+				<vscode-option value="cygwin">Cygwin</vscode-option>
+				<vscode-option value="mingw">MinGW</vscode-option>
+			</vscode-dropdown>
 		</label>
 		<label>
 			Architecture:
-			<select id="architectures" class="refresh-ui">
-				<option value="">All</option>
-				<option value="x86">X86</option>
-				<option value="x86_64">X86_64</option>
-				<option value="arm">ARM</option>
-				<option value="arm_thumb">ARM_Thumb</option>
-				<option value="arm_softfloat">ARM_SoftFloat</option>
-				<option value="arm_hardfloat">ARM_HardFloat</option>
-				<option value="arm64">ARM64</option>
-				<option value="ppc">PPC</option>
-				<option value="ppc_softfp">PPC_SoftFP</option>
-				<option value="ppc_hardfp">PPC_HardFP</option>
-				<option value="ppc64">PPC64</option>
-				<option value="ia64">IA64</option>
-				<option value="mips">MIPS</option>
-				<option value="mips32">MIPS32</option>
-				<option value="mips64">MIPS64</option>
-				<option value="mips_o32">MIPS_O32</option>
-				<option value="mips_n32">MIPS_N32</option>
-				<option value="mips_o64">MIPS_O64</option>
-				<option value="mips_n64">MIPS_N64</option>
-				<option value="mips_eabi">MIPS_EABI</option>
-				<option value="mips_nofloat">MIPS_NoFloat</option>
-				<option value="mips_softfloat">MIPS_SoftFloat</option>
-				<option value="mips_hardfloat">MIPS_HardFloat</option>
-				<option value="sparc">SPARC</option>
-				<option value="sparc_v8plus">SPARC_V8Plus</option>
-				<option value="sparc_softfp">SPARC_SoftFP</option>
-				<option value="sparc_hardfp">SPARC_HardFP</option>
-				<option value="sparc64">SPARC64</option>
-				<option value="s390">S390</option>
-				<option value="s390x">S390X</option>
-				<option value="hppa">HPPA</option>
-				<option value="hppa64">HPPA64</option>
-				<option value="sh">SH</option>
-				<option value="sh64">SH64</option>
-				<option value="alpha">Alpha</option>
-				<option value="alpha_softfp">Alpha_SoftFP</option>
-				<option value="alpha_hardfp">Alpha_HardFP</option>
-			</select>
+			<vscode-dropdown id="architectures" class="refresh-ui">
+				<vscode-option value="">All</vscode-option>
+				<vscode-option value="x86">X86</vscode-option>
+				<vscode-option value="x86_64">X86_64</vscode-option>
+				<vscode-option value="arm">ARM</vscode-option>
+				<vscode-option value="arm_thumb">ARM_Thumb</vscode-option>
+				<vscode-option value="arm_softfloat">ARM_SoftFloat</vscode-option>
+				<vscode-option value="arm_hardfloat">ARM_HardFloat</vscode-option>
+				<vscode-option value="arm64">ARM64</vscode-option>
+				<vscode-option value="ppc">PPC</vscode-option>
+				<vscode-option value="ppc_softfp">PPC_SoftFP</vscode-option>
+				<vscode-option value="ppc_hardfp">PPC_HardFP</vscode-option>
+				<vscode-option value="ppc64">PPC64</vscode-option>
+				<vscode-option value="ia64">IA64</vscode-option>
+				<vscode-option value="mips">MIPS</vscode-option>
+				<vscode-option value="mips32">MIPS32</vscode-option>
+				<vscode-option value="mips64">MIPS64</vscode-option>
+				<vscode-option value="mips_o32">MIPS_O32</vscode-option>
+				<vscode-option value="mips_n32">MIPS_N32</vscode-option>
+				<vscode-option value="mips_o64">MIPS_O64</vscode-option>
+				<vscode-option value="mips_n64">MIPS_N64</vscode-option>
+				<vscode-option value="mips_eabi">MIPS_EABI</vscode-option>
+				<vscode-option value="mips_nofloat">MIPS_NoFloat</vscode-option>
+				<vscode-option value="mips_softfloat">MIPS_SoftFloat</vscode-option>
+				<vscode-option value="mips_hardfloat">MIPS_HardFloat</vscode-option>
+				<vscode-option value="sparc">SPARC</vscode-option>
+				<vscode-option value="sparc_v8plus">SPARC_V8Plus</vscode-option>
+				<vscode-option value="sparc_softfp">SPARC_SoftFP</vscode-option>
+				<vscode-option value="sparc_hardfp">SPARC_HardFP</vscode-option>
+				<vscode-option value="sparc64">SPARC64</vscode-option>
+				<vscode-option value="s390">S390</vscode-option>
+				<vscode-option value="s390x">S390X</vscode-option>
+				<vscode-option value="hppa">HPPA</vscode-option>
+				<vscode-option value="hppa64">HPPA64</vscode-option>
+				<vscode-option value="sh">SH</vscode-option>
+				<vscode-option value="sh64">SH64</vscode-option>
+				<vscode-option value="alpha">Alpha</vscode-option>
+				<vscode-option value="alpha_softfp">Alpha_SoftFP</vscode-option>
+				<vscode-option value="alpha_hardfp">Alpha_HardFP</vscode-option>
+			</vscode-dropdown>
 		</label>
 		<label>
 			Compiler:
-			<select id="compilers" class="refresh-ui">
-				<option value="">All</option>
-				<option value="dmd">DMD</option>
-				<option value="gdc">GDC</option>
-				<option value="ldc2">LDC</option>
-				<option value="sdc">SDC</option>
-			</select>
+			<vscode-dropdown id="compilers" class="refresh-ui">
+				<vscode-option value="">All</vscode-option>
+				<vscode-option value="dmd">DMD</vscode-option>
+				<vscode-option value="gdc">GDC</vscode-option>
+				<vscode-option value="ldc2">LDC</vscode-option>
+				<vscode-option value="sdc">SDC</vscode-option>
+			</vscode-dropdown>
 		</label>
 	</div>
 	<div class="hsplit">
@@ -117,114 +119,115 @@
 			<li id="tabConfigurations" has-config="false" has-suffix="true">Configurations</li>
 		</ul>
 		<div class="child" id="pageGeneral">
-			<label class="label" title="Name of the package, used to uniquely identify the package. Must be comprised of only lower case ASCII alpha-numeric characters, &quot;-&quot; or &quot;_&quot;.">
-				Name
-				<input type="text" class="setting" has-config="false" json-path="name" />
+			<label class="label">
+				<vscode-text-field class="setting" has-config="false" json-path="name">Name</vscode-text-field>
+				<p class="description">Name of the package, used to uniquely identify the package. Must be comprised of only lower case ASCII alpha-numeric characters, &quot;-&quot; or &quot;_&quot;.</p>
 			</label>
-			<label class="label" title="URL of the project website">
-				Homepage
-				<input type="text" class="setting" has-config="false" json-path="homepage" />
+			<label class="label">
+				<vscode-text-field class="setting" has-config="false" json-path="homepage">Homepage</vscode-text-field>
+				<p class="description">URL of the project website</p>
 			</label>
-			<label class="label" title="Brief description of the package">
-				Description
-				<input type="text" class="setting" has-config="false" json-path="description" />
+			<label class="label">
+				<vscode-text-field class="setting" has-config="false" json-path="description">Description</vscode-text-field>
+				<p class="description">Brief description of the package</p>
 			</label>
-			<label class="label" title="Copyright declaration string">
-				Copyright
-				<input type="text" class="setting" has-config="false" json-path="copyright" />
+			<label class="label">
+				<vscode-text-field class="setting" has-config="false" json-path="copyright">Copyright</vscode-text-field>
+				<p class="description">Copyright declaration string</p>
 			</label>
-			<label class="label" title="License(s) under which the project can be used - see the license specification section for possible values">
-				License
-				<input type="text" class="setting" has-config="false" json-path="license" />
+			<label class="label">
+				<vscode-text-field class="setting" has-config="false" json-path="license">License</vscode-text-field>
+				<p class="description">License(s) under which the project can be used - see the license specification section for possible values</p>
 			</label>
-			<label class="label" title="List of project authors (the suggested format is either &quot;Peter Parker&quot; or &quot;Peter Parker <pparker@example.com>&quot;)">
-				Authors
-				<textarea type="text" rows="5" class="setting" has-config="false" json-type="string[]" json-path="authors"></textarea>
+			<label class="label">
+				<vscode-text-area rows="5" resize="both" class="setting" has-config="false" json-type="string[]" json-path="authors">Authors</vscode-text-area>
+				<p class="description">List of project authors (the suggested format is either &quot;Peter Parker&quot; or &quot;Peter Parker &lt;pparker@example.com&gt;&quot;)</p>
 			</label>
-			<label class="label" title="Specifies a list of command line flags usable for controlling filter behavior for --build=ddox [experimental]">
-				ddox Filter Args
-				<textarea type="text" rows="5" class="setting" has-config="false" json-type="string[]" json-path="-ddoxFilterArgs"></textarea>
+			<label class="label">
+				<vscode-text-area rows="5" resize="both" class="setting" has-config="false" json-type="string[]" json-path="-ddoxFilterArgs">ddox Filter Args</vscode-text-area>
+				<p class="description">Specifies a list of command line flags usable for controlling filter behavior for --build=ddox [experimental]</p>
 			</label>
 		</div>
 		<div class="child" id="pageBuildOutput">
-			<label class="label" title="Sets the base name of the output file; type and platform specific pre- and suffixes are added automatically">
-				Target Name
-				<input type="text" class="setting" json-path="targetName" />
+			<label class="label">
+				<vscode-text-field class="setting" json-path="targetName">Target Name</vscode-text-field>
+				<p class="description">Sets the base name of the output file; type and platform specific pre- and suffixes are added automatically</p>
 			</label>
-			<label class="label" title="Specifies a specific target type">
+			<label class="label">
 				Target Type
-				<select class="setting" json-path="targetType">
-					<option value="autodetect">Auto Detect</option>
-					<option value="none">None</option>
-					<option value="executable">Executable</option>
-					<option value="library">Library</option>
-					<option value="sourceLibrary">Source Library</option>
-					<option value="staticLibrary">Static Library</option>
-					<option value="dynamicLibrary">Dynamic Library</option>
-				</select>
+				<vscode-dropdown class="setting" json-path="targetType">
+					<vscode-option value="autodetect">Auto Detect</vscode-option>
+					<vscode-option value="none">None</vscode-option>
+					<vscode-option value="executable">Executable</vscode-option>
+					<vscode-option value="library">Library</vscode-option>
+					<vscode-option value="sourceLibrary">Source Library</vscode-option>
+					<vscode-option value="staticLibrary">Static Library</vscode-option>
+					<vscode-option value="dynamicLibrary">Dynamic Library</vscode-option>
+				</vscode-dropdown>
+				<p class="description">Specifies a specific target type</p>
 			</label>
-			<label class="label" title="The destination path of the output binary">
-				Target Path
-				<input type="text" class="setting" json-path="targetPath" />
+			<label class="label">
+				<vscode-text-field class="setting" json-path="targetPath">Target Path</vscode-text-field>
+				<p class="description">The destination path of the output binary</p>
 			</label>
-			<label class="label" title="A fixed working directory from which the generated executable will be run">
-				Working Directory
-				<input type="text" class="setting" json-path="workingDirectory" />
+			<label class="label">
+				<vscode-text-field class="setting" json-path="workingDirectory">Working Directory</vscode-text-field>
+				<p class="description">A fixed working directory from which the generated executable will be run</p>
 			</label>
-			<label class="label" title="Determines the file that contains the main() function. This setting can be used by dub to exclude this file in situations where a different main function is defined (e.g. for &quot;dub test&quot;)">
-				Main Source File
-				<input type="text" class="setting" json-path="mainSourceFile">
+			<label class="label">
+				<vscode-text-field class="setting" json-path="mainSourceFile">Main Source File</vscode-text-field>
+				<p class="description">Determines the file that contains the main() function. This setting can be used by dub to exclude this file in situations where a different main function is defined (e.g. for &quot;dub test&quot;)</p>
 			</label>
 		</div>
 		<div class="child" id="pageDependencies">
 			<table id="dependencies">
 			</table>
-			<button>Add</button>
+			<vscode-button>Add</vscode-button>
 			<!-- <datalist> creates an arrow for auto completion but popup cant appear -->
 			<!--datalist id="dependencylist"></datalist>-->
 		</div>
 		<div class="child" id="pageBuildSettings">
-			<label class="label" title="A textual description of the required system dependencies (external C libraries) required by the package. This will be visible on the registry and will be displayed in case of linker errors.">
-				System Dependencies
-				<input type="text" class="setting" has-suffix="true" json-path="systemDependencies" />
+			<label class="label">
+				<vscode-text-field class="setting" has-suffix="true" json-path="systemDependencies">System Dependencies</vscode-text-field>
+				<p class="description">A textual description of the required system dependencies (external C libraries) required by the package. This will be visible on the registry and will be displayed in case of linker errors.</p>
 			</label>
-			<label class="label" title="A list of external library names - depending on the compiler, these will be converted to the proper linker flag (e.g. &quot;ssl&quot; might get translated to &quot;-L-lssl&quot;)">
-				Libraries (Linker)
-				<textarea type="text" rows="5" class="setting" has-suffix="true" json-type="string[]" json-path="libs"></textarea>
+			<label class="label">
+				<vscode-text-area rows="5" resize="both" class="setting" has-suffix="true" json-type="string[]" json-path="libs">Libraries (Linker)</vscode-text-area>
+				<p class="description">A list of external library names - depending on the compiler, these will be converted to the proper linker flag (e.g. &quot;ssl&quot; might get translated to &quot;-L-lssl&quot;)</p>
 			</label>
-			<label class="label" title="A list of D versions to be defined during compilation">
-				Versions
-				<textarea type="text" rows="5" class="setting" has-suffix="true" json-type="string[]" json-path="versions"></textarea>
+			<label class="label">
+				<vscode-text-area rows="5" resize="both" class="setting" has-suffix="true" json-type="string[]" json-path="versions">Versions</vscode-text-area>
+				<p class="description">A list of D versions to be defined during compilation</p>
 			</label>
-			<label class="label" title="A list of D debug identifiers to be defined during compilation">
-				Debug Versions
-				<textarea type="text" rows="5" class="setting" has-suffix="true" json-type="string[]" json-path="debugVersions"></textarea>
+			<label class="label">
+				<vscode-text-area rows="5" resize="both" class="setting" has-suffix="true" json-type="string[]" json-path="debugVersions">Debug Versions</vscode-text-area>
+				<p class="description">A list of D debug identifiers to be defined during compilation</p>
 			</label>
-			<label class="label" title="Additional flags passed to the D compiler - note that these flags are usually specific to the compiler in use, but a set of flags is automatically translated from DMD to the selected compiler">
-				Compiler Flags
-				<textarea type="text" rows="5" class="setting" has-suffix="true" json-type="string[]" json-path="dflags"></textarea>
+			<label class="label">
+				<vscode-text-area rows="5" resize="both" class="setting" has-suffix="true" json-type="string[]" json-path="dflags">Compiler Flags</vscode-text-area>
+				<p class="description">Additional flags passed to the D compiler - note that these flags are usually specific to the compiler in use, but a set of flags is automatically translated from DMD to the selected compiler</p>
 			</label>
-			<label class="label" title="Additional flags passed to the linker - note that these flags are usually specific to the linker in use">
-				Linker Flags
-				<textarea type="text" rows="5" class="setting" has-suffix="true" json-type="string[]" json-path="lflags"></textarea>
+			<label class="label">
+				<vscode-text-area rows="5" resize="both" class="setting" has-suffix="true" json-type="string[]" json-path="lflags">Linker Flags</vscode-text-area>
+				<p class="description">Additional flags passed to the linker - note that these flags are usually specific to the linker in use</p>
 			</label>
 		</div>
 		<div class="child" id="pageBuildCommands">
-			<label class="label" title="A list of shell commands that is executed before project generation is started">
-				Pre-Generate Commands
-				<textarea type="text" rows="5" class="setting" has-suffix="true" json-type="string[]" json-path="preGenerateCommands"></textarea>
+			<label class="label">
+				<vscode-text-area rows="5" resize="both" class="setting" has-suffix="true" json-type="string[]" json-path="preGenerateCommands">Pre-Generate Commands</vscode-text-area>
+				<p class="description">A list of shell commands that is executed before project generation is started</p>
 			</label>
-			<label class="label" title="A list of shell commands that is executed after project generation is finished">
-				Post-Generate Commands
-				<textarea type="text" rows="5" class="setting" has-suffix="true" json-type="string[]" json-path="postGenerateCommands"></textarea>
+			<label class="label">
+				<vscode-text-area rows="5" resize="both" class="setting" has-suffix="true" json-type="string[]" json-path="postGenerateCommands">Post-Generate Commands</vscode-text-area>
+				<p class="description">A list of shell commands that is executed after project generation is finished</p>
 			</label>
-			<label class="label" title="A list of shell commands that is executed always before the project is built">
-				Pre-Build Commands
-				<textarea type="text" rows="5" class="setting" has-suffix="true" json-type="string[]" json-path="preBuildCommands"></textarea>
+			<label class="label">
+				<vscode-text-area rows="5" resize="both" class="setting" has-suffix="true" json-type="string[]" json-path="preBuildCommands">Pre-Build Commands</vscode-text-area>
+				<p class="description">A list of shell commands that is executed always before the project is built</p>
 			</label>
-			<label class="label" title="A list of shell commands that is executed always after the project is built">
-				Post-Build Commands
-				<textarea type="text" rows="5" class="setting" has-suffix="true" json-type="string[]" json-path="postBuildCommands"></textarea>
+			<label class="label">
+				<vscode-text-area rows="5" resize="both" class="setting" has-suffix="true" json-type="string[]" json-path="postBuildCommands">Post-Build Commands</vscode-text-area>
+				<p class="description">A list of shell commands that is executed always after the project is built</p>
 			</label>
 		</div>
 		<div class="child" id="pageBuildRequirements">
@@ -324,43 +327,55 @@
 			</label>
 		</div>
 		<div class="child" id="pageSources">
-			<label class="label" title="Additional files passed to the compiler - can be useful to add certain configuration dependent source files that are not contained in the general source folder">
+			<label class="label">
 				Additional Source Files
 				<select multiple class="complex-setting" has-suffix="true" json-type="files" json-paths="Include:sourceFiles;Exclude:excludedSourceFiles"></select>
-				<button class="add">Add</button>
-				<button class="edit">Edit</button>
-				<button class="remove">Remove</button>
+				<p class="description">Additional files passed to the compiler - can be useful to add certain configuration dependent source files that are not contained in the general source folder</p>
+				<div class="buttonrow">
+					<vscode-button class="add">Add</vscode-button>
+					<vscode-button class="edit" appearance="secondary">Edit</vscode-button>
+					<vscode-button class="remove" appearance="secondary">Remove</vscode-button>
+				</div>
 			</label>
-			<label class="label" title="Allows to customize the path where to look for source files (any folder &quot;source&quot; or &quot;src&quot; is automatically used as a source path if no sourcePaths setting is specified)">
+			<label class="label">
 				Source Paths
 				<select multiple class="complex-setting" has-suffix="true" json-type="files" json-paths="Import:importPaths;Source:sourcePaths;String Import:stringImportPaths"></select>
-				<button class="add">Add</button>
-				<button class="edit">Edit</button>
-				<button class="remove">Remove</button>
+				<p class="description">Allows to customize the path where to look for source files (any folder &quot;source&quot; or &quot;src&quot; is automatically used as a source path if no sourcePaths setting is specified)</p>
+				<div class="buttonrow">
+					<vscode-button class="add">Add</vscode-button>
+					<vscode-button class="edit" appearance="secondary">Edit</vscode-button>
+					<vscode-button class="remove" appearance="secondary">Remove</vscode-button>
+				</div>
 			</label>
-			<label class="label" title="A list of globs matching files or directories to be copied to targetPath. Matching directories are copied recursively, i.e. &quot;copyFiles&quot;: [&quot;path/to/dir&quot;]&quot; recursively copies dir, while &quot;copyFiles&quot;: [&quot;path/to/dir/*&quot;]&quot; only copies files within dir.">
-				Copy Files
-				<textarea type="text" rows="5" class="setting" has-suffix="true" json-type="string[]" json-path="copyFiles"></textarea>
+			<label class="label">
+				<p class="description">A list of globs matching files or directories to be copied to targetPath. Matching directories are copied recursively, i.e. &quot;copyFiles&quot;: [&quot;path/to/dir&quot;]&quot; recursively copies dir, while &quot;copyFiles&quot;: [&quot;path/to/dir/*&quot;]&quot; only copies files within dir.</p>
+				<vscode-text-area rows="5" resize="both" class="setting" has-suffix="true" json-type="string[]" json-path="copyFiles">Copy Files</vscode-text-area>
 			</label>
 		</div>
 		<div class="child" id="pageBuildTypes">
-			<label class="label" title="Defines additional custom build types or overrides the default ones (chosen on the command line using --build=...)">
+			<label class="label">
 				Build Types
 				<select multiple class="list-setting refresh-ui" has-config="false" json-path="buildTypes" json-default="{}">
+				<p class="description">Defines additional custom build types or overrides the default ones (chosen on the command line using --build=...)</p>
 				</select>
-				<button class="add">Add</button>
-				<button class="rename">Rename</button>
-				<button class="remove">Remove</button>
+				<div class="buttonrow">
+					<vscode-button class="add">Add</vscode-button>
+					<vscode-button class="rename" appearance="secondary">Rename</vscode-button>
+					<vscode-button class="remove" appearance="secondary">Remove</vscode-button>
+				</div>
 			</label>
 		</div>
 		<div class="child" id="pageConfigurations">
-			<label class="label" title="Speficies an optional list of build configurations (chosen on the command line using --config=...)">
+			<label class="label">
 				Configurations
 				<select multiple class="list-setting refresh-ui" has-config="false" json-array="true" json-array-key="name" json-path="configurations" json-default="{}">
+				<p class="description">Speficies an optional list of build configurations (chosen on the command line using --config=...)</p>
 				</select>
-				<button class="add">Add</button>
-				<button class="rename">Rename</button>
-				<button class="remove">Remove</button>
+				<div class="buttonrow">
+					<vscode-button class="add">Add</vscode-button>
+					<vscode-button class="rename" appearance="secondary">Rename</vscode-button>
+					<vscode-button class="remove" appearance="secondary">Remove</vscode-button>
+				</div>
 			</label>
 		</div>
 		<div class="clear"></div>

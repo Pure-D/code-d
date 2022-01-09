@@ -60,7 +60,7 @@ window.addEventListener("message", event => {
 
 /**
  * @typedef {Object} InputOption
- * @property {string} type
+ * @property {"text" | "checkbox"} type
  * @property {string} name
  * @property {any} [defaultValue]
  * @property {boolean} [readonly]
@@ -150,7 +150,9 @@ function showDialog(options, buttons, onButtonClick) {
 		}
 	};
 	for (var i = 0; i < buttons.length; i++) {
-		var button = document.createElement("button");
+		var button = document.createElement("vscode-button");
+		if (i != 0)
+			button.setAttribute("appearance", "secondary");
 		button.textContent = buttons[i];
 		button.setAttribute("cb", buttons[i]);
 		button.onclick = buttonHandler;
@@ -158,28 +160,23 @@ function showDialog(options, buttons, onButtonClick) {
 	}
 	for (var i = 0; i < options.length; i++) {
 		var opt = options[i];
-		var element = document.createElement("label");
 		if (opt.type == "checkbox") {
-			element.className = "labelcb";
-			opt.element = opt.element || document.createElement("input");
-			opt.element.setAttribute("type", "checkbox");
-			opt.element.checked = !!opt.defaultValue;
-			element.appendChild(opt.element);
-			element.appendChild(document.createTextNode(opt.name));
-		} else {
-			element.className = "label";
-			element.appendChild(document.createTextNode(opt.name));
-			opt.element = opt.element || document.createElement(opt.type == "textarea" ? "textarea" : "input");
-			opt.element.setAttribute("type", opt.type);
 			// @ts-ignore
-			if (opt.rows) opt.element.setAttribute("rows", opt.rows);
+			opt.element = opt.element || document.createElement("vscode-checkbox");
+			opt.element.textContent = opt.name;
+			opt.element.checked = !!opt.defaultValue;
+		} else {
+			// @ts-ignore
+			opt.element = opt.element || document.createElement(opt.type == "textarea" ? "vscode-text-area" : "vscode-text-field");
+			opt.element.textContent = opt.name;
+			// @ts-ignore
+			if (opt.rows) opt.element.rows = opt.rows;
 			opt.element.value = opt.defaultValue || "";
-			element.appendChild(opt.element);
 		}
 
 		if (opt.readonly)
 			opt.element.setAttribute("readonly", "readonly");
-		contentSpace.appendChild(element);
+		contentSpace.appendChild(opt.element);
 	}
 	dialog.style.display = "block";
 }
@@ -308,7 +305,7 @@ function updateBuildTypes() {
 		return;
 	var buildTypes = Object.keys(content["buildTypes"]);
 	for (var i = 0; i < buildTypes.length; i++) {
-		var option = document.createElement("option");
+		var option = /** @type {HTMLOptionElement} */ (document.createElement("vscode-option"));
 		option.value = buildTypes[i];
 		option.textContent = buildTypes[i];
 		buildtypeSelector.appendChild(option);
@@ -334,7 +331,7 @@ function updateConfigurations() {
 		if (content.configurations[i].name)
 			configurations.push(content.configurations[i].name);
 	for (var i = 0; i < configurations.length; i++) {
-		var option = document.createElement("option");
+		var option = /** @type {HTMLOptionElement} */ (document.createElement("vscode-option"));
 		option.value = configurations[i];
 		option.textContent = configurations[i];
 		configurationSelector.appendChild(option);
@@ -572,7 +569,7 @@ function loadJsonIntoUI() {
 			});
 			setPath(configPath, value);
 		}).bind(this, setting, configPath, path, encode);
-		if (setting.tagName == "INPUT" || setting.tagName == "TEXTAREA")
+		if (setting.tagName == "VSCODE-TEXT-FIELD" || setting.tagName == "VSCODE-TEXT-AREA")
 			setting.oninput = changeFun;
 		else
 			setting.onchange = changeFun;
@@ -623,6 +620,9 @@ function loadJsonIntoUI() {
 			}).bind(this, setting);
 
 			addBtn.onclick = (function (setting, paths) {
+				/**
+				 * @type {InputOption[]}
+				 */
 				let options = [
 					{ type: "text", name: "File" }
 				];
@@ -664,7 +664,7 @@ function loadJsonIntoUI() {
 						if (addedCount == 0)
 							return "Select at least one category";
 						let existing = false;
-						let option = document.createElement("option");
+						let option = /** @type {HTMLOptionElement} */ (document.createElement(setting.tagName.startsWith("VSCODE") ? "vscode-option" : "option"));
 						for (let j = 0; j < setting.options.length; j++)
 							if (setting.options[j].value == file) {
 								option = setting.options[j];
@@ -790,7 +790,7 @@ function loadJsonIntoUI() {
 				setting.removeChild(setting.options[j]);
 
 			for (let j = 0; j < found.length; j++) {
-				let option = document.createElement("option");
+				let option = /** @type {HTMLOptionElement} */ (document.createElement(setting.tagName.startsWith("VSCODE") ? "vscode-option" : "option"));
 				option.value = found[j].file;
 				option.setAttribute("paths", found[j].paths.join(";;"));
 				let tags = "";
@@ -831,7 +831,7 @@ function loadJsonIntoUI() {
 					path: path,
 					value: getPath(path)
 				});
-				var option = document.createElement("option");
+				var option = /** @type {HTMLOptionElement} */ (document.createElement(setting.tagName.startsWith("VSCODE") ? "vscode-option" : "option"));
 				option.value = name;
 				option.textContent = name;
 				setting.appendChild(option);
@@ -863,6 +863,9 @@ function loadJsonIntoUI() {
 				}
 			if (!selected)
 				return;
+			/**
+			 * @type {InputOption[]}
+			 */
 			var options = [{
 				type: "text",
 				name: "Name",
@@ -906,7 +909,7 @@ function loadJsonIntoUI() {
 		if (values) {
 			if (arrayType) {
 				for (var j = 0; j < values.length; j++) {
-					var option = document.createElement("option");
+					var option = /** @type {HTMLOptionElement} */ (document.createElement(setting.tagName.startsWith("VSCODE") ? "vscode-option" : "option"));
 					option.value = values[j][arrayProp];
 					option.textContent = values[j][arrayProp];
 					setting.appendChild(option);
@@ -915,7 +918,7 @@ function loadJsonIntoUI() {
 			else {
 				var names = Object.keys(values);
 				for (var j = 0; j < names.length; j++) {
-					var option = document.createElement("option");
+					var option = /** @type {HTMLOptionElement} */ (document.createElement(setting.tagName.startsWith("VSCODE") ? "vscode-option" : "option"));
 					option.value = names[j];
 					option.textContent = names[j];
 					setting.appendChild(option);
@@ -972,8 +975,9 @@ function loadJsonIntoUI() {
 			versionLabel.appendChild(document.createTextNode(type));
 			versionLabel.appendChild(versionInput);
 			version.appendChild(versionLabel);
-			var removeLabel = document.createElement("button");
+			var removeLabel = document.createElement("vscode-button");
 			removeLabel.textContent = "Remove";
+			removeLabel.setAttribute("appearance", "secondary");
 			removeLabel.onclick = (function (key, tr) {
 				delete content.dependencies[key];
 				dependencies.removeChild(tr);
@@ -991,18 +995,23 @@ function loadJsonIntoUI() {
 
 			dependencies.appendChild(tr);
 		}
-		var addButton = dependencies.parentElement.querySelector("button");
+		var addButton = /** @type {HTMLButtonElement} */ (dependencies.parentElement.querySelector("vscode-button"));
 		addButton.onclick = function () {
-			var options = [{
-				name: "Name",
-				type: "text"
-			}, {
+			/**
+			 * @type {InputOption[]}
+			 */
+			var options = [
+				{
+					name: "Name",
+					type: "text"
+				}, {
 					name: "From Path",
 					type: "checkbox"
 				}, {
 					name: "Path or Version",
 					type: "text"
-				}];
+				}
+			];
 			showDialog(options, ["Add", "Cancel"], function (r) {
 				if (r == "Add") {
 					if (!content.dependencies)

@@ -1344,6 +1344,7 @@
 		"grammar": "js-yaml syntaxes/dml.yml > syntaxes/dml.json; js-yaml syntaxes/diet.yml > syntaxes/diet.json; js-yaml syntaxes/d.yml > syntaxes/d.json; js-yaml syntaxes/sdl.yml > syntaxes/sdl.json; mocha out/test/ci"
 	},
 	"dependencies": {
+		"@vscode/webview-ui-toolkit": "^0.8.5",
 		"adm-zip": "^0.5.9",
 		"async": "^3.2.2",
 		"axios": "^0.24.0",
