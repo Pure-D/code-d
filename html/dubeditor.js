@@ -10,24 +10,50 @@ let content = {};
 const vscode = acquireVsCodeApi();
 const state = vscode.getState() || {};
 
-function setState(key, value) {
+function setState(/** @type {string} */ key, /** @type {any} */ value) {
 	state[key] = value;
 	vscode.setState(state);
 }
 
-function runCommand(command, argument) {
+function runCommand(/** @type {string} */ command, /** @type {any} */ argument) {
 	vscode.postMessage({
 		cmd: command,
 		arg: argument
 	});
 }
 
+/**
+ * @typedef {Object} InputOptions
+ * @property {string} [error]
+ */
+
+/**
+ * @param {string} label
+ * @param {InputOptions | undefined} options
+ * @returns {Promise<string | undefined>}
+ */
+function getInput(label, options) {
+	let callbackId = (_gid++).toString();
+	let ret = new Promise(resolve => {
+		_callbacks[callbackId] = v => resolve(v);
+	});
+	runCommand("getInput", { callbackId, label, options });
+	return ret;
+}
+
+// event callback counter
+let _gid = 0;
+let _callbacks = {};
 window.addEventListener("message", event => {
 	const message = event.data;
 	switch (message.type) {
 		case "update":
 			updateRecipeContent(message.json);
 			refreshSettings();
+			return;
+		case "callback":
+			_callbacks[message.id](message.value);
+			delete _callbacks[message.id];
 			return;
 	}
 });
@@ -776,23 +802,19 @@ function loadJsonIntoUI() {
 		let renameBtn = /** @type {HTMLButtonElement} */ (setting.parentElement.querySelector(".rename"));
 		let removeBtn = /** @type {HTMLButtonElement} */ (setting.parentElement.querySelector(".remove"));
 
-		addBtn.onclick = (function (setting, path, arrayType, arrayProp) {
-			/**
-			 * @type { Option[] }
-			 */
-			var options = [{
-				type: "text",
-				name: "Name"
-			}];
-			showDialog(options, ["Add", "Cancel"], function (r) {
-				if (r == "Add") {
-					var name = options[0].element.value.trim();
+		addBtn.onclick = (async function (setting, path, arrayType, arrayProp) {
+			let error = undefined;
+			while (true)
+			{
+				let name = await getInput("Enter Name", { "error": error });
 					if (!name)
-						return "Please enter a name";
+					return;
 					if (!getPath(path))
 						setPath(path, arrayType ? [] : {});
-					if (getInArray(getPath(path), name, arrayType, arrayProp))
-						return "An entry with this name already exists";
+				if (getInArray(getPath(path), name, arrayType, arrayProp)) {
+					error = "An entry with this name already exists";
+					continue;
+				}
 					setInArray(getPath(path), name, arrayType, arrayProp, JSON.parse(setting.getAttribute("json-default") || "null"));
 					runCommand("setValue", {
 						path: path,
@@ -803,8 +825,8 @@ function loadJsonIntoUI() {
 					option.textContent = name;
 					setting.appendChild(option);
 					setting.dispatchEvent(new Event("dub-update"));
+				break;
 				}
-			});
 		}).bind(this, setting, path, arrayType, arrayProp);
 		removeBtn.onclick = (function (setting, path, arrayType, arrayProp) {
 			if (!getPath(path))

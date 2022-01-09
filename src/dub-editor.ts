@@ -52,7 +52,7 @@ export class DubEditor implements vscode.CustomTextEditorProvider {
 			changeDocumentSubscription.dispose();
 		});
 
-		webviewPanel.webview.onDidReceiveMessage((e) => {
+		webviewPanel.webview.onDidReceiveMessage(async (e) => {
 			switch (e.cmd) {
 				case "setValue":
 					try {
@@ -60,6 +60,25 @@ export class DubEditor implements vscode.CustomTextEditorProvider {
 					} catch (e: any) {
 						vscode.window.showErrorMessage((e.message || e) + "");
 					}
+					break;
+				case "getInput":
+					let callbackId = <string>e.arg.callbackId;
+					let label = <string>e.arg.label;
+					let options = <{ error?: string } | undefined>e.arg.options;
+
+					if (options?.error) {
+						vscode.window.showErrorMessage(options.error);
+					}
+
+					let res = await vscode.window.showInputBox({
+						title: label
+					});
+
+					webviewPanel.webview.postMessage({
+						type: "callback",
+						id: callbackId,
+						value: res
+					})
 					break;
 				default:
 					vscode.window.showErrorMessage("Unknown command " + e.cmd);
