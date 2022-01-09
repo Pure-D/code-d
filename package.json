@@ -40,14 +40,13 @@
 		"onCommand:code-d.rdmdCurrent",
 		"onCommand:code-d.generateCoverageReport",
 		"onCommand:code-d.showGCCalls",
-		"onCommand:dub.openSettingsEditor",
-		"onCommand:dub.closeSettingsEditor",
 		"onCommand:code-d.createProject",
 		"onCommand:code-d.addImport",
 		"onCommand:code-d.searchDocs",
 		"onCommand:code-d.openDocsAtCursor",
 		"onCommand:code-d.convertDubRecipe",
-		"onCommand:code-d.setupCompiler"
+		"onCommand:code-d.setupCompiler",
+		"onCustomEditor:code-d.dubRecipe"
 	],
 	"main": "./out/extension",
 	"keywords": [
@@ -904,16 +903,6 @@
 					"when": "resourceFilename =~ /dub\\.json|dub\\.sdl/",
 					"command": "code-d.convertDubRecipe",
 					"group": "navigation"
-				},
-				{
-					"when": "resourceFilename == 'dub.json'",
-					"command": "dub.openSettingsEditor",
-					"group": "navigation"
-				},
-				{
-					"when": "resourceScheme == dubsettings",
-					"command": "dub.closeSettingsEditor",
-					"group": "navigation"
 				}
 			],
 			"view/title": [
@@ -1101,24 +1090,6 @@
 				"command": "code-d.showGCCalls",
 				"title": "Show GC calls from profilegc.log",
 				"category": "code-d"
-			},
-			{
-				"command": "dub.openSettingsEditor",
-				"title": "Open project settings",
-				"category": "code-d",
-				"icon": {
-					"light": "./images/edit-dub-inverse.svg",
-					"dark": "./images/edit-dub.svg"
-				}
-			},
-			{
-				"command": "dub.closeSettingsEditor",
-				"title": "Close project settings",
-				"category": "code-d",
-				"icon": {
-					"light": "./images/edit-source-inverse.svg",
-					"dark": "./images/edit-source.svg"
-				}
 			},
 			{
 				"command": "code-d.createProject",
@@ -1341,6 +1312,24 @@
 						}
 					}
 				]
+			}
+		],
+		"customEditors": [
+			{
+				"viewType": "code-d.dubRecipe",
+				"displayName": "DUB Recipe Editor",
+				"selector": [
+					{
+						"filenamePattern": "dub.json"
+					},
+					{
+						"filenamePattern": "package.json"
+					},
+					{
+						"filenamePattern": "dub.sdl"
+					}
+				],
+				"priority": "option"
 			}
 		]
 	},

@@ -1,0 +1,205 @@
+.configurationbar {
+	display: block;
+	min-height: 1.5em;
+	line-height: 1.5em;
+	padding: 4px;
+}
+
+.configurationbar label {
+	white-space: nowrap;
+	margin: 4px;
+}
+
+.hsplit .master {
+	float: left;
+	width: 200px;
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.hsplit .master li {
+	margin: 0;
+	padding: 8px;
+	list-style: none;
+	cursor: pointer;
+}
+
+.hsplit .child {
+	float: left;
+	width: calc(100% - 200px);
+	box-sizing: border-box;
+	display: none;
+	margin: 0;
+	padding: 8px;
+}
+
+.hsplit .child.visible {
+	display: block;
+}
+
+.clear {
+	clear: both;
+}
+
+table#dependencies tr td:nth-child(1) {
+	text-align: right;
+}
+
+label.label {
+	font-size: 0.9em;
+	display: block;
+	margin: 8px;
+	box-sizing: border-box;
+	max-width: 400px;
+}
+
+label.label.lite {
+	margin: 0;
+}
+
+label.labelcb {
+	display: block;
+	margin: 8px;
+	box-sizing: border-box;
+}
+
+label.label input,
+label.label textarea,
+label.label select {
+	display: block;
+	width: 100%;
+}
+
+#filedialog {
+	position: fixed;
+	left: 0;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	padding: 16px;
+	margin: auto;
+	width: 300px;
+	height: 200px;
+}
+
+#filedialog .content {
+	padding: 8px;
+}
+
+#filedialog .content .label,
+#filedialog .content .labelcb {
+	margin: 0;
+	margin-bottom: 8px;
+}
+
+#filedialog .buttons {
+	position: absolute;
+	left: 0;
+	bottom: 0;
+	right: 0;
+	width: 100%;
+	height: 48px;
+	padding: 8px 0;
+	box-sizing: border-box;
+}
+
+#filedialog .buttons button {
+	box-sizing: border-box;
+	height: 32px;
+	float: right;
+	margin-right: 8px;
+}
+
+input, textarea {
+	font-family: monospace;
+}
+
+/* Light Theme */
+.vscode-light .configurationbar {
+	background-color: rgba(0, 0, 0, 0.2);
+}
+
+.vscode-light .hsplit .master {
+	background-color: rgba(0, 0, 0, 0.1);
+	box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+}
+
+.vscode-light .hsplit .master li:hover {
+	background-color: rgba(0, 0, 0, 0.1);
+}
+
+.vscode-light .hsplit .master .active {
+	background-color: rgba(0, 0, 0, 0.05);
+}
+
+.vscode-light #filedialog {
+	background-color: #eeeeee;
+	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.vscode-light #filedialog .buttons {
+	background-color: #e0e0e0;
+}
+
+.vscode-light #filedialog .error {
+	color: #ff1744;
+}
+
+/* Dark Theme */
+.vscode-dark .configurationbar {
+	background-color: rgba(255, 255, 255, 0.05);
+}
+
+.vscode-dark .hsplit .master {
+	background-color: rgba(255, 255, 255, 0.04);
+	box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+}
+
+.vscode-dark .hsplit .master li:hover {
+	background-color: rgba(255, 255, 255, 0.04);
+}
+
+.vscode-dark .hsplit .master .active {
+	background-color: rgba(255, 255, 255, 0.02);
+}
+
+.vscode-dark #filedialog {
+	background-color: #263238;
+	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.vscode-dark #filedialog .buttons {
+	background-color: #37474f;
+}
+
+.vscode-dark #filedialog .error {
+	color: #ff1744;
+}
+
+/* High Contrast Theme */
+.vscode-high-contrast .configurationbar {
+	border-bottom: 1px solid #6FC3DF;
+}
+
+.vscode-high-contrast .hsplit .master {
+	border-right: 1px solid #6FC3DF;
+}
+
+.vscode-high-contrast .hsplit .master .active {
+	border: 2px solid #F38518;
+}
+
+.vscode-high-contrast #filedialog {
+	background-color: #0C141F;
+	border: 1px solid #6FC3DF;
+}
+
+.vscode-high-contrast #filedialog .buttons {
+	border-top: 1px solid #6FC3DF;
+}
+
+.vscode-high-contrast #filedialog .error {
+	color: red;
+}

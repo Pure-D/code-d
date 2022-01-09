@@ -358,15 +358,10 @@ export function registerClientCommands(context: vscode.ExtensionContext, client:
 export function registerCommands(context: vscode.ExtensionContext) {
 	var subscriptions = context.subscriptions;
 
-	{
-		let editor = new DubEditor(context);
-		subscriptions.push(vscode.workspace.registerTextDocumentContentProvider("dubsettings", editor));
-		subscriptions.push(vscode.commands.registerCommand("dub.openSettingsEditor", editor.open, editor));
-		subscriptions.push(vscode.commands.registerCommand("dub.closeSettingsEditor", editor.close, editor));
-	}
-
 	vscode.commands.executeCommand("setContext", "d.isActive", true);
-	var evalCounter = 0;
+
+	subscriptions.push(DubEditor.register(context));
+
 	subscriptions.push(vscode.commands.registerCommand("code-d.rdmdCurrent", async (file: vscode.Uri) => {
 		var args: vscode.ShellQuotedString[] = [];
 		if (!vscode.window.activeTextEditor)
@@ -406,6 +401,7 @@ export function registerCommands(context: vscode.ExtensionContext) {
 			}];
 
 		const shell = new vscode.ShellExecution({ value: "rdmd", quoting: vscode.ShellQuoting.Strong }, args, { cwd: cwd });
+		var evalCounter = 0;
 		const task = new vscode.Task({ type: "rdmd" }, vscode.TaskScope.Workspace, "RDMD " + (file || ("eval code " + (++evalCounter))), "code-d", shell);
 
 		task.isBackground = false;

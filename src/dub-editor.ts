@@ -1,217 +1,236 @@
 import * as vscode from "vscode";
-import * as path from "path";
 import * as fs from "fs";
+import * as jsonc from 'jsonc-parser';
 
-function getEditorUrl(uri: vscode.Uri) {
-	return uri.with({
-		scheme: "dubsettings",
-		path: uri.path + ".editor",
-		query: uri.toString()
-	});
-}
+export class DubEditor implements vscode.CustomTextEditorProvider {
+	private static readonly viewType = "code-d.dubRecipe";
 
-function isDubPackage(uri: vscode.Uri) {
-	if (uri.scheme == "dubsettings")
-		return false;
-	let file = path.basename(uri.path).toLowerCase();
-	return file == "dub.json" || file == "dub.sdl";
-}
+	private editorTemplate: Promise<string>;
 
-function copyFile(source: string, target: string, cb: Function) {
-	var cbCalled = false;
-
-	var rd = fs.createReadStream(source);
-	rd.on("error", function (err) {
-		done(err);
-	});
-	var wr = fs.createWriteStream(target);
-	wr.on("error", function (err) {
-		done(err);
-	});
-	wr.on("close", function (ex: any) {
-		done();
-	});
-	rd.pipe(wr);
-
-	function done(err?: any) {
-		if (!cbCalled) {
-			cb(err);
-			cbCalled = true;
-		}
-	}
-}
-
-const pathSeparator = " >_> ";
-
-function getPath(content: any, path: string) {
-	var splits = path.split(pathSeparator);
-	var scope = content;
-	for (var i = 0; i < splits.length; i++) {
-		if (scope === undefined)
-			return undefined;
-		var path = splits[i];
-		if (path[0] == ":") {
-			var eqIdx = path.indexOf("=");
-			var key = path.substring(1, eqIdx);
-			var value = path.substr(eqIdx + 1);
-			for (var j = 0; j < scope.length; j++)
-				if (scope[j][key] == value) {
-					scope = scope[j];
-					break;
-				}
-		}
-		else
-			scope = scope[path];
-	}
-	return scope;
-}
-
-function setPath(content: any, path: string, value: JSON) {
-	var splits = path.split(pathSeparator);
-	var scope = content;
-	for (var i = 0; i < splits.length - 1; i++) {
-		var path = splits[i];
-		if (path[0] == ":") {
-			if (scope === undefined)
-				return;
-			var eqIdx = path.indexOf("=");
-			var key = path.substring(1, eqIdx);
-			var val = path.substr(eqIdx + 1);
-			for (var j = 0; j < scope.length; j++)
-				if (scope[j][key] == val) {
-					scope = scope[j];
-					break;
-				}
-		}
-		else {
-			if (scope[splits[i]] === undefined)
-				scope[splits[i]] = {};
-			scope = scope[path];
-		}
-	}
-	scope[splits[splits.length - 1]] = value;
-	if (value === undefined)
-		delete scope[splits[splits.length - 1]];
-}
-
-export class DubEditor implements vscode.TextDocumentContentProvider {
-	private editorTemplate: string;
-	private editorPath: string;
-	private asyncTimeout: NodeJS.Timer = <NodeJS.Timer><any>undefined;
-	private asyncBuffer: any;
-	private asyncStarted: boolean = false;
-
-	constructor(context: vscode.ExtensionContext) {
-		this.editorPath = context.asAbsolutePath("html/dubeditor.html");
-		this.editorTemplate = fs.readFileSync(this.editorPath, "utf8");
-
-		context.subscriptions.push(vscode.commands.registerCommand("_dubedit.setValue", (arg) => {
-			let uri = vscode.Uri.parse(arg.file);
-			vscode.workspace.openTextDocument(uri).then(doc => {
-				if (doc.isDirty) {
-					vscode.window.showErrorMessage("Please save or close all instances of this dub.json file and try again");
-					return;
-				}
-				var text = doc.getText();
-				var jsonContent;
-				clearTimeout(this.asyncTimeout);
-				if (!this.asyncStarted) {
-					try {
-						jsonContent = JSON.parse(text.trim());
-					}
-					catch (e) {
-						vscode.window.showErrorMessage("dub.json is not a valid json file");
-						console.error(e);
-						return;
-					}
-					this.asyncBuffer = jsonContent;
-					this.asyncStarted = true;
-				}
-				setPath(this.asyncBuffer, arg.path, arg.value);
-				this.asyncTimeout = setTimeout(() => {
-					this.asyncStarted = false;
-					this.updateDubJson(uri, this.asyncBuffer);
-				}, 30);
-				// avoid multiple writes on same file at once to avoid data loss
+	constructor(private context: vscode.ExtensionContext) {
+		let editorPath = this.context.asAbsolutePath("html/dubeditor.html");
+		this.editorTemplate = new Promise<string>((resolve, reject) => {
+			fs.readFile(editorPath, {
+				encoding: "utf8"
+			}, (err, data) => {
+				if (err) reject(new Error("Failed to read dubeditor: " + err));
+				else resolve(data);
 			});
-		}));
+		});
 	}
 
-	updateDubJson(uri: vscode.Uri, content: JSON) {
-		if (!content || typeof content !== "object")
-			return vscode.window.showErrorMessage("Failed to generate dub.json");
-		return fs.stat(uri.fsPath + ".bak", function (err, stats) {
-			var prepareWrite = function (err: any) {
-				var performWrite = function () {
-					fs.writeFile(uri.fsPath, JSON.stringify(content, null, "\t"), function (err) {
-						if (err) {
-							vscode.window.showErrorMessage("Failed to update dub.json");
-							console.error(err);
+	static register(context: vscode.ExtensionContext): { dispose(): any; } {
+		const provider = new DubEditor(context);
+		return vscode.window.registerCustomEditorProvider(DubEditor.viewType, provider);
+	}
+
+	async resolveCustomTextEditor(document: vscode.TextDocument, webviewPanel: vscode.WebviewPanel, token: vscode.CancellationToken): Promise<void> {
+		webviewPanel.webview.options = {
+			enableCommandUris: true,
+			enableScripts: true
+		};
+		webviewPanel.webview.html = await this.getHtmlForWebview(webviewPanel.webview);
+
+		function updateWebview() {
+			let errors: jsonc.ParseError[] = [];
+			let parsed = jsonc.parse(document.getText(), errors);
+			webviewPanel.webview.postMessage({
+				type: 'update',
+				json: parsed,
+				errors: errors,
+			});
+		}
+
+		const changeDocumentSubscription = vscode.workspace.onDidChangeTextDocument(e => {
+			if (e.document.uri.toString() === document.uri.toString()) {
+				updateWebview();
+			}
+		});
+
+		// Make sure we get rid of the listener when our editor is closed.
+		webviewPanel.onDidDispose(() => {
+			changeDocumentSubscription.dispose();
+		});
+
+		webviewPanel.webview.onDidReceiveMessage((e) => {
+			switch (e.cmd) {
+				case "setValue":
+					try {
+						this.setValue(document, e.arg);
+					} catch (e: any) {
+						vscode.window.showErrorMessage((e.message || e) + "");
+					}
+					break;
+				default:
+					vscode.window.showErrorMessage("Unknown command " + e.cmd);
+					break;
+			}
+		});
+
+		updateWebview();
+	}
+
+	setValue(doc: vscode.TextDocument, arg: { path: string[], value: any | undefined }) {
+		const root = jsonc.parseTree(doc.getText(), undefined, {
+			disallowComments: true
+		});
+		if (!root) {
+			throw new Error(doc.fileName + " does not contain valid JSON, please recreate.");
+		}
+		let value = arg.value;
+
+		if (!Array.isArray(arg.path) || typeof arg.path == "string")
+			throw new Error("invalid path");
+
+		// compute minimal insert edit
+		let scope = root;
+		let i = 0;
+		for (; i < arg.path.length - 1; i++) {
+			let part = arg.path[i];
+			if (part[0] == ":") {
+				let [key, value] = part.substr(1).split("=", 2);
+				// find "key": value in json
+				if (scope.type == "property" && scope.children)
+					scope = scope.children[1];
+				if (scope.type == "array" && scope.children) {
+					for (let i = 0; i < scope.children.length; i++) {
+						const child = scope.children[i];
+						let match = findChildNodeByKey(child, key);
+						if (match && match.children && match.children[1].value == value) {
+							scope = child;
+							break;
 						}
-					});
-				};
-				if (err)
-					vscode.window.showWarningMessage("Failed to backup dub.json", "Override without Backup").then(r => {
-						if (r == "Override without Backup")
-							performWrite();
-					});
-				else
-					performWrite();
-			};
-			if (err || (new Date().getTime() - stats.ctime.getTime()) > 3000) //
-				copyFile(uri.fsPath, uri.fsPath + ".bak", prepareWrite);
-			else
-				prepareWrite(undefined);
-		});
-	}
-
-	provideTextDocumentContent(uri: vscode.Uri, token: vscode.CancellationToken): Thenable<string> {
-		console.log("provideTextDocumentContent");
-		return new Promise((resolve, reject) => {
-			resolve(this.editorTemplate.replace("/* INJECT EDITOR */",
-				`var dubFile = ${JSON.stringify(uri.query.toString())};
-				var packageType = "json";`));
-		});
-	}
-
-	open(file?: vscode.Uri) {
-		if (typeof file == "string")
-			file = vscode.Uri.parse(<any>file);
-
-		if (!(file instanceof vscode.Uri)) {
-			if (vscode.window.activeTextEditor) {
-				file = vscode.window.activeTextEditor.document.uri;
-				if (!isDubPackage(file)) {
-					var workspace = vscode.workspace.getWorkspaceFolder(vscode.window.activeTextEditor.document.uri);
-					if (workspace)
-						file = vscode.Uri.file(path.join(workspace.uri.path, "dub.json"));
+					}
 				}
+			} else {
+				let child = findChildNodeByKey(scope, part);
+				if (child === undefined || !child.children) {
+					break; // remaining below
+				}
+				scope = child.children[1];
 			}
 		}
-		if (!(file instanceof vscode.Uri) || !isDubPackage(file))
-			return undefined;
-
-		return vscode.commands.executeCommand('vscode.previewHtml',
-			getEditorUrl(file),
-			undefined,
-			`Dub Package`);
-	}
-
-	close(file?: vscode.Uri) {
-		if (!(file instanceof vscode.Uri)) {
-			return vscode.commands.executeCommand('workbench.action.navigateBack');
-		}
-
-		const docUri = vscode.Uri.parse(file.query);
-
-		for (let editor of vscode.window.visibleTextEditors) {
-			if (editor.document.uri.toString() === docUri.toString()) {
-				return vscode.window.showTextDocument(editor.document, editor.viewColumn);
+		// create empty objects
+		for (let remaining = arg.path.length - 2; remaining >= i; remaining--) {
+			if (value === undefined) return; // already done, don't need to remove anything
+			let part = arg.path[i];
+			if (part[0] == ":") {
+				throw new Error("invalid code-d editor state");
+			} else {
+				let obj: any = {};
+				obj[part] = value;
+				value = obj;
 			}
 		}
 
-		return vscode.workspace.openTextDocument(docUri).then(doc => {
-			return vscode.window.showTextDocument(doc);
-		});
+		let edit = new vscode.WorkspaceEdit();
+		let key = arg.path[arg.path.length - 1];
+		// now set scope[key] to the new value in the document
+		let existingKey = findChildNodeByKey(scope, key);
+		if (existingKey) {
+			if (value === undefined) {
+				// delete
+				let start = doc.positionAt(existingKey.offset);
+				let end = doc.positionAt(existingKey.offset + existingKey.length);
+				let leading = doc.getText(new vscode.Range(start.with(start.line - 1, 0), start));
+				let trailing = doc.getText(new vscode.Range(end, end.with(end.line + 1, 100000)));
+				const whitespaceRegex = /\s/;
+				if (trailing.trimStart().startsWith(",")) {
+					// make sure we don't leave a trailing comma + clean up whitespace
+					let i = trailing.indexOf(',');
+					for (; i < trailing.length - 1; i++) {
+						if (!whitespaceRegex.exec(trailing[i + 1])) {
+							break;
+						}
+					}
+					end = doc.positionAt(existingKey.offset + existingKey.length + i + 1);
+				} else if (leading.trimEnd().endsWith(",")) {
+					// no trailing comma, but comma before (last item in object)
+					// so delete comma before + clean up whitespace
+					let i = leading.lastIndexOf(',');
+					for (; i >= 0; i--) {
+						if (!whitespaceRegex.exec(leading[i - 1])) {
+							break;
+						}
+					}
+					start = doc.positionAt(existingKey.offset - (leading.length - i));
+				}
+				edit.delete(doc.uri, new vscode.Range(start, end));
+			} else {
+				// value exists, replace
+				let indent = getNodeIndentation(doc, existingKey);
+				let child = (existingKey.children && existingKey.children[1]) || existingKey;
+				edit.replace(doc.uri,
+					new vscode.Range(
+						doc.positionAt(child.offset),
+						doc.positionAt(child.offset + child.length)
+					),
+					JSON.stringify(value, null, "\t")
+						.replace(/\n/g, "\n" + indent));
+			}
+		} else if (scope.children) {
+			if (value === undefined) return; // already done, don't need to remove anything
+			// get indentation based on first property
+			let indent = getNodeIndentation(doc, scope.children[0]);
+
+			// does not exist yet, append property at end of object
+			let last = scope.children[scope.children.length - 1];
+			if (!last)
+				throw new Error("invalid JSON");
+			// insert after last value
+			edit.insert(doc.uri,
+				doc.positionAt(last.offset + last.length),
+				",\n" + indent
+					+ JSON.stringify(key) + ": "
+					+ JSON.stringify(value, null, "\t")
+					.replace(/\n/g, "\n" + indent));
+		} else {
+			throw new Error("invalid JSON");
+		}
+		return vscode.workspace.applyEdit(edit);
 	}
+
+	private async getHtmlForWebview(webview: vscode.Webview): Promise<string> {
+		let scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(
+			this.context.extensionUri, "html", "dubeditor.js"));
+
+		let styleUri = webview.asWebviewUri(vscode.Uri.joinPath(
+			this.context.extensionUri, "html", "dubeditor.css"));
+
+		return (await this.editorTemplate)
+			.replace("{{dubEditorStyleUri}}", styleUri.toString())
+			.replace("{{dubEditorScriptUri}}", scriptUri.toString());
+	}
+}
+
+function getNodeIndentation(document: vscode.TextDocument, node?: jsonc.Node): string {
+	let indent = "";
+	if (node && node.type == "property") {
+		let pos = document.positionAt(node.offset);
+		indent = document.getText(new vscode.Range(pos.with(undefined, 0), pos));
+		// make sure there is only whitespace
+		const whitespaceRegex = /\s/;
+		for (let i = indent.length - 1; i >= 0; i--) {
+			if (!whitespaceRegex.exec(indent[i])) {
+				indent = indent.substr(i + 1);
+				break;
+			}
+		}
+	}
+	return indent;
+}
+
+function findChildNodeByKey(node: jsonc.Node, key: string): jsonc.Node | undefined {
+	if (!node.children)
+		return undefined;
+
+	for (let i = 0; i < node.children.length; i++) {
+		const child = node.children[i];
+		if (child.type != "property" || !child.children)
+			continue;
+		// "property" has children [key, value] of type [Node(string), Node(any)]
+		if (child.children[0].value === key)
+			return child;
+	}
+	return undefined;
 }
