@@ -48,7 +48,7 @@ window.addEventListener("message", event => {
 	const message = event.data;
 	switch (message.type) {
 		case "update":
-			updateRecipeContent(message.json);
+			updateRecipeContent(message.json, message.errors);
 			refreshSettings();
 			return;
 		case "callback":
@@ -437,7 +437,7 @@ function ready() {
 		switchTab(document.getElementById("tabGeneral"));
 }
 
-function updateRecipeContent(newContent) {
+function updateRecipeContent(newContent, errors) {
 	if (packageType != "json" && packageType != "sdl")
 		throw new Error("Invalid type");
 
@@ -447,6 +447,17 @@ function updateRecipeContent(newContent) {
 	updateBuildTypes();
 	updateConfigurations();
 	fixSelectors();
+
+	let errorOutput = document.getElementById("errors");
+	let errorText = "";
+	for (let i = 0; i < errors.length; i++) {
+		let e = errors[i];
+		errorText += "Line " + e.line + ":" + e.column + ": " + e.message;
+	}
+	if (errorText)
+		errorOutput.textContent = "Errors parsing JSON:\n" + errorText;
+	else
+		errorOutput.textContent = "";
 }
 
 
@@ -807,26 +818,26 @@ function loadJsonIntoUI() {
 			while (true)
 			{
 				let name = await getInput("Enter Name", { "error": error });
-					if (!name)
+				if (!name)
 					return;
-					if (!getPath(path))
-						setPath(path, arrayType ? [] : {});
+				if (!getPath(path))
+					setPath(path, arrayType ? [] : {});
 				if (getInArray(getPath(path), name, arrayType, arrayProp)) {
 					error = "An entry with this name already exists";
 					continue;
 				}
-					setInArray(getPath(path), name, arrayType, arrayProp, JSON.parse(setting.getAttribute("json-default") || "null"));
-					runCommand("setValue", {
-						path: path,
-						value: getPath(path)
-					});
-					var option = document.createElement("option");
-					option.value = name;
-					option.textContent = name;
-					setting.appendChild(option);
-					setting.dispatchEvent(new Event("dub-update"));
+				setInArray(getPath(path), name, arrayType, arrayProp, JSON.parse(setting.getAttribute("json-default") || "null"));
+				runCommand("setValue", {
+					path: path,
+					value: getPath(path)
+				});
+				var option = document.createElement("option");
+				option.value = name;
+				option.textContent = name;
+				setting.appendChild(option);
+				setting.dispatchEvent(new Event("dub-update"));
 				break;
-				}
+			}
 		}).bind(this, setting, path, arrayType, arrayProp);
 		removeBtn.onclick = (function (setting, path, arrayType, arrayProp) {
 			if (!getPath(path))

@@ -37,7 +37,14 @@ export class DubEditor implements vscode.CustomTextEditorProvider {
 			webviewPanel.webview.postMessage({
 				type: 'update',
 				json: parsed,
-				errors: errors,
+				errors: errors.map(err => {
+					let loc = document.positionAt(err.offset);
+					return {
+						message: jsonc.printParseErrorCode(err.error),
+						line: loc.line + 1,
+						column: loc.character + 1
+					};
+				}),
 			});
 		}
 
