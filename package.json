@@ -46,6 +46,7 @@
 		"onCommand:code-d.openDocsAtCursor",
 		"onCommand:code-d.convertDubRecipe",
 		"onCommand:code-d.setupCompiler",
+		"onCommand:code-d.viewUserGuide",
 		"onCustomEditor:code-d.dubRecipe"
 	],
 	"main": "./out/extension",
