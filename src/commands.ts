@@ -458,6 +458,9 @@ export function registerCommands(context: vscode.ExtensionContext) {
 		case "openRecipe":
 			vscode.commands.executeCommand("code-d.openDubRecipe", root);
 			break;
+		case "openDpldocs":
+			vscode.commands.executeCommand("code-d.openDubOnDpldocs", root);
+			break;
 		case "doNothing":
 			break;
 		case "openFileDialog":
@@ -509,6 +512,29 @@ export function registerCommands(context: vscode.ExtensionContext) {
 			}
 		}
 		showError();
+	}));
+
+	subscriptions.push(vscode.commands.registerCommand("code-d.openDubOnDpldocs", (root: DubDependency) => {
+		let explicit = root instanceof DubDependency;
+		let showError = function() {
+			if (explicit)
+				vscode.window.showErrorMessage("Could not determine package name");
+		};
+		let name = root?.info?.name;
+		let version = root?.info?.version;
+		if (!name)
+			return showError();
+
+		let colon = name.indexOf(':');
+		if (colon >= 0) {
+			name = name.substr(0, colon); // strip subpackage
+			version = undefined; // versions are invalid for subpackages
+		}
+
+		if (version)
+			vscode.env.openExternal(vscode.Uri.parse(`https://${name}.dpldocs.info/v${version}/`))
+		else
+			vscode.env.openExternal(vscode.Uri.parse(`https://${name}.dpldocs.info/`))
 	}));
 
 	subscriptions.push(vscode.commands.registerCommand("code-d.listDubPackageDocuments", (

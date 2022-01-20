@@ -693,6 +693,7 @@
 						"listDocumentsSource",
 						"listDocumentsBoth",
 						"openRecipe",
+						"openDpldocs",
 						"doNothing",
 						"openFileDialog"
 					],
@@ -701,6 +702,7 @@
 						"See source of a readable document text file of the package",
 						"Preview or view source of a readable document text file of the package",
 						"Open dub.json/dub.sdl file of the package",
+						"Open package on dpldocs.info in a web browser",
 						"Do nothing",
 						"Open a file dialog in the dependency folder"
 					],
@@ -930,6 +932,11 @@
 					"group": "3_files"
 				},
 				{
+					"command": "code-d.openDubOnDpldocs",
+					"when": "view == dubDependencies && viewItem == root",
+					"group": "3_files"
+				},
+				{
 					"command": "code-d.listDubPackageDocuments",
 					"when": "view == dubDependencies && viewItem =~ /root|dependency/",
 					"group": "3_files"
@@ -964,6 +971,10 @@
 				},
 				{
 					"command": "code-d.openDubRecipe",
+					"when": "false"
+				},
+				{
+					"command": "code-d.openDubOnDpldocs",
 					"when": "false"
 				},
 				{
@@ -1021,6 +1032,11 @@
 			{
 				"command": "code-d.openDubRecipe",
 				"title": "Edit DUB recipe",
+				"category": "code-d"
+			},
+			{
+				"command": "code-d.openDubOnDpldocs",
+				"title": "Open on dpldocs.info",
 				"category": "code-d"
 			},
 			{
