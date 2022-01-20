@@ -287,16 +287,16 @@
           "begin": "\\b(cast)\\s*(\\()",
           "beginCaptures": {
             "1": {
-              "name": "keyword.operator.cast.begin.d"
+              "name": "keyword.operator.cast.d"
             },
             "2": {
-              "name": "punctuation.section.cast.begin.d"
+              "name": "keyword.operator.cast.begin.d"
             }
           },
           "end": "\\)",
           "endCaptures": {
             "0": {
-              "name": "punctuation.section.cast.end.d"
+              "name": "keyword.operator.cast.end.d"
             }
           },
           "patterns": [
