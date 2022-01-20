@@ -202,7 +202,7 @@
       "patterns": [
         {
           "match": "\\s(\\?|:)\\s",
-          "name": "keyword.operator.expression.d"
+          "name": "keyword.operator.ternary.d"
         }
       ]
     },
@@ -284,16 +284,19 @@
     "cast-expression": {
       "patterns": [
         {
-          "begin": "\\bcast\\s*\\(",
+          "begin": "\\b(cast)\\s*(\\()",
           "beginCaptures": {
-            "0": {
-              "name": "support.type.cast.begin.d"
+            "1": {
+              "name": "keyword.operator.cast.begin.d"
+            },
+            "2": {
+              "name": "punctuation.section.cast.begin.d"
             }
           },
           "end": "\\)",
           "endCaptures": {
             "0": {
-              "name": "support.type.cast.end.d"
+              "name": "punctuation.section.cast.end.d"
             }
           },
           "patterns": [
@@ -1551,14 +1554,6 @@
         }
       ]
     },
-    "unit-test": {
-      "patterns": [
-        {
-          "match": "\\bunittest\\b",
-          "name": "entity.name.function.unit-test.d"
-        }
-      ]
-    },
     "shared-static-constructor": {
       "patterns": [
         {
@@ -1669,26 +1664,33 @@
     "enum-declaration": {
       "patterns": [
         {
-          "match": "\\b(enum)(?:\\s+([A-Za-z_][\\w_\\d]*))?\\b",
-          "captures": {
+          "begin": "\\b(enum)\\b\\s+",
+          "end": "([A-Za-z_][\\w_\\d]*)\\s*(?=;|=|\\()(;)?",
+          "beginCaptures": {
             "1": {
               "name": "storage.type.enum.d"
-            },
-            "2": {
-              "name": "entity.name.type.enum.d"
             }
-          }
-        },
-        {
-          "match": "\\b(enum)\\b\\s+([A-Za-z_][\\w_\\d]*)\\s*(?=;|=)",
-          "captures": {
+          },
+          "endCaptures": {
             "1": {
-              "name": "storage.type.enum.d"
+              "name": "entity.name.type.enum.d"
             },
             "2": {
-              "name": "entity.name.type.enum.d"
+              "name": "meta.enum.end.d"
             }
-          }
+          },
+          "patterns": [
+            {
+              "include": "#type"
+            },
+            {
+              "match": "=(?![=>])",
+              "name": "keyword.operator.equal.alias.d"
+            },
+            {
+              "include": "#expression"
+            }
+          ]
         }
       ]
     },

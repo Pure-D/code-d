@@ -87,7 +87,7 @@ repository:
   conditional-expression:
     patterns:
     - match: \s(\?|:)\s
-      name: keyword.operator.expression.d
+      name: keyword.operator.ternary.d
   logical-expression:
     patterns:
     - match: \|\||&&|==|!=|!
@@ -127,14 +127,16 @@ repository:
       name: keyword.other.delete.d
   cast-expression:
     patterns:
-    - begin: \bcast\s*\(
+    - begin: \b(cast)\s*(\()
       beginCaptures:
-        0:
-          name: support.type.cast.begin.d
+        1:
+          name: keyword.operator.cast.begin.d
+        2:
+          name: punctuation.section.cast.begin.d
       end: \)
       endCaptures:
         0:
-          name: support.type.cast.end.d
+          name: punctuation.section.cast.end.d
       patterns:
       - include: '#type'
   index-expression:
@@ -720,10 +722,6 @@ repository:
     patterns:
     - match: \binvariant\s*\(\s*\)
       name: entity.name.class.invariant.d
-  unit-test:
-    patterns:
-    - match: \bunittest\b
-      name: entity.name.function.unit-test.d
   shared-static-constructor:
     patterns:
     - match: \b(shared\s+)?static\s+this\s*\(\s*\)
@@ -777,18 +775,21 @@ repository:
           name: entity.name.type.union.d
   enum-declaration:
     patterns:
-    - match: \b(enum)(?:\s+([A-Za-z_][\w_\d]*))?\b
-      captures:
+    - begin: \b(enum)\b\s+
+      end: ([A-Za-z_][\w_\d]*)\s*(?=;|=|\()(;)?
+      beginCaptures:
         1:
           name: storage.type.enum.d
-        2:
-          name: entity.name.type.enum.d
-    - match: \b(enum)\b\s+([A-Za-z_][\w_\d]*)\s*(?=;|=)
-      captures:
+      endCaptures:
         1:
-          name: storage.type.enum.d
-        2:
           name: entity.name.type.enum.d
+        2:
+          name: meta.enum.end.d
+      patterns:
+      - include: '#type'
+      - match: =(?![=>])
+        name: keyword.operator.equal.alias.d
+      - include: '#expression'
   template-declaration:
     patterns:
     - match: \b(template)(?:\s+([A-Za-z_][\w_\d]*))?\b
