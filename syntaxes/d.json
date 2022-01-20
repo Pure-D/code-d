@@ -31,6 +31,18 @@
         },
         {
           "include": "#type-ctor"
+        },
+        {
+          "begin": "!\\(",
+          "end": "\\)",
+          "patterns": [
+            {
+              "include": "#type"
+            },
+            {
+              "include": "#expression"
+            }
+          ]
         }
       ]
     },
@@ -48,6 +60,10 @@
     },
     "extended-type": {
       "patterns": [
+        {
+          "match": "\\b((\\.\\s*)?[_\\w][_\\d\\w]*)(\\s*\\.\\s*[_\\w][_\\d\\w]*)*\\b",
+          "name": "entity.name.type.d"
+        },
         {
           "begin": "\\[",
           "beginCaptures": {
@@ -302,6 +318,9 @@
           "patterns": [
             {
               "include": "#type"
+            },
+            {
+              "include": "#extended-type"
             }
           ]
         }
@@ -1687,11 +1706,11 @@
               "include": "#type"
             },
             {
-              "match": "=(?![=>])",
-              "name": "keyword.operator.equal.alias.d"
+              "include": "#extended-type"
             },
             {
-              "include": "#expression"
+              "match": "=(?![=>])",
+              "name": "keyword.operator.equal.alias.d"
             }
           ]
         }

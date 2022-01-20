@@ -15,14 +15,21 @@ repository:
     - include: '#typeof'
     - include: '#base-type'
     - include: '#type-ctor'
+    - begin: '!\('
+      end: \)
+      patterns:
+      - include: '#type'
+      - include: '#expression'
   base-type:
     patterns:
     - match: \b(auto|bool|byte|ubyte|short|ushort|int|uint|long|ulong|char|wchar|dchar|float|double|real|ifloat|idouble|ireal|cfloat|cdouble|creal|void)\b
       name: storage.type.basic-type.d
     - match: \b(string|wstring|dstring|size_t|ptrdiff_t)\b(?!\s*=)
       name: storage.type.basic-type.d
-  extended-type:
+  extended-type: # include in scopes where there are guaranteed types (no expressions)
     patterns:
+    - match: \b((\.\s*)?[_\w][_\d\w]*)(\s*\.\s*[_\w][_\d\w]*)*\b
+      name: entity.name.type.d
     - begin: \[
       beginCaptures:
         0:
@@ -139,6 +146,7 @@ repository:
           name: keyword.operator.cast.end.d
       patterns:
       - include: '#type'
+      - include: '#extended-type'
   index-expression:
     patterns:
     - begin: \[
@@ -788,9 +796,9 @@ repository:
           name: meta.enum.end.d
       patterns:
       - include: '#type'
+      - include: '#extended-type'
       - match: =(?![=>])
         name: keyword.operator.equal.alias.d
-      - include: '#expression'
   template-declaration:
     patterns:
     - match: \b(template)(?:\s+([A-Za-z_][\w_\d]*))?\b
