@@ -562,6 +562,9 @@
           "include": "#for-statement"
         },
         {
+          "include": "#static-foreach"
+        },
+        {
           "include": "#foreach-statement"
         },
         {
@@ -2051,6 +2054,30 @@
           "patterns": [
             {
               "include": "#expression"
+            }
+          ]
+        }
+      ]
+    },
+    "static-foreach": {
+      "patterns": [
+        {
+          "begin": "\\b(static\\s+foreach)\\b\\s*",
+          "captures": {
+            "1": {
+              "name": "keyword.control.static-foreach.d"
+            }
+          },
+          "end": "(?<=\\))",
+          "patterns": [
+            {
+              "begin": "\\(",
+              "end": "\\)",
+              "patterns": [
+                {
+                  "include": "source.d"
+                }
+              ]
             }
           ]
         }

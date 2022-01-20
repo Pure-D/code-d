@@ -259,6 +259,7 @@ repository:
     - include: '#while-statement'
     - include: '#do-statement'
     - include: '#for-statement'
+    - include: '#static-foreach'
     - include: '#foreach-statement'
     - include: '#foreach-reverse-statement'
     - include: '#switch-statement'
@@ -965,6 +966,18 @@ repository:
           name: keyword.other.static-assert.end.d
       patterns:
       - include: '#expression'
+  static-foreach:
+    patterns:
+    - begin: \b(static\s+foreach)\b\s*
+      captures:
+        1:
+          name: keyword.control.static-foreach.d
+      end: (?<=\))
+      patterns:
+      - begin: \(
+        end: \)
+        patterns:
+        - include: 'source.d'
   module:
     packages:
     - import: '#module-declaration'
