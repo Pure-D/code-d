@@ -346,20 +346,13 @@
     "function-literal": {
       "patterns": [
         {
-          "include": "#lambda-expression"
-        },
-        {
           "match": "=>",
           "name": "keyword.operator.lambda.d"
         },
         {
           "match": "\\b(function|delegate)\\b",
           "name": "keyword.other.function-literal.d"
-        }
-      ]
-    },
-    "lambda-expression": {
-      "patterns": [
+        },
         {
           "begin": "\\b([_\\w][_\\d\\w]*)\\s*(=>)",
           "end": "(?=[\\);,\\]}])",
@@ -371,6 +364,23 @@
               "name": "meta.lexical.token.symbolic.d"
             }
           },
+          "patterns": [
+            {
+              "include": "source.d"
+            }
+          ]
+        },
+        {
+          "begin": "(?<=\\)|\\()(\\s*)({)",
+          "beginCaptures": {
+            "1": {
+              "name": "source.d"
+            },
+            "2": {
+              "name": "source.d"
+            }
+          },
+          "end": "}",
           "patterns": [
             {
               "include": "source.d"
