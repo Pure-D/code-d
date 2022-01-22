@@ -52,9 +52,13 @@ export class DubJSONContribution implements IJSONContribution {
 
 	public collectPropertySuggestions(fileName: string, location: Location, currentWord: string, addValue: boolean, isLast: boolean, result: ISuggestionsCollector): Thenable<any> {
 		if (location.isAtPropertyKey) {
-			if (location.path[location.path.length - 2] != "dependencies" && location.path[location.path.length - 3] != "dependencies")
+			// complete in { "dependencies": {...} } - path == ["...root", "dependencies", ""]
+			// but not in { "dependencies": { "vibe-d": {...} }} - path == ["...root", "dependencies", "vibe-d", ""]
+			if (!(location.path[location.path.length - 2] == "dependencies"))
 				return Promise.resolve(null);
 		} else {
+			// dunno if this else is ever reached since updating the collection code...
+			// does not seem like it and can probably be removed
 			if (location.path[location.path.length - 1] != "dependencies" && location.path[location.path.length - 2] != "dependencies")
 				return Promise.resolve(null);
 		}
