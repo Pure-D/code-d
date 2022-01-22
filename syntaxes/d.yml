@@ -641,18 +641,10 @@ repository:
     patterns:
     - include: '#function-attribute'
     - include: '#function-prelude'
-    - include: '#function-parameters'
   function-prelude:
     patterns:
     - match: (?!typeof|typeid)((\.\s*)?[_\w][_\d\w]*)(\s*\.\s*[_\w][_\d\w]*)*\s*(?=\()
       name: entity.name.function.d
-  function-parameters:
-    begin: \((?=.*\)\s*(\{|=>))
-    beginCaptures: entity.name.function.d
-    end: \)
-    endCaptures: entity.name.function.d
-    patterns:
-    - include: '#parameters'
   class-members:
     patterns:
     - include: '#shared-static-constructor'
@@ -662,28 +654,6 @@ repository:
     - include: '#postblit'
     - include: '#invariant'
     - include: '#member-function-attribute'
-  parameters:
-    patterns:
-    - match: ','
-      name: keyword.operator.comma.d
-    - include: '#comment'
-    - include: '#parameter'
-  parameter:
-    patterns:
-    - include: '#in-out'
-    - include: '#type'
-    - include: '#function-literal'
-    - match: \.\.\.
-      name: support.type.tuple.d
-    - match: \b[R-Z]([0-9])?\b
-      name: variable.parameter.d
-    - match: \b(\.?[_\w][_\d\w]*)+\b
-      name: variable.parameter.d
-    - include: '#lexical'
-  in-out:
-    patterns:
-    - match: \b(auto|final|in|out|lazy|ref|scope)\b
-      name: storage.type.modifier.inout.d
   function-attribute:
     patterns:
     - match: \b(nothrow|pure)\b
