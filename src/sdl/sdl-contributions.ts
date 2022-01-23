@@ -28,14 +28,6 @@ export function addSDLProviders(): vscode.Disposable {
 	return vscode.Disposable.from(...subscriptions);
 }
 
-function pad3(n: number) {
-	if (n >= 100)
-		return n.toString();
-	if (n >= 10)
-		return "0" + n.toString();
-	return "00" + n.toString();
-}
-
 function completeDubVersion(info: SDLCompletionInfo): SDLCompletionResult {
 	if (!info.currentSDLObject.values || info.currentSDLObject.values.length != 1)
 		return [];
