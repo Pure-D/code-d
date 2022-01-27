@@ -327,26 +327,30 @@
 			</label>
 		</div>
 		<div class="child" id="pageSources">
-			<label class="label">
-				Additional Source Files
-				<select multiple class="complex-setting" has-suffix="true" json-type="files" json-paths="Include:sourceFiles;Exclude:excludedSourceFiles"></select>
+			<div class="label">
+				<vscode-data-grid
+					aria-label="Additional Source Files"
+					class="complex-setting"
+					has-suffix="true"
+					json-type="files"
+					json-paths="Include=sourceFiles;Exclude=excludedSourceFiles"
+					string-label="Additional Source File"
+				></vscode-data-grid>
+				<vscode-button class="add">Add</vscode-button>
 				<p class="description">Additional files passed to the compiler - can be useful to add certain configuration dependent source files that are not contained in the general source folder</p>
-				<div class="buttonrow">
-					<vscode-button class="add">Add</vscode-button>
-					<vscode-button class="edit" appearance="secondary">Edit</vscode-button>
-					<vscode-button class="remove" appearance="secondary">Remove</vscode-button>
-				</div>
-			</label>
-			<label class="label">
-				Source Paths
-				<select multiple class="complex-setting" has-suffix="true" json-type="files" json-paths="Import:importPaths;Source:sourcePaths;String Import:stringImportPaths"></select>
+			</div>
+			<div class="label">
+				<vscode-data-grid
+					aria-label="Source Paths"
+					class="complex-setting"
+					has-suffix="true"
+					json-type="files"
+					json-paths="Import=importPaths;Source=sourcePaths;String Import=stringImportPaths"
+					string-label="Source Path"
+				></vscode-data-grid>
+				<vscode-button class="add">Add</vscode-button>
 				<p class="description">Allows to customize the path where to look for source files (any folder &quot;source&quot; or &quot;src&quot; is automatically used as a source path if no sourcePaths setting is specified)</p>
-				<div class="buttonrow">
-					<vscode-button class="add">Add</vscode-button>
-					<vscode-button class="edit" appearance="secondary">Edit</vscode-button>
-					<vscode-button class="remove" appearance="secondary">Remove</vscode-button>
-				</div>
-			</label>
+			</div>
 			<label class="label">
 				<p class="description">A list of globs matching files or directories to be copied to targetPath. Matching directories are copied recursively, i.e. &quot;copyFiles&quot;: [&quot;path/to/dir&quot;]&quot; recursively copies dir, while &quot;copyFiles&quot;: [&quot;path/to/dir/*&quot;]&quot; only copies files within dir.</p>
 				<vscode-text-area rows="5" resize="both" class="setting" has-suffix="true" json-type="string[]" json-path="copyFiles">Copy Files</vscode-text-area>
@@ -387,8 +391,8 @@
 			<div class="buttons">
 			</div>
 		</div>
+		<pre id="errors"></pre>
 	</div>
-	<pre id="errors"></pre>
 	<script src="{{dubEditorScriptUri}}"></script>
 </body>
 

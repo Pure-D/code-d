@@ -23,6 +23,12 @@ function runCommand(/** @type {string} */ command, /** @type {any} */ argument) 
 }
 
 /**
+ * @typedef {HTMLElement} VSCodeDataGridElement
+ * @property {{ columnDataKey: string, title: string }} [columnDefinitions]
+ * @property {{ [index: string]: string }} [rowsData]
+ */
+
+/**
  * @typedef {Object} InputOptions
  * @property {string} [error]
  * @property {string} [placeholder]
@@ -576,232 +582,137 @@ function loadJsonIntoUI() {
 			setting.onchange = changeFun;
 	}
 	for (let i = 0; i < complexSettings.length; i++) {
-		let setting = /** @type {HTMLSelectElement} */ (complexSettings[i]);
-		// Import:importPaths;Source:sourcePaths;String Import:stringImportPaths
-		let paths = setting.getAttribute("json-paths").split(/;/g);
+		// TODO: need to store the extra state per platform-suffix-combo, not globally
+		let setting = /** @type {VSCodeDataGridElement & { rows: ({ label: string } | { [index: string]: boolean })[], columnNames: string[], addedClick: boolean }} */ (complexSettings[i]);
+		// Import=importPaths;Source=sourcePaths;String Import=stringImportPaths
+		let paths = setting.getAttribute("json-paths").split(/;/g).map(v => v.split("=", 2));
 		if (!paths)
 			continue;
-		let type = setting.getAttribute("json-type");
-		if (type == "files") {
-			let addBtn = /** @type {HTMLButtonElement} */ (setting.parentElement.querySelector(".add"));
-			let editBtn = /** @type {HTMLButtonElement} */ (setting.parentElement.querySelector(".edit"));
-			let removeBtn = /** @type {HTMLButtonElement} */ (setting.parentElement.querySelector(".remove"));
+		if (setting.querySelector("vscode-text-field"))
+			continue;
 
-			removeBtn.onclick = (function (setting) {
-				let options = setting.options;
-				let toRemove = [];
-				for (let i = options.length - 1; i >= 0; i--)
-					if (options[i].selected) {
-						toRemove.push({
-							name: options[i].value,
-							paths: options[i].getAttribute("paths").split(";;")
-						});
-						setting.removeChild(options[i]);
-					}
-				for (let i = 0; i < toRemove.length; i++) {
-					let elem = toRemove[i];
-					for (let j = 0; j < elem.paths.length; j++) {
-						let path = elem.paths[j];
-						let configPath = undefined;
-						if (getPath(makePath(setting, path, true)) !== undefined)
-							configPath = makePath(setting, path, true);
-						else if (getPath(makePath(setting, path, false)) !== undefined)
-							configPath = makePath(setting, path, false);
-						let index = getPath(configPath).indexOf(elem.name);
-						if (index != -1) {
-							getPath(configPath).splice(index, 1);
-							runCommand("setValue", {
-								path: configPath,
-								value: getPath(configPath)
-							});
-						}
-						else console.log("Path not in dub.json?!");
-					}
-				}
-			}).bind(this, setting);
+		const hasSuffix = setting.getAttribute("has-suffix") == "true";
 
-			addBtn.onclick = (function (setting, paths) {
-				/**
-				 * @type {InputOption[]}
-				 */
-				let options = [
-					{ type: "text", name: "File" }
-				];
-				for (let j = 0; j < paths.length; j++) {
-					let parts = paths[j].split(":");
-					options.push({
-						type: "checkbox",
-						name: parts[0],
-						jsonPath: parts[1]
-					});
-				}
-				showDialog(options, ["Add", "Cancel"], function (btn) {
-					if (btn == "Add") {
-						let file = options[0].element.value;
-						if (!file)
-							return "Please enter a file path";
-						let addedCount = 0;
-						let paths = [];
-						let names = [];
-						for (let j = 1; j < options.length; j++) {
-							if (!options[j].element.checked)
-								continue;
-							addedCount++;
-							let path = options[j].jsonPath;
-							let configPath = makePath(setting, path, true);
+		if (!setting.columnNames) {
+			setting.columnNames = [setting.getAttribute("string-label")];
 
-							if (getPath(configPath) === undefined)
-								setPath(configPath, (getPath(path) || []).slice());
-							if (getPath(configPath).indexOf(file) == -1)
-								getPath(configPath).push(file);
-							// set anyway in case of new field creation
-							runCommand("setValue", {
-								path: configPath,
-								value: getPath(configPath)
-							});
-							names.push(options[j].name);
-							paths.push(path);
-						}
-						if (addedCount == 0)
-							return "Select at least one category";
-						let existing = false;
-						let option = /** @type {HTMLOptionElement} */ (document.createElement(setting.tagName.startsWith("VSCODE") ? "vscode-option" : "option"));
-						for (let j = 0; j < setting.options.length; j++)
-							if (setting.options[j].value == file) {
-								option = setting.options[j];
-								existing = true;
-								break;
-							}
-						option.value = file;
-						option.setAttribute("paths", paths.join(";;"));
-						let tags = "";
-						if (names.length)
-							tags = " (" + names.join(", ") + ")";
-						option.textContent = file + tags;
-						if (!existing)
-							setting.appendChild(option);
-					}
-				});
-			}).bind(this, setting, paths);
-
-			editBtn.onclick = (function (setting, paths) {
-				let selected = undefined;
-				for (let i = setting.options.length - 1; i >= 0; i--)
-					if (setting.options[i].selected) {
-						selected = setting.options[i];
-						break;
-					}
-				if (!selected)
-					return;
-				/**
-				 * @type { InputOption[] }
-				 */
-				let options = [
-					{ type: "text", name: "File", readonly: true, defaultValue: selected.value, option: selected }
-				];
-				let file = selected.value;
-				for (let j = 0; j < paths.length; j++) {
-					let parts = paths[j].split(":");
-					let path = parts[1];
-					let configPath = makePath(setting, path, true);
-
-					if (getPath(configPath) === undefined)
-						setPath(configPath, (getPath(path) || []).slice());
-					options.push({
-						type: "checkbox",
-						name: parts[0],
-						jsonPath: path,
-						defaultValue: getPath(configPath).indexOf(file) != -1
-					});
-				}
-				showDialog(options, ["Update", "Cancel"], function (btn) {
-					if (btn == "Update") {
-						let paths = [];
-						let names = [];
-						for (let j = 1; j < options.length; j++) {
-							let path = options[j].jsonPath;
-							let configPath = makePath(setting, path, true);
-
-							if (getPath(configPath) === undefined)
-								setPath(configPath, (getPath(path) || []).slice());
-							if (options[j].element.checked) {
-								if (getPath(configPath).indexOf(file) == -1)
-									getPath(configPath).push(file);
-							}
-							else {
-								let index = getPath(configPath).indexOf(file);
-								if (index != -1)
-									getPath(configPath).splice(index, 1);
-							}
-							// set anyway in case of new field creation
-							runCommand("setValue", {
-								path: configPath,
-								value: getPath(configPath)
-							});
-							if (options[j].element.checked) {
-								names.push(options[j].name);
-								paths.push(path);
-							}
-						}
-						let option = options[0].option;
-						option.setAttribute("paths", paths.join(";;"));
-						let tags = "";
-						if (names.length)
-							tags = " (" + names.join(", ") + ")";
-						option.textContent = file + tags;
-					}
-				});
-			}).bind(this, setting, paths);
-
-			let found = [];
 			for (let j = 0; j < paths.length; j++) {
-				let parts = paths[j].split(":");
+				let parts = paths[j];
 				let name = parts[0];
-				let path = parts[1].split(/\./g);
-				let configPath = undefined;
-				if (getPath(makePath(setting, path, true)) !== undefined)
-					configPath = makePath(setting, path, true);
-				else if (getPath(makePath(setting, path, false)) !== undefined)
-					configPath = makePath(setting, path, false);
-
-				if (configPath !== undefined) {
-					let files = getPath(configPath);
-					for (let fi = 0; fi < files.length; fi++) {
-						let file = files[fi];
-						let handled = false;
-						for (let fo = 0; fo < found.length; fo++) {
-							if (found[fo].file == file) {
-								found[fo].paths.push(path);
-								found[fo].names.push(name);
-								handled = true;
-							}
-						}
-						if (!handled) {
-							found.push({
-								file: file,
-								paths: [path],
-								names: [name]
-							});
-						}
-					}
-				}
+				setting.columnNames.push(name);
 			}
 
-			for (let j = setting.options.length - 1; j >= 0; j--)
-				setting.removeChild(setting.options[j]);
+			let spacing = "1fr";
+			for (let j = 1; j < setting.columnNames.length; j++)
+				spacing += " 96px";
+			setting.setAttribute("grid-template-columns", spacing);
 
-			for (let j = 0; j < found.length; j++) {
-				let option = /** @type {HTMLOptionElement} */ (document.createElement(setting.tagName.startsWith("VSCODE") ? "vscode-option" : "option"));
-				option.value = found[j].file;
-				option.setAttribute("paths", found[j].paths.join(";;"));
-				let tags = "";
-				if (found[j].names.length)
-					tags = " (" + found[j].names.join(", ") + ")";
-				option.textContent = found[j].file + tags;
-				setting.appendChild(option);
+			let headerRowElem = document.createElement("vscode-data-grid-row");
+			headerRowElem.setAttribute("row-type", "header");
+			for (let column = 0; column < setting.columnNames.length; column++) {
+				let columnElem = document.createElement("vscode-data-grid-cell");
+				columnElem.setAttribute("cell-type", "columnheader");
+				columnElem.setAttribute("grid-column", (column + 1).toString());
+				columnElem.textContent = setting.columnNames[column];
+				headerRowElem.appendChild(columnElem);
+			}
+			setting.appendChild(headerRowElem);
+		}
+
+		if (!setting.rows)
+			setting.rows = [];
+
+		for (let j = 0; j < setting.rows.length; j++) {
+			// first unset all the checkboxes
+			// @ts-ignore
+			setting.rows[j] = { label: setting.rows[j].label };
+		}
+
+		for (let j = 0; j < paths.length; j++) {
+			let parts = paths[j];
+			let path = parts[1].split(/\./g);
+			let configPath = undefined;
+			if (getPath(makePath(setting, path, hasSuffix)) !== undefined)
+				configPath = makePath(setting, path, hasSuffix);
+			else if (hasSuffix && getPath(makePath(setting, path, false)) !== undefined)
+				configPath = makePath(setting, path, false);
+
+			if (configPath !== undefined) {
+				let items = getPath(configPath);
+				for (let fi = 0; fi < items.length; fi++) {
+					let item = items[fi];
+					let index = setting.rows.findIndex(row => row.label == item);
+					if (index == -1) {
+						index = setting.rows.length;
+						setting.rows.push({ label: item });
+					}
+					setting.rows[index]["d" + j] = true;
+				}
 			}
 		}
-		else throw "Unsupported complex setting: " + type;
+
+		function recreateCells() {
+			for (let row = 0; row < setting.rows.length; row++) {
+				let rowElem = document.createElement("vscode-data-grid-row");
+				let labelCell = document.createElement("vscode-data-grid-cell");
+				labelCell.setAttribute("grid-column", "1");
+				// @ts-ignore
+				labelCell.textContent = setting.rows[row].label;
+				rowElem.appendChild(labelCell);
+				for (let column = 1; column < setting.columnNames.length; column++) {
+					let cell = document.createElement("vscode-data-grid-cell");
+					cell.setAttribute("grid-column", (column + 1).toString());
+					let cb = /** @type {HTMLInputElement} */ (document.createElement("vscode-checkbox"));
+					cb.checked = !!setting.rows[row]["d" + (column - 1)];
+					cell.appendChild(cb);
+					rowElem.appendChild(cell);
+				}
+				setting.appendChild(rowElem);
+			}
+		}
+
+		/**
+		 * @param {HTMLElement} cellElement
+		 * @param {(value) => any} onChange
+		 * @param {() => any} onRemove
+		 */
+		function startEdit(cellElement, onChange, onRemove) {
+			let existing = setting.querySelectorAll("vscode-text-field");
+			for (let i = 0; i < existing.length; i++) {
+				// @ts-ignore
+				existing[i].finishEdit();
+			}
+
+			let field = /** @type { HTMLInputElement } */ (document.createElement("vscode-text-field"));
+			field.classList.add("inline-edit");
+			// @ts-ignore
+			field.finishEdit = function() {
+				if (!field.value) {
+					onRemove();
+				} else {
+					field.parentElement.insertBefore(field, document.createTextNode(field.value));
+					field.parentElement.removeChild(field);
+				}
+			};
+
+			field.addEventListener("input", function() {
+				onChange(field.value);
+			});
+
+			field.value = cellElement.textContent;
+			cellElement.removeChild(cellElement.firstChild);
+			cellElement.appendChild(field);
+		}
+
+		if (!setting.addedClick) {
+			setting.addedClick = true;
+			setting.nextElementSibling.addEventListener("click", function() {
+				setting.rows.push({ label: "" });
+				recreateCells();
+			});
+		}
+
+		recreateCells();
 	}
 	for (let i = 0; i < listSettings.length; i++) {
 		let setting = /** @type {HTMLSelectElement} */ (listSettings[i]);
