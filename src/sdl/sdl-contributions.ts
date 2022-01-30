@@ -8,7 +8,7 @@ import { cmpSemver } from "../installer"
 export function addSDLProviders(): vscode.Disposable {
 	let subscriptions: vscode.Disposable[] = [];
 	let contribution = new SDLContributions();
-	subscriptions.push(vscode.languages.registerCompletionItemProvider([{ language: "sdl", pattern: "**/dub.sdl" }], contribution, '"', '`', '='));
+	subscriptions.push(vscode.languages.registerCompletionItemProvider([{ language: "sdl", pattern: "**/dub.sdl" }], contribution, '"', '`', '=', '/', '\\'));
 	let diagnosticCollection = vscode.languages.createDiagnosticCollection("dub.sdl");
 	subscriptions.push(diagnosticCollection);
 	let version;
