@@ -3,11 +3,13 @@ import { parseSDL, Tag, Value } from "./sdlparse"
 
 export type SDLLocationType = "block" | "value" | "attribute";
 export interface SDLCompletionInfo {
+	uri: vscode.Uri,
 	currentSDLObject: Tag;
 	type: SDLLocationType;
 	namespace: string[];
 	name: string[];
 	value: string;
+	valueRange: vscode.Range | undefined;
 	partial: string;
 }
 
@@ -58,7 +60,7 @@ export function getLocationInfo(document: vscode.TextDocument, position: vscode.
 	var locationType: SDLLocationType = "block";
 	var namespaceStack = currentNamespace;
 	var nameStack = currentName;
-	var valueContent = "";
+	var valueContent: Value | undefined = undefined;
 	var partialContent = "";
 
 	function findInValues(values: Value[], attribName?: string) {
@@ -71,23 +73,23 @@ export function getLocationInfo(document: vscode.TextDocument, position: vscode.
 						locationType = "value";
 					namespaceStack.push(value.namespace);
 					nameStack.push(attribName || "");
-					valueContent = "";
-					partialContent = valueContent;
+					valueContent = undefined;
+					partialContent = "";
 				}
 				else {
 					locationType = "attribute";
 					namespaceStack.push(value.namespace);
 					nameStack.push(attribName || "");
-					valueContent = "";
-					partialContent = valueContent;
+					valueContent = undefined;
+					partialContent = "";
 				}
 			}
 			else if (pos >= value.range[0] && pos < value.range[1]) {
 				locationType = "value";
 				namespaceStack.push(value.namespace);
 				nameStack.push(attribName || "");
-				valueContent = value.value;
-				partialContent = valueContent.substr(0, value.range[0] - pos);
+				valueContent = value;
+				partialContent = valueContent.value.substr(0, value.range[0] - pos);
 			}
 		});
 	}
@@ -101,16 +103,29 @@ export function getLocationInfo(document: vscode.TextDocument, position: vscode.
 			locationType = "attribute";
 			namespaceStack.push("");
 			nameStack.push("");
-			valueContent = "";
-			partialContent = valueContent;
+			valueContent = undefined;
+			partialContent = "";
 		}
 	}
+
+	let range: vscode.Range | undefined;
+	if (valueContent)
+	{
+		let intRange = (<Value>valueContent).range;
+		range = new vscode.Range(
+			document.positionAt(intRange[0]),
+			document.positionAt(intRange[1]),
+		);
+	}
+
 	return {
+		uri: document.uri,
 		currentSDLObject: curr,
 		type: locationType,
 		namespace: namespaceStack,
 		name: nameStack,
-		value: valueContent,
+		value: (<Value | undefined>valueContent)?.value ?? "",
+		valueRange: range,
 		partial: partialContent
 	};
 }

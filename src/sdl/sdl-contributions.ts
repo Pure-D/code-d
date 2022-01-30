@@ -2,7 +2,7 @@ import { getLocationInfo, SDLCompletionInfo } from "./sdlinfo"
 import { parseSDL, Tag, Value, TagParseError } from "./sdlparse"
 import * as path from "path"
 import * as vscode from "vscode"
-import { listPackages, getPackageInfo, getLatestPackageInfo } from "../dub-api"
+import { listPackages, getPackageInfo, getLatestPackageInfo, autoCompletePath } from "../dub-api"
 import { cmpSemver } from "../installer"
 
 export function addSDLProviders(): vscode.Disposable {
@@ -174,6 +174,24 @@ const architectureComplete = architectures.map(a => new vscode.CompletionItem(a,
 const compilers = ["dmd", "gdc", "ldc", "sdc"];
 const compilerComplete = compilers.map(a => new vscode.CompletionItem(a, vscode.CompletionItemKind.Method));
 
+const pathComplete: CompletionValues = {
+	type: "string",
+	pattern: {
+		complete: async (info: SDLCompletionInfo) => {
+			let res: vscode.CompletionItem[] = [];
+			await autoCompletePath(
+				info.uri.fsPath,
+				info.name[info.name.length - 1] || info.name[info.name.length - 2],
+				info.value,
+				v => {
+					v.range = info.valueRange;
+					res.push(v);
+				});
+			return res;
+		}
+	}
+}
+
 function platformPatternCompleter(info: SDLCompletionInfo): SDLCompletionResult {
 	// os-architecture-compiler
 	let part = info.partial.trim();
@@ -321,9 +339,7 @@ const buildSettings: CompletionTagMap = {
 			},
 			path: {
 				description: "Use a folder to source a package from",
-				values: {
-					type: "string"
-				}
+				values: pathComplete
 			},
 			repository: {
 				description: "Path to a git repository with a leading `git+` prefix like `git+https://github.com/dlang-community/gitcompatibledubpackage.git`",
@@ -382,9 +398,7 @@ const buildSettings: CompletionTagMap = {
 	},
 	targetPath: {
 		description: "The destination path of the output binary - this setting does not support the platform attribute",
-		values: {
-			type: "string"
-		},
+		values: pathComplete,
 		minValues: 1,
 		maxValues: 1
 	},
@@ -467,41 +481,31 @@ const buildSettings: CompletionTagMap = {
 	},
 	sourceFiles: {
 		description: "Additional files passed to the compiler - can be useful to add certain configuration dependent source files that are not contained in the general source folder",
-		values: {
-			type: "string"
-		},
+		values: pathComplete,
 		attributes: platformAttributes,
 		minValues: 1
 	},
 	sourcePaths: {
 		description: `Allows to customize the path where to look for source files (any folder "source" or "src" is automatically used as a source path if no sourcePaths setting is specified) - note that you usually also need to define "importPaths" as "sourcePaths" don't influence those`,
-		values: {
-			type: "string"
-		},
+		values: pathComplete,
 		attributes: platformAttributes,
 		minValues: 1
 	},
 	excludedSourceFiles: {
 		description: 'Files that should be removed for the set of already added source files (takes precedence over "sourceFiles" and "sourcePaths") - Glob matching can be used to pattern match multiple files at once',
-		values: {
-			type: "string"
-		},
+		values: pathComplete,
 		attributes: platformAttributes,
 		minValues: 1
 	},
 	mainSourceFile: {
 		description: 'Determines the file that contains the main() function. This setting can be used by dub to exclude this file in situations where a different main function is defined (e.g. for "dub test") - this setting does not support platform suffixes',
-		values: {
-			type: "string"
-		},
+		values: pathComplete,
 		minValues: 1,
 		maxValues: 1
 	},
 	copyFiles: {
 		description: 'A list of globs matching files or directories to be copied to targetPath. Matching directories are copied recursively, i.e. "copyFiles": ["path/to/dir"]" recursively copies dir, while "copyFiles": ["path/to/dir/*"]" only copies files within dir.',
-		values: {
-			type: "string"
-		},
+		values: pathComplete,
 		attributes: platformAttributes,
 		minValues: 1
 	},
@@ -523,17 +527,13 @@ const buildSettings: CompletionTagMap = {
 	},
 	importPaths: {
 		description: "Additional import paths to search for D modules (the source/ folder is used by default as a source folder, if it exists)",
-		values: {
-			type: "string"
-		},
+		values: pathComplete,
 		attributes: platformAttributes,
 		minValues: 1
 	},
 	stringImportPaths: {
 		description: "Additional import paths to search for string imports/views (the views/ folder is used by default as a string import folder, if it exists)",
-		values: {
-			type: "string"
-		},
+		values: pathComplete,
 		attributes: platformAttributes,
 		minValues: 1
 	},

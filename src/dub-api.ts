@@ -1,4 +1,6 @@
 import * as vscode from "vscode";
+import * as fs from "fs";
+import * as path from "path";
 import { reqJson } from "./util";
 import { AxiosError } from "axios";
 
@@ -75,4 +77,49 @@ export function getLatestPackageInfo(pkg: string): Thenable<{ description?: stri
 				readmeMarkdown: json.readmeMarkdown
 			};
 		});
+}
+
+export function autoCompletePath(fileName: string, key: string, currentValue: string, addResult: (v: vscode.CompletionItem) => any): Thenable<any> {
+	let folderOnly = ["path", "targetPath", "sourcePaths", "stringImportPaths", "importPaths"].indexOf(key) != -1;
+	let fileRegex = ["copyFiles"].indexOf(key) != -1 ? null : /\.di?$/i;
+	return new Promise((resolve, reject) => {
+		if (currentValue != "") {
+			let end = currentValue.lastIndexOf('/');
+			if (end != -1)
+				currentValue = currentValue.substr(0, end);
+		}
+		let dir = path.join(path.dirname(fileName), currentValue);
+		fs.readdir(dir, { withFileTypes: true }, (err, files) => {
+			if (err)
+				return reject(err);
+
+			files.forEach(file => {
+				if (file.name[0] == '.')
+					return;
+				if (folderOnly && !file.isDirectory())
+					return;
+				if (!file.isDirectory() && fileRegex && !fileRegex.exec(file.name))
+					return;
+
+				let kind: vscode.CompletionItemKind = vscode.CompletionItemKind.Text;
+				if (file.isSymbolicLink())
+					kind = vscode.CompletionItemKind.Reference;
+				else if (file.isDirectory())
+					kind = vscode.CompletionItemKind.Folder;
+				else if (file.isFile())
+					kind = vscode.CompletionItemKind.File;
+
+				let value = path.join(currentValue, file.name).replace(/\\/g, '/');
+				if (file.isDirectory() && !folderOnly)
+					value += "/";
+				value = JSON.stringify(value);
+
+				let item = new vscode.CompletionItem(value, kind);
+				if (file.isDirectory())
+					item.insertText = new vscode.SnippetString(value.slice(0, -1) + "${0}\"");
+				addResult(item);
+			});
+			resolve(null);
+		});
+	});
 }

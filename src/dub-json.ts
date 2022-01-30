@@ -3,7 +3,7 @@ import * as vscode from "vscode";
 import * as fs from "fs";
 import * as path from "path";
 import { Location } from "jsonc-parser";
-import { searchDubPackages, listPackages, getPackageInfo, getLatestPackageInfo } from "./dub-api"
+import { searchDubPackages, listPackages, getPackageInfo, getLatestPackageInfo, autoCompletePath } from "./dub-api"
 import { cmpSemver } from "./installer";
 
 function pad3(n: number) {
@@ -137,49 +137,7 @@ export class DubJSONContribution implements IJSONContribution {
 	}
 
 	protected collectPathValueSuggestions(fileName: string, location: Location, result: ISuggestionsCollector, key: string): Thenable<any> {
-		let folderOnly = ["path", "targetPath", "sourcePaths", "stringImportPaths", "importPaths"].indexOf(key) != -1;
-		let fileRegex = ["copyFiles"].indexOf(key) != -1 ? null : /\.di?$/i;
-		let currentValue = location.previousNode?.value || "";
-		return new Promise((resolve, reject) => {
-			if (currentValue != "") {
-				let end = currentValue.lastIndexOf('/');
-				if (end != -1)
-					currentValue = currentValue.substr(0, end);
-			}
-			let dir = path.join(path.dirname(fileName), currentValue);
-			fs.readdir(dir, { withFileTypes: true }, (err, files) => {
-				if (err)
-					return reject(err);
-
-				files.forEach(file => {
-					if (file.name[0] == '.')
-						return;
-					if (folderOnly && !file.isDirectory())
-						return;
-					if (!file.isDirectory() && fileRegex && !fileRegex.exec(file.name))
-						return;
-
-					let kind: vscode.CompletionItemKind = vscode.CompletionItemKind.Text;
-					if (file.isSymbolicLink())
-						kind = vscode.CompletionItemKind.Reference;
-					else if (file.isDirectory())
-						kind = vscode.CompletionItemKind.Folder;
-					else if (file.isFile())
-						kind = vscode.CompletionItemKind.File;
-
-					let value = path.join(currentValue, file.name).replace(/\\/g, '/');
-					if (file.isDirectory() && !folderOnly)
-						value += "/";
-					value = JSON.stringify(value);
-
-					let item = new vscode.CompletionItem(value, kind);
-					if (file.isDirectory())
-						item.insertText = new vscode.SnippetString(value.slice(0, -1) + "${0}\"");
-					result.add(item);
-				});
-				resolve(null);
-			})
-		});
+		return autoCompletePath(fileName, key, location.previousNode?.value || "", v => result.add(v));
 	}
 
 	protected collectDependencyValueSuggestions(currentKey: string | number, fileName: string, location: Location, result: ISuggestionsCollector): Thenable<any> {
