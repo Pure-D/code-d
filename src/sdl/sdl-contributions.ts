@@ -4,6 +4,7 @@ import * as path from "path"
 import * as vscode from "vscode"
 import { listPackages, getPackageInfo, getLatestPackageInfo, autoCompletePath } from "../dub-api"
 import { cmpSemver } from "../installer"
+import { served } from "../extension"
 
 export function addSDLProviders(): vscode.Disposable {
 	let subscriptions: vscode.Disposable[] = [];
@@ -413,7 +414,28 @@ const buildSettings: CompletionTagMap = {
 	subConfiguration: {
 		description: "Locks a dependency (first argument) to a specific configuration (second argument); see also the configurations section - this setting does not support the platform attribute",
 		values: {
-			type: "string"
+			type: "string",
+			pattern: {
+				complete: async (info: SDLCompletionInfo): Promise<vscode.CompletionItem[]> =>
+				{
+					if (info.valueIndex == 0) {
+						// dependency name
+						let deps = await served.getDependencies();
+						return deps
+							.filter(d => d.info !== undefined)
+							.map(d => {
+								let item = new vscode.CompletionItem(d.info!.name);
+								item.filterText = item.insertText = JSON.stringify(d.info!.name); // add quotes
+								item.range = info.valueRange;
+								item.kind = vscode.CompletionItemKind.Property;
+								return item;
+							});
+					} else {
+						// dependency subconfiguration value
+						return [];
+					}
+				}
+			}
 		},
 		minValues: 2,
 		maxValues: 2

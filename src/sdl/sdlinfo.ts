@@ -11,6 +11,7 @@ export interface SDLCompletionInfo {
 	value: string;
 	valueRange: vscode.Range | undefined;
 	partial: string;
+	valueIndex: number;
 }
 
 export function getLocationInfo(document: vscode.TextDocument, position: vscode.Position): SDLCompletionInfo {
@@ -61,10 +62,11 @@ export function getLocationInfo(document: vscode.TextDocument, position: vscode.
 	var namespaceStack = currentNamespace;
 	var nameStack = currentName;
 	var valueContent: Value | undefined = undefined;
+	var valueIndex = -1;
 	var partialContent = "";
 
 	function findInValues(values: Value[], attribName?: string) {
-		values.forEach(value => {
+		values.forEach((value, i) => {
 			if (pos >= value.ownerRange[0] && pos < value.ownerRange[1]) {
 				if (value.type == "none") {
 					if (value.range[0] == value.range[1])
@@ -75,6 +77,7 @@ export function getLocationInfo(document: vscode.TextDocument, position: vscode.
 					nameStack.push(attribName || "");
 					valueContent = undefined;
 					partialContent = "";
+					valueIndex = i;
 				}
 				else {
 					locationType = "attribute";
@@ -82,6 +85,7 @@ export function getLocationInfo(document: vscode.TextDocument, position: vscode.
 					nameStack.push(attribName || "");
 					valueContent = undefined;
 					partialContent = "";
+					valueIndex = i;
 				}
 			}
 			else if (pos >= value.range[0] && pos < value.range[1]) {
@@ -90,6 +94,7 @@ export function getLocationInfo(document: vscode.TextDocument, position: vscode.
 				nameStack.push(attribName || "");
 				valueContent = value;
 				partialContent = valueContent.value.substr(0, value.range[0] - pos);
+				valueIndex = i;
 			}
 		});
 	}
@@ -126,6 +131,7 @@ export function getLocationInfo(document: vscode.TextDocument, position: vscode.
 		name: nameStack,
 		value: (<Value | undefined>valueContent)?.value ?? "",
 		valueRange: range,
+		valueIndex: valueIndex,
 		partial: partialContent
 	};
 }

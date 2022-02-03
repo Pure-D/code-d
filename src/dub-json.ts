@@ -5,6 +5,7 @@ import * as path from "path";
 import { Location } from "jsonc-parser";
 import { searchDubPackages, listPackages, getPackageInfo, getLatestPackageInfo, autoCompletePath } from "./dub-api"
 import { cmpSemver } from "./installer";
+import { served } from "./extension";
 
 function pad3(n: number) {
 	if (n >= 100)
@@ -12,6 +13,11 @@ function pad3(n: number) {
 	if (n >= 10)
 		return "0" + n.toString();
 	return "00" + n.toString();
+}
+
+interface PropertyCompletionItem extends vscode.CompletionItem {
+	defaultValue?: string;
+	isDependency?: boolean;
 }
 
 export class DubJSONContribution implements IJSONContribution {
@@ -50,69 +56,87 @@ export class DubJSONContribution implements IJSONContribution {
 		return Promise.resolve([]);
 	}
 
-	public collectPropertySuggestions(fileName: string, location: Location, currentWord: string, addValue: boolean, isLast: boolean, result: ISuggestionsCollector): Thenable<any> {
+	public async collectPropertySuggestions(fileName: string, location: Location, currentWord: string, addValue: boolean, isLast: boolean, result: ISuggestionsCollector): Promise<void> {
+		let items : PropertyCompletionItem[] | undefined;
+
 		if (location.isAtPropertyKey) {
+			currentWord = location.previousNode?.value || currentWord;
 			// complete in { "dependencies": {...} } - path == ["...root", "dependencies", ""]
 			// but not in { "dependencies": { "vibe-d": {...} }} - path == ["...root", "dependencies", "vibe-d", ""]
-			if (!(location.path[location.path.length - 2] == "dependencies"))
-				return Promise.resolve(null);
-		} else {
-			// dunno if this else is ever reached since updating the collection code...
-			// does not seem like it and can probably be removed
-			if (location.path[location.path.length - 1] != "dependencies" && location.path[location.path.length - 2] != "dependencies")
-				return Promise.resolve(null);
+			try {
+				if (location.path[location.path.length - 2] == "dependencies")
+					items = await this.collectDependencyPropertySuggestions(currentWord);
+				else if (location.path[location.path.length - 2] == "subConfigurations")
+					items = await this.collectSubConfigurationsPropertySuggestions();
+			} catch (err) {
+				result.error((err ? (<Error>err).message : null) || ("" + err));
+				return;
+			}
 		}
 
-		return new Promise((resolve, reject) => {
-			let keyString = location.previousNode?.value || currentWord;
-			var colonIdx = keyString.indexOf(":");
-			if (colonIdx != -1) {
-				var pkgName = keyString.substr(0, colonIdx);
-				getLatestPackageInfo(pkgName).then(info => {
-					if (info.subPackages)
-						info.subPackages.forEach(subPkgName => {
-							var completionName = pkgName + ":" + subPkgName;
-							var item = new vscode.CompletionItem(completionName);
-							var insertText = new vscode.SnippetString().appendText(JSON.stringify(completionName));
-							if (addValue) {
-								insertText.appendText(': "').appendPlaceholder(info.version || "").appendText('"');
-								if (!isLast)
-									insertText.appendText(",");
-							}
-							item.insertText = insertText;
-							item.kind = vscode.CompletionItemKind.Property;
-							item.documentation = info.description;
-							result.add(item);
-						});
-					resolve(undefined);
-				}, err => {
-					result.error("Package not found");
-					resolve(undefined);
-				});
+		if (!items)
+			return;
+
+		items.forEach(item => {
+			let insertText = new vscode.SnippetString().appendText(JSON.stringify(item.label));
+			if (addValue) {
+				insertText.appendText(': "').appendPlaceholder(item.defaultValue || "").appendText('"');
+				if (!isLast)
+					insertText.appendText(",");
 			}
-			else {
-				listPackages().then(json => {
-					json.forEach(element => {
-						var item = new vscode.CompletionItem(element);
-						item.kind = vscode.CompletionItemKind.Property;
-						var insertText = new vscode.SnippetString().appendText(JSON.stringify(element));
-						if (addValue) {
-							insertText.appendText(': "').appendPlaceholder("").appendText('"');
-							if (!isLast)
-								insertText.appendText(",");
-						}
-						item.insertText = insertText;
-						item.filterText = JSON.stringify(element);
-						result.add(item);
-					});
-					resolve(undefined);
-				}, err => {
-					console.log("Error searching for packages");
-					console.log(err);
-					resolve(undefined);
-				});
-			}
+			item.insertText = insertText;
+			item.filterText = JSON.stringify(item.label);
+			result.add(item);
 		});
+	}
+
+	protected async collectSubConfigurationsPropertySuggestions(): Promise<PropertyCompletionItem[]> {
+		const deps = await served.getDependencies();
+		return deps
+			.filter(d => d.info !== undefined)
+			.map(d => {
+				let item = new vscode.CompletionItem(d.info!.name);
+				item.filterText = item.insertText = JSON.stringify(d.info!.name); // add quotes
+				item.kind = vscode.CompletionItemKind.Property;
+				return item;
+			});
+	}
+
+	protected async collectDependencyPropertySuggestions(currentWord: string): Promise<PropertyCompletionItem[]> {
+		let colonIdx = currentWord.indexOf(":");
+		let ret: vscode.CompletionItem[] = [];
+		if (colonIdx != -1) {
+			const pkgName = currentWord.substring(0, colonIdx);
+			const info = await getLatestPackageInfo(pkgName);
+			try
+			{
+				info.subPackages?.forEach(subPkgName => {
+					let completionName = pkgName + ":" + subPkgName;
+					let item = <PropertyCompletionItem>new vscode.CompletionItem(completionName, vscode.CompletionItemKind.Property);
+					item.documentation = info.description;
+					item.defaultValue = info.version;
+					item.isDependency = true;
+					ret.push(item);
+				});
+			}
+			catch (err)
+			{
+				throw new Error("Package not found");
+			}
+		} else {
+			const json = await listPackages();
+			try {
+				json.forEach(element => {
+					let item = <PropertyCompletionItem>new vscode.CompletionItem(element, vscode.CompletionItemKind.Property);
+					item.isDependency = true;
+					ret.push(item);
+				});
+			} catch (err) {
+				console.log("Error searching for packages");
+				console.log(err);
+			}
+		}
+		return ret;
 	}
 
 	public collectValueSuggestions(fileName: string, location: Location, result: ISuggestionsCollector): Thenable<any> {
@@ -178,7 +202,7 @@ export class DubJSONContribution implements IJSONContribution {
 	}
 
 	public resolveSuggestion(item: vscode.CompletionItem): Thenable<vscode.CompletionItem> {
-		if (item.kind === vscode.CompletionItemKind.Property) {
+		if (item.kind === vscode.CompletionItemKind.Property && (<any>item).isDependency) {
 			let pack = item.label;
 			if (typeof pack != "string")
 				pack = pack.label;
