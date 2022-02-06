@@ -14,22 +14,16 @@
 <body>
 	<div class="configurationbar">
 		<label>
-			Configuration:
-			<vscode-dropdown id="configurations" class="refresh-ui">
-				<vscode-option value="">Default</vscode-option>
-			</vscode-dropdown>
-		</label>
-		<label>
-			Build Type:
-			<vscode-dropdown id="buildtypes" class="refresh-ui">
-				<vscode-option value="">Default</vscode-option>
+			Overrides:
+			<vscode-dropdown id="overrides" class="refresh-ui">
+				<vscode-option value="*" selected>Base</vscode-option>
 			</vscode-dropdown>
 		</label>
 		<label>
 			Platform:
 			<vscode-dropdown id="platforms" class="refresh-ui">
 				<!-- Source: https://github.com/dlang/dub/blob/master/source/dub/platform.d -->
-				<vscode-option value="">All</vscode-option>
+				<vscode-option value="*" selected>All</vscode-option>
 				<vscode-option value="windows">Windows</vscode-option>
 				<vscode-option value="linux">Linux</vscode-option>
 				<vscode-option value="posix">Posix</vscode-option>
@@ -54,7 +48,7 @@
 		<label>
 			Architecture:
 			<vscode-dropdown id="architectures" class="refresh-ui">
-				<vscode-option value="">All</vscode-option>
+				<vscode-option value="*" selected>All</vscode-option>
 				<vscode-option value="x86">X86</vscode-option>
 				<vscode-option value="x86_64">X86_64</vscode-option>
 				<vscode-option value="arm">ARM</vscode-option>
@@ -97,7 +91,7 @@
 		<label>
 			Compiler:
 			<vscode-dropdown id="compilers" class="refresh-ui">
-				<vscode-option value="">All</vscode-option>
+				<vscode-option value="*" selected>All</vscode-option>
 				<vscode-option value="dmd">DMD</vscode-option>
 				<vscode-option value="gdc">GDC</vscode-option>
 				<vscode-option value="ldc2">LDC</vscode-option>
@@ -107,7 +101,7 @@
 	</div>
 	<div class="hsplit">
 		<ul class="master" id="tabs">
-			<li id="tabGeneral" has-config="false">General</li>
+			<li id="tabGeneral" has-override="false">General</li>
 			<li id="tabBuildOutput">Output</li>
 			<li id="tabDependencies">Dependencies</li>
 			<li id="tabBuildSettings" has-suffix="true">Build Settings</li>
@@ -115,8 +109,8 @@
 			<li id="tabBuildRequirements" has-suffix="true">Build Requirements</li>
 			<li id="tabBuildOptions" has-suffix="true">Build Options</li>
 			<li id="tabSources" has-suffix="true">Sources</li>
-			<li id="tabBuildTypes" has-config="false">Build Types</li>
-			<li id="tabConfigurations" has-config="false" has-suffix="true">Configurations</li>
+			<li id="tabBuildTypes" has-override="false">Build Types</li>
+			<li id="tabConfigurations" has-override="false" has-suffix="true">Configurations</li>
 		</ul>
 		<div class="child" id="pageGeneral">
 			<label class="label">

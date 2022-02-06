@@ -5,6 +5,8 @@ let packageType = "json";
 // dub.json content
 let content = {};
 
+const OPTION_EMPTY_VALUE = "*"; // workaround to https://github.com/microsoft/vscode-webview-ui-toolkit/issues/327
+
 // IPC API
 // @ts-ignore
 const vscode = acquireVsCodeApi();
@@ -32,6 +34,7 @@ function runCommand(/** @type {string} */ command, /** @type {any} */ argument) 
  * @typedef {Object} InputOptions
  * @property {string} [error]
  * @property {string} [placeholder]
+ * @property {string} [value]
  */
 
 /**
@@ -65,6 +68,8 @@ window.addEventListener("message", event => {
 	}
 });
 
+runCommand("refetch");
+
 /**
  * @typedef {Object} InputOption
  * @property {"text" | "checkbox"} type
@@ -93,8 +98,7 @@ window.addEventListener("message", event => {
  */
 
 // basic DOM
-let configurationSelector = /** @type {HTMLSelectElement} */ (document.getElementById("configurations"));
-let buildtypeSelector = /** @type {HTMLSelectElement} */ (document.getElementById("buildtypes"));
+let overridesSelector = /** @type {HTMLSelectElement} */ (document.getElementById("overrides"));
 let platformSelector = /** @type {HTMLSelectElement} */ (document.getElementById("platforms"));
 let architectureSelector = /** @type {HTMLSelectElement} */ (document.getElementById("architectures"));
 let compilerSelector = /** @type {HTMLSelectElement} */ (document.getElementById("compilers"));
@@ -104,7 +108,7 @@ let settings = document.querySelectorAll(".setting");
 let complexSettings = document.querySelectorAll(".complex-setting");
 let listSettings = document.querySelectorAll(".list-setting");
 
-let configDisabled = false;
+let overridesDisabled = false;
 let suffixDisabled = false;
 
 function isSameValue(a, b) {
@@ -283,92 +287,76 @@ function makePath(/** @type {HTMLElement} */ setting, /** @type {string[]} */ pa
 	var suffix = "";
 	var prefix = [];
 	if (setting.getAttribute("has-suffix") == "true") {
-		if (platformSelector.value)
+		if (platformSelector.value != OPTION_EMPTY_VALUE)
 			suffix += "-" + platformSelector.value;
-		if (architectureSelector.value)
+		if (architectureSelector.value != OPTION_EMPTY_VALUE)
 			suffix += "-" + architectureSelector.value;
-		if (compilerSelector.value)
+		if (compilerSelector.value != OPTION_EMPTY_VALUE)
 			suffix += "-" + compilerSelector.value;
 
-		if (buildtypeSelector.value)
-			prefix = ["buildTypes", buildtypeSelector.value];
+		if (overridesSelector.value != OPTION_EMPTY_VALUE
+			&& overridesSelector.value.startsWith("build:"))
+			prefix = ["buildTypes", overridesSelector.value.substring("build:".length)];
 	}
 	// important: config and buildtypes cant mix!
-	if (setting.getAttribute("has-config") != "false") {
-		if (configurationSelector.value)
-			prefix = ["configurations", ":name=" + configurationSelector.value];
-	}
+	if (setting.getAttribute("has-config") != "false"
+		&& overridesSelector.value != OPTION_EMPTY_VALUE
+		&& overridesSelector.value.startsWith("config:"))
+		prefix = ["configurations", ":name=" + overridesSelector.value.substring("config:".length)];
+
 	if (addSuffix)
 		path[path.length - 1] += suffix;
 	return prefix.concat(path);
 }
 
-function updateBuildTypes() {
-	var selected = buildtypeSelector.value;
-	for (var i = buildtypeSelector.options.length - 1; i >= 0; i--)
-		if (buildtypeSelector.options[i].value)
-			buildtypeSelector.removeChild(buildtypeSelector.options[i]);
-	if (!content.buildTypes || typeof content.buildTypes != "object")
-		return;
-	var buildTypes = Object.keys(content["buildTypes"]);
-	for (var i = 0; i < buildTypes.length; i++) {
-		var option = /** @type {HTMLOptionElement} */ (document.createElement("vscode-option"));
-		option.value = buildTypes[i];
-		option.textContent = buildTypes[i];
-		buildtypeSelector.appendChild(option);
-	}
-	if (selected && buildTypes.indexOf(selected) == -1) {
-		console.log("Deleted build type");
-		console.log("Array: " + JSON.stringify(buildTypes) + ", selected: " + selected);
-		buildtypeSelector.value = "";
-	}
-	else
-		buildtypeSelector.value = selected;
-}
+function updateOverrides() {
+	let selected = overridesSelector.value;
+	for (let i = overridesSelector.children.length - 1; i >= 0; i--)
+		if ((/** @type {HTMLOptionElement} */ (overridesSelector.children[i])).value)
+			overridesSelector.removeChild(overridesSelector.children[i]);
 
-function updateConfigurations() {
-	var selected = configurationSelector.value;
-	for (var i = configurationSelector.options.length - 1; i >= 0; i--)
-		if (configurationSelector.options[i].value)
-			configurationSelector.removeChild(configurationSelector.options[i]);
-	if (!content.configurations || !Array.isArray(content.configurations))
-		return;
-	var configurations = [];
-	for (var i = 0; i < content.configurations.length; i++)
-		if (content.configurations[i].name)
-			configurations.push(content.configurations[i].name);
-	for (var i = 0; i < configurations.length; i++) {
-		var option = /** @type {HTMLOptionElement} */ (document.createElement("vscode-option"));
-		option.value = configurations[i];
-		option.textContent = configurations[i];
-		configurationSelector.appendChild(option);
+	let option = /** @type {HTMLOptionElement} */ (document.createElement("vscode-option"));
+	option.value = OPTION_EMPTY_VALUE;
+	option.textContent = "Base";
+	overridesSelector.appendChild(option);
+
+	function addOption(value, textContent) {
+		let option = /** @type {HTMLOptionElement} */ (document.createElement("vscode-option"));
+		option.value = value;
+		option.textContent = textContent;
+		overridesSelector.appendChild(option);
+
+		if (selected == value)
+			option.selected = true;
 	}
-	if (selected && configurations.indexOf(selected) == -1) {
-		console.log("Deleted configuration");
-		console.log("Array: " + JSON.stringify(configurations) + ", selected: " + selected);
-		configurationSelector.value = "";
+
+	if (content.configurations && Array.isArray(content.configurations))
+	{
+		let configurations = [];
+		for (let i = 0; i < content.configurations.length; i++)
+			if (content.configurations[i].name)
+				configurations.push(content.configurations[i].name);
+		for (let i = 0; i < configurations.length; i++) {
+			addOption("config:" + configurations[i], "--config=" + configurations[i]);
+		}
 	}
-	else
-		configurationSelector.value = selected;
+	if (content.buildTypes && typeof content.buildTypes == "object")
+	{
+		let buildTypes = Object.keys(content["buildTypes"]);
+		for (let i = 0; i < buildTypes.length; i++) {
+			addOption("build:" + buildTypes[i], "--build=" + buildTypes[i]);
+		}
+	}
 }
 
 function fixSelectors() {
-	console.log("Fix Selectors");
-	if (configurationSelector.value) {
-		buildtypeSelector.value = "";
-		buildtypeSelector.setAttribute("disabled", "disabled");
-		console.log("Disabled buildtypeSelector");
-	}
-	else if (!suffixDisabled)
-		buildtypeSelector.removeAttribute("disabled");
-
-	if (buildtypeSelector.value) {
-		configurationSelector.value = "";
-		configurationSelector.setAttribute("disabled", "disabled");
+	if (overridesSelector.value != OPTION_EMPTY_VALUE && overridesDisabled) {
+		overridesSelector.value = OPTION_EMPTY_VALUE;
+		overridesSelector.setAttribute("disabled", "disabled");
 		console.log("Disabled configurationSelector");
 	}
-	else if (!configDisabled)
-		configurationSelector.removeAttribute("disabled");
+	else if (!overridesDisabled)
+		overridesSelector.removeAttribute("disabled");
 }
 
 let didStartup = false;
@@ -376,11 +364,16 @@ function ready() {
 	if (didStartup) return;
 	didStartup = true;
 
-	configurationSelector.value = state["dub.configuration"] || "";
-	buildtypeSelector.value = state["dub.configuration"] || "";
-	platformSelector.value = state["dub.platform"] || "";
-	architectureSelector.value = state["dub.architecture"] || "";
-	compilerSelector.value = state["dub.compiler"] || "";
+	overridesSelector.value = state["dub.overrides"] || OPTION_EMPTY_VALUE;
+	platformSelector.value = state["dub.platform"] || OPTION_EMPTY_VALUE;
+	architectureSelector.value = state["dub.architecture"] || OPTION_EMPTY_VALUE;
+	compilerSelector.value = state["dub.compiler"] || OPTION_EMPTY_VALUE;
+
+	console.log("loaded state:",
+		"\n\toverrides:", overridesSelector.value,
+		"\n\tplatform:", platformSelector.value,
+		"\n\tarchitecture:", architectureSelector.value,
+		"\n\tcompiler:", compilerSelector.value);
 
 	refreshSettings();
 	document.querySelectorAll(".refresh-ui").forEach(e => {
@@ -405,26 +398,25 @@ function ready() {
 		element.setAttribute("class", "active");
 		setState("dub.activeTab", activeTab);
 		var hasSuffixMembers = !!element.getAttribute("has-suffix");
-		var hasConfiguration = element.getAttribute("has-config") != "false";
+		var hasOverride = element.getAttribute("has-override") != "false";
 		if (hasSuffixMembers) {
 			platformSelector.removeAttribute("disabled");
 			architectureSelector.removeAttribute("disabled");
 			compilerSelector.removeAttribute("disabled");
-			buildtypeSelector.removeAttribute("disabled");
 		}
 		else {
 			platformSelector.setAttribute("disabled", "disabled");
 			architectureSelector.setAttribute("disabled", "disabled");
 			compilerSelector.setAttribute("disabled", "disabled");
-			buildtypeSelector.setAttribute("disabled", "disabled");
 		}
-		if (hasConfiguration)
-			configurationSelector.removeAttribute("disabled");
-		else
-			configurationSelector.setAttribute("disabled", "disabled")
-		suffixDisabled = !hasSuffixMembers;
-		configDisabled = !hasConfiguration;
 
+		if (hasOverride)
+			overridesSelector.removeAttribute("disabled");
+		else
+			overridesSelector.setAttribute("disabled", "disabled")
+
+		suffixDisabled = !hasSuffixMembers;
+		overridesDisabled = !hasOverride;
 		fixSelectors();
 	}
 
@@ -445,12 +437,9 @@ function updateRecipeContent(newContent, errors) {
 	if (packageType != "json" && packageType != "sdl")
 		throw new Error("Invalid type");
 
-	ready();
-
 	content = newContent;
-	updateBuildTypes();
-	updateConfigurations();
-	fixSelectors();
+	updateOverrides();
+	ready();
 
 	let errorOutput = document.getElementById("errors");
 	let errorText = "";
@@ -467,8 +456,8 @@ function updateRecipeContent(newContent, errors) {
 
 function refreshSettings() {
 	try {
-		setState("dub.configuration", configurationSelector.value);
-		setState("dub.buildtype", buildtypeSelector.value);
+		console.log("refreshing settings ", overridesSelector.value);
+		setState("dub.overrides", overridesSelector.value);
 		setState("dub.platform", platformSelector.value);
 		setState("dub.architecture", architectureSelector.value);
 		setState("dub.compiler", compilerSelector.value);
@@ -480,6 +469,7 @@ function refreshSettings() {
 		} else {
 			document.write("unknown file format");
 		}
+		console.log("done refreshing settings ", overridesSelector.value);
 	}
 	catch (e) {
 		console.log(e);
@@ -747,7 +737,7 @@ function loadJsonIntoUI() {
 					path: path,
 					value: getPath(path)
 				});
-				var option = /** @type {HTMLOptionElement} */ (document.createElement(setting.tagName.startsWith("VSCODE") ? "vscode-option" : "option"));
+				let option = /** @type {HTMLOptionElement} */ (document.createElement(setting.tagName.startsWith("VSCODE") ? "vscode-option" : "option"));
 				option.value = name;
 				option.textContent = name;
 				setting.appendChild(option);
@@ -758,8 +748,8 @@ function loadJsonIntoUI() {
 		removeBtn.onclick = (function (setting, path, arrayType, arrayProp) {
 			if (!getPath(path))
 				return;
-			var options = setting.options;
-			for (var i = options.length - 1; i >= 0; i--)
+			let options = setting.children;
+			for (let i = options.length - 1; i >= 0; i--)
 				if (options[i].selected) {
 					removeInArray(getPath(path), options[i].value, arrayType, arrayProp);
 					setting.removeChild(options[i]);
@@ -770,71 +760,82 @@ function loadJsonIntoUI() {
 			});
 			setting.dispatchEvent(new Event("dub-update"));
 		}).bind(this, setting, path, arrayType, arrayProp);
-		renameBtn.onclick = (function (setting, path, arrayType, arrayProp) {
-			var selected = undefined;
-			for (var i = setting.options.length - 1; i >= 0; i--)
-				if (setting.options[i].selected) {
-					selected = setting.options[i];
+		renameBtn.onclick = (async function(setting, path, arrayType, arrayProp) {
+			let selected = undefined;
+			let options = setting.children;
+			for (let i = options.length - 1; i >= 0; i--)
+				if (options[i].selected) {
+					selected = options[i];
 					break;
 				}
 			if (!selected)
 				return;
-			/**
-			 * @type {InputOption[]}
-			 */
-			var options = [{
-				type: "text",
-				name: "Name",
-				defaultValue: selected.value
-			}];
-			var origName = selected.value;
-			showDialog(options, ["Rename", "Cancel"], function (r) {
-				if (r == "Rename") {
-					var name = options[0].element.value.trim();
-					if (!name)
-						return "Please enter a name";
-					if (!getPath(path))
-						setPath(path, {});
-					var oldValue = getInArray(getPath(path), origName, arrayType, arrayProp);
-					if (!oldValue)
-						return "Could not rename, try reopening the settings";
-					if (getInArray(getPath(path), name, arrayType, arrayProp))
-						return "An entry with this name already exists";
-					if (arrayType) {
-						oldValue[arrayProp] = name;
-					}
-					else {
-						getPath(path)[name] = oldValue;
-						delete getPath(path)[origName];
-					}
-					runCommand("setValue", {
-						path: path,
-						value: getPath(path)
-					});
-					selected.value = name;
-					selected.textContent = name;
-					setting.dispatchEvent(new Event("dub-update"));
+			let origName = selected.value;
+			let value = origName;
+
+			const settingName = setting.getAttribute("ui-setting-name");
+			let error = undefined;
+			while (true)
+			{
+				/**
+				 * @type {InputOptions}
+				 */
+				let options = { "error": error, "value": value };
+				if (settingName)
+					options.placeholder = settingName + " name";
+				value = await getInput("Enter new Name", options);
+				if (!value)
+					return;
+				if (!getPath(path))
+					setPath(path, arrayType ? [] : {});
+
+				let oldValue = getInArray(getPath(path), origName, arrayType, arrayProp);
+				if (!oldValue) {
+					runCommand("showError", "Could not rename, try reopening the settings");
+					break;
 				}
-			});
+
+				if (getInArray(getPath(path), value, arrayType, arrayProp)) {
+					error = "An entry with this name already exists";
+					continue;
+				}
+
+				if (arrayType) {
+					oldValue[arrayProp] = value;
+				}
+				else {
+					getPath(path)[value] = oldValue;
+					delete getPath(path)[origName];
+				}
+
+				runCommand("setValue", {
+					path: path,
+					value: getPath(path)
+				});
+				selected.value = value;
+				selected.textContent = value;
+				setting.dispatchEvent(new Event("dub-update"));
+				break;
+			}
 		}).bind(this, setting, path, arrayType, arrayProp);
 
-		for (var j = setting.options.length - 1; j >= 0; j--)
+		for (let j = setting.options.length - 1; j >= 0; j--)
 			setting.removeChild(setting.options[j]);
 
-		var values = getPath(path);
+		let values = getPath(path);
 		if (values) {
 			if (arrayType) {
-				for (var j = 0; j < values.length; j++) {
-					var option = /** @type {HTMLOptionElement} */ (document.createElement(setting.tagName.startsWith("VSCODE") ? "vscode-option" : "option"));
+				for (let j = 0; j < values.length; j++) {
+					let option = /** @type {HTMLOptionElement} */ (document.createElement(setting.tagName.startsWith("VSCODE") ? "vscode-option" : "option"));
 					option.value = values[j][arrayProp];
 					option.textContent = values[j][arrayProp];
 					setting.appendChild(option);
 				}
 			}
 			else {
-				var names = Object.keys(values);
-				for (var j = 0; j < names.length; j++) {
-					var option = /** @type {HTMLOptionElement} */ (document.createElement(setting.tagName.startsWith("VSCODE") ? "vscode-option" : "option"));
+				let names = Object.keys(values);
+				for (let j = 0; j < names.length; j++) {
+					let option = /** @type {HTMLOptionElement} */ (document.createElement(setting.tagName.startsWith("VSCODE") ? "vscode-option" : "option"));
 					option.value = names[j];
 					option.textContent = names[j];
 					setting.appendChild(option);
