@@ -310,15 +310,43 @@ function makePath(/** @type {HTMLElement} */ setting, /** @type {string[]} */ pa
 }
 
 function updateOverrides() {
+	/**
+	 * @type {[string, string][]}
+	 */
+	let fullArray = [];
+	if (content.configurations && Array.isArray(content.configurations)) {
+		let configurations = [];
+		for (let i = 0; i < content.configurations.length; i++)
+			if (content.configurations[i].name)
+				configurations.push(content.configurations[i].name);
+		for (let i = 0; i < configurations.length; i++) {
+			fullArray.push(["config:" + configurations[i], "--config=" + configurations[i]]);
+		}
+	}
+	if (content.buildTypes && typeof content.buildTypes == "object") {
+		let buildTypes = Object.keys(content["buildTypes"]);
+		for (let i = 0; i < buildTypes.length; i++) {
+			fullArray.push(["build:" + buildTypes[i], "--build=" + buildTypes[i]]);
+		}
+	}
+
+	let allMatch = true;
+	for (let i = 0; i < fullArray.length; i++) {
+		if (!overridesSelector.children[i + 1]
+			|| /** @type {any} */ (overridesSelector.children[i + 1]).value != fullArray[i][0]
+			|| overridesSelector.children[i + 1].textContent != fullArray[i][1]) {
+			allMatch = false;
+			break;
+		}
+	}
+
+	if (allMatch)
+		return;
+
 	let selected = overridesSelector.value;
 	for (let i = overridesSelector.children.length - 1; i >= 0; i--)
-		if ((/** @type {HTMLOptionElement} */ (overridesSelector.children[i])).value)
+		if ((/** @type {HTMLOptionElement} */ (overridesSelector.children[i])).value != OPTION_EMPTY_VALUE)
 			overridesSelector.removeChild(overridesSelector.children[i]);
-
-	let option = /** @type {HTMLOptionElement} */ (document.createElement("vscode-option"));
-	option.value = OPTION_EMPTY_VALUE;
-	option.textContent = "Base";
-	overridesSelector.appendChild(option);
 
 	function addOption(value, textContent) {
 		let option = /** @type {HTMLOptionElement} */ (document.createElement("vscode-option"));
@@ -327,26 +355,18 @@ function updateOverrides() {
 		overridesSelector.appendChild(option);
 
 		if (selected == value)
+		{
 			option.selected = true;
+			// https://github.com/microsoft/vscode-webview-ui-toolkit/issues/332
+			option.setAttribute("selected", "selected");
+		}
 	}
 
-	if (content.configurations && Array.isArray(content.configurations))
-	{
-		let configurations = [];
-		for (let i = 0; i < content.configurations.length; i++)
-			if (content.configurations[i].name)
-				configurations.push(content.configurations[i].name);
-		for (let i = 0; i < configurations.length; i++) {
-			addOption("config:" + configurations[i], "--config=" + configurations[i]);
-		}
-	}
-	if (content.buildTypes && typeof content.buildTypes == "object")
-	{
-		let buildTypes = Object.keys(content["buildTypes"]);
-		for (let i = 0; i < buildTypes.length; i++) {
-			addOption("build:" + buildTypes[i], "--build=" + buildTypes[i]);
-		}
-	}
+	fullArray.forEach(option => {
+		addOption(option[0], option[1]);
+	});
+
+	overridesSelector.value = selected;
 }
 
 function fixSelectors() {
