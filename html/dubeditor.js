@@ -284,8 +284,8 @@ function removeInArray(arr, name, isArray, propName) {
 }
 
 function makePath(/** @type {HTMLElement} */ setting, /** @type {string[]} */ path, /** @type {boolean} */ addSuffix) {
-	var suffix = "";
-	var prefix = [];
+	let suffix = "";
+	let prefix = [];
 	if (setting.getAttribute("has-suffix") == "true") {
 		if (platformSelector.value != OPTION_EMPTY_VALUE)
 			suffix += "-" + platformSelector.value;
@@ -304,9 +304,10 @@ function makePath(/** @type {HTMLElement} */ setting, /** @type {string[]} */ pa
 		&& overridesSelector.value.startsWith("config:"))
 		prefix = ["configurations", ":name=" + overridesSelector.value.substring("config:".length)];
 
+	let ret = prefix.concat(path); // duplicate first
 	if (addSuffix)
-		path[path.length - 1] += suffix;
-	return prefix.concat(path);
+		ret[ret.length - 1] += suffix; // only modify duplicated
+	return ret;
 }
 
 function updateOverrides() {
