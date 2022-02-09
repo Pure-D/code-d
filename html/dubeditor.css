@@ -85,6 +85,26 @@ table#dependencies tr td:nth-child(1) {
 	text-align: right;
 }
 
+vscode-button.reset-btn {
+    position: absolute;
+    display: inline-block;
+    width: 2em;
+}
+
+.modified-hint {
+	font-style: italic;
+	opacity: 0.7;
+}
+
+.modified-hint:before {
+	content: " (";
+	display: inline;
+}
+.modified-hint:after {
+	content: ")";
+	display: inline;
+}
+
 .label {
 	font-size: 0.9em;
 	display: block;

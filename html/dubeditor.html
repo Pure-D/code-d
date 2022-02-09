@@ -9,6 +9,7 @@
 	<script type="module" src="{{vscodeuiToolkitUri}}"></script>
 
 	<link rel="stylesheet" href="{{dubEditorStyleUri}}">
+	<link rel="stylesheet" href="{{codiconUri}}">
 </head>
 
 <body>
@@ -148,7 +149,7 @@
 				<p class="description">Sets the base name of the output file; type and platform specific pre- and suffixes are added automatically</p>
 			</label>
 			<label class="label">
-				Target Type
+				<span>Target Type</span>
 				<vscode-dropdown class="setting" json-path="targetType">
 					<vscode-option value="autodetect">Auto Detect</vscode-option>
 					<vscode-option value="none">None</vscode-option>
@@ -227,97 +228,97 @@
 		<div class="child" id="pageBuildRequirements">
 			<label class="labelcb" title="Warnings do not abort compilation">
 				<input type="checkbox" class="setting" has-suffix="true" json-type="string[]" json-value="allowWarnings" json-path="buildRequirements">
-				Allow Warnings
+				<span>Allow Warnings</span>
 			</label>
 			<label class="labelcb" title="Don't show warnings">
 				<input type="checkbox" class="setting" has-suffix="true" json-type="string[]" json-value="silenceWarnings" json-path="buildRequirements">
-				Silence Warnings
+				<span>Silence Warnings</span>
 			</label>
 			<label class="labelcb" title="Using deprecated features aborts compilation">
 				<input type="checkbox" class="setting" has-suffix="true" json-type="string[]" json-value="disallowDeprecations" json-path="buildRequirements">
-				Disallow Deprecations
+				<span>Disallow Deprecations</span>
 			</label>
 			<label class="labelcb" title="Don't show deprecation warnings">
 				<input type="checkbox" class="setting" has-suffix="true" json-type="string[]" json-value="silenceDeprecations" json-path="buildRequirements">
-				Silence Deprecations
+				<span>Silence Deprecations</span>
 			</label>
 			<label class="labelcb" title="Avoid function inlining, even in release builds">
 				<input type="checkbox" class="setting" has-suffix="true" json-type="string[]" json-value="disallowInlining" json-path="buildRequirements">
-				Disallow Inlining
+				<span>Disallow Inlining</span>
 			</label>
 			<label class="labelcb" title="Avoid optimizations, even in release builds">
 				<input type="checkbox" class="setting" has-suffix="true" json-type="string[]" json-value="disallowOptimization" json-path="buildRequirements">
-				Disallow Optimization
+				<span>Disallow Optimization</span>
 			</label>
 			<label class="labelcb" title="Always perform bounds checks">
 				<input type="checkbox" class="setting" has-suffix="true" json-type="string[]" json-value="requireBoundsCheck" json-path="buildRequirements">
-				Require Bounds Check
+				<span>Require Bounds Check</span>
 			</label>
 			<label class="labelcb" title="Leave assertions and contracts enabled in release builds">
 				<input type="checkbox" class="setting" has-suffix="true" json-type="string[]" json-value="requireContracts" json-path="buildRequirements">
-				Require Contracts
+				<span>Require Contracts</span>
 			</label>
 		</div>
 		<div class="child" id="pageBuildOptions">
 			<label class="labelcb" title="Compile in debug mode (enables contracts)">
 				<input type="checkbox" class="setting" has-suffix="true" json-type="string[]" json-value="debugMode" json-path="buildOptions">
-				Debug Mode
+				<span>Debug Mode</span>
 			</label>
 			<label class="labelcb" title="Compile in release mode (disables assertions and bounds checks)">
 				<input type="checkbox" class="setting" has-suffix="true" json-type="string[]" json-value="releaseMode" json-path="buildOptions">
-				Release Mode
+				<span>Release Mode</span>
 			</label>
 			<label class="labelcb" title="Enable code coverage analysis">
 				<input type="checkbox" class="setting" has-suffix="true" json-type="string[]" json-value="coverage" json-path="buildOptions">
-				Coverage
+				<span>Coverage</span>
 			</label>
 			<label class="labelcb" title="Enable symbolic debug information">
 				<input type="checkbox" class="setting" has-suffix="true" json-type="string[]" json-value="debugInfo" json-path="buildOptions">
-				Debug Information
+				<span>Debug Information</span>
 			</label>
 			<label class="labelcb" title="Enable symbolic debug information in C compatible form">
 				<input type="checkbox" class="setting" has-suffix="true" json-type="string[]" json-value="debugInfoC" json-path="buildOptions">
-				Debug Information (C compatible)
+				<span>Debug Information (C compatible)</span>
 			</label>
 			<label class="labelcb" title="Always generate a stack frame">
 				<input type="checkbox" class="setting" has-suffix="true" json-type="string[]" json-value="alwaysStackFrame" json-path="buildOptions">
-				Always generate a stack frame
+				<span>Always generate a stack frame</span>
 			</label>
 			<label class="labelcb" title="Perform stack stomping">
 				<input type="checkbox" class="setting" has-suffix="true" json-type="string[]" json-value="stackStomping" json-path="buildOptions">
-				Stack Stomping
+				<span>Stack Stomping</span>
 			</label>
 			<label class="labelcb" title="Perform function inlining">
 				<input type="checkbox" class="setting" has-suffix="true" json-type="string[]" json-value="inline" json-path="buildOptions">
-				Inline
+				<span>Inline</span>
 			</label>
 			<label class="labelcb" title="Disable all bounds checking">
 				<input type="checkbox" class="setting" has-suffix="true" json-type="string[]" json-value="noBoundsCheck" json-path="buildOptions">
-				No Bounds Check
+				<span>No Bounds Check</span>
 			</label>
 			<label class="labelcb" title="Enable optimizations">
 				<input type="checkbox" class="setting" has-suffix="true" json-type="string[]" json-value="optimize" json-path="buildOptions">
-				Optimize
+				<span>Optimize</span>
 			</label>
 			<label class="labelcb" title="Emit profiling code">
 				<input type="checkbox" class="setting" has-suffix="true" json-type="string[]" json-value="profile" json-path="buildOptions">
-				Profile
+				<span>Profile</span>
 			</label>
 			<label class="labelcb" title="Compile unit tests">
 				<input type="checkbox" class="setting" has-suffix="true" json-type="string[]" json-value="unittests" json-path="buildOptions">
-				Unit tests
+				<span>Unit tests</span>
 			</label>
 			<label class="labelcb" title="Verbose compiler output">
 				<input type="checkbox" class="setting" has-suffix="true" json-type="string[]" json-value="verbose" json-path="buildOptions">
-				Verbose compiler output
+				<span>Verbose compiler output</span>
 			</label>
 			<label class="labelcb" title="Ignores unknown pragmas during compilation">
 				<input type="checkbox" class="setting" has-suffix="true" json-type="string[]" json-value="ignoreUnknownPragmas" json-path="buildOptions">
-				Ignore unknown pragmas
+				<span>Ignore unknown pragmas</span>
 			</label>
 			<label class="labelcb" title="Don't generate object files">
 				<input type="checkbox" class="setting" has-suffix="true" json-type="string[]" json-value="syntaxOnly" json-path="buildOptions">
-				Syntax only
+				<span>Syntax only</span>
 			</label>
 		</div>
 		<div class="child" id="pageSources">
@@ -352,7 +353,7 @@
 		</div>
 		<div class="child" id="pageBuildTypes">
 			<label class="label">
-				Build Types
+				<span>Build Types</span>
 				<select multiple class="list-setting refresh-ui" has-config="false" json-path="buildTypes" json-default="{}" ui-setting-name="build type">
 				<p class="description">Defines additional custom build types or overrides the default ones (chosen on the command line using --build=...)</p>
 				</select>
@@ -365,7 +366,7 @@
 		</div>
 		<div class="child" id="pageConfigurations">
 			<label class="label">
-				Configurations
+				<span>Configurations</span>
 				<select multiple class="list-setting refresh-ui" has-config="false" json-array="true" json-array-key="name" json-path="configurations" json-default="{}" ui-setting-name="configuration">
 				<p class="description">Speficies an optional list of build configurations (chosen on the command line using --config=...)</p>
 				</select>

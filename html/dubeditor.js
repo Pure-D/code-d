@@ -283,7 +283,7 @@ function removeInArray(arr, name, isArray, propName) {
 		delete arr[name];
 }
 
-function makePath(/** @type {HTMLElement} */ setting, /** @type {string[]} */ path, /** @type {boolean} */ addSuffix) {
+function makePath(/** @type {HTMLElement} */ setting, /** @type {string[]} */ path, /** @type {boolean} */ addSuffix, /** @type {boolean?} */ addOverrides) {
 	let suffix = "";
 	let prefix = [];
 	if (setting.getAttribute("has-suffix") == "true") {
@@ -303,6 +303,9 @@ function makePath(/** @type {HTMLElement} */ setting, /** @type {string[]} */ pa
 		&& overridesSelector.value != OPTION_EMPTY_VALUE
 		&& overridesSelector.value.startsWith("config:"))
 		prefix = ["configurations", ":name=" + overridesSelector.value.substring("config:".length)];
+
+	if (addOverrides === false)
+		prefix = [];
 
 	let ret = prefix.concat(path); // duplicate first
 	if (addSuffix)
@@ -378,6 +381,123 @@ function fixSelectors() {
 	}
 	else if (!overridesDisabled)
 		overridesSelector.removeAttribute("disabled");
+}
+
+/**
+ * @param {HTMLElement} setting
+ * @returns {HTMLElement | undefined}
+ */
+function getLabelElement(setting) {
+	if (setting.tagName == "VSCODE-TEXT-AREA"
+		|| setting.tagName == "VSCODE-TEXT-FIELD")
+		return setting;
+	return setting.parentElement.querySelector("span");
+}
+
+/**
+ * @param {HTMLElement} setting 
+ */
+function makeResetButton(setting, configPath) {
+	let label = getLabelElement(setting);
+	let modifiedHint = label?.querySelector(".modified-hint a");
+	if (modifiedHint) {
+		modifiedHint.parentElement.parentElement.removeChild(modifiedHint.parentElement);
+	}
+
+	let next = /** @type {HTMLElement} */(setting.nextElementSibling);
+	if (next && next.classList.contains("reset-btn")) {
+		next.style.display = "";
+		next.onclick = function(e) {
+			e.preventDefault();
+			next.style.display = "none";
+			runCommand("setValue", {
+				path: configPath,
+				value: undefined
+			});
+			setPath(configPath, undefined);
+			return false;
+		};
+		return;
+	}
+
+	next = document.createElement("vscode-button");
+	next.classList.add("reset-btn");
+	next.setAttribute("appearance", "icon");
+	next.setAttribute("aria-label", "Reset to global settings");
+	next.setAttribute("title", "Reset to global settings");
+	let icon = document.createElement("span");
+	icon.className = "codicon codicon-discard";
+	next.appendChild(icon);
+	if (setting.nextSibling)
+		setting.parentElement.insertBefore(next, setting.nextSibling);
+	else
+		setting.parentElement.appendChild(next);
+
+	next.onclick = function(e) {
+		e.preventDefault();
+		next.style.display = "none";
+		runCommand("setValue", {
+			path: configPath,
+			value: undefined
+		});
+		setPath(configPath, undefined);
+		return false;
+	};
+}
+
+/**
+ * @param {HTMLElement} setting 
+ */
+function hideResetButton(setting) {
+	let next = /** @type {HTMLElement} */(setting.nextElementSibling);
+	if (next && next.classList.contains("reset-btn")) {
+		next.style.display = "none";
+	}
+}
+
+/**
+ * @param {HTMLElement} setting 
+ * @param {[boolean, boolean, string] | undefined} usedAccess
+ */
+function makeSetInLabel(setting, usedAccess) {
+	let label = getLabelElement(setting);
+	let modifiedHint = label?.querySelector(".modified-hint a");
+	if (usedAccess && usedAccess[2] && label) {
+		if (!modifiedHint) {
+			let hint = document.createElement("span");
+			hint.className = "modified-hint";
+			hint.textContent = "Set in ";
+			modifiedHint = document.createElement("a");
+			hint.appendChild(modifiedHint);
+			label.appendChild(hint);
+
+			modifiedHint.addEventListener("click", function(e) {
+				e.preventDefault();
+
+				let prefix = this.getAttribute("data-prefix") == "true";
+				let suffix = this.getAttribute("data-suffix") == "true";
+
+				if (!prefix)
+					overridesSelector.value = OPTION_EMPTY_VALUE;
+				if (!suffix) {
+					platformSelector.value = OPTION_EMPTY_VALUE;
+					architectureSelector.value = OPTION_EMPTY_VALUE;
+					compilerSelector.value = OPTION_EMPTY_VALUE;
+				}
+
+				refreshSettings();
+
+				return false;
+			});
+		}
+		modifiedHint.textContent = usedAccess[2];
+		modifiedHint.setAttribute("data-prefix", usedAccess[1] ? "true" : "false");
+		modifiedHint.setAttribute("data-suffix", usedAccess[0] ? "true" : "false");
+	} else {
+		if (modifiedHint) {
+			modifiedHint.parentElement.parentElement.removeChild(modifiedHint.parentElement);
+		}
+	}
 }
 
 let didStartup = false;
@@ -503,6 +623,9 @@ function loadJsonIntoUI() {
 		// json-path="description"
 		// json-value="name" in string[] for checkboxes
 		// json-type="string[]"
+		let label = setting.parentElement;
+		if (label.tagName != "LABEL")
+			label = undefined;
 
 		let inputType = setting.getAttribute("type");
 		let path = setting.getAttribute("json-path").split(/\./g);
@@ -511,12 +634,41 @@ function loadJsonIntoUI() {
 		let type = setting.getAttribute("json-type");
 		let strValue = setting.getAttribute("json-value");
 		let configPath = undefined;
-		let pathWithSuffix = makePath(setting, path, true);
-		let pathWithoutSuffix = makePath(setting, path, false);
-		if (getPath(pathWithSuffix) !== undefined)
-			configPath = pathWithSuffix;
-		else if (pathWithSuffix != pathWithoutSuffix && getPath(pathWithoutSuffix) !== undefined)
-			configPath = pathWithoutSuffix;
+		let usedAccess = undefined;
+		/**
+		 * @type {[boolean, boolean, string][]}
+		 */
+		const accessTries = [
+			[true, true, ""], // in current config/override with platform suffix
+			[false, true, "all platforms"], // in current config/override without platform suffix
+			[true, false, "Base"], // in global scope with platform suffix
+			[false, false, "Base with all platforms"], // in global scope without platform suffix
+		];
+		accessTries.forEach(access => {
+			if (configPath) return;
+			let resolved = makePath(setting, path, access[0], access[1]);
+			if (getPath(resolved) !== undefined) {
+				configPath = resolved;
+				usedAccess = access;
+			}
+		});
+		const isResettable = configPath
+			&& isSameValue(makePath(setting, path, true, true), configPath);
+
+		if (isResettable) {
+			label?.classList?.add("resettable");
+			label?.classList?.remove("not-resettable");
+
+			makeResetButton(setting, configPath);
+		} else {
+			label?.classList?.remove("resettable");
+			label?.classList?.add("not-resettable");
+
+			hideResetButton(setting);
+		}
+
+		makeSetInLabel(setting, usedAccess);
+
 		let encode, decode;
 		if (inputType == "checkbox") {
 			if (type == "string[]" && strValue) {
@@ -553,18 +705,20 @@ function loadJsonIntoUI() {
 						(value || []).join("\n")
 						: (value || ""));
 			}.bind(this, type);
-			encode = (function (type, setting, e) {
+			encode = (function (type, setting, isOverride, e) {
 				var newVal;
 				if (type == "string[]") {
-					if (setting.value.trim() == "")
-						newVal = undefined;
+					if (!isOverride && setting.value.trim() == "")
+						newVal = undefined; // allow empty strings in overrides
 					else
 						newVal = setting.value.split("\n");
 				}
 				else
-					newVal = setting.value || undefined;
+					newVal = isOverride
+						? setting.value // allow empty strings in overrides
+						: (setting.value || undefined);
 				return newVal;
-			}).bind(this, type, setting);
+			}).bind(this, type, setting, isOverride);
 		}
 		var configSetting;
 		if (configPath !== undefined)
@@ -575,12 +729,12 @@ function loadJsonIntoUI() {
 		configPath = makePath(setting, path, true);
 		let changeFun = (function (setting, configPath, path, encode, e) {
 			var value = encode(e);
-			var set = true;
-			var suffixlessPath = makePath(setting, path, false);
-			if (configPath != suffixlessPath)
-				if (isSameValue(getPath(suffixlessPath), value))
-					set = false;
-			value = set ? value : undefined;
+			// var set = true;
+			// var suffixlessPath = makePath(setting, path, false);
+			// if (configPath != suffixlessPath)
+			// 	if (isSameValue(getPath(suffixlessPath), value))
+			// 		set = false;
+			// value = set ? value : undefined;
 			runCommand("setValue", {
 				path: configPath,
 				value: value

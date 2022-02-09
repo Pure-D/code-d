@@ -238,10 +238,14 @@ export class DubEditor implements vscode.CustomTextEditorProvider {
 		let vscodeUiUri = webview.asWebviewUri(vscode.Uri.joinPath(
 			this.context.extensionUri, "node_modules", "@vscode", "webview-ui-toolkit", "dist", "toolkit.js"));
 
+		let codiconUri = webview.asWebviewUri(vscode.Uri.joinPath(
+			this.context.extensionUri, "node_modules", "@vscode", "codicons", "dist", "codicon.css"));
+
 		return (await this.editorTemplate)
 			.replace("{{dubEditorStyleUri}}", styleUri.toString())
 			.replace("{{dubEditorScriptUri}}", scriptUri.toString())
 			.replace("{{vscodeuiToolkitUri}}", vscodeUiUri.toString())
+			.replace("{{codiconUri}}", codiconUri.toString())
 		;
 	}
 }
