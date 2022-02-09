@@ -389,12 +389,24 @@
                 "configurations": {
                     "type": "array",
                     "items": {
+                        "required": ["name"],
                         "allOf": [
                             {
                                 "properties": {
                                     "name": {
                                         "$ref": "#/definitions/configurationName",
                                         "description": "Name of the configuration, used to uniquely identify the configuration. Must be comprised of ASCII alpha-numeric characters, \"-\" or \"_\"."
+                                    }
+                                }
+                            },
+                            {
+                                "properties": {
+                                    "platforms": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "description": "A list of platform suffixes (as used for the build settings) to limit on which platforms the configuration applies."
                                     }
                                 }
                             },

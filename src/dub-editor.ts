@@ -35,7 +35,7 @@ export class DubEditor implements vscode.CustomTextEditorProvider {
 			let errors: jsonc.ParseError[] = [];
 			let parsed = jsonc.parse(document.getText(), errors);
 			webviewPanel.webview.postMessage({
-				type: 'update',
+				type: "update",
 				json: parsed,
 				errors: errors.map(err => {
 					let loc = document.positionAt(err.offset);
@@ -71,7 +71,7 @@ export class DubEditor implements vscode.CustomTextEditorProvider {
 				case "getInput":
 					let callbackId = <string>e.arg.callbackId;
 					let label = <string>e.arg.label;
-					let options = <{ error?: string, placeholder?: string } | undefined>e.arg.options;
+					let options = <{ error?: string, placeholder?: string, value?: string } | undefined>e.arg.options;
 
 					if (options?.error) {
 						vscode.window.showErrorMessage(options.error);
@@ -79,7 +79,8 @@ export class DubEditor implements vscode.CustomTextEditorProvider {
 
 					let res = await vscode.window.showInputBox({
 						title: label,
-						placeHolder: options?.placeholder
+						placeHolder: options?.placeholder,
+						value: options?.value
 					});
 
 					webviewPanel.webview.postMessage({
@@ -88,13 +89,23 @@ export class DubEditor implements vscode.CustomTextEditorProvider {
 						value: res
 					})
 					break;
+				case "showError":
+					vscode.window.showErrorMessage((e.message || e) + "");
+					break;
+				case "showWarning":
+					vscode.window.showWarningMessage((e.message || e) + "");
+					break;
+				case "showInfo":
+					vscode.window.showInformationMessage((e.message || e) + "");
+					break;
+				case "refetch":
+					updateWebview();
+					break;
 				default:
 					vscode.window.showErrorMessage("Unknown command " + e.cmd);
 					break;
 			}
 		});
-
-		updateWebview();
 	}
 
 	setValue(doc: vscode.TextDocument, arg: { path: string[], value: any | undefined }) {
