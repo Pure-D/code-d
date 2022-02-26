@@ -37,11 +37,18 @@ export function registerClientCommands(context: vscode.ExtensionContext, client:
 	}));
 
 	subscriptions.push(vscode.commands.registerCommand("code-d.switchArchType", () => {
-		vscode.window.showQuickPick(client.sendRequest<string[]>("served/listArchTypes")).then((arch) => {
-			if (arch)
-				client.sendRequest<boolean>("served/switchArchType", arch).then(success => {
+		let items = client.sendRequest<({ value: string, label?: string } | string)[]>("served/listArchTypes",
+				{ withMeaning: true })
+			.then(ts => ts.map(t => <vscode.QuickPickItem & { _value: string }>{
+				label: typeof t == "string" ? t : t.label || t.value,
+				_value: typeof t == "string" ? t : t.value,
+				description: typeof t != "string" && t.label ? t.value : undefined
+			}));
+		vscode.window.showQuickPick(items).then((arch) => {
+			if (arch !== undefined)
+				client.sendRequest<boolean>("served/switchArchType", arch._value).then(success => {
 					if (success)
-						served.emit("arch-type-change", arch);
+						served.emit("arch-type-change", arch._value);
 				});
 		});
 	}, (err: any) => {

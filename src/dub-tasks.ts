@@ -96,11 +96,12 @@ export class DubTasksProvider implements vscode.TaskProvider {
 			target_args?: string[]
 		}
 	}, token?: vscode.CancellationToken | undefined): Promise<vscode.Task> {
-		function replaceCurrent(str: string, servedFetchCommand: string): string | Promise<string> {
+		async function insertDollarCurrent(args: string[], prefix: string, str: string | undefined, servedFetchCommand: string): Promise<void> {
 			if (str == "$current")
-				return served.client.sendRequest<string>(servedFetchCommand);
-			else
-				return str;
+				str = await served.client.sendRequest<string | undefined>(servedFetchCommand);
+
+			if (str)
+				args.push(prefix + str);
 		}
 
 		const dubLint = config(null).get("enableDubLinting", true);
@@ -114,14 +115,10 @@ export class DubTasksProvider implements vscode.TaskProvider {
 			});
 		if (task.definition.force)
 			args.push("--force");
-		if (task.definition.compiler)
-			args.push("--compiler=" + await replaceCurrent(task.definition.compiler, "served/getCompiler"));
-		if (task.definition.archType)
-			args.push("--arch=" + await replaceCurrent(task.definition.archType, "served/getArchType"));
-		if (task.definition.buildType)
-			args.push("--build=" + await replaceCurrent(task.definition.buildType, "served/getBuildType"));
-		if (task.definition.configuration)
-			args.push("--config=" + await replaceCurrent(task.definition.configuration, "served/getConfig"));
+		await insertDollarCurrent(args, "--compiler=", task.definition.compiler, "served/getCompiler");
+		await insertDollarCurrent(args, "--arch=", task.definition.archType, "served/getArchType");
+		await insertDollarCurrent(args, "--build=", task.definition.buildType, "served/getBuildType");
+		await insertDollarCurrent(args, "--config=", task.definition.configuration, "served/getConfig");
 
 		if (Array.isArray(task.definition.dub_args))
 			args.push.apply(args, task.definition.dub_args);

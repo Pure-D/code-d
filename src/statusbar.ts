@@ -52,20 +52,16 @@ export function checkStatusbarVisibility(overrideConfig: string, editor?: vscode
 class GenericSelector implements vscode.Disposable {
 	subscriptions: vscode.Disposable[] = [];
 	item?: vscode.StatusBarItem;
-	served: ServeD;
-	x: number;
-	command: string;
-	tooltip: string;
-	event: string;
-	method: string;
 
-	constructor(served: ServeD, x: number, command: string, tooltip: string, event: string, method: string) {
-		this.served = served;
-		this.x = x;
-		this.command = command;
-		this.tooltip = tooltip;
-		this.event = event;
-		this.method = method;
+	constructor(
+		public served: ServeD,
+		public x: number,
+		public command: string,
+		public tooltip: string,
+		public event: string,
+		public method: string,
+		public fallback: string
+	) {
 		served.client.onReady().then(this.create.bind(this));
 	}
 
@@ -79,7 +75,7 @@ class GenericSelector implements vscode.Disposable {
 		}));
 		this.served.on(this.event, config => {
 			if (this.item)
-				this.item.text = config;
+				this.item.text = config || this.fallback;
 		});
 		this.served.on("workspace-change", () => {
 			this.update();
@@ -99,7 +95,7 @@ class GenericSelector implements vscode.Disposable {
 	update() {
 		this.served.client.sendRequest<string>(this.method).then(config => {
 			if (this.item)
-				this.item.text = config;
+				this.item.text = config || this.fallback;
 		});
 	}
 
@@ -110,24 +106,32 @@ class GenericSelector implements vscode.Disposable {
 
 class ConfigSelector extends GenericSelector {
 	constructor(served: ServeD) {
-		super(served, 0.92145, "code-d.switchConfiguration", "Switch Configuration", "config-change", "served/getConfig");
+		super(served, 0.92145,
+			"code-d.switchConfiguration", "Switch Configuration", "config-change",
+			"served/getConfig", "(config)");
 	}
 }
 class ArchSelector extends GenericSelector {
 	constructor(served: ServeD) {
-		super(served, 0.92144, "code-d.switchArchType", "Switch Arch Type", "arch-type-change", "served/getArchType");
+		super(served, 0.92144,
+			"code-d.switchArchType", "Switch Arch Type", "arch-type-change",
+			"served/getArchType", "(default arch)");
 	}
 }
 
 class BuildSelector extends GenericSelector {
 	constructor(served: ServeD) {
-		super(served, 0.92143, "code-d.switchBuildType", "Switch Build Type", "build-type-change", "served/getBuildType");
+		super(served, 0.92143,
+			"code-d.switchBuildType", "Switch Build Type", "build-type-change",
+			"served/getBuildType", "(build type)");
 	}
 }
 
 class CompilerSelector extends GenericSelector {
 	constructor(served: ServeD) {
-		super(served, 0.92142, "code-d.switchCompiler", "Switch Compiler", "compiler-change", "served/getCompiler");
+		super(served, 0.92142,
+			"code-d.switchCompiler", "Switch Compiler", "compiler-change",
+			"served/getCompiler", "(compiler)");
 	}
 }
 
