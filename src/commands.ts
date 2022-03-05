@@ -9,7 +9,7 @@ import { listPackageOptions, getLatestPackageInfo } from "./dub-api"
 import { DubDependency } from "./dub-view";
 import { DubTasksProvider } from "./dub-tasks";
 import { showDpldocsSearch } from "./dpldocs";
-import { simpleBytesToString } from "./util";
+import { showQuickPickWithInput, simpleBytesToString } from "./util";
 
 const multiTokenWordPattern = /[^\`\~\!\@\#\%\^\&\*\(\)\=\+\[\{\]\}\\\|\;\:\'\"\,\.\<\>\/\?\s]+(?:\.[^\`\~\!\@\#\%\^\&\*\(\)\=\+\[\{\]\}\\\|\;\:\'\"\,\.\<\>\/\?\s]+)*/;
 
@@ -29,6 +29,8 @@ export function registerClientCommands(context: vscode.ExtensionContext, client:
 				client.sendRequest<boolean>("served/switchConfig", config).then(success => {
 					if (success)
 						served.emit("config-change", config);
+					else
+						vscode.window.showErrorMessage("Invalid configuration: " + config);
 				});
 		});
 	}, (err: any) => {
@@ -44,12 +46,21 @@ export function registerClientCommands(context: vscode.ExtensionContext, client:
 				_value: typeof t == "string" ? t : t.value,
 				description: typeof t != "string" && t.label ? t.value : undefined
 			}));
-		vscode.window.showQuickPick(items).then((arch) => {
-			if (arch !== undefined)
-				client.sendRequest<boolean>("served/switchArchType", arch._value).then(success => {
+		showQuickPickWithInput(items, {
+			canPickMany: false,
+			matchOnDescription: true,
+			placeHolder: "Pick architecture or enter custom triple",
+			title: "Pick new target architecture"
+		}).then((arch) => {
+			if (arch !== undefined) {
+				const v = (<any>arch)._value ? (<any>arch)._value : arch.label;
+				client.sendRequest<boolean>("served/switchArchType", v).then(success => {
 					if (success)
-						served.emit("arch-type-change", arch._value);
+						served.emit("arch-type-change", v);
+					else
+						vscode.window.showErrorMessage("Invalid architecture type: " + v);
 				});
+			}
 		});
 	}, (err: any) => {
 		client.outputChannel.appendLine(err.toString());
@@ -62,6 +73,8 @@ export function registerClientCommands(context: vscode.ExtensionContext, client:
 				client.sendRequest<boolean>("served/switchBuildType", type).then(success => {
 					if (success)
 						served.emit("build-type-change", type);
+					else
+						vscode.window.showErrorMessage("Invalid build type: " + type);
 				});
 		});
 	}, (err: any) => {
@@ -76,6 +89,8 @@ export function registerClientCommands(context: vscode.ExtensionContext, client:
 					client.sendRequest<boolean>("served/switchCompiler", compiler).then(success => {
 						if (success)
 							served.emit("compiler-change", compiler);
+						else
+							vscode.window.showErrorMessage("Invalid compiler: " + compiler);
 					});
 			});
 		}, (err) => {
