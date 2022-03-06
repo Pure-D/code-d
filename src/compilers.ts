@@ -47,20 +47,9 @@ export async function setupCompilersUI() {
 
 		const compiler = compilers[i];
 		if (compiler.has && compiler.path) {
-			let versionStrings: string[] = [];
-			if (compiler.version) {
-				if (compiler.has == "gdc")
-					versionStrings.push("gcc " + compiler.version);
-				else
-					versionStrings.push(compiler.version);
-			}
-			if (compiler.frontendVersion && compiler.frontendVersion != compiler.version)
-				versionStrings.push("spec version " + compiler.frontendVersion);
-			if (!compiler.inPath && compiler.path)
-				versionStrings.push(compiler.path);
 			items.push({
 				label: compiler.has,
-				description: versionStrings.length > 0 ? versionStrings.join(" ・ ") : undefined,
+				description: makeCompilerDescription(compiler),
 				installInfo: compiler
 			});
 		}
@@ -165,6 +154,21 @@ export async function setupCompilersUI() {
 			}
 		}
 	});
+}
+
+export function makeCompilerDescription(compiler: DetectedCompiler): string | undefined {
+	let versionStrings: string[] = [];
+	if (compiler.version) {
+		if (compiler.has == "gdc")
+			versionStrings.push("gcc " + compiler.version);
+		else
+			versionStrings.push(compiler.version);
+	}
+	if (compiler.frontendVersion && compiler.frontendVersion != compiler.version)
+		versionStrings.push("spec version " + compiler.frontendVersion);
+	if (!compiler.inPath && compiler.path)
+		versionStrings.push(compiler.path);
+	return versionStrings.length > 0 ? versionStrings.join(" ・ ") : undefined;
 }
 
 async function readHTTP(uri: string): Promise<string | undefined> {

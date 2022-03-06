@@ -10,6 +10,7 @@ import { DubDependency } from "./dub-view";
 import { DubTasksProvider } from "./dub-tasks";
 import { showDpldocsSearch } from "./dpldocs";
 import { showQuickPickWithInput, simpleBytesToString } from "./util";
+import { listCompilers, makeCompilerDescription } from "./compilers";
 
 const multiTokenWordPattern = /[^\`\~\!\@\#\%\^\&\*\(\)\=\+\[\{\]\}\\\|\;\:\'\"\,\.\<\>\/\?\s]+(?:\.[^\`\~\!\@\#\%\^\&\*\(\)\=\+\[\{\]\}\\\|\;\:\'\"\,\.\<\>\/\?\s]+)*/;
 
@@ -84,14 +85,34 @@ export function registerClientCommands(context: vscode.ExtensionContext, client:
 
 	subscriptions.push(vscode.commands.registerCommand("code-d.switchCompiler", () => {
 		client.sendRequest<string>("served/getCompiler").then(compiler => {
-			vscode.window.showInputBox({ value: compiler, prompt: "Enter compiler identifier. (e.g. dmd, ldc2, gdc)" }).then(compiler => {
-				if (compiler)
+			let settingCompiler = config(null).get("dubCompiler", undefined);
+			let extra: (vscode.QuickPickItem & { value: string })[] = settingCompiler
+				? [{ label: settingCompiler, value: settingCompiler, description: "(from User Settings)" }]
+				: [];
+			showQuickPickWithInput(listCompilers().then(compilers =>
+				extra.concat(compilers
+					.filter(a => a.has && a.path)
+					.map(c => (<vscode.QuickPickItem & { value: string }>{
+						label: c.has,
+						value: c.path ?? c.has,
+						description: makeCompilerDescription(c)
+					})))
+			), {
+				canPickMany: false,
+				matchOnDescription: true,
+				placeHolder: "Enter compiler name (e.g. dmd, ldc2, gdc) or full exe path",
+				title: "Pick new dub build compiler"
+			}).then((v) => {
+				if (v) {
+					// @ts-ignore
+					let compiler: string = v.custom ? v.label : v.value;
 					client.sendRequest<boolean>("served/switchCompiler", compiler).then(success => {
 						if (success)
 							served.emit("compiler-change", compiler);
 						else
 							vscode.window.showErrorMessage("Invalid compiler: " + compiler);
 					});
+				}
 			});
 		}, (err) => {
 			client.outputChannel.appendLine(err.toString());
