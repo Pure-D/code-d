@@ -853,7 +853,7 @@ function greetNewUsers(context: vscode.ExtensionContext) {
 		context.globalState.update("greetedNewCodeDUser", true);
 		context.globalState.update("lastCheckedCodedVersion", currentVersion);
 
-		vscode.commands.executeCommand("code-d.viewUserGuide");
+		vscode.commands.executeCommand("workbench.action.openWalkthrough", "webfreak.code-d#welcome");
 	} else if (currentVersion) {
 		let oldVersion = context.globalState.get("lastCheckedCodedVersion", "");
 		if (oldVersion != currentVersion) {
