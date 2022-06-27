@@ -617,9 +617,10 @@ export function registerCommands(context: vscode.ExtensionContext) {
 		const doViewSource = behavior != "listDocumentsPreview";
 
 		if (root) {
-			fs.readdir(root, async (err, files) => {
+			fs.readdir(root, { withFileTypes: true }, async (err, fileEntries) => {
 				if (err)
 					return showError(true);
+				let files = fileEntries.filter(f => f.isFile()).map(f => f.name);
 				function isInterestingFilename(f: string): boolean {
 					f = f.toLowerCase();
 					let filter = <string[]>config(null).get("dependencyTextDocumentFilter");
