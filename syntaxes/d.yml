@@ -22,7 +22,7 @@ repository:
       - include: '#expression'
   base-type:
     patterns:
-    - match: \b(auto|bool|byte|ubyte|short|ushort|int|uint|long|ulong|char|wchar|dchar|float|double|real|ifloat|idouble|ireal|cfloat|cdouble|creal|void)\b
+    - match: \b(auto|bool|byte|ubyte|short|ushort|int|uint|long|ulong|char|wchar|dchar|float|double|real|ifloat|idouble|ireal|cfloat|cdouble|creal|void|noreturn)\b
       name: storage.type.basic-type.d
     - match: \b(string|wstring|dstring|size_t|ptrdiff_t)\b(?!\s*=)
       name: storage.type.basic-type.d
