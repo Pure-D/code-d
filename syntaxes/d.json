@@ -49,7 +49,7 @@
     "base-type": {
       "patterns": [
         {
-          "match": "\\b(auto|bool|byte|ubyte|short|ushort|int|uint|long|ulong|char|wchar|dchar|float|double|real|ifloat|idouble|ireal|cfloat|cdouble|creal|void)\\b",
+          "match": "\\b(auto|bool|byte|ubyte|short|ushort|int|uint|long|ulong|char|wchar|dchar|float|double|real|ifloat|idouble|ireal|cfloat|cdouble|creal|void|noreturn)\\b",
           "name": "storage.type.basic-type.d"
         },
         {
