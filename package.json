@@ -735,12 +735,14 @@
 					"enum": [
 						"allman",
 						"otbs",
-						"stroustrup"
+						"stroustrup",
+						"knr"
 					],
 					"enumDescriptions": [
 						"Curly braces always on separate lines",
 						"Curly braces on the same line as for example if or while statements. Else on same line as closing curly brace.",
-						"Curly braces on the same line as for example if or while statements, but a new line after the closing curly brace, even if there is an else"
+						"Curly braces on the same line as for example if or while statements, but a new line after the closing curly brace, even if there is an else",
+						"Curly braces on the same line for everything except functions"
 					],
 					"default": "allman",
 					"description": "See Wikipedia https://en.wikipedia.org/wiki/Brace_style"
