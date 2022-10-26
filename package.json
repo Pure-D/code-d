@@ -125,6 +125,11 @@
 								"description": "Command line arguments to pass to the program. Can be a string which is passed as-is to Native Debug or parsed for C++. Can also be an array which is concatenated using the platform variable or current executing platform on Native Debug or passed as-is for C++. Using a string for this on Native Debug means you can use pipes and such as they are handled by GDB.",
 								"default": []
 							},
+							"env": {
+								"type": "object",
+								"description": "Additional environment variables",
+								"default": {}
+							},
 							"config": {
 								"type": "object",
 								"description": "Debug configuration members to overwrite launch settings.",

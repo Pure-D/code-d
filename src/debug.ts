@@ -74,6 +74,7 @@ class DDebugProvider implements vscode.DebugConfigurationProvider {
 			type: type,
 			target: debugConfiguration.program,
 			cwd: debugConfiguration.cwd,
+			env: debugConfiguration.env,
 			valuesFormatting: "prettyPrinters"
 		};
 
@@ -101,6 +102,7 @@ class DDebugProvider implements vscode.DebugConfigurationProvider {
 			type: "lldb",
 			program: debugConfiguration.program,
 			cwd: debugConfiguration.cwd,
+			env: debugConfiguration.env,
 			initCommands: [`command script import "${this.pyLLDBEntrypoint}"`]
 		};
 	
@@ -121,6 +123,7 @@ class DDebugProvider implements vscode.DebugConfigurationProvider {
 			type: "cppdbg",
 			program: debugConfiguration.program,
 			cwd: debugConfiguration.cwd,
+			environment: debugConfiguration.env,
 			setupCommands: [
 				{
 					description: "Enable python pretty printing for D extensions",
@@ -164,6 +167,7 @@ class DDebugProvider implements vscode.DebugConfigurationProvider {
 			type: "cppvsdbg",
 			program: debugConfiguration.program,
 			cwd: debugConfiguration.cwd,
+			environment: debugConfiguration.env,
 			visualizerFile: this.vsdbgNatvis
 		};
 	
