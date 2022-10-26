@@ -416,7 +416,12 @@ export function registerCommands(context: vscode.ExtensionContext) {
 			const btnDisk = "Run from disk";
 			const btnCancel = "Abort";
 
-			const choice = await vscode.window.showWarningMessage("The file is not saved, do you want to proceed?", btnSave, btnDisk, btnCancel);
+			let choice;
+			if (config(file).get("files.autoSave") != "off")
+				choice = btnSave;
+			else
+				choice = await vscode.window.showWarningMessage("The file is not saved, do you want to proceed?", btnSave, btnDisk, btnCancel);
+
 			switch (choice) {
 				case btnSave:
 					if (!await vscode.window.activeTextEditor.document.save()) {
