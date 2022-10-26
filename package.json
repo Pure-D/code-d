@@ -1380,7 +1380,7 @@
 		"vscode-languageclient": "^8.0.0-next.2",
 		"vscode-test-adapter-api": "^1.9.0",
 		"which": "^2.0.2",
-		"xmldom": "^0.6.0"
+		"@xmldom/xmldom": "^0.8.3"
 	},
 	"devDependencies": {
 		"@types/expand-tilde": "^2.0.0",
@@ -1399,9 +1399,6 @@
 		"vscode-test": "^1.6.1",
 		"vscode-textmate": "^4.4.0"
 	},
-	"extensionDependencies": [
-		"hbenl.vscode-test-explorer"
-	],
 	"__metadata": {
 		"id": "bf217d41-312b-4d39-9536-82fd0d9c6f94",
 		"publisherDisplayName": "WebFreak",
