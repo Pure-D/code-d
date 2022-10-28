@@ -4,7 +4,7 @@ import { JSDOM } from "jsdom";
 import { reqText } from "./util";
 import { served } from "./extension";
 import { DubDependencyInfo } from "./dub-view";
-var DOMParser = require("xmldom").DOMParser;
+import { DOMParser } from "@xmldom/xmldom";
 
 export type DocItem = vscode.QuickPickItem & { href: string, score: number, dependency?: DubDependencyInfo };
 
