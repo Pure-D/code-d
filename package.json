@@ -918,6 +918,12 @@
 						"order": 1,
 						"markdownDescription": "Array of workspace-relative (or absolute) folders to force start a project instance in."
 					},
+					"d.ccdbPath": {
+						"type": "string",
+						"scope": "resource",
+						"default": null,
+						"description": "Path to a Clang compilation database (aka. CCDB, aka. `compile_commands.json`) to use to lint this project"
+					},
 					"d.dmdPath": {
 						"type": "string",
 						"scope": "machine-overridable",

@@ -222,7 +222,8 @@ async function startClient(context: vscode.ExtensionContext) {
 				vscode.workspace.createFileSystemWatcher("**/*.d"),
 				vscode.workspace.createFileSystemWatcher("**/dub.json"),
 				vscode.workspace.createFileSystemWatcher("**/dub.sdl"),
-				vscode.workspace.createFileSystemWatcher("**/profilegc.log")
+				vscode.workspace.createFileSystemWatcher("**/profilegc.log"),
+				vscode.workspace.createFileSystemWatcher("**/compile_commands.json"),
 			]
 		},
 		revealOutputChannelOn: RevealOutputChannelOn.Never,
