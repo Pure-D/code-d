@@ -191,6 +191,7 @@ function startClient(context: vscode.ExtensionContext) {
 		"--provide", "http",
 		"--provide", "implement-snippets",
 		"--provide", "context-snippets",
+		"--provide", "default-snippets",
 		"--provide", "tasks-current",
 	];
 
