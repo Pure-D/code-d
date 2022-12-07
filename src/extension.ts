@@ -722,35 +722,38 @@ async function preStartup(context: vscode.ExtensionContext) {
 
 	let version = await findLatestServeD(firstTimeUser || force, channelString);
 	async function doUpdate(): Promise<boolean> {
-		let [isBlocked, lock] = await acquireInstallLock("serve-d", context);
-		let retry = false;
-		try {
-			context.subscriptions.push(lock);
-			let origUpdateFun = version ? (version.asset
-				? installServeD([{ url: version.asset.browser_download_url, title: "Serve-D" }], version.name)
-				: compileServeD((version && version.name != "nightly") ? version.name : undefined))
-				: updateAndInstallServeD;
-			let updateFun = origUpdateFun;
-			if (isBlocked) {
-				updateFun = function(env: NodeJS.ProcessEnv): Promise<boolean | undefined | "retry"> {
-					return waitForOtherInstanceInstall("serve-d", context, force)
-						.then((doUpdate) => doUpdate ? origUpdateFun(env) : "retry");
-				};
-			}
-			let upToDate = await checkProgram(force, "servedPath", "serve-d", "serve-d",
-				updateFun,
-				version ? (version.asset ? "Download" : "Compile") : "Install", isServedOutdated(version));
-			if (upToDate === undefined)
-				return false; /* user dismissed install dialogs, don't continue startup */
-			else if (upToDate === "retry")
-				retry = true;
-		} finally {
-			let i = context.subscriptions.indexOf(lock);
-			context.subscriptions.splice(i, 1);
-			lock.dispose();
-		}
+		let origUpdateFun = version ? (version.asset
+			? installServeD([{ url: version.asset.browser_download_url, title: "Serve-D" }], version.name)
+			: compileServeD((version && version.name != "nightly") ? version.name : undefined))
+			: updateAndInstallServeD;
+		let updateFun = origUpdateFun;
 
-		return retry ? doUpdate() : true;
+		updateFun = async function(env: NodeJS.ProcessEnv): Promise<boolean | undefined | "retry"> {
+			let [isBlocked, lock] = await acquireInstallLock("serve-d", context);
+			try {
+				context.subscriptions.push(lock);
+				if (isBlocked) {
+					return await waitForOtherInstanceInstall("serve-d", context, force)
+						.then((doUpdate) => doUpdate ? origUpdateFun(env) : "retry");
+				}
+				return await origUpdateFun(env);
+			}
+			finally {
+				let i = context.subscriptions.indexOf(lock);
+				context.subscriptions.splice(i, 1);
+				lock.dispose();
+			}
+		};
+
+		let upToDate = await checkProgram(force, "servedPath", "serve-d", "serve-d",
+			updateFun,
+			version ? (version.asset ? "Download" : "Compile") : "Install", isServedOutdated(version));
+		if (upToDate === undefined)
+			return false; /* user dismissed install dialogs, don't continue startup */
+		else if (upToDate === "retry")
+			return doUpdate();
+
+		return true;
 	}
 
 	if (!await doUpdate())
@@ -773,18 +776,32 @@ async function preStartup(context: vscode.ExtensionContext) {
 	}
 }
 
+function lockIsStillAcquired(lock: any): boolean {
+	return lock && isFinite(parseInt(lock)) && new Date().getTime() - parseInt(lock) < 10000;
+}
+
 async function acquireInstallLock(depName: string, context: vscode.ExtensionContext): Promise<[boolean, vscode.Disposable]> {
 	const installInProgress = "installInProgress-" + depName;
-	var installing = context.globalState.get(installInProgress, undefined);
-	context.globalState.update(installInProgress, true);
-	return [!!installing, new vscode.Disposable(() => context.globalState.update(installInProgress, false))];
+	let existingLock = context.globalState.get(installInProgress, undefined);
+	if (lockIsStillAcquired(existingLock)) {
+		return [false, new vscode.Disposable(() => {})];
+	} else {
+		context.globalState.update(installInProgress, new Date().getTime());
+		let timer = setInterval(function() {
+			context.globalState.update(installInProgress, new Date().getTime());
+		}, 2000);
+		return [true, new vscode.Disposable(() => {
+			clearInterval(timer);
+			context.globalState.update(installInProgress, false);
+		})];
+	}
 }
 
 async function waitForOtherInstanceInstall(depName: string, context: vscode.ExtensionContext, forced: boolean, showProgress: boolean = true): Promise<boolean> {
 	// XXX: horrible polling code here because there is no other IPC API for vscode extensions
 	const installInProgress = "installInProgress-" + depName;
-	var installing = context.globalState.get(installInProgress, undefined);
-	if (installing) {
+	var lock = context.globalState.get(installInProgress, undefined);
+	if (lockIsStillAcquired(lock)) {
 		if (forced) {
 			let ret = new Promise<boolean>((resolve) => {
 				setTimeout(function() {
