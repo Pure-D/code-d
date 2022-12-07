@@ -396,6 +396,21 @@ export function registerClientCommands(context: vscode.ExtensionContext, client:
 			});
 		});
 	}));
+
+	subscriptions.push(vscode.commands.registerCommand("code-d.dumpServedInfo", async () => {
+		let info = await client.sendRequest("served/getInfo", {
+			includeConfig: true
+		});
+
+		client.outputChannel.appendLine("");
+		client.outputChannel.appendLine("---");
+		client.outputChannel.appendLine("serve-d dump:");
+		client.outputChannel.appendLine(JSON.stringify(info, null, "\t"));
+		client.outputChannel.appendLine("---");
+		client.outputChannel.appendLine("");
+
+		client.outputChannel.show(true);
+	}));
 }
 
 export function registerCommands(context: vscode.ExtensionContext) {

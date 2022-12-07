@@ -1163,6 +1163,11 @@
 				"command": "code-d.setupCompiler",
 				"title": "Setup D Compiler",
 				"category": "code-d"
+			},
+			{
+				"command": "code-d.dumpServedInfo",
+				"title": "Dump serve-d state to output",
+				"category": "code-d"
 			}
 		],
 		"jsonValidation": [
