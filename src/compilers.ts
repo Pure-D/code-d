@@ -105,9 +105,9 @@ export async function setupCompilersUI() {
 						latest && { platform: "win32", label: "Run installer", downloadAndRun: "http://downloads.dlang.org/releases/2.x/" + latest + "/dmd-" + latest + ".exe" },
 						{ label: "Portable install (in existing ~/dlang)", installSh: "install dmd,dub", binTest: "bash", global: true, platform: isGlobalInstallSh },
 						{ label: "Portable install", installSh: "install dmd,dub", binTest: "bash" },
-						{ platform: "linux", label: "System install", command: "pacman -S dlang-dmd", binTest: "pacman" },
+						{ platform: "linux", label: "System install", command: "pacman -S dlang-dmd dub", binTest: "pacman" },
 						{ platform: "linux", label: "System install", command: "layman -a dlang", binTest: "layman" },
-						{ platform: "darwin", label: "System install", command: "brew install dmd", binTest: "brew" },
+						{ platform: "darwin", label: "Brew install", command: "brew install dmd dub", binTest: "brew" },
 						{ platform: "linux", label: "System install", command: "nix-env -iA nixpkgs.dmd", binTest: "nix-env" },
 						{ platform: "linux", label: "System install", command: "zypper install dmd", binTest: "zypper" },
 						{ platform: "linux", label: "System install", command: "xbps-install -S dmd", binTest: "xbps-install" },
@@ -120,15 +120,14 @@ export async function setupCompilersUI() {
 						latest && { platform: "win32", label: "Run installer", downloadAndRun: "https://github.com/ldc-developers/ldc/releases/download/v" + latest + "/ldc2-" + latest + "-windows-multilib.exe" },
 						{ label: "Portable install (in existing ~/dlang)", installSh: "install ldc,dub", binTest: "bash", global: true, platform: isGlobalInstallSh },
 						{ label: "Portable install", installSh: "install ldc,dub", binTest: "bash" },
-						{ label: "System install", command: "brew install ldc", binTest: "brew" },
 						{ platform: "linux", label: "System install", command: "apk add ldc", binTest: "apk" },
-						{ platform: "linux", label: "System install", command: "pacman -S dlang-ldc", binTest: "pacman" },
+						{ platform: "linux", label: "System install", command: "pacman -S dlang-ldc dub", binTest: "pacman" },
 						{ platform: "win32", label: "System install", command: "choco install ldc", binTest: "choco" },
 						{ platform: "linux", label: "System install", command: "apt install ldc", binTest: "apt" },
 						{ platform: "linux", label: "System install", command: "dnf install ldc", binTest: "dnf" },
 						{ platform: "freebsd", label: "System install", command: "pkg install ldc", binTest: "pkg" },
 						{ platform: "linux", label: "System install", command: "layman -a ldc", binTest: "layman" },
-						{ platform: "darwin", label: "System install", command: "brew install ldc", binTest: "brew" },
+						{ platform: "darwin", label: "Brew install", command: "brew install ldc dub", binTest: "brew" },
 						{ platform: "linux", label: "System install", command: "nix-env -i ldc", binTest: "nix-env" },
 						{ platform: "linux", label: "System install", command: "xbps-install -S ldc", binTest: "xbps-install" },
 					]);
@@ -140,7 +139,7 @@ export async function setupCompilersUI() {
 						// no install.sh for GDC because the version is ancient! (installing gcc 4.8.5, FE 2.068.2)
 						// { platform: () => isGlobalInstallSh() && process.platform == "linux", label: "Portable install (in existing ~/dlang)", installSh: "install gdc,dub", global: true },
 						// { platform: "linux", label: "Portable install", installSh: "install gdc,dub" },
-						{ platform: "linux", label: "System install", command: "pacman -S gcc-d", binTest: "pacman" },
+						{ platform: "linux", label: "System install", command: "pacman -S gcc-d dub", binTest: "pacman" },
 						{ platform: "linux", label: "System install", command: "apt install gdc", binTest: "apt" },
 					]);
 					break;
