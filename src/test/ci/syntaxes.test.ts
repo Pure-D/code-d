@@ -1,26 +1,37 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 import * as fs from 'fs';
-import * as paths from 'path';
+import * as path from 'path';
 import * as vsctm from 'vscode-textmate';
+import * as oniguruma from 'vscode-oniguruma';
 import { suite, test } from 'mocha';
+import { IRawGrammar } from 'vscode-textmate/release/rawGrammar';
 
 /**
  * Resolves a package relative path (relative to root folder / package.json folder) to the actual path
- * @param path the package relative path to resolve to an actual path
+ * @param pathStr the package relative path to resolve to an actual path
  */
-function res(path: string): string {
-	return paths.join(__dirname, "../../../", path);
+function res(pathStr: string): string {
+	return path.join(__dirname, "../../../", pathStr);
 }
 
-function readFile(path: string): Promise<Buffer> {
+const wasmBin = fs.readFileSync(res('node_modules/vscode-oniguruma/release/onig.wasm')).buffer;
+const vscodeOnigurumaLib = oniguruma.loadWASM(wasmBin).then(() => {
+	return {
+		createOnigScanner: function(patterns: any) { return new oniguruma.OnigScanner(patterns); },
+		createOnigString: function(s: any) { return new oniguruma.OnigString(s); }
+	};
+});
+
+function readFile(pathStr: string): Promise<Buffer> {
 	return new Promise((resolve, reject) => {
-		fs.readFile(res(path), (error, data) => error ? reject(error) : resolve(data));
+		fs.readFile(res(pathStr), (error, data) => error ? reject(error) : resolve(data));
 	});
 }
 
 const registry = new vsctm.Registry({
-	loadGrammar: async (scopeName): Promise<vsctm.IRawGrammar | undefined | null> => {
+	onigLib: vscodeOnigurumaLib,
+	loadGrammar: async (scopeName): Promise<IRawGrammar | undefined | null> => {
 		if (scopeName === 'source.diet') {
 			const data = await readFile('syntaxes/diet.json');
 			return vsctm.parseRawGrammar(data.toString(), 'syntaxes/diet.json');
@@ -60,7 +71,7 @@ function testSyntaxes(grammar: vsctm.IGrammar, folder: string, ext: string) {
 
 					let ruleStack = vsctm.INITIAL;
 
-					const text = await readFile(paths.join(folder, file));
+					const text = await readFile(path.join(folder, file));
 					const lines = text.toString().split(/\r?\n/g);
 					const tokens = lines.map(line => grammar.tokenizeLine(line, ruleStack).tokens.map(a => {
 						return {
@@ -71,9 +82,9 @@ function testSyntaxes(grammar: vsctm.IGrammar, folder: string, ext: string) {
 					}));
 
 					const actual = tokens.map(line => JSON.stringify(line)).join("\n");
-					fs.writeFileSync(res(paths.join(folder, file) + ".actual"), actual);
+					fs.writeFileSync(res(path.join(folder, file) + ".actual"), actual);
 
-					const expectedText = await readFile(paths.join(folder, file) + ".expected");
+					const expectedText = await readFile(path.join(folder, file) + ".expected");
 					const expectedLines = expectedText.toString().split(/\r?\n/g);
 					const expectedTokens = expectedLines.map(line => JSON.parse(line));
 
