@@ -1257,6 +1257,7 @@ repository:
       end: '}'
       patterns:
       - include: '#token-string-content'
+    - include: '#comment'
     - include: '#tokens'
   tokens:
     patterns:

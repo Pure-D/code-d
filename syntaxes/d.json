@@ -2659,6 +2659,9 @@
           ]
         },
         {
+          "include": "#comment"
+        },
+        {
           "include": "#tokens"
         }
       ]
