@@ -539,7 +539,7 @@
 				},
 				"d.dubCompiler": {
 					"type": "string",
-					"scope": "resource",
+					"scope": "machine-overridable",
 					"description": "Sets the default compiler to use when starting up"
 				},
 				"d.overrideDfmtEditorconfig": {
