@@ -406,14 +406,14 @@
 						"scope": "application",
 						"default": true,
 						"order": 2,
-						"markdownDescription": "Updates and installs outdated or missing tools without user confirmation automatically."
+						"markdownDescription": "Automatically update and install outdated or missing tools without user confirmation."
 					},
 					"d.showUpdateChangelogs": {
 						"type": "boolean",
 						"scope": "application",
 						"default": true,
 						"order": 3,
-						"markdownDescription": "Opens `CHANGELOG.md` on every code-d update (which also includes serve-d updates) to see new features."
+						"markdownDescription": "Open `CHANGELOG.md` on every code-d update (which also includes serve-d updates) to see new features."
 					}
 				}
 			},
@@ -426,7 +426,7 @@
 						"type": "boolean",
 						"scope": "resource",
 						"default": true,
-						"markdownDescription": "Enables auto-completion in D files, mostly powered by DCD. To change which DCD binary to run as auto-completion server, use the `#d.dcdServerPath#` setting. (only needed if you want to use a custom DCD setup)"
+						"markdownDescription": "Enable auto-completion in D files, mostly powered by DCD.\n\nIf you have a custom DCD setup, you can change the started dcd-server binary through the `#d.dcdServerPath#` setting."
 					},
 					"d.stdlibPath": {
 						"scope": "machine-overridable",
@@ -507,13 +507,13 @@
 						"type": "boolean",
 						"scope": "resource",
 						"default": false,
-						"markdownDescription": "Inserts the function signature (function arguments) as snippet which can be navigated using tab when autocompleting functions."
+						"markdownDescription": "Insert function signatures (function arguments) as snippets which can be navigated using tab when auto-completing functions."
 					},
 					"d.dietContextCompletion": {
 						"type": "boolean",
 						"scope": "resource",
 						"default": false,
-						"markdownDescription": "Enables reading `//-context=path/to/file.d` comments in diet files and act like the D code inside the diet file comes from there, to allow auto-completion of local symbols."
+						"markdownDescription": "Read `//-context=path/to/file.d` comments in diet files and act like the D code inside the diet file comes from there, to allow auto-completion of local symbols."
 					}
 				}
 			},
@@ -557,19 +557,19 @@
 						"scope": "resource",
 						"default": true,
 						"order": 9,
-						"markdownDescription": "Initializes isolated workspaces for every dub.sdl and dub.json file in all folders, avoiding mixing import paths in unrelated projects."
+						"markdownDescription": "Initialize isolated workspaces for every dub.sdl and dub.json file in all folders, avoiding mixing import paths in unrelated projects."
 					},
 					"d.neverUseDub": {
 						"type": "boolean",
 						"scope": "resource",
 						"default": false,
-						"markdownDescription": "Disables DUB integration and requires you to always manually provide import paths. See `#d.projectImportPaths#` for setting import paths then. This is discouraged as it will remove most features like packages, building & compiler linting. If this is a standalone project with no external dependencies with a custom build system then this should be true."
+						"markdownDescription": "Disable DUB integration and require manually provided import paths using `#d.projectImportPaths#`.\n\nThis is discouraged as it will remove most features like resolving dependencies, building and compiler linting. For standalone projects with no external dependencies with a custom build system then this can be useful."
 					},
 					"d.alwaysShowDubStatusButtons": {
 						"type": "boolean",
 						"scope": "resource",
 						"default": false,
-						"markdownDescription": "Always shows DUB Configuration/Arch Type/Build Type/Compiler buttons in DUB projects, and not just when a D file is open."
+						"markdownDescription": "Always show DUB Configuration/Arch Type/Build Type/Compiler buttons in DUB projects, and not just when a D file is open."
 					},
 					"d.dependencyClickBehavior": {
 						"type": "string",
@@ -629,28 +629,28 @@
 						"type": "boolean",
 						"scope": "resource",
 						"default": true,
-						"markdownDescription": "Enables 'squiggly lines' error diagnostics while editing source code.\n\nTurning this off disables all diagnostics coming from code-d.You can toggle\n\n- `#d.enableSDLLinting#`\n- `#d.enableDubLinting#`\n- `#d.enableStaticLinting#`\n\nfor finer control instead."
+						"markdownDescription": "Enable errors and warnings (squiggly lines) while editing source code.\n\nTurning this off disables all diagnostics coming from code-d.You can toggle\n\n- `#d.enableSDLLinting#`\n- `#d.enableDubLinting#`\n- `#d.enableStaticLinting#`\n\nfor finer control instead."
 					},
 					"d.enableStaticLinting": {
 						"order": 1,
 						"type": "boolean",
 						"scope": "resource",
 						"default": true,
-						"markdownDescription": "D files will be checked for errors, without being built, whenever typing.\n\nOnly has an effect if `#d.enableLinting#` is also turned on."
+						"markdownDescription": "Check D file for errors and warnings, without being built, whenever typing.\n\nOnly has an effect if `#d.enableLinting#` is also turned on."
 					},
 					"d.enableDubLinting": {
 						"order": 2,
 						"type": "boolean",
 						"scope": "resource",
 						"default": true,
-						"markdownDescription": "DUB projects will run the configured compiler on save to check for compile errors.\n\nThis is very similar to running `dub build` on the command line to see what actual errors occur, but does not output any executable or library.\n\nOnly has an effect if `#d.enableLinting#` is also turned on."
+						"markdownDescription": "Compile DUB projects on save to check for compile errors.\n\nThis is very similar to running `dub build` on the command line to see what actual errors occur, but does not output any executable or library.\n\nOnly has an effect if `#d.enableLinting#` is also turned on."
 					},
 					"d.enableSDLLinting": {
 						"order": 3,
 						"type": "boolean",
 						"scope": "resource",
 						"default": true,
-						"markdownDescription": "`dub.sdl` files will be checked for errors.\n\nOnly has an effect if `#d.enableLinting#` is also turned on."
+						"markdownDescription": "Check `dub.sdl` files for errors and warnings.\n\nOnly has an effect if `#d.enableLinting#` is also turned on."
 					},
 					"d.lintOnFileOpen": {
 						"type": "string",
@@ -739,13 +739,13 @@
 						"type": "boolean",
 						"scope": "resource",
 						"default": true,
-						"markdownDescription": "The standard VSCode Formatting behavior will apply to D files when on. Formatting on save can be configured with `#editor.formatOnSave#`"
+						"markdownDescription": "Apply standard VSCode Formatting behavior to D files. Formatting on save can be configured with `#editor.formatOnSave#`"
 					},
 					"d.overrideDfmtEditorconfig": {
 						"type": "boolean",
 						"scope": "resource",
 						"default": true,
-						"markdownDescription": "Uses the VSCode `dfmt.*` config options & editor settings instead of `.editorconfig`. This avoids inconsistencies with the vscode editor settings, it's recommended to only turn this off when you have the EditorConfig extension for VSCode installed."
+						"markdownDescription": "Use the VSCode `dfmt.*` config options & editor settings instead of `.editorconfig` files. This avoids inconsistencies with the vscode editor settings, it's recommended to only turn this off when you have the EditorConfig extension for VSCode installed."
 					},
 					"dfmt.alignSwitchStatements": {
 						"type": "boolean",
@@ -859,31 +859,31 @@
 						"type": "boolean",
 						"scope": "resource",
 						"default": false,
-						"markdownDescription": "Add code lenses (gray text above source code) on import statements showing how long each import takes to compile on its own. Executes DMD, as set by `#d.dmdPath#`, to get the impact on compilation time by this import."
+						"markdownDescription": "Add code lenses (gray text above source code) on import statements to show how long each import takes to compile on its own. Executes DMD, as set by `#d.dmdPath#`, to get the impact on compilation time by this import."
 					},
 					"d.enableCoverageDecoration": {
 						"type": "boolean",
 						"scope": "resource",
 						"default": true,
-						"markdownDescription": "Automatically highlights tested/untested coverage lines with light red/green backgrounds per line for `*.lst` files. You can for example run `dub test --config=unittest-cov` to run unittests and collect coverage information."
+						"markdownDescription": "Automatically highlight tested/untested coverage inside source code with light red/green backgrounds from `*.lst` files. You can for example run `dub test --config=unittest-cov` to run unittests and collect coverage information."
 					},
 					"d.enableGCProfilerDecorations": {
 						"type": "boolean",
 						"scope": "resource",
 						"default": true,
-						"markdownDescription": "Automatically embed code lenses (gray text above source code) for all GC allocations based on `profilegc.log`. You can for example run `dub run --config=profile-gc` to run the project and see where the GC is actually used."
+						"markdownDescription": "Automatically embed code lenses (gray text above source code) for GC allocations based on `profilegc.log`. You can for example run `dub run --config=profile-gc` to run the project and see where the GC is actually used."
 					},
 					"d.alwaysShowCoverageStatus": {
 						"type": "boolean",
 						"scope": "resource",
 						"default": false,
-						"markdownDescription": "Always shows D code coverage status when available through `.lst` files, and not just when a D file is open."
+						"markdownDescription": "Always show D code coverage status in status bar when available through `.lst` files, and not just when a D file is open."
 					},
 					"d.generateModuleNames": {
 						"type": "boolean",
 						"scope": "resource",
 						"default": true,
-						"markdownDescription": "Automatically inserts or replaces the module name in the current file when creating or renaming a file."
+						"markdownDescription": "Automatically insert or replace the `module name;` when creating or renaming a file."
 					}
 				}
 			},
@@ -929,7 +929,7 @@
 						"type": "boolean",
 						"scope": "application",
 						"default": true,
-						"markdownDescription": "Randomly omits serve-d update checks to save bandwidth, lowers startup delay and minimizes breakage on new releases with quick fixes. Also avoids to update when working on fridays."
+						"markdownDescription": "Randomly omit serve-d update checks to save bandwidth. Lowers startup delay and minimizes breakage on new releases with quick fixes. Also avoids to update when working on fridays."
 					},
 					"d.manyProjectsAction": {
 						"type": "string",
@@ -958,7 +958,7 @@
 						"type": "boolean",
 						"scope": "window",
 						"default": false,
-						"markdownDescription": "No hints will be shown when a project may be wrongly configured when trying to start debugging."
+						"markdownDescription": "Don't show alerts when a project may be wrongly configured when trying to start debugging."
 					}
 				}
 			}
