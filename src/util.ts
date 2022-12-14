@@ -148,3 +148,27 @@ export function showQuickPickWithInput<T>(items: T[] | Thenable<T[]>, options?: 
 		quickPick.show();
 	});
 }
+
+/**
+ * @param uri The text document to open and show to the user.
+ * @param lineOrRange
+ *     If null, only open the text document, don't scroll or select anything (default vscode behavior)
+ *     If a number, this is the 0-based line number to focus and put the cursor on.
+ *     If a range, this is a range to focus in the center of the editor and put the cursor at the start of.
+ */
+export function openTextDocumentAtRange(uri: vscode.Uri, lineOrRange: null | number | vscode.Position | vscode.Range): Thenable<vscode.TextEditor> {
+	return vscode.workspace.openTextDocument(uri).then(doc =>
+		vscode.window.showTextDocument(doc).then(editor => {
+			if (lineOrRange !== null) {
+				if (typeof lineOrRange == "number")
+					lineOrRange = doc.lineAt(lineOrRange).range;
+				if (lineOrRange instanceof vscode.Position)
+					lineOrRange = new vscode.Range(lineOrRange, lineOrRange);
+
+				editor.revealRange(lineOrRange, vscode.TextEditorRevealType.InCenterIfOutsideViewport);
+				editor.selection = new vscode.Selection(lineOrRange.start, lineOrRange.start);
+			}
+			return editor;
+		})
+	);
+}

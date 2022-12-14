@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { served } from "./extension";
+import { openTextDocumentAtRange } from "./util";
 
 interface ProfileQuickPick extends vscode.QuickPickItem {
 	uri: string;
@@ -21,13 +22,7 @@ export class GCProfiler {
 
 		vscode.window.showQuickPick(items).then(item => {
 			if (item)
-				vscode.workspace.openTextDocument(vscode.Uri.parse(item.uri)).then(doc => {
-					vscode.window.showTextDocument(doc).then(editor => {
-						let line = doc.lineAt(item.line - 1);
-						editor.revealRange(line.range, vscode.TextEditorRevealType.InCenterIfOutsideViewport);
-						editor.selection = new vscode.Selection(line.range.start, line.range.start);
-					});
-				});
+				openTextDocumentAtRange(vscode.Uri.parse(item.uri), item.line - 1);
 		});
 	}
 

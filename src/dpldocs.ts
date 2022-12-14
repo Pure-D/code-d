@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import { JSDOM } from "jsdom";
-import { reqText } from "./util";
+import { openTextDocumentAtRange, reqText } from "./util";
 import { served } from "./extension";
 import { DubDependencyInfo } from "./dub-view";
 import { DOMParser } from "@xmldom/xmldom";
@@ -637,17 +637,8 @@ function focusModule(module_: string, line: number) {
 	served.findFilesByModule(module_).then(files => {
 		if (!files.length) {
 			vscode.window.showErrorMessage("Could not find module " + module_);
-		}
-		else {
-			vscode.workspace.openTextDocument(files[0]).then(doc => {
-				vscode.window.showTextDocument(doc).then(editor => {
-					if (line > 0) {
-						var pos = new vscode.Position(line - 1, 0);
-						editor.revealRange(new vscode.Range(pos, pos), vscode.TextEditorRevealType.InCenter);
-						editor.selection.active = pos;
-					}
-				});
-			});
+		} else {
+			openTextDocumentAtRange(vscode.Uri.parse(files[0]), line > 0 ? line - 1 : null);
 		}
 	});
 }
