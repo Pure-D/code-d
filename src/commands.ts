@@ -11,6 +11,7 @@ import { DubTasksProvider } from "./dub-tasks";
 import { showDpldocsSearch } from "./dpldocs";
 import { showQuickPickWithInput, simpleBytesToString } from "./util";
 import { listCompilers, makeCompilerDescription } from "./compilers";
+import { DTerminalLinkProvider } from "./terminal-link-provider";
 
 const multiTokenWordPattern = /[^\`\~\!\@\#\%\^\&\*\(\)\=\+\[\{\]\}\\\|\;\:\'\"\,\.\<\>\/\?\s]+(?:\.[^\`\~\!\@\#\%\^\&\*\(\)\=\+\[\{\]\}\\\|\;\:\'\"\,\.\<\>\/\?\s]+)*/;
 
@@ -419,6 +420,7 @@ export function registerCommands(context: vscode.ExtensionContext) {
 	vscode.commands.executeCommand("setContext", "d.isActive", true);
 
 	subscriptions.push(DubEditor.register(context));
+	subscriptions.push(DTerminalLinkProvider.register());
 
 	subscriptions.push(vscode.commands.registerCommand("code-d.rdmdCurrent", async (file: vscode.Uri) => {
 		var args: vscode.ShellQuotedString[] = [];
