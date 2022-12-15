@@ -1352,8 +1352,8 @@
 				"name": "dmd",
 				"owner": "d",
 				"fileLocation": [
-					"relative",
-					"${cwd}"
+					"autoDetect",
+					"${workspaceFolder}"
 				],
 				"pattern": {
 					"regexp": "^(.*?)(?:-mixin-\\d+)?\\((\\d+)(?:,\\s*(\\d+))?\\):\\s([Ww]arning|[Ee]rror|[Dd]eprecated|[Dd]eprecation|\\s{4,}):?\\s*(.*)$",
