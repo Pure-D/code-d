@@ -242,6 +242,7 @@ function startClient(context: vscode.ExtensionContext) {
 	client.onReady().then(() => {
 		var updateSetting = new NotificationType<{ section: string, value: any, global: boolean }>("coded/updateSetting");
 		client.onNotification(updateSetting, (arg: { section: string, value: any, global: boolean }) => {
+			hideNextPotentialConfigUpdateWarning();
 			config(null).update(arg.section, arg.value, arg.global);
 		});
 
@@ -405,6 +406,7 @@ export function activate(context: vscode.ExtensionContext): CodedAPI {
 
 	context.subscriptions.push(addSDLProviders());
 	context.subscriptions.push(addJSONProviders());
+	context.subscriptions.push(createConfigUpdateWatcher());
 
 	context.subscriptions.push(registerCompilerInstaller(context));
 
@@ -526,8 +528,10 @@ async function preStartup(context: vscode.ExtensionContext) {
 			}
 		}
 
-		if (updateSetting)
+		if (updateSetting) {
+			hideNextPotentialConfigUpdateWarning();
 			await config(null).update("dubPath", path);
+		}
 		return true;
 	}
 
@@ -690,6 +694,7 @@ async function preStartup(context: vscode.ExtensionContext) {
 	}
 
 	if (isLegacyBeta && servedReleaseChannel && !servedReleaseChannel.globalValue) {
+		hideNextPotentialConfigUpdateWarning();
 		config(null).update("servedReleaseChannel", "nightly", vscode.ConfigurationTarget.Global);
 		channelString = "nightly";
 
@@ -703,9 +708,11 @@ async function preStartup(context: vscode.ExtensionContext) {
 				if (item == userConfig) {
 					vscode.commands.executeCommand("workbench.action.openGlobalSettings");
 				} else if (item == stable) {
+					hideNextPotentialConfigUpdateWarning();
 					let done = config(null).update("servedReleaseChannel", "stable", vscode.ConfigurationTarget.Global);
 					didChangeReleaseChannel(done);
 				} else if (item == beta) {
+					hideNextPotentialConfigUpdateWarning();
 					let done = config(null).update("servedReleaseChannel", "beta", vscode.ConfigurationTarget.Global);
 					didChangeReleaseChannel(done);
 				}
@@ -904,3 +911,49 @@ function shortenPath(p: string) {
 		});
 	return short;
 }
+
+/**
+ * Watches for config updates that need a vscode window reload to be effective
+ * and shows a hint to the user in these cases.
+ */
+function createConfigUpdateWatcher(): vscode.Disposable {
+	return vscode.workspace.onDidChangeConfiguration((e) => {
+		const needReloadSettings = [
+			"d.servedPath",
+			"d.servedReleaseChannel",
+			"d.dcdServerPath",
+			"d.dcdClientPath",
+			"d.scanAllFolders",
+			"d.neverUseDub",
+			"d.disabledRootGlobs",
+			"d.extraRoots",
+		];
+
+		if (lastConfigUpdateWasInternal && new Date().getTime() - lastConfigUpdateWasInternal < 1000)
+			return; // ignore config updates that come from code-d or serve-d
+
+		var changed: string | null = null;
+		needReloadSettings.forEach(setting => {
+			if (!changed && e.affectsConfiguration(setting))
+				changed = setting;
+		});
+
+		let reloadBtn = "Reload VSCode";
+		let ignoreBtn = "Ignore";
+
+		if (changed)
+			vscode.window.showInformationMessage("You have changed code-d's `"
+				+ changed + "` setting. To apply the new value, you need to reload VSCode.",
+				reloadBtn, ignoreBtn)
+				.then(btn => {
+					if (btn == reloadBtn)
+						vscode.commands.executeCommand("workbench.action.reloadWindow");
+				});
+	});
+}
+
+var lastConfigUpdateWasInternal: number | null;
+export function hideNextPotentialConfigUpdateWarning() {
+	lastConfigUpdateWasInternal = new Date().getTime();
+}
+

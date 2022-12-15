@@ -3,7 +3,7 @@ import * as which from "which";
 import * as fs from "fs";
 import * as path from "path";
 import * as ChildProcess from "child_process";
-import { config } from './extension';
+import { config, hideNextPotentialConfigUpdateWarning } from './extension';
 import { determineOutputFolder, downloadFileInteractive } from './installer';
 import { reqText } from './util';
 
@@ -395,6 +395,7 @@ export function makeCompilerInstallButtons(compiler: DetectedCompiler): [UIQuick
 			detail: detail,
 			action: function () {
 				settings.forEach(setting => {
+					hideNextPotentialConfigUpdateWarning();
 					config(null).update(setting[0], setting[1], vscode.ConfigurationTarget.Global);
 				});
 			}

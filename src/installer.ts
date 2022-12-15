@@ -3,7 +3,7 @@ import * as vscode from "vscode"
 import * as path from "path"
 import * as fs from "fs"
 import { reqJson, reqType } from "./util"
-import { config, extensionContext } from "./extension"
+import { config, extensionContext, hideNextPotentialConfigUpdateWarning } from "./extension"
 import expandTilde = require("expand-tilde");
 import { AxiosResponse } from "axios"
 import { Readable } from "stream"
@@ -390,6 +390,7 @@ export function installServeD(urls: { url: string, title: string }[], ref: strin
 					return done(undefined);
 			}
 			else {
+				hideNextPotentialConfigUpdateWarning();
 				await config(null).update("servedPath", finalDestination, true);
 				installationLog.appendLine("Finished installing into " + finalDestination);
 				done(true);
@@ -503,6 +504,7 @@ export function compileServeD(ref?: string): (env: NodeJS.ProcessEnv) => Promise
 		], env, ref);
 		var finalDestination = path.join(outputFolder, "serve-d", "serve-d" + (process.platform == "win32" ? ".exe" : ""));
 
+		hideNextPotentialConfigUpdateWarning();
 		await config(null).update("servedPath", finalDestination, true);
 		return true;
 	});
