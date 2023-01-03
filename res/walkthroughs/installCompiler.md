@@ -30,10 +30,10 @@ Download (executables): https://github.com/ldc-developers/ldc/releases
 
 ## GDC
 
-GDC is an GCC-based D compiler. Other than the other compilers it comes built-in
-into GCC and does not require a separate installation. It supports a variety of
+GDC is a GCC-based D compiler. Other than the other compilers, it comes built-in
+with GCC and does not require a separate installation. It supports a variety of
 operating systems and target architectures. Being tied to GCC's release schedule
-it is often behind in new features but receives bug fix backports from later
+it may be behind in new D features. However GDC backports D bug fixes from later
 versions in minor updates. GDC could be called the most stable compiler as it is
 tied to specific D frontend versions for a while, only fixing issues without big
 changes. GDC is a good compiler to be using in production to create executables.
