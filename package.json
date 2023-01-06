@@ -855,6 +855,13 @@
 				"title": "Editing Features",
 				"type": "object",
 				"properties": {
+					"d.enableIndex": {
+						"order": 0,
+						"type": "boolean",
+						"scope": "resource",
+						"default": true,
+						"markdownDescription": "Enable cached background indexing that is used for find references and auto-import suggestions in completion and code actions."
+					},
 					"d.enableDMDImportTiming": {
 						"type": "boolean",
 						"scope": "resource",
