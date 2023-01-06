@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
-import { LanguageClient, LanguageClientOptions, ServerOptions, DocumentFilter, NotificationType, CloseAction, ErrorAction, ErrorHandler, Message, State, MessageType, RevealOutputChannelOn } from "vscode-languageclient/node";
+import { LanguageClient, LanguageClientOptions, ServerOptions, DocumentFilter, NotificationType, CloseAction, ErrorAction, ErrorHandler, Message, State, MessageType, RevealOutputChannelOn, ErrorHandlerResult, CloseHandlerResult } from "vscode-languageclient/node";
 import { installServeD, compileServeD, getInstallOutput, downloadFileInteractive, findLatestServeD, cmpSemver, extractServedBuiltDate, Release, updateAndInstallServeD } from "./installer";
 import { EventEmitter } from "events";
 import * as ChildProcess from "child_process";
@@ -31,23 +31,23 @@ class CustomErrorHandler implements ErrorHandler {
 		this.restarts = [];
 	}
 
-	public error(error: Error, message: Message, count: number): ErrorAction {
-		return ErrorAction.Continue;
+	public error(error: Error, message: Message, count: number): ErrorHandlerResult {
+		return { action: ErrorAction.Continue };
 	}
 
-	public closed(): CloseAction {
+	public closed(): CloseHandlerResult {
 		this.restarts.push(Date.now());
 		if (this.restarts.length < 10) {
-			return CloseAction.Restart;
+			return { action: CloseAction.Restart };
 		} else {
 			let diff = this.restarts[this.restarts.length - 1] - this.restarts[0];
 			if (diff <= 60 * 1000) {
 				// TODO: run automated diagnostics about current code file here
 				this.output.appendLine(`Server crashed 10 times in the last minute. The server will not be restarted.`);
-				return CloseAction.DoNotRestart;
+				return { action: CloseAction.DoNotRestart };
 			} else {
 				this.restarts.shift();
-				return CloseAction.Restart;
+				return { action: CloseAction.Restart };
 			}
 		}
 	}
@@ -183,7 +183,7 @@ export class ServeD extends EventEmitter implements vscode.TreeDataProvider<DubD
 	];
 }
 
-function startClient(context: vscode.ExtensionContext) {
+async function startClient(context: vscode.ExtensionContext) {
 	let servedPath = expandTilde(config(null).get("servedPath", "serve-d"));
 	let args = [
 		"--require", "D",
@@ -230,7 +230,7 @@ function startClient(context: vscode.ExtensionContext) {
 		errorHandler: new CustomErrorHandler(outputChannel)
 	};
 	let client = new LanguageClient("serve-d", "code-d & serve-d", executable, clientOptions);
-	client.start();
+	await client.start();
 	served = new ServeD(client, outputChannel);
 
 	context.subscriptions.push({
@@ -239,113 +239,109 @@ function startClient(context: vscode.ExtensionContext) {
 		}
 	});
 
-	client.onReady().then(() => {
-		var updateSetting = new NotificationType<{ section: string, value: any, global: boolean }>("coded/updateSetting");
-		client.onNotification(updateSetting, (arg: { section: string, value: any, global: boolean }) => {
-			hideNextPotentialConfigUpdateWarning();
-			config(null).update(arg.section, arg.value, arg.global);
-		});
+	registerClientCommands(context, client, served);
+	linkDebuggersWithServed(served);
 
-		var logInstall = new NotificationType<string>("coded/logInstall");
-		client.onNotification(logInstall, (message: string) => {
-			getInstallOutput().appendLine(message);
-		});
+	var updateSetting = new NotificationType<{ section: string, value: any, global: boolean }>("coded/updateSetting");
+	client.onNotification(updateSetting, (arg: { section: string, value: any, global: boolean }) => {
+		hideNextPotentialConfigUpdateWarning();
+		config(null).update(arg.section, arg.value, arg.global);
+	});
 
-		client.onNotification("coded/initDubTree", function () {
-			context.subscriptions.push(statusbar.setupDub(served));
-			vscode.commands.executeCommand("setContext", "d.hasDubProject", true);
-			context.subscriptions.push(vscode.window.registerTreeDataProvider<DubDependency>("dubDependencies", served));
-		});
+	var logInstall = new NotificationType<string>("coded/logInstall");
+	client.onNotification(logInstall, (message: string) => {
+		getInstallOutput().appendLine(message);
+	});
 
-		client.onNotification("coded/updateDubTree", function () {
-			served.refreshDependencies();
-		});
+	client.onNotification("coded/initDubTree", function () {
+		context.subscriptions.push(statusbar.setupDub(served));
+		vscode.commands.executeCommand("setContext", "d.hasDubProject", true);
+		context.subscriptions.push(vscode.window.registerTreeDataProvider<DubDependency>("dubDependencies", served));
+	});
 
-		client.onNotification("coded/changedSelectedWorkspace", function () {
-			served.emit("workspace-change");
-			served.refreshDependencies();
-		});
+	client.onNotification("coded/updateDubTree", function () {
+		served.refreshDependencies();
+	});
 
-		const startupProgress = new statusbar.StartupProgress();
-		client.onNotification("window/logMessage", function (info: { type: MessageType, message: string }) {
-			if (info.type == MessageType.Log && info.message.startsWith("[progress]")) {
-				let m = /^\[progress\] \[(\d+\.\d+)\] \[(\w+)\](?:\s*(\d+)?\s*(?:\/\s*(\d+))?:\s)?(.*)/.exec(info.message);
-				if (!m) return;
-				const time = parseFloat(m[1]);
-				const type = m[2];
-				const step = m[3] ? parseInt(m[3]) : undefined;
-				const max = m[4] ? parseInt(m[4]) : undefined;
-				const args = m[5] || undefined;
+	client.onNotification("coded/changedSelectedWorkspace", function () {
+		served.emit("workspace-change");
+		served.refreshDependencies();
+	});
 
-				if (type == "configLoad") {
+	const startupProgress = new statusbar.StartupProgress();
+	client.onNotification("window/logMessage", function (info: { type: MessageType, message: string }) {
+		if (info.type == MessageType.Log && info.message.startsWith("[progress]")) {
+			let m = /^\[progress\] \[(\d+\.\d+)\] \[(\w+)\](?:\s*(\d+)?\s*(?:\/\s*(\d+))?:\s)?(.*)/.exec(info.message);
+			if (!m) return;
+			const time = parseFloat(m[1]);
+			const type = m[2];
+			const step = m[3] ? parseInt(m[3]) : undefined;
+			const max = m[4] ? parseInt(m[4]) : undefined;
+			const args = m[5] || undefined;
+
+			if (type == "configLoad") {
+				startupProgress.startGlobal();
+				const p = vscode.Uri.parse(args || "").fsPath;
+				startupProgress.setWorkspace(shortenPath(p));
+			}
+			else if (type == "configFinish") {
+				startupProgress.finishGlobal();
+			}
+			else if (type == "workspaceStartup" && step !== undefined && max) {
+				startupProgress.workspaceStep(step * 0.5, max, "updating");
+			}
+			else if (type == "completionStartup" && step !== undefined && max) {
+				startupProgress.workspaceStep(step * 0.5 + max * 0.5, max, "indexing");
+			}
+			else if ((type == "dubReload" || type == "importReload" || type == "importUpgrades") && step !== undefined && max) {
+				if (step == max)
+					startupProgress.finishGlobal();
+				else {
 					startupProgress.startGlobal();
 					const p = vscode.Uri.parse(args || "").fsPath;
-					startupProgress.setWorkspace(shortenPath(p));
-				}
-				else if (type == "configFinish") {
-					startupProgress.finishGlobal();
-				}
-				else if (type == "workspaceStartup" && step !== undefined && max) {
-					startupProgress.workspaceStep(step * 0.5, max, "updating");
-				}
-				else if (type == "completionStartup" && step !== undefined && max) {
-					startupProgress.workspaceStep(step * 0.5 + max * 0.5, max, "indexing");
-				}
-				else if ((type == "dubReload" || type == "importReload" || type == "importUpgrades") && step !== undefined && max) {
-					if (step == max)
-						startupProgress.finishGlobal();
-					else {
-						startupProgress.startGlobal();
-						const p = vscode.Uri.parse(args || "").fsPath;
-						let label: string;
-						switch (type) {
-							case "dubReload":
-								label = "updating";
-								break;
-							case "importReload":
-								label = "indexing";
-								break;
-							case "importUpgrades":
-								label = "downloading dependencies";
-								break;
-							default:
-								label = "loading";
-								break;
-						}
-						startupProgress.globalStep(step, max, shortenPath(p), label)
+					let label: string;
+					switch (type) {
+						case "dubReload":
+							label = "updating";
+							break;
+						case "importReload":
+							label = "indexing";
+							break;
+						case "importUpgrades":
+							label = "downloading dependencies";
+							break;
+						default:
+							label = "loading";
+							break;
 					}
+					startupProgress.globalStep(step, max, shortenPath(p), label)
 				}
-
-				// console.log("progress:", time, type, step, max, args);
 			}
-		});
 
-		client.onRequest<boolean, { url: string, title?: string, output: string }>("coded/interactiveDownload", function (e, token): Thenable<boolean> {
-			return new Promise((resolve, reject) => {
-				let aborted = false;
-				downloadFileInteractive(e.url, e.title || "Dependency Download", () => {
-					aborted = true;
-					resolve(false);
-				}).then(stream => stream.pipe(fs.createWriteStream(e.output)).on("finish", () => {
-					if (!aborted)
-						resolve(true);
-				}));
-			});
-		});
+			// console.log("progress:", time, type, step, max, args);
+		}
+	});
 
-		// this code is run on every restart too
-		CodedAPIServedImpl.getInstance().started(served);
-		client.onDidChangeState((event) => {
-			if (event.newState == State.Starting) {
-				client.onReady().then(() => {
-					CodedAPIServedImpl.getInstance().started(served);
-				});
-			}
+	client.onRequest<boolean, { url: string, title?: string, output: string }>("coded/interactiveDownload", function (e, token): Thenable<boolean> {
+		return new Promise((resolve, reject) => {
+			let aborted = false;
+			downloadFileInteractive(e.url, e.title || "Dependency Download", () => {
+				aborted = true;
+				resolve(false);
+			}).then(stream => stream.pipe(fs.createWriteStream(e.output)).on("finish", () => {
+				if (!aborted)
+					resolve(true);
+			}));
 		});
 	});
 
-	registerClientCommands(context, client, served);
-	linkDebuggersWithServed(served);
+	// this code is run on every restart too
+	CodedAPIServedImpl.getInstance().started(served);
+	client.onDidChangeState((event) => {
+		if (event.newState == State.Starting) {
+			CodedAPIServedImpl.getInstance().started(served);
+		}
+	});
 }
 
 export var currentVersion: string | undefined;
@@ -778,7 +774,7 @@ async function preStartup(context: vscode.ExtensionContext) {
 			}, 500);
 		}
 	} else {
-		startClient(context);
+		await startClient(context);
 		started = true;
 	}
 }

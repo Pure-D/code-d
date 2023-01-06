@@ -62,7 +62,7 @@ class GenericSelector implements vscode.Disposable {
 		public method: string,
 		public fallback: string
 	) {
-		served.client.onReady().then(this.create.bind(this));
+		this.create();
 	}
 
 	protected create() {

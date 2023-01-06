@@ -41,7 +41,7 @@ export async function setupCompilersUI() {
 		if (i == 0) {
 			items.push({
 				label: "$(find-expanded) Detected installations",
-				kind: 2, // proposed type for separators: https://github.com/microsoft/vscode/blob/main/src/vscode-dts/vscode.proposed.quickPickSeparators.d.ts
+				kind: vscode.QuickPickItemKind.Separator,
 			});
 		}
 
@@ -56,7 +56,7 @@ export async function setupCompilersUI() {
 	}
 	items.push({
 		label: "$(find-expanded) Manual configuration",
-		kind: 2,
+		kind: vscode.QuickPickItemKind.Separator,
 	});
 	let manualSelect: vscode.QuickPickItem;
 	let dmdItem: vscode.QuickPickItem;
@@ -85,7 +85,7 @@ export async function setupCompilersUI() {
 
 	introQuickPick.onDidAccept(async (e) => {
 		let selection = <UIQuickPickItem>introQuickPick.selectedItems[0];
-		if (selection.kind === 2)
+		if (selection.kind === vscode.QuickPickItemKind.Separator)
 			return;
 
 		introQuickPick.hide();

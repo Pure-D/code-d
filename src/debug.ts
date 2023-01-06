@@ -405,7 +405,8 @@ class DDebugProvider implements vscode.DebugConfigurationProvider {
 						showReuseMessage: false
 					},
 					problemMatchers: ["$dmd"],
-					group: vscode.TaskGroup.Build
+					group: vscode.TaskGroup.Build,
+					scope: undefined
 				}, undefined);
 
 			// hacky wait until finished task
