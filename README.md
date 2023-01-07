@@ -18,11 +18,29 @@ Also [available for Atom](https://github.com/Pure-D/atomize-d)!
 
 ## Special Thanks
 
+### Corporate Sponsors
+
+Development on code-d/serve-d tools is sponsored by
+
+| [![Weka.IO Logo](sponsors/weka.png)](https://weka.io) |
+|:---:|
+| **[Weka.IO](https://weka.io)** |
+
+### Individual Sponsors
+
 **Thanks to the following big GitHub sponsors** financially supporting the code-d/serve-d tools:
 
 * Jaen ([@jaens](https://github.com/jaens))
 
 _[become a sponsor](https://github.com/sponsors/WebFreak001)_
+
+### Development
+
+Thanks to @Hackerpilot for his great IDE software that serve-d built upon.
+
+Thanks to the D package registry, especially @s-ludwig for their great package manager and library "dub".
+
+Thanks to all contributors to [code-d](https://github.com/Pure-D/code-d/graphs/contributors) and [serve-d](https://github.com/Pure-D/serve-d/graphs/contributors).
 
 ## Installation
 
@@ -59,16 +77,6 @@ if they are not already installed.
 ## License
 
 MIT - Look in [LICENSE.md](LICENSE.md) for more information
-
-## Special Thanks
-
-Thanks to @Hackerpilot for his great software used here and the D package registry
-for their great package manager and library "dub"
-
-## Authors
-
-* Dan "Wild" Printzell
-* Jan "WebFreak" Jurzitza
 
 ## Issues
 
