@@ -2,18 +2,17 @@
 
 Join the chat: [![Join on Discord](https://discordapp.com/api/guilds/242094594181955585/widget.png?style=shield)](https://discord.gg/Bstj9bx)
 
-Adds D language support for visual studio code.
-
-> It works pretty good - Wild 2018
+Adds advanced IDE support for the [D Programming Language](https://dlang.org) to Visual Studio Code. Powered by [serve-d](https://github.com/Pure-D/serve-d).
 
 Also [available for Atom](https://github.com/Pure-D/atomize-d)!
 
 ## Features
 
-* Autocompletion
+* Auto-Completion
 * Code formatting
-* Static linting
+* Static linting + Build linting
 * Outlining and searching for symbols
+* Refactorings for code diagnostics
 * and [much more](https://github.com/Pure-D/code-d/wiki)
 
 ## Special Thanks
@@ -25,6 +24,10 @@ Development on code-d/serve-d tools is sponsored by
 | [![Weka.IO Logo](sponsors/weka.png)](https://weka.io) |
 |:---:|
 | **[Weka.IO](https://weka.io)** |
+
+If you are looking for a Job with D, check out the companies listed above!
+
+_For professional D consulting, programming services or corporate support with D IDE tools, DUB and the ecosystem, contact me through [dlang@wfr.software](mailto:dlang@wfr.software)_
 
 ### Individual Sponsors
 
