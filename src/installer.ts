@@ -356,19 +356,19 @@ export function installServeD(urls: { url: string, title: string }[], ref: strin
 
 	// add DCD binaries here as well
 	if (process.platform == "linux" && process.arch == "x64") {
-		urls.push({ url: "https://github.com/dlang-community/DCD/releases/download/v0.15.0/dcd-v0.15.0-linux-x86_64.tar.gz", title: "DCD" });
+		urls.push({ url: "https://github.com/dlang-community/DCD/releases/download/v0.15.2/dcd-v0.15.2-linux-x86_64.tar.gz", title: "DCD" });
 	}
 	else if (process.platform == "darwin" && process.arch == "x64") {
-		urls.push({ url: "https://github.com/dlang-community/DCD/releases/download/v0.15.0/dcd-v0.15.0-osx-x86_64.tar.gz", title: "DCD" });
+		urls.push({ url: "https://github.com/dlang-community/DCD/releases/download/v0.15.2/dcd-v0.15.2-osx-x86_64.tar.gz", title: "DCD" });
 	}
 	else if (process.platform == "darwin" && process.arch == "arm64") {
-		urls.push({ url: "https://github.com/dlang-community/DCD/releases/download/v0.15.0/dcd-v0.15.0-osx-arm64.tar.gz", title: "DCD" });
+		urls.push({ url: "https://github.com/dlang-community/DCD/releases/download/v0.15.2/dcd-v0.15.2-osx-arm64.tar.gz", title: "DCD" });
 	}
 	else if (process.platform == "win32") {
 		if (process.arch == "x64")
-			urls.push({ url: "https://github.com/dlang-community/DCD/releases/download/v0.15.0/dcd-v0.15.0-windows-x86_64.zip", title: "DCD" });
+			urls.push({ url: "https://github.com/dlang-community/DCD/releases/download/v0.15.2/dcd-v0.15.2-windows-x86_64.zip", title: "DCD" });
 		else
-			urls.push({ url: "https://github.com/dlang-community/DCD/releases/download/v0.15.0/dcd-v0.15.0-windows-x86.zip", title: "DCD" });
+			urls.push({ url: "https://github.com/dlang-community/DCD/releases/download/v0.15.2/dcd-v0.15.2-windows-x86.zip", title: "DCD" });
 	}
 
 	return (env: any) => new Promise((done) => {
