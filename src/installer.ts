@@ -252,9 +252,35 @@ async function fetchLatestTaggedRelease(channel: "stable" | "beta", timeout: num
 	return ret;
 }
 
+function getSystemArch(): string {
+	if (process.arch == "x64")
+		return "x86_64";
+	else if (process.arch == "ia32")
+	{
+		if (process.platform == "win32")
+		{
+			// we might be on WOW:
+			// https://ss64.com/nt/syntax-64bit.html
+			// https://learn.microsoft.com/en-us/windows/win32/api/sysinfoapi/ns-sysinfoapi-system_info
+			if (process.env.PROCESSOR_ARCHITEW6432 === "AMD64" || process.env.PROCESSOR_ARCHITEW6432 === "IA64")
+				return "x86_64";
+			else if (process.env.PROCESSOR_ARCHITECTURE === "ARM64")
+				return "arm64";
+			else if (process.env.PROCESSOR_ARCHITECTURE === "ARM")
+				return "arm";
+			else
+				return "x86";
+		}
+		else
+			return "x86";
+	}
+	else
+		return process.arch;
+}
+
 function findFirstMatchingAsset(name: string | "nightly", assets: ReleaseAsset[]): ReleaseAsset | undefined {
 	let os = <string>process.platform;
-	let arch = process.arch == "x64" ? "x86_64" : process.arch == "ia32" ? "x86" : process.arch;
+	let arch = getSystemArch();
 
 	if (os == "win32") {
 		os = "windows";
@@ -499,7 +525,6 @@ export function compileServeD(ref?: string): (env: NodeJS.ProcessEnv) => Promise
 			buildArgs.push("--compiler=" + dmdPath);
 		}
 		await compileDependency(outputFolder, "serve-d", "https://github.com/Pure-D/serve-d.git", [
-			[dubPath, ["upgrade"]],
 			[dubPath, buildArgs]
 		], env, ref);
 		var finalDestination = path.join(outputFolder, "serve-d", "serve-d" + (process.platform == "win32" ? ".exe" : ""));
