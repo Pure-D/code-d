@@ -39,9 +39,9 @@ function runCommand(/** @type {string} */ command, /** @type {any} */ argument) 
 
 /**
  * @typedef {Object} AccessType
- * @property {boolean} [platform] true if this setting is set with a platform/arch/compiler suffix.
- * @property {boolean} [subscope] true if this setting is inside a config or build config.
- * @property {string} [desc] Human readable description (suffix)
+ * @property {boolean} platform true if this setting is set with a platform/arch/compiler suffix.
+ * @property {boolean} subscope true if this setting is inside a config or build config.
+ * @property {string} desc Human readable description (suffix)
  */
 
 /**
@@ -755,7 +755,7 @@ function loadJsonIntoUI() {
 		}));
 		accessTries.forEach(access => {
 			if (configPath) return;
-			let resolved = makePath(setting, path, access[0], access[1]);
+			let resolved = makePath(setting, path, access.platform, access.subscope);
 			if (getPath(resolved) !== undefined) {
 				configPath = resolved;
 				usedAccess = access;
