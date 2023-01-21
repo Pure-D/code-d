@@ -38,6 +38,13 @@ function runCommand(/** @type {string} */ command, /** @type {any} */ argument) 
  */
 
 /**
+ * @typedef {Object} AccessType
+ * @property {boolean} [platform] true if this setting is set with a platform/arch/compiler suffix.
+ * @property {boolean} [subscope] true if this setting is inside a config or build config.
+ * @property {string} [desc] Human readable description (suffix)
+ */
+
+/**
  * @param {string} label
  * @param {InputOptions | undefined} options
  * @returns {Promise<string | undefined>}
@@ -540,12 +547,12 @@ function hideResetButton(setting) {
 
 /**
  * @param {HTMLElement} setting 
- * @param {[boolean, boolean, string] | undefined} usedAccess
+ * @param {AccessType | undefined} usedAccess
  */
 function makeSetInLabel(setting, usedAccess) {
 	let label = getLabelElement(setting);
 	let modifiedHint = label?.querySelector(".modified-hint a");
-	if (usedAccess && usedAccess[2] && label) {
+	if (usedAccess && usedAccess.desc && label) {
 		if (!modifiedHint) {
 			let hint = document.createElement("span");
 			hint.className = "modified-hint";
@@ -573,9 +580,9 @@ function makeSetInLabel(setting, usedAccess) {
 				return false;
 			});
 		}
-		modifiedHint.textContent = usedAccess[2];
-		modifiedHint.setAttribute("data-prefix", usedAccess[1] ? "true" : "false");
-		modifiedHint.setAttribute("data-suffix", usedAccess[0] ? "true" : "false");
+		modifiedHint.textContent = usedAccess.desc;
+		modifiedHint.setAttribute("data-prefix", usedAccess.subscope ? "true" : "false");
+		modifiedHint.setAttribute("data-suffix", usedAccess.platform ? "true" : "false");
 	} else {
 		modifiedHint?.parentElement?.parentElement?.removeChild(modifiedHint.parentElement);
 	}
@@ -640,7 +647,7 @@ function ready() {
 
 		let suffixDisabled = !hasSuffixMembers;
 		let overridesDisabled = !hasOverride;
-
+		
 		if (overridesDisabled)
 			overridesSelector.classList.add("effectless");
 		else
@@ -729,16 +736,23 @@ function loadJsonIntoUI() {
 		let type = setting.getAttribute("json-type");
 		let strValue = setting.getAttribute("json-value");
 		let configPath = undefined;
+		/**
+		 * @type {AccessType | undefined}
+		 */
 		let usedAccess = undefined;
 		/**
-		 * @type {[boolean, boolean, string][]}
+		 * @type {AccessType[]}
 		 */
 		const accessTries = [
 			[true, true, ""], // in current config/override with platform suffix
 			[false, true, "all platforms"], // in current config/override without platform suffix
 			[true, false, "Base"], // in global scope with platform suffix
 			[false, false, "Base with all platforms"], // in global scope without platform suffix
-		];
+		].map(v => ({
+			platform: /** @type {boolean} */ (v[0]),
+			subscope: /** @type {boolean} */ (v[1]),
+			desc: /** @type {string} */ (v[2])
+		});
 		accessTries.forEach(access => {
 			if (configPath) return;
 			let resolved = makePath(setting, path, access[0], access[1]);
