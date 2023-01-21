@@ -108,9 +108,6 @@ let settings = document.querySelectorAll(".setting");
 let complexSettings = document.querySelectorAll(".complex-setting");
 let listSettings = document.querySelectorAll(".list-setting");
 
-let overridesDisabled = false;
-let suffixDisabled = false;
-
 function isSameValue(a, b) {
 	if (typeof a != typeof b)
 		return false;
@@ -353,6 +350,61 @@ function getPlatformSuffix(forSetting) {
 	return suffix;
 }
 
+/**
+ * @param {HTMLElement} setting
+ * @param {Function} cb
+ */
+function iterateSettingInputs(setting, cb) {
+	if (setting.tagName == "VSCODE-TEXT-AREA"
+		|| setting.tagName == "VSCODE-TEXT-FIELD"
+		|| setting.tagName == "VSCODE-DROPDOWN"
+		|| setting.tagName == "INPUT"
+		|| setting.tagName == "TEXTAREA")
+		cb(setting);
+	else
+	{
+		var inputs = setting.querySelectorAll("input, textarea");
+		inputs.forEach(i => {
+			cb(i);
+		});
+	}
+}
+
+/**
+ * @param {HTMLElement} setting
+ */
+function enableSetting(setting) {
+	if (!setting.classList.contains("disabled"))
+		return;
+	let oldTitle = setting.getAttribute("data-old-title");
+	setting.title = oldTitle || "";
+	setting.classList.remove("disabled");
+	iterateSettingInputs(setting, s => s.disabled = false);
+
+	let resetBtn = getResetButton(setting);
+	if (resetBtn)
+		resetBtn.disabled = false;
+}
+
+/**
+ * @param {HTMLElement} setting
+ * @param {string} reason disabling reason
+ */
+function disableSetting(setting, reason) {
+	if (setting.classList.contains("disabled"))
+		return;
+	let oldTitle = setting.getAttribute("data-old-title");
+	if (!oldTitle)
+		setting.setAttribute("data-old-title", setting.title);
+	setting.title = reason;
+	setting.classList.add("disabled");
+	iterateSettingInputs(setting, s => s.disabled = true);
+
+	let resetBtn = getResetButton(setting);
+	if (resetBtn)
+		resetBtn.disabled = true;
+}
+
 function updateOverrides() {
 	/**
 	 * @type {[string, string][]}
@@ -411,16 +463,6 @@ function updateOverrides() {
 	});
 
 	overridesSelector.value = selected;
-}
-
-function fixSelectors() {
-	if (overridesSelector.value != OPTION_EMPTY_VALUE && overridesDisabled) {
-		overridesSelector.value = OPTION_EMPTY_VALUE;
-		overridesSelector.setAttribute("disabled", "disabled");
-		console.log("Disabled configurationSelector");
-	}
-	else if (!overridesDisabled)
-		overridesSelector.removeAttribute("disabled");
 }
 
 /**
@@ -539,6 +581,18 @@ function makeSetInLabel(setting, usedAccess) {
 	}
 }
 
+/**
+ * @param {HTMLElement} setting
+ * @returns {HTMLButtonElement | null}
+ */
+function getResetButton(setting) {
+	let next = /** @type {HTMLElement} */(setting.nextElementSibling);
+	if (next && next.classList.contains("reset-btn")) {
+		return next;
+	}
+	return null;
+}
+
 let didStartup = false;
 function ready() {
 	if (didStartup) return;
@@ -579,25 +633,18 @@ function ready() {
 		setState("dub.activeTab", activeTab);
 		var hasSuffixMembers = !!element.getAttribute("has-suffix");
 		var hasOverride = element.getAttribute("has-override") != "false";
-		if (hasSuffixMembers) {
-			platformSelector.removeAttribute("disabled");
-			architectureSelector.removeAttribute("disabled");
-			compilerSelector.removeAttribute("disabled");
-		}
-		else {
-			platformSelector.setAttribute("disabled", "disabled");
-			architectureSelector.setAttribute("disabled", "disabled");
-			compilerSelector.setAttribute("disabled", "disabled");
-		}
 
-		if (hasOverride)
-			overridesSelector.removeAttribute("disabled");
+		platformSelector.disabled = !hasSuffixMembers;
+		architectureSelector.disabled = !hasSuffixMembers;
+		compilerSelector.disabled = !hasSuffixMembers;
+
+		let suffixDisabled = !hasSuffixMembers;
+		let overridesDisabled = !hasOverride;
+
+		if (overridesDisabled)
+			overridesSelector.classList.add("effectless");
 		else
-			overridesSelector.setAttribute("disabled", "disabled")
-
-		suffixDisabled = !hasSuffixMembers;
-		overridesDisabled = !hasOverride;
-		fixSelectors();
+			overridesSelector.classList.remove("effectless");
 	}
 
 	var tabsMenu = document.getElementById("tabs").querySelectorAll("li");
@@ -657,6 +704,15 @@ function refreshSettings() {
 }
 
 function loadJsonIntoUI() {
+	const currentDubConfig = getDUBConfig();
+	const currentDubBuildType = getDUBBuildType();
+	const currentPlatformSuffix = getPlatformSuffix();
+
+	console.log("loading settings for");
+	console.log("- config: ", currentDubConfig);
+	console.log("- build: ", currentDubBuildType);
+	console.log("- platform: ", currentPlatformSuffix);
+
 	for (let i = 0; i < settings.length; i++) {
 		let setting =  /** @type {HTMLInputElement} */ (settings[i]);
 		// json-path="description"
@@ -783,6 +839,28 @@ function loadJsonIntoUI() {
 			});
 			setPath(configPath, value);
 		}).bind(this, setting, configPath, path, encode);
+
+		var changable = true;
+		var disabledReason = "";
+		if (currentDubConfig && setting?.getAttribute("has-config") == "false")
+		{
+			changable = false;
+			disabledReason += "This setting can't be changed inside a custom configuration. ";
+		}
+		if ((currentDubBuildType || currentPlatformSuffix) && setting?.getAttribute("has-suffix") != "true")
+		{
+			changable = false;
+			disabledReason += "This setting can't be changed with build configuration or target platform suffix. ";
+		}
+
+		if (changable)
+			enableSetting(setting);
+		else
+			disableSetting(setting, disabledReason.trim());
+
+		if (!changable)
+			continue;
+
 		if (setting.tagName == "VSCODE-TEXT-FIELD" || setting.tagName == "VSCODE-TEXT-AREA")
 			setting.oninput = changeFun;
 		else
