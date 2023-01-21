@@ -207,7 +207,7 @@ function getPathImpl(content, /** @type {string[]} */ path) {
 		if (part[0] == ":") {
 			let eqIdx = part.indexOf("=");
 			let key = part.substring(1, eqIdx);
-			let val = part.substr(eqIdx + 1);
+			let val = part.substring(eqIdx + 1);
 			for (let j = 0; j < scope.length; j++) {
 				if (scope[j][key] == val) {
 					scope = scope[j];
@@ -229,7 +229,7 @@ function setPathImpl(content, /** @type {string[]} */ path, /** @type {any} */ v
 				return;
 			let eqIdx = part.indexOf("=");
 			let key = part.substring(1, eqIdx);
-			let val = part.substr(eqIdx + 1);
+			let val = part.substring(eqIdx + 1);
 			for (let j = 0; j < scope.length; j++)
 				if (scope[j][key] == val) {
 					scope = scope[j];
@@ -438,11 +438,12 @@ function getLabelElement(setting) {
  * @param {HTMLElement} setting 
  */
 function makeResetButton(setting, configPath) {
+	if (!setting || !setting.parentElement)
+		throw new Error("invalid setting element passed in");
+
 	let label = getLabelElement(setting);
 	let modifiedHint = label?.querySelector(".modified-hint a");
-	if (modifiedHint) {
-		modifiedHint.parentElement.parentElement.removeChild(modifiedHint.parentElement);
-	}
+	modifiedHint?.parentElement?.parentElement?.removeChild(modifiedHint.parentElement);
 
 	let next = /** @type {HTMLElement} */(setting.nextElementSibling);
 	if (next && next.classList.contains("reset-btn")) {
@@ -534,9 +535,7 @@ function makeSetInLabel(setting, usedAccess) {
 		modifiedHint.setAttribute("data-prefix", usedAccess[1] ? "true" : "false");
 		modifiedHint.setAttribute("data-suffix", usedAccess[0] ? "true" : "false");
 	} else {
-		if (modifiedHint) {
-			modifiedHint.parentElement.parentElement.removeChild(modifiedHint.parentElement);
-		}
+		modifiedHint?.parentElement?.parentElement?.removeChild(modifiedHint.parentElement);
 	}
 }
 
@@ -569,12 +568,12 @@ function ready() {
 		if (activeTab === element.id || element.id === undefined)
 			return;
 		if (activeTab !== undefined) {
-			var page = "page" + activeTab.substr(3);
+			var page = "page" + activeTab.substring(3);
 			document.getElementById(page).setAttribute("class", "child");
 			document.getElementById(activeTab).setAttribute("class", "");
 		}
 		activeTab = element.id;
-		page = "page" + activeTab.substr(3);
+		page = "page" + activeTab.substring(3);
 		document.getElementById(page).setAttribute("class", "child visible");
 		element.setAttribute("class", "active");
 		setState("dub.activeTab", activeTab);
@@ -664,11 +663,11 @@ function loadJsonIntoUI() {
 		// json-value="name" in string[] for checkboxes
 		// json-type="string[]"
 		let label = setting.parentElement;
-		if (label.tagName != "LABEL")
-			label = undefined;
+		if (!label || label.tagName != "LABEL")
+			label = null;
 
 		let inputType = setting.getAttribute("type");
-		let path = setting.getAttribute("json-path").split(/\./g);
+		const path = setting.getAttribute("json-path")?.split(/\./g);
 		if (!path)
 			continue;
 		let type = setting.getAttribute("json-type");
