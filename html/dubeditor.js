@@ -752,7 +752,7 @@ function loadJsonIntoUI() {
 			platform: /** @type {boolean} */ (v[0]),
 			subscope: /** @type {boolean} */ (v[1]),
 			desc: /** @type {string} */ (v[2])
-		});
+		}));
 		accessTries.forEach(access => {
 			if (configPath) return;
 			let resolved = makePath(setting, path, access[0], access[1]);
