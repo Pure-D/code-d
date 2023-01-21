@@ -284,25 +284,17 @@ function removeInArray(arr, name, isArray, propName) {
 }
 
 function makePath(/** @type {HTMLElement} */ setting, /** @type {string[]} */ path, /** @type {boolean} */ addSuffix, /** @type {boolean?} */ addOverrides) {
-	let suffix = "";
+	let suffix = getPlatformSuffix(setting);
 	let prefix = [];
-	if (setting.getAttribute("has-suffix") == "true") {
-		if (platformSelector.value != OPTION_EMPTY_VALUE)
-			suffix += "-" + platformSelector.value;
-		if (architectureSelector.value != OPTION_EMPTY_VALUE)
-			suffix += "-" + architectureSelector.value;
-		if (compilerSelector.value != OPTION_EMPTY_VALUE)
-			suffix += "-" + compilerSelector.value;
-
-		if (overridesSelector.value != OPTION_EMPTY_VALUE
-			&& overridesSelector.value.startsWith("build:"))
-			prefix = ["buildTypes", overridesSelector.value.substring("build:".length)];
-	}
+	let dubBuildType = getDUBBuildType(setting);
+	let dubConfig = getDUBConfig(setting);
+	if (dubBuildType)
+		prefix = ["buildTypes", dubBuildType];
+	if (dubConfig)
+		prefix = ["configurations", ":name=" + dubConfig];
 	// important: config and buildtypes cant mix!
-	if (setting.getAttribute("has-config") != "false"
-		&& overridesSelector.value != OPTION_EMPTY_VALUE
-		&& overridesSelector.value.startsWith("config:"))
-		prefix = ["configurations", ":name=" + overridesSelector.value.substring("config:".length)];
+	if (dubBuildType && dubConfig)
+		throw new Error("invalid state: can't have both config and build type set on a setting");
 
 	if (addOverrides === false)
 		prefix = [];
@@ -311,6 +303,54 @@ function makePath(/** @type {HTMLElement} */ setting, /** @type {string[]} */ pa
 	if (addSuffix)
 		ret[ret.length - 1] += suffix; // only modify duplicated
 	return ret;
+}
+
+/**
+ * @param {HTMLElement} [forSetting] optional, return empty string if this setting doesn't support any build type
+ * @returns {string}
+ */
+function getDUBBuildType(forSetting) {
+	if (forSetting && forSetting.getAttribute("has-suffix") != "true")
+		return "";
+
+	if (overridesSelector.value != OPTION_EMPTY_VALUE
+		&& overridesSelector.value.startsWith("build:"))
+		return overridesSelector.value.substring("build:".length);
+	else
+		return "";
+}
+
+/**
+ * @param {HTMLElement} [forSetting] optional, return empty string if this setting doesn't support any config
+ * @returns {string}
+ */
+function getDUBConfig(forSetting) {
+	if (forSetting?.getAttribute("has-config") == "false")
+		return "";
+
+	if (overridesSelector.value != OPTION_EMPTY_VALUE
+		&& overridesSelector.value.startsWith("config:"))
+		return overridesSelector.value.substring("config:".length);
+	else
+		return "";
+}
+
+/**
+ * @param {HTMLElement} [forSetting] optional, return empty string if this setting doesn't support any platform suffix
+ * @returns {string}
+ */
+function getPlatformSuffix(forSetting) {
+	if (forSetting?.getAttribute("has-suffix") != "true")
+		return "";
+
+	let suffix = "";
+	if (platformSelector.value != OPTION_EMPTY_VALUE)
+		suffix += "-" + platformSelector.value;
+	if (architectureSelector.value != OPTION_EMPTY_VALUE)
+		suffix += "-" + architectureSelector.value;
+	if (compilerSelector.value != OPTION_EMPTY_VALUE)
+		suffix += "-" + compilerSelector.value;
+	return suffix;
 }
 
 function updateOverrides() {
@@ -709,7 +749,7 @@ function loadJsonIntoUI() {
 				var newVal;
 				if (type == "string[]") {
 					if (!isOverride && setting.value.trim() == "")
-						newVal = undefined; // allow empty strings in overrides
+						newVal = []; // allow empty arrays in overrides
 					else
 						newVal = setting.value.split("\n");
 				}
@@ -718,7 +758,10 @@ function loadJsonIntoUI() {
 						? setting.value // allow empty strings in overrides
 						: (setting.value || undefined);
 				return newVal;
-			}).bind(this, type, setting, isOverride);
+			}).bind(this, type, setting, usedAccess
+				&& (getDUBBuildType(setting)
+					|| getDUBConfig(setting)
+					|| getPlatformSuffix(setting)));
 		}
 		var configSetting;
 		if (configPath !== undefined)
