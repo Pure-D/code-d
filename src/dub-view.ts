@@ -4,6 +4,7 @@ import { extensionContext } from "./extension";
 
 export interface DubDependencyInfo {
 	name: string;
+	failed?: boolean;
 	version: string;
 	path: string;
 	description: string;
@@ -20,7 +21,7 @@ export class DubDependency extends vscode.TreeItem {
 	constructor(info: DubDependencyInfo, command?: vscode.Command, icon?: string);
 	constructor(info: string, command?: vscode.Command, icon?: string);
 	constructor(info: DubDependencyInfo | string, command?: vscode.Command, icon?: string) {
-		super(typeof info == "string" ? info : info.name + ":  " + info.version,
+		super(typeof info == "string" ? info : info.name + ":  " + info.version + (info.failed ? " (failed loading)" : ""),
 			typeof info == "string" ? vscode.TreeItemCollapsibleState.None : vscode.TreeItemCollapsibleState.Collapsed);
 		if (typeof info == "object") {
 			this.info = info;
