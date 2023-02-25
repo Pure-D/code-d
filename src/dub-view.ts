@@ -26,8 +26,8 @@ export class DubDependency extends vscode.TreeItem {
 		if (typeof info == "object") {
 			this.info = info;
 			this.iconPath = {
-				light: extensionContext.asAbsolutePath(path.join("images", "dependency-light.svg")),
-				dark: extensionContext.asAbsolutePath(path.join("images", "dependency-dark.svg"))
+				light: vscode.Uri.joinPath(extensionContext.extensionUri, "images", "dependency-light.svg"),
+				dark: vscode.Uri.joinPath(extensionContext.extensionUri, "images", "dependency-dark.svg")
 			};
 			this.command = {
 				command: "code-d.viewDubPackage",
@@ -41,8 +41,8 @@ export class DubDependency extends vscode.TreeItem {
 			this.command = command;
 		if (icon)
 			this.iconPath = {
-				light: extensionContext.asAbsolutePath(path.join("images", icon + "-light.svg")),
-				dark: extensionContext.asAbsolutePath(path.join("images", icon + "-dark.svg"))
+				light: vscode.Uri.joinPath(extensionContext.extensionUri, "images", icon + "-light.svg"),
+				dark: vscode.Uri.joinPath(extensionContext.extensionUri, "images", icon + "-dark.svg")
 			};
 	}
 
