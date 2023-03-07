@@ -33,7 +33,13 @@ _For professional D consulting, programming services or corporate support with D
 
 **Thanks to the following big GitHub sponsors** financially supporting the code-d/serve-d tools:
 
-* Jaen ([@jaens](https://github.com/jaens))
+| ![ZyeByte's GitHub avatar](https://avatars.githubusercontent.com/u/102230672?s=96&v=4) |
+|:---:|
+| [@ZyeByte](https://github.com/ZyeByte) |
+
+<!-- additional thanks to the following sponsors:
+
+* Display Name ([@...](https://github.com/username)) -->
 
 _[become a sponsor](https://github.com/sponsors/WebFreak001)_
 
