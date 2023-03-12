@@ -21,4 +21,4 @@
 [{"start":0,"end":8,"scope":"source.d"},{"start":8,"end":10,"scope":"comment.block.begin.d"},{"start":10,"end":42,"scope":"comment.block.content.d"},{"start":42,"end":44,"scope":"comment.block.end.d"},{"start":44,"end":45,"scope":"source.d"},{"start":45,"end":49,"scope":"constant.numeric.integer.hexadecimal.d"},{"start":49,"end":50,"scope":"keyword.operator.comma.d"}]
 [{"start":0,"end":8,"scope":"source.d"},{"start":8,"end":10,"scope":"comment.block.begin.d"},{"start":10,"end":42,"scope":"comment.block.content.d"},{"start":42,"end":44,"scope":"comment.block.end.d"},{"start":44,"end":45,"scope":"source.d"},{"start":45,"end":49,"scope":"constant.numeric.integer.hexadecimal.d"},{"start":49,"end":50,"scope":"keyword.operator.comma.d"}]
 [{"start":0,"end":7,"scope":"source.d"}]
-[{"start":0,"end":1,"scope":"source.d"},{"start":1,"end":3,"scope":"meta.statement.end.d"}]
+[{"start":0,"end":1,"scope":"source.d"},{"start":1,"end":2,"scope":"meta.statement.end.d"}]
