@@ -274,6 +274,7 @@ repository:
     - include: '#do-statement'
     - include: '#for-statement'
     - include: '#static-foreach'
+    - include: '#static-foreach-reverse'
     - include: '#foreach-statement'
     - include: '#foreach-reverse-statement'
     - include: '#switch-statement'
@@ -347,6 +348,7 @@ repository:
       - begin: \(
         end: \)
         patterns:
+        # for loops have ; as statement end, not as operator
         - include: 'source.d'
   foreach-statement:
     patterns:
@@ -359,6 +361,8 @@ repository:
       - begin: \(
         end: \)
         patterns:
+        - match: ;
+          name: keyword.operator.semi-colon.d
         - include: 'source.d'
   foreach-reverse-statement:
     patterns:
@@ -371,6 +375,8 @@ repository:
       - begin: \(
         end: \)
         patterns:
+        - match: ;
+          name: keyword.operator.semi-colon.d
         - include: 'source.d'
   switch-statement:
     patterns:
@@ -961,6 +967,22 @@ repository:
       - begin: \(
         end: \)
         patterns:
+        - match: ;
+          name: keyword.operator.semi-colon.d
+        - include: 'source.d'
+  static-foreach-reverse:
+    patterns:
+    - begin: \b(static\s+foreach_reverse)\b\s*
+      captures:
+        1:
+          name: keyword.control.static-foreach.d
+      end: (?<=\))
+      patterns:
+      - begin: \(
+        end: \)
+        patterns:
+        - match: ;
+          name: keyword.operator.semi-colon.d
         - include: 'source.d'
   module:
     packages:
@@ -1022,10 +1044,8 @@ repository:
       name: keyword.operator.equal.d
   semi-colon:
     patterns:
-    - match: ;\s*$
-      name: meta.statement.end.d
     - match: ;
-      name: keyword.operator.semi-colon.d
+      name: meta.statement.end.d
   lexical:
     patterns:
     - include: '#comment'
