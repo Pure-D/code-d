@@ -215,9 +215,9 @@ async function startClient(context: vscode.ExtensionContext) {
 	};
 	var outputChannel = vscode.window.createOutputChannel("code-d & serve-d");
 	let clientOptions: LanguageClientOptions = {
-		documentSelector: <DocumentFilter[]>[mode.D_MODE, mode.DUB_MODE, mode.DIET_MODE, mode.DML_MODE, mode.DSCANNER_INI_MODE, mode.PROFILEGC_MODE],
+		documentSelector: <DocumentFilter[]>[mode.D_MODE, mode.SDL_MODE, mode.DUB_MODE, mode.DIET_MODE, mode.DML_MODE, mode.DSCANNER_INI_MODE, mode.PROFILEGC_MODE],
 		synchronize: {
-			configurationSection: ["d", "dfmt", "dscanner", "editor", "git"],
+			configurationSection: ["d", "dfmt", "dscanner", "sdl", "editor", "git"],
 			fileEvents: [
 				vscode.workspace.createFileSystemWatcher("**/*.d"),
 				vscode.workspace.createFileSystemWatcher("**/dub.json"),

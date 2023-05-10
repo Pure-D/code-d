@@ -741,6 +741,12 @@
 						"default": true,
 						"markdownDescription": "Apply standard VSCode Formatting behavior to D files. Formatting on save can be configured with `#editor.formatOnSave#`"
 					},
+					"sdl.enableFormatting": {
+						"type": "boolean",
+						"scope": "resource",
+						"default": true,
+						"markdownDescription": "Apply standard VSCode Formatting behavior to SDL files. (e.g. dub.sdl) Formatting on save can be configured with `#editor.formatOnSave#`"
+					},
 					"d.overrideDfmtEditorconfig": {
 						"type": "boolean",
 						"scope": "resource",
@@ -848,6 +854,18 @@
 						"scope": "resource",
 						"default": true,
 						"markdownDescription": "Set if the code in parens is indented by a single tab instead of two."
+					},
+					"sdl.whitespaceAroundEquals": {
+						"type": "boolean",
+						"scope": "resource",
+						"default": false,
+						"markdownDescription": "Set if `tag attribute=value` should be formatted to `tag attribute = value`."
+					},
+					"sdl.backslashTempIndent": {
+						"type": "integer",
+						"scope": "resource",
+						"default": 2,
+						"markdownDescription": "Set to how many indents should be inserted after a line-continuation with backslash."
 					}
 				}
 			},
