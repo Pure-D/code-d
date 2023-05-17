@@ -428,6 +428,13 @@
 						"default": true,
 						"markdownDescription": "Enable auto-completion in D files, mostly powered by DCD.\n\nIf you have a custom DCD setup, you can change the started dcd-server binary through the `#d.dcdServerPath#` setting."
 					},
+					"d.enableAutoImportCompletions": {
+						"order": 0,
+						"type": "boolean",
+						"scope": "resource",
+						"default": true,
+						"markdownDescription": "Enable auto-completion in D files for symbols that are indexed, but not yet imported. Automatically imports them on use.\n\nFor this to work, the `#d.enableIndex#` setting must be enabled."
+					},
 					"d.stdlibPath": {
 						"scope": "machine-overridable",
 						"title": "Standard Library (Phobos) Path",
