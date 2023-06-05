@@ -680,7 +680,7 @@
 							"Opened files in the current project will be linted immediately. Other files will be linted when editing.",
 							"Opening files will not lint and only start when editing them."
 						],
-						"markdownDescription": "Performs static linting already when opening a file, and not just when editing it. Needs `#d.enableStaticLinting#` to be enabled."
+						"markdownDescription": "Performs static (DScanner) and/or CCDB (compile_commands.json) linting already when opening a file, and not just when editing it."
 					},
 					"dscanner.ignoredKeys": {
 						"type": "array",
