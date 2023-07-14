@@ -228,7 +228,11 @@ async function startClient(context: vscode.ExtensionContext) {
 		},
 		revealOutputChannelOn: RevealOutputChannelOn.Never,
 		outputChannel: outputChannel,
-		errorHandler: new CustomErrorHandler(outputChannel)
+		errorHandler: new CustomErrorHandler(outputChannel),
+		markdown: {
+			isTrusted: true,
+			supportHtml: true
+		}
 	};
 	let client = new LanguageClient("serve-d", "code-d & serve-d", executable, clientOptions);
 	await client.start();
