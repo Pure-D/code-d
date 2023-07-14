@@ -175,6 +175,10 @@ export class ServeD extends EventEmitter implements vscode.TreeDataProvider<DubD
 		return this.client.sendRequest("served/getActiveDubConfig");
 	}
 
+	forceLoadProjects(roots: string[]): Thenable<boolean[]> {
+		return this.client.sendRequest("served/forceLoadProjects", roots);
+	}
+
 	private static taskGroups: vscode.TaskGroup[] = [
 		vscode.TaskGroup.Build,
 		vscode.TaskGroup.Clean,
@@ -193,6 +197,7 @@ async function startClient(context: vscode.ExtensionContext) {
 		"--provide", "context-snippets",
 		"--provide", "default-snippets",
 		"--provide", "tasks-current",
+		"--provide", "async-ask-load",
 	];
 
 	let executable: ServerOptions = {
@@ -271,6 +276,128 @@ async function startClient(context: vscode.ExtensionContext) {
 	client.onNotification("coded/changedSelectedWorkspace", function () {
 		served.emit("workspace-change");
 		served.refreshDependencies();
+	});
+
+	client.onNotification("coded/skippedLoads", async function (roots: string[]) {
+		if (typeof(roots) === "object" && !Array.isArray(roots))
+			roots = (<any>roots).roots;
+
+		if (typeof(roots) === "string")
+			roots = <string[]>[roots];
+		else if (!Array.isArray(roots))
+			throw new Error("Unexpected roots with coded/skippedLoads: " + JSON.stringify(roots));
+
+		var allowList = config(null).get<string[]>("manyProjectsAllowList") || [];
+		var denyList = config(null).get<string[]>("manyProjectsDenyList") || [];
+		var decisions = new Array(roots.length);
+		let decidedNum = 0;
+		for (let i = 0; i < roots.length; i++) {
+			const root = roots[i];
+			if (allowList.includes(root))
+				decisions[i] = true;
+			else if (denyList.includes(root))
+				decisions[i] = false;
+			else
+				continue;
+			decidedNum++;
+		}
+
+		console.log("Asking for late init for projects ", roots, " (allowlist: ", allowList, ", denylist: ", denyList, ")");
+
+		let btnLoadAll = decidedNum > 0
+			? "Load Remaining (" + (roots.length - decidedNum) + ")"
+			: roots.length == 1
+				? "Load"
+				: "Load All (" + roots.length + ")";
+		let btnSkipAll = decidedNum > 0
+			? "Skip Remaining"
+			: roots.length == 1
+				? "Skip"
+				: "Skip All";
+		let btnInteractive = "More Options...";
+		let msg = "There are too many subprojects in this project according to d.manyProjectsThreshold. Load "
+			+ (roots.length == 1 ? "1 extra project?" : roots.length + " extra projects?")
+			+ (decidedNum > 0 ? ("\n" + (decidedNum == 1 ? "1 project has" : decidedNum + " projects have")
+			+ " been decided on based on d.manyProjects{Allow/Deny}List already.") : "");
+		let result = await vscode.window.showInformationMessage(msg,
+				btnLoadAll, btnSkipAll, btnInteractive);
+
+		function setRemaining(b: boolean) {
+			for (let i = 0; i < decisions.length; i++)
+				if (decisions[i] === undefined)
+					decisions[i] = b;
+		}
+
+		switch (result)
+		{
+		case btnLoadAll:
+			setRemaining(true);
+			break;
+		case btnInteractive:
+			let result = await vscode.window.showQuickPick<vscode.QuickPickItem>(roots.map((r, i) => <vscode.QuickPickItem>{
+				_root: r,
+				_id: i,
+				label: r,
+				picked: decisions[i],
+			}).concat([
+				{
+					kind: vscode.QuickPickItemKind.Separator,
+					label: "Options",
+					alwaysShow: true,
+				},
+				<any>{
+					_id: "remember",
+					label: "Remember Selection (workspace settings)",
+					alwaysShow: true
+				}
+			]), {
+				canPickMany: true,
+				ignoreFocusOut: true,
+				title: "Select projects to load"
+			});
+			
+			result?.forEach(r => {
+				let root = <string>(<any>r)._root;
+				let id = <number>(<any>r)._id;
+				if (!root)
+					return;
+
+				if (!allowList.includes(root))
+					allowList.push(root);
+				let denyIndex = denyList.indexOf(root);
+				if (denyIndex != -1)
+					denyList.splice(denyIndex, 1);
+
+				decisions[id] = true;
+			});
+
+			for (let i = 0; i < decisions.length; i++) {
+				if (decisions[i] === undefined) {
+					let root = roots[i];
+					if (!denyList.includes(root))
+						denyList.push(root);
+					let allowIndex = allowList.indexOf(root);
+					if (allowIndex != -1)
+						allowList.splice(allowIndex, 1);
+					decisions[i] = false;
+				}
+			}
+
+			let save = (result?.findIndex(r => (<any>r)._id == "remember") ?? -1) >= 0;
+			if (save)
+			{
+				config(null).update("manyProjectsAllowList", allowList, vscode.ConfigurationTarget.Workspace);
+				config(null).update("manyProjectsDenyList", denyList, vscode.ConfigurationTarget.Workspace);
+			}
+			return;
+		case btnSkipAll:
+		default:
+			setRemaining(false);
+			break;
+		}
+
+		let toLoad = roots.filter((_, i) => decisions[i] === true);
+		served.forceLoadProjects(toLoad);
 	});
 
 	const startupProgress = new statusbar.StartupProgress();
@@ -911,6 +1038,20 @@ function shortenPath(p: string) {
 			}
 		});
 	return short;
+}
+
+function getOwnerWorkspace(p: string): vscode.WorkspaceFolder | null {
+	if (p.endsWith("serve-d-dummy-workspace"))
+		return null;
+	let best: vscode.WorkspaceFolder | null = null;
+	if (vscode.workspace.workspaceFolders)
+		vscode.workspace.workspaceFolders.forEach(element => {
+			const dir = element.uri.fsPath;
+			if (dir.length >= (best?.uri?.fsPath?.length ?? 0) && dir.startsWith(p)) {
+				best = element;
+			}
+		});
+	return best;
 }
 
 /**

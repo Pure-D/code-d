@@ -992,6 +992,24 @@
 						"minimum": 0,
 						"markdownDescription": "After how many projects to start checking the `#d.manyProjectsAction#` to load or not load further projects."
 					},
+					"d.manyProjectsAllowList": {
+						"type": "array",
+						"scope": "machine-overridable",
+						"items": {
+							"type": "string"
+						},
+						"default": [],
+						"markdownDescription": "List of absolute project paths to **always** load if more than `#d.manyProjectsThreshold#` projects are attempted to be loaded. You would usually set this in the workspace settings."
+					},
+					"d.manyProjectsDenyList": {
+						"type": "array",
+						"scope": "machine-overridable",
+						"items": {
+							"type": "string"
+						},
+						"default": [],
+						"markdownDescription": "List of absolute project paths to **never** load if more than `#d.manyProjectsThreshold#` projects are attempted to be loaded. You would usually set this in the workspace settings."
+					},
 					"d.ignoreDebugHints": {
 						"type": "boolean",
 						"scope": "window",
