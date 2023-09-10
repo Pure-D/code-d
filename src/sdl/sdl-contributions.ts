@@ -276,6 +276,7 @@ interface CompletionTag {
 	values?: CompletionValues;
 	attributes?: CompletionAttributeMap;
 	minValues?: number;
+	suggestShouldHaveValues?: boolean;
 	maxValues?: number;
 	tags?: CompletionTagMap | null;
 	requireTags?: boolean;
@@ -499,25 +500,29 @@ const buildSettings: CompletionTagMap = {
 			type: "string"
 		},
 		attributes: platformAttributes,
-		minValues: 1
+		minValues: 0,
+		suggestShouldHaveValues: true
 	},
 	sourceFiles: {
 		description: "Additional files passed to the compiler - can be useful to add certain configuration dependent source files that are not contained in the general source folder",
 		values: pathComplete,
 		attributes: platformAttributes,
-		minValues: 1
+		minValues: 0,
+		suggestShouldHaveValues: true
 	},
 	sourcePaths: {
 		description: `Allows to customize the path where to look for source files (any folder "source" or "src" is automatically used as a source path if no sourcePaths setting is specified) - note that you usually also need to define "importPaths" as "sourcePaths" don't influence those`,
 		values: pathComplete,
 		attributes: platformAttributes,
-		minValues: 1
+		minValues: 0
+		// default: source, so empty is valid and not a warning
 	},
 	excludedSourceFiles: {
 		description: 'Files that should be removed for the set of already added source files (takes precedence over "sourceFiles" and "sourcePaths") - Glob matching can be used to pattern match multiple files at once',
 		values: pathComplete,
 		attributes: platformAttributes,
-		minValues: 1
+		minValues: 0,
+		suggestShouldHaveValues: true
 	},
 	mainSourceFile: {
 		description: 'Determines the file that contains the main() function. This setting can be used by dub to exclude this file in situations where a different main function is defined (e.g. for "dub test") - this setting does not support platform suffixes',
@@ -529,7 +534,8 @@ const buildSettings: CompletionTagMap = {
 		description: 'A list of globs matching files or directories to be copied to targetPath. Matching directories are copied recursively, i.e. "copyFiles": ["path/to/dir"]" recursively copies dir, while "copyFiles": ["path/to/dir/*"]" only copies files within dir.',
 		values: pathComplete,
 		attributes: platformAttributes,
-		minValues: 1
+		minValues: 0,
+		suggestShouldHaveValues: true
 	},
 	versions: {
 		description: "A list of D versions to be defined during compilation",
@@ -537,7 +543,8 @@ const buildSettings: CompletionTagMap = {
 			type: "string"
 		},
 		attributes: platformAttributes,
-		minValues: 1
+		minValues: 0,
+		suggestShouldHaveValues: true
 	},
 	debugVersions: {
 		description: "A list of D debug identifiers to be defined during compilation",
@@ -545,19 +552,22 @@ const buildSettings: CompletionTagMap = {
 			type: "string"
 		},
 		attributes: platformAttributes,
-		minValues: 1
+		minValues: 0,
+		suggestShouldHaveValues: true
 	},
 	importPaths: {
 		description: "Additional import paths to search for D modules (the source/ folder is used by default as a source folder, if it exists)",
 		values: pathComplete,
 		attributes: platformAttributes,
-		minValues: 1
+		minValues: 0
+		// default: source, so empty is valid and not a warning
 	},
 	stringImportPaths: {
 		description: "Additional import paths to search for string imports/views (the views/ folder is used by default as a string import folder, if it exists)",
 		values: pathComplete,
 		attributes: platformAttributes,
-		minValues: 1
+		minValues: 0
+		// default: views, so empty is valid and not a warning
 	},
 	preGenerateCommands: {
 		description: "A list of shell commands that is executed before project generation is started",
@@ -565,7 +575,8 @@ const buildSettings: CompletionTagMap = {
 			type: "string"
 		},
 		attributes: platformAttributes,
-		minValues: 1
+		minValues: 0,
+		suggestShouldHaveValues: true
 	},
 	postGenerateCommands: {
 		description: "A list of shell commands that is executed after project generation is finished",
@@ -573,7 +584,8 @@ const buildSettings: CompletionTagMap = {
 			type: "string"
 		},
 		attributes: platformAttributes,
-		minValues: 1
+		minValues: 0,
+		suggestShouldHaveValues: true
 	},
 	preBuildCommands: {
 		description: "A list of shell commands that is executed always before the project is built",
@@ -581,7 +593,8 @@ const buildSettings: CompletionTagMap = {
 			type: "string"
 		},
 		attributes: platformAttributes,
-		minValues: 1
+		minValues: 0,
+		suggestShouldHaveValues: true
 	},
 	postBuildCommands: {
 		description: "A list of shell commands that is executed always after the project is built",
@@ -589,7 +602,8 @@ const buildSettings: CompletionTagMap = {
 			type: "string"
 		},
 		attributes: platformAttributes,
-		minValues: 1
+		minValues: 0,
+		suggestShouldHaveValues: true
 	},
 	preRunCommands: {
 		description: "A list of shell commands that is executed always before the project is built",
@@ -597,7 +611,8 @@ const buildSettings: CompletionTagMap = {
 			type: "string"
 		},
 		attributes: platformAttributes,
-		minValues: 1
+		minValues: 0,
+		suggestShouldHaveValues: true
 	},
 	postRunCommands: {
 		description: "A list of shell commands that is executed always after the project is built",
@@ -605,7 +620,8 @@ const buildSettings: CompletionTagMap = {
 			type: "string"
 		},
 		attributes: platformAttributes,
-		minValues: 1
+		minValues: 0,
+		suggestShouldHaveValues: true
 	},
 	environments: {
 		description: "Environment variables to pass to every invoked build tool, program or script. (lowest precedence)\n\n```\nenvironments \"key\" \"value\"\n```",
@@ -711,6 +727,24 @@ function merge(a: OptionalCompletionTagMap, b: OptionalCompletionTagMap): Comple
 	Object.keys(a).forEach(k => obj[k] = a[k]);
 	Object.keys(b).forEach(k => obj[k] = b[k]);
 	return obj;
+}
+
+function map(obj: CompletionTagMap, fn: (t: CompletionTag) => CompletionTag): CompletionTagMap {
+	var d: CompletionTagMap = {};
+	for (const k in obj)
+		if (obj.hasOwnProperty(k))
+			d[k] = fn(obj[k]);
+	return d;
+}
+
+function removeField(fieldName: keyof CompletionTag): (t: CompletionTag) => CompletionTag {
+	return function(obj: CompletionTag) {
+		if (fieldName in obj) {
+			obj = JSON.parse(JSON.stringify(obj));
+			delete obj[fieldName];
+		}
+		return obj;
+	}
 }
 
 let dubSchema = {
@@ -828,7 +862,7 @@ let dubSchema = {
 			values: {
 				type: "string"
 			},
-			tags: merge(buildSettings, {
+			tags: merge(map(buildSettings, removeField("suggestShouldHaveValues")), {
 				platforms: {
 					description: "A list of platform specifiers to limit on which platforms the configuration applies",
 					values: {
@@ -845,7 +879,7 @@ let dubSchema = {
 			values: {
 				type: "string"
 			},
-			tags: merge(buildSettings, {
+			tags: merge(map(buildSettings, removeField("suggestShouldHaveValues")), {
 				dependency: undefined,
 				targetType: undefined,
 				targetName: undefined,
@@ -1063,6 +1097,9 @@ export class SDLContributions implements vscode.CompletionItemProvider {
 				if (typeof obj.minValues == "number")
 					if (tag.values.length < obj.minValues && tag.range)
 						errors.push(new vscode.Diagnostic(range(tag.range), "Not enough values. Requires at least " + obj.minValues, vscode.DiagnosticSeverity.Error));
+				if (obj.suggestShouldHaveValues)
+					if (tag.values.length == 0 && tag.range)
+						errors.push(new vscode.Diagnostic(range(tag.range), "This directive should specify some values, otherwise it might not have any effect", vscode.DiagnosticSeverity.Information));
 				if (typeof obj.maxValues == "number")
 					if (tag.values.length > obj.maxValues && tag.range)
 						errors.push(new vscode.Diagnostic(range(tag.range), "Too many values. Allows at most " + obj.maxValues, vscode.DiagnosticSeverity.Error));
