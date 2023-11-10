@@ -23,7 +23,7 @@
 	"activationEvents": [
 		"onLanguage:d",
 		"onLanguage:dml",
-		"onDebugResolve:d",
+		"onDebugResolve:code-d",
 		"onDebugDynamicConfigurations",
 		"onDebugInitialConfigurations",
 		"workspaceContains:dub.json",
