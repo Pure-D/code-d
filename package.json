@@ -916,6 +916,18 @@
 						"scope": "resource",
 						"default": true,
 						"markdownDescription": "Automatically insert or replace the `module name;` when creating or renaming a file."
+					},
+					"d.enableDCDHighlight": {
+						"type": "boolean",
+						"scope": "resource",
+						"default": true,
+						"markdownDescription": "When the text cursor is on a symbol, highlight other uses of the symbol within the current file. Does not change behavior of F2 / rename symbol. `#d.enableFallbackHighlight#` is separate from this and can still be run even if this setting is turned off. This internally runs `dcd-client --localUse`."
+					},
+					"d.enableFallbackHighlight": {
+						"type": "boolean",
+						"scope": "resource",
+						"default": true,
+						"markdownDescription": "Similar to `#d.enableDCDHighlight#`, but for simple cases, such as:\n\n- highlighting equivalent identifiers and text inside strings\n- on `return`, highlight the other `return` statements in the current function\n- on `switch`/`case`/`default` highlight the other switch-related control flow statements\n- on loops, `break`/`continue`, highlight break/continue/return\n- on `if`/`else`, highlight all if/if else/else blocks associated with the current if statement"
 					}
 				}
 			},
