@@ -400,7 +400,9 @@ export function registerClientCommands(context: vscode.ExtensionContext, client:
 
 	subscriptions.push(vscode.commands.registerCommand("code-d.dumpServedInfo", async () => {
 		let info = await client.sendRequest("served/getInfo", {
-			includeConfig: true
+			includeConfig: true,
+			includeIndex: true,
+			includeTasks: true,
 		});
 
 		client.outputChannel.appendLine("");
