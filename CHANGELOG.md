@@ -27,9 +27,83 @@ code-d and serve-d
 </tr>
 </table>
 
-# 0.x.y
+# 0.24.0
 
-## DUB improvements
+## Completion
+
+There is a new symbol index that will automatically be built on project launch. With this index the following features are introduced:
+
+- Find references (only in its most basic form)
+- auto-import completions (type a symbol name and it automatically gets imported on auto-complete submit)
+
+Auto completion now has better sorting and more information.
+
+UFCS is now supported for regular types and trivial templates.
+
+## CCDB
+
+There is support for basic clang compilation database (compile_commands.json) now. Since this is basically a makefile with shell commands and no standardized way of specifying the files, your mileage may vary on this.
+
+CCDB is used in favor of DUB if it can be parsed successfully.
+
+## Editing
+
+Proper folding support was introduced, it's no longer white-space based, but instead uses statements and can fold import blocks as well.
+
+You can now sort all imports in the entire file. This will also get rid of duplicate imports.
+
+Identifiers/variables can be renamed within a single file now. Putting the text cursor on a variable highlights its uses. Some control flow things such as if/else, switch/case, return, etc. also highlight.
+
+## D-Scanner
+
+You now get light-bulbs to auto-fix many more issue types, including a bunch of D-Scanner issues.
+
+Diagnostic location, length and information has improved a lot.
+
+## DDoc
+
+Hovers are no longer 1-off at start of the identifier. They include a basic definition of the symbol now.
+
+Improved support for:
+
+- code blocks (fixed)
+- tables (new)
+- colors (new)
+
+## Diet templates
+
+Auto completion ergonomics were improved a little.
+
+## Formatting
+
+You can now auto-format SDL files.
+
+## Snippets
+
+Fixed some spec links. New snippets:
+
+- `trymain`
+- `switch`
+- `final switch`
+- `if`
+- `if auto`
+- `while`
+- `while auto`
+- `for`
+- `scope guard`
+- `return`
+- `throw`
+- `goto`
+- `with`
+- `try`
+- `tryf`
+- try-catch-finally snippets (smart)
+- `default` (smart, in switch)
+- snippets for vibe.d and mir-ion
+
+## DUB
+
+The bundled DUB version in serve-d is now at 1.36.0
 
 Auto completion of dub.json has been improved and the issues with quoting have been fixed.
 
@@ -47,9 +121,31 @@ The DUB Dependencies view got a few improvements:
 
 The new dependency click actions can also be accessed by right-clicking a dependency.
 
+Linting D code through DUB builds has had many bugs resolved and should work a lot more reliably now, as well as not generating any binaries anymore.
+
+Startup DUB issues have improved error messages and error recovery now.
+
+Serve-D will now ask to upgrade the project and auto-download missing dependencies then when dependencies are missing.
+
 ## Other
 
 Installation/update of serve-d with multiple vscode windows now works properly.
+
+In this serve-d release we moved away from painlessjson to mir-ion as serialization library. Correctness for LSP implementation has greatly increased.
+
+Support for OpenSSL 3 was introduced.
+
+Fixed various bugs and crashes.
+
+Fixed FreeBSD and OSX M1 support. (serve-d)
+
+The settings view has been overhauled, including a lot of new settings. Manual JSON settings also aren't as likely to cause crashes anymore.
+
+The document outline has been improved.
+
+You will no longer be spammed with project loading notifications at startup.
+
+Various performance improvements.
 
 # 0.23.2
 
@@ -229,7 +325,7 @@ You can now use new context variables in `when` clauses in vscode settings like 
 
 - `d.isActive` which is true once code-d has been started (user ran some code-d command, opened a D file, wants to debug, has dub.json/dub.sdl, etc.)
 
-## Other Things
+## Other
 
 * Many improvements in syntax highlighting
 * Updated DCD to 0.13.6
@@ -255,7 +351,7 @@ Minor Changes:
 
 # 0.22.0
 
-## dub
+## DUB
 
 Platform attributes on supported values in dub.sdl are now autocompleted. This includes all the [current](https://github.com/dlang/dub/blob/8ffc09ed6fb9625837161ffbbda2d926f490196c/source/dub/platform.d#L24) platforms, architectures and compilers.
 
@@ -288,7 +384,7 @@ Syntax highlighting was improved
 * `asm` block fixes
 * fixed delegate highlighting without arguments
 
-## Other things
+## Other
 
 The custom serve-d commands and initialization have all been documented in the README for custom LSP clients in other editors.
 
@@ -348,7 +444,7 @@ You can now use new context variables in `when` clauses in vscode settings like 
 
 - `d.hasDubProject` which is true if there is a project with dub enabled (when the dub outline is visible)
 
-## Other Things
+## Other
 
 DCD upgrade to 0.11.1
 
@@ -424,7 +520,7 @@ The implement interface code action will no longer insert duplicate code and a l
 
 If you do OOP, try it out by simply extending an interface or abstract class and going on the inherited symbol with your cursor.
 
-## Completion improvements
+## Completion
 
 If you have `d.argumentSnippets` enabled, you will now have a much cleaner experience. Types and default values are no longer passed inside the snippets, so only variable names are put in inside the function arguments.
 
@@ -438,7 +534,7 @@ You can revert this back to a slightly modified version using `"d.completeNoDupe
 
 You can now convert dub package recipes between JSON/SDL using a click on the convert button in the toolbar or by running the "Convert between dub.json/dub.sdl" command while having the recipe open. You can still undo after conversion if it missed something or you noticed you had comments it removed.
 
-## Other Things
+## Other
 
 The server now tries to restart more. It now only doesn't restart after 20 restart fails in one minute instead of 5 fails in 3 minutes.
 
