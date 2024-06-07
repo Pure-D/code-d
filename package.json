@@ -735,6 +735,14 @@
 							]
 						},
 						"markdownDescription": "DScanner warnings to ignore in this project.\n\nTo disable warnings also with standalone D-Scanner, inside CI or for other people, create a `dscanner.ini` file in the project root.\n\nYou can use the `Insert default dscanner.ini content` command from the VSCode command palette to fill it with defaults."
+					},
+					"dscanner.excludedFiles": {
+						"type": "array",
+						"scope": "resource",
+						"items": {
+							"type": "string"
+						},
+						"markdownDescription": "Files to exclude from being linted with DScanner."
 					}
 				}
 			},
