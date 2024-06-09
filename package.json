@@ -742,7 +742,7 @@
 						"items": {
 							"type": "string"
 						},
-						"markdownDescription": "Files to exclude from being linted with DScanner."
+						"markdownDescription": "Files or glob patterns to exclude from being linted with DScanner."
 					}
 				}
 			},
