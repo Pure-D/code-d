@@ -12,7 +12,10 @@ suite("Integration Tests", () => {
   // sanity test that we have the correct window open
   let workspaces = vscode.workspace.workspaceFolders;
   assert.strictEqual(workspaces?.length, 1);
-  assert.strictEqual(workspaces[0].uri.fsPath, process.env["PROJECT_DIR"]);
+  assert.strictEqual(
+    workspaces[0].uri.fsPath.toLowerCase(),
+    process.env["PROJECT_DIR"]!.toLowerCase()
+  );
   let workspace = workspaces[0];
 
   test("check code-d installed", async () => {
@@ -44,7 +47,10 @@ suite("Integration Tests", () => {
       recipe,
       new vscode.Position(2, 3),
       new vscode.CompletionList([
-        new vscode.CompletionItem("dependency", vscode.CompletionItemKind.Field),
+        new vscode.CompletionItem(
+          "dependency",
+          vscode.CompletionItemKind.Field
+        ),
       ]),
       "contains"
     );
