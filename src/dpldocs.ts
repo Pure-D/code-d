@@ -4,7 +4,7 @@ import { JSDOM } from "jsdom";
 import { openTextDocumentAtRange, reqText } from "./util";
 import { served } from "./extension";
 import { DubDependencyInfo } from "./dub-view";
-import { DOMParser } from "@xmldom/xmldom";
+import { DOMParser, Element } from "@xmldom/xmldom";
 
 export type DocItem = vscode.QuickPickItem & { href: string, score: number, dependency?: DubDependencyInfo };
 
@@ -144,7 +144,7 @@ export function showDpldocsSearch(query?: string, fastOpen: boolean = false) {
 
 	loadDependencyPackageDocumentations(state);
 
-	var timeout: NodeJS.Timer | undefined;
+	var timeout: NodeJS.Timeout | undefined;
 	function updateSearch(query: string, delay: number = 500) {
 		timeout = updateRootSearchQuery(timeout, query, state, delay);
 	}
@@ -465,7 +465,7 @@ export function loadDependencySymbolsOnline(
 }
 
 
-function updateRootSearchQuery(timeout: NodeJS.Timer | undefined, value: string, state: WorkState, delay: number = 500): NodeJS.Timer {
+function updateRootSearchQuery(timeout: NodeJS.Timeout | undefined, value: string, state: WorkState, delay: number = 500): NodeJS.Timeout {
 	if (timeout !== undefined)
 		clearTimeout(timeout);
 	return setTimeout(async () => {
@@ -507,7 +507,7 @@ function parseDependencySearchResult(
 		return [];
 
 	let content = body.substring(start, end + "</adrdox>".length);
-	let xml: Document = new DOMParser().parseFromString(content, "text/xml");
+	let xml = new DOMParser().parseFromString(content, "text/xml");
 	let decls = xml.getElementsByTagName("decl");
 	let localItems: DocItem[] = [];
 	for (let j = 0; j < decls.length; j++) {
@@ -561,7 +561,7 @@ function parseDocEntry(declElem: Element): DocEntry {
 }
 
 function parseDocItem(dt: Element): DocItem | undefined {
-	let a = dt.querySelector("a");
+	let a = dt.getElementsByTagName("a")[0];
 	if (!a)
 		return;
 	let href = a.getAttribute("href");
@@ -570,7 +570,7 @@ function parseDocItem(dt: Element): DocItem | undefined {
 
 	let score = parseInt(dt.getAttribute("data-score") || "0");
 	let obj: DocItem = {
-		label: (a.innerText || a.textContent || "").replace(/[\s\u2000-\u200F]+/g, ""),
+		label: (a.textContent || "").replace(/[\s\u2000-\u200F]+/g, ""),
 		href: href,
 		score: score
 	};
@@ -578,8 +578,12 @@ function parseDocItem(dt: Element): DocItem | undefined {
 	if (score > 0)
 		obj.description = "Search Score: " + score;
 
-	if (dt.nextElementSibling)
-		obj.detail = ((<any>dt.nextElementSibling).innerText || dt.nextElementSibling.textContent || "").replace(/[\u2000-\u200F]+/g, "").replace(/([^\S\n]*\n[^\S\n]*\n[^\S\n]*)+/g, "\n\n");
+	let next = dt.nextSibling;
+	while (next && !(next instanceof Element)) {
+		next = next.nextSibling;
+	}
+	if (next && next instanceof Element)
+		obj.detail = (next.textContent || "").replace(/[\u2000-\u200F]+/g, "").replace(/([^\S\n]*\n[^\S\n]*\n[^\S\n]*)+/g, "\n\n");
 
 	return obj;
 }

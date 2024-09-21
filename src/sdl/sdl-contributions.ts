@@ -13,7 +13,7 @@ export function addSDLProviders(): vscode.Disposable {
 	let diagnosticCollection = vscode.languages.createDiagnosticCollection("dub.sdl");
 	subscriptions.push(diagnosticCollection);
 	let version;
-	let writeTimeout: NodeJS.Timer;
+	let writeTimeout: NodeJS.Timeout;
 	vscode.workspace.onDidChangeTextDocument(event => {
 		let document = event.document;
 		if (path.basename(document.fileName) != "dub.sdl")

@@ -74,20 +74,20 @@ export function unixEscapeShellParam(param: string): string {
  */
 export function simpleBytesToString(bytes: Uint8Array): string {
 	let buffer = Buffer.from(bytes);
-	let encoding = "utf8";
+	let encoding: BufferEncoding = "utf8";
 	if (bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF) {
-		buffer = buffer.slice(3);
+		buffer = buffer.subarray(3);
 	} else if (bytes[0] === 0x00 && bytes[1] === 0x00 && bytes[2] === 0xFE && bytes[3] === 0xFF) {
-		buffer = buffer.slice(4);
-		encoding = "utf32be";
+		buffer = buffer.subarray(4);
+		encoding = "utf32be" as BufferEncoding;
 	} else if (bytes[0] === 0xFF && bytes[1] === 0xFE && bytes[2] === 0x00 && bytes[3] === 0x00) {
-		buffer = buffer.slice(4);
-		encoding = "utf32le";
+		buffer = buffer.subarray(4);
+		encoding = "utf32le" as BufferEncoding;
 	} else if (bytes[0] === 0xFE && bytes[1] === 0xFF) {
-		buffer = buffer.slice(2);
-		encoding = "utf16be";
+		buffer = buffer.subarray(2);
+		encoding = "utf16be" as BufferEncoding;
 	} else if (bytes[0] === 0xFF && bytes[1] === 0xFE) {
-		buffer = buffer.slice(2);
+		buffer = buffer.subarray(2);
 		encoding = "utf16le";
 	}
 
