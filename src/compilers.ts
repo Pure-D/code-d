@@ -562,13 +562,15 @@ export async function listCompilersImpl(): Promise<DetectedCompiler[]> {
 	});
 
 	// test compilers in $PATH
-	const compilers = ["dmd", "ldc2", "ldc", "gdc", "gcc"];
+	const compilers = ["dmd", "ldc2", "ldc", "gdc", "gcc"] as const;
 	for (let i = 0; i < compilers.length; i++) {
 		const check = compilers[i];
 		let result = await checkCompiler(<any>check);
 		fallbackPath = fallbackPath || result.path;
 		if (result && result.has) {
-			result.has = check == "ldc2" ? "ldc" : <any>check;
+			result.has = check == "ldc2" ? "ldc"
+						: check == "gcc" ? "gdc"
+						: check;
 			ret.push(result);
 			if (check == "ldc2" || check == "gdc")
 				i++; // skip ldc / gcc
