@@ -1091,6 +1091,9 @@ repository:
     - include: '#delimited-string'
     - include: '#double-quoted-string'
     - include: '#token-string'
+    - include: '#ies-string'
+    - include: '#ies-wysiwyg-string'
+    - include: '#ies-token-string'
   wysiwyg-string:
     patterns:
     - begin: r\"
@@ -1105,12 +1108,30 @@ repository:
       name: string.alternate-wysiwyg-string.d
       patterns:
       - include: '#wysiwyg-characters'
+  ies-wysiwyg-string:
+    patterns:
+    - begin: 'i`'
+      end: '`[cwd]?'
+      name: string.ies-wysiwyg-string.d
+      patterns:
+      - include: '#interpolation-escape'
+      - include: '#interpolation-sequence'
+      - include: '#wysiwyg-characters'
   double-quoted-string:
     patterns:
     - begin: '"'
       end: '"[cwd]?'
       name: string.double-quoted-string.d
       patterns:
+      - include: '#double-quoted-characters'
+  ies-string:
+    patterns:
+    - begin: 'i"'
+      end: '"[cwd]?'
+      name: string.ies-string.d
+      patterns:
+      - include: '#interpolation-escape'
+      - include: '#interpolation-sequence'
       - include: '#double-quoted-characters'
   hex-string:
     patterns:
@@ -1136,6 +1157,18 @@ repository:
     - include: '#delimited-string-parens'
     - include: '#delimited-string-angle-brackets'
     - include: '#delimited-string-braces'
+  ies-token-string:
+    begin: iq\{
+    end: \}[cdw]?
+    beginCaptures:
+      0:
+        name: string.quoted.token.d
+    endCaptures:
+      0:
+        name: string.quoted.token.d
+    patterns:
+    - include: '#interpolation-sequence'
+    - include: '#token-string-content'
   token-string:
     begin: q\{
     end: \}[cdw]?
@@ -1168,6 +1201,21 @@ repository:
       name: constant.character.angle-brackets.d
       patterns:
       - include: '#wysiwyg-characters'
+  interpolation-escape:
+    match: \\\$
+    name: constant.character.escape-sequence.d
+  interpolation-sequence:
+    begin: \$\(
+    end: \)
+    name: meta.interpolation.expression.d
+    beginCaptures:
+      0:
+        name: punctuation.definition.template-expression.begin.d
+    endCaptures:
+      0:
+        name: punctuation.definition.template-expression.end.d
+    patterns:
+    - include: '#expression'
   delimited-string-braces:
     patterns:
     - begin: \{

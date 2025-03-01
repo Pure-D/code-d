@@ -2325,6 +2325,15 @@
         },
         {
           "include": "#token-string"
+        },
+        {
+          "include": "#ies-string"
+        },
+        {
+          "include": "#ies-wysiwyg-string"
+        },
+        {
+          "include": "#ies-token-string"
         }
       ]
     },
@@ -2356,6 +2365,26 @@
         }
       ]
     },
+    "ies-wysiwyg-string": {
+      "patterns": [
+        {
+          "begin": "i`",
+          "end": "`[cwd]?",
+          "name": "string.ies-wysiwyg-string.d",
+          "patterns": [
+            {
+              "include": "#interpolation-escape"
+            },
+            {
+              "include": "#interpolation-sequence"
+            },
+            {
+              "include": "#wysiwyg-characters"
+            }
+          ]
+        }
+      ]
+    },
     "double-quoted-string": {
       "patterns": [
         {
@@ -2363,6 +2392,26 @@
           "end": "\"[cwd]?",
           "name": "string.double-quoted-string.d",
           "patterns": [
+            {
+              "include": "#double-quoted-characters"
+            }
+          ]
+        }
+      ]
+    },
+    "ies-string": {
+      "patterns": [
+        {
+          "begin": "i\"",
+          "end": "\"[cwd]?",
+          "name": "string.ies-string.d",
+          "patterns": [
+            {
+              "include": "#interpolation-escape"
+            },
+            {
+              "include": "#interpolation-sequence"
+            },
             {
               "include": "#double-quoted-characters"
             }
@@ -2412,6 +2461,28 @@
         },
         {
           "include": "#delimited-string-braces"
+        }
+      ]
+    },
+    "ies-token-string": {
+      "begin": "iq\\{",
+      "end": "\\}[cdw]?",
+      "beginCaptures": {
+        "0": {
+          "name": "string.quoted.token.d"
+        }
+      },
+      "endCaptures": {
+        "0": {
+          "name": "string.quoted.token.d"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#interpolation-sequence"
+        },
+        {
+          "include": "#token-string-content"
         }
       ]
     },
@@ -2473,6 +2544,30 @@
               "include": "#wysiwyg-characters"
             }
           ]
+        }
+      ]
+    },
+    "interpolation-escape": {
+      "match": "\\\\\\$",
+      "name": "constant.character.escape-sequence.d"
+    },
+    "interpolation-sequence": {
+      "begin": "\\$\\(",
+      "end": "\\)",
+      "name": "meta.interpolation.expression.d",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.template-expression.begin.d"
+        }
+      },
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.template-expression.end.d"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#expression"
         }
       ]
     },
