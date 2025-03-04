@@ -636,7 +636,7 @@
 						"type": "boolean",
 						"scope": "resource",
 						"default": true,
-						"markdownDescription": "Enable errors and warnings (squiggly lines) while editing source code.\n\nTurning this off disables all diagnostics coming from code-d.You can toggle\n\n- `#d.enableSDLLinting#`\n- `#d.enableDubLinting#`\n- `#d.enableStaticLinting#`\n\nfor finer control instead."
+						"markdownDescription": "Enable errors and warnings (squiggly lines) while editing source code.\n\nTurning this off disables all diagnostics coming from code-d.You can toggle\n\n- `#d.enableSDLLinting#`\n- `#d.enableDubLinting#`\n- `\n- `#d.enableCcdbLinting#`\n- `#d.enableStaticLinting#`\n\nfor finer control instead."
 					},
 					"d.enableStaticLinting": {
 						"order": 1,
@@ -652,8 +652,15 @@
 						"default": true,
 						"markdownDescription": "Compile DUB projects on save to check for compile errors.\n\nThis is very similar to running `dub build` on the command line to see what actual errors occur, but does not output any executable or library.\n\nOnly has an effect if `#d.enableLinting#` is also turned on."
 					},
-					"d.enableSDLLinting": {
+					"d.enableCcdbLinting": {
 						"order": 3,
+						"type": "boolean",
+						"scope": "resource",
+						"default": true,
+						"markdownDescription": "Compile file with `compile_commands.json` on save to check for compile errors.\n\nOnly has an effect if `#d.ccdbPath` is set and `#d.enableLinting#` is also turned on."
+					},
+					"d.enableSDLLinting": {
+						"order": 4,
 						"type": "boolean",
 						"scope": "resource",
 						"default": true,
@@ -673,7 +680,7 @@
 							"Opened files in the current project will be linted immediately. Other files will be linted when editing.",
 							"Opening files will not lint and only start when editing them."
 						],
-						"markdownDescription": "Performs static linting already when opening a file, and not just when editing it. Needs `#d.enableStaticLinting#` to be enabled."
+						"markdownDescription": "Performs static (DScanner) and/or CCDB (compile_commands.json) linting already when opening a file, and not just when editing it."
 					},
 					"dscanner.ignoredKeys": {
 						"type": "array",
