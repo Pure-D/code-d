@@ -87,6 +87,10 @@
                     "$ref": "#/definitions/stringArray",
                     "description": "A list of external library names - depending on the compiler, these will be converted to the proper linker flag (e.g. \"ssl\" might get translated to \"-L-lssl\")"
                 },
+                "frameworks": {
+                    "$ref": "#/definitions/stringArray",
+                    "description": "A list of external framework names - Used only for darwin platforms. \"Foundation\" is translated to the linker flags \"-L-framework -LFoundation\""
+                },
                 "sourceFiles": {
                     "$ref": "#/definitions/stringArray",
                     "description": "Additional files passed to the compiler - can be useful to add certain configuration dependent source files that are not contained in the general source folder"
@@ -128,6 +132,10 @@
                     "default": [
                         "views"
                     ]
+                },
+                "cImportPaths": {
+                    "$ref": "#/definitions/stringArray",
+                    "description": "A list of import paths to search for C source files. Translated to -P-I"
                 },
                 "preGenerateCommands": {
                     "$ref": "#/definitions/stringArray",
