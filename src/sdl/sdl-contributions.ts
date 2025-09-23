@@ -503,6 +503,15 @@ const buildSettings: CompletionTagMap = {
 		minValues: 0,
 		suggestShouldHaveValues: true
 	},
+	frameworks: {
+		description: "A list of external framework names - Used only for darwin platforms. \"Foundation\" is translated to the linker flags \"-L-framework -LFoundation\"",
+		values: {
+			type: "string"
+		},
+		attributes: platformAttributes,
+		minValues: 0,
+		suggestShouldHaveValues: true
+	},
 	sourceFiles: {
 		description: "Additional files passed to the compiler - can be useful to add certain configuration dependent source files that are not contained in the general source folder",
 		values: pathComplete,
@@ -568,6 +577,12 @@ const buildSettings: CompletionTagMap = {
 		attributes: platformAttributes,
 		minValues: 0
 		// default: views, so empty is valid and not a warning
+	},
+	cImportPaths: {
+		description: "A list of import paths to search for C source files. Translated to -P-I",
+		values: pathComplete,
+		attributes: platformAttributes,
+		minValues: 0
 	},
 	preGenerateCommands: {
 		description: "A list of shell commands that is executed before project generation is started",
