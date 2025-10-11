@@ -953,6 +953,9 @@ export class SDLContributions implements vscode.CompletionItemProvider {
 			}
 			let completions: vscode.CompletionItem[] = [];
 			if (info.type == "block") {
+				if (obj == dubSchema)
+					provideRootSnippets(completions);
+
 				if (obj.tags)
 					Object.keys(obj.tags).forEach(key => {
 						let item = new vscode.CompletionItem(key);
@@ -1130,4 +1133,17 @@ export class SDLContributions implements vscode.CompletionItemProvider {
 		scanTag(root, dubSchema);
 		return errors;
 	}
+}
+
+function provideRootSnippets(res: vscode.CompletionItem[])
+{
+	let s = new vscode.CompletionItem("buildType \"unittest\"", vscode.CompletionItemKind.Snippet);
+	let str = `buildType "unittest" {
+    buildOptions "unittests" "debugMode" "debugInfo"
+    # dflags "-checkaction=context" # enables showing values in failing asserts
+    # dependency "my_ut_runner" version=""$0
+}`;
+	s.insertText = new vscode.SnippetString(str);
+	s.documentation = new vscode.MarkdownString("Block for configuring how unittests behave\n\n```sdl\n" + str + "\n```");
+	res.push(s);
 }
