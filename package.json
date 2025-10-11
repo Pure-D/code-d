@@ -1462,6 +1462,9 @@
 			}
 		]
 	},
+	"extensionPack": [
+		"webfreak.dub-editor"
+	],
 	"scripts": {
 		"vscode:prepublish": "tsc -p ./",
 		"vscode:uninstall": "node ./out/uninstall.js",
