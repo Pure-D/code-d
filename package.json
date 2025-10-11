@@ -11,7 +11,7 @@
 	"icon": "images/dlogo-square.png",
 	"license": "MIT",
 	"engines": {
-		"vscode": "^1.60.0"
+		"vscode": "^1.93.0"
 	},
 	"categories": [
 		"Programming Languages",
@@ -1506,10 +1506,5 @@
 		"vscode-oniguruma": "^2.0.1",
 		"vscode-test": "^1.6.1",
 		"vscode-textmate": "^9.1.0"
-	},
-	"__metadata": {
-		"id": "bf217d41-312b-4d39-9536-82fd0d9c6f94",
-		"publisherDisplayName": "WebFreak",
-		"publisherId": "e054f80a-50f9-4d80-85c8-6ff87eef6c35"
 	}
 }
