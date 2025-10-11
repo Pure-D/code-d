@@ -21,33 +21,11 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onLanguage:d",
-		"onLanguage:dml",
 		"onDebugResolve:code-d",
 		"onDebugDynamicConfigurations",
 		"onDebugInitialConfigurations",
-		"workspaceContains:dub.json",
-		"workspaceContains:dub.sdl",
-		"onCommand:code-d.switchConfiguration",
-		"onCommand:code-d.switchArchType",
-		"onCommand:code-d.switchBuildType",
-		"onCommand:code-d.switchCompiler",
-		"onCommand:code-d.killServer",
-		"onCommand:code-d.restartServer",
-		"onCommand:code-d.reloadImports",
 		"onCommand:code-d.stop",
-		"onCommand:code-d.insertDscanner",
-		"onCommand:code-d.rdmdCurrent",
-		"onCommand:code-d.generateCoverageReport",
-		"onCommand:code-d.showGCCalls",
-		"onCommand:code-d.createProject",
-		"onCommand:code-d.addImport",
-		"onCommand:code-d.searchDocs",
-		"onCommand:code-d.openDocsAtCursor",
-		"onCommand:code-d.convertDubRecipe",
-		"onCommand:code-d.setupCompiler",
-		"onCommand:code-d.viewUserGuide",
-		"onCustomEditor:code-d.dubRecipe"
+		"onCommand:code-d.addImport"
 	],
 	"main": "./out/extension",
 	"keywords": [
@@ -1316,12 +1294,6 @@
 				"category": "code-d"
 			}
 		],
-		"jsonValidation": [
-			{
-				"fileMatch": "dub.json",
-				"url": "./json-validation/dub.schema.json"
-			}
-		],
 		"taskDefinitions": [
 			{
 				"type": "dub",
@@ -1488,24 +1460,6 @@
 					}
 				]
 			}
-		],
-		"customEditors": [
-			{
-				"viewType": "code-d.dubRecipe",
-				"displayName": "DUB Recipe Editor",
-				"selector": [
-					{
-						"filenamePattern": "dub.json"
-					},
-					{
-						"filenamePattern": "package.json"
-					},
-					{
-						"filenamePattern": "dub.sdl"
-					}
-				],
-				"priority": "option"
-			}
 		]
 	},
 	"scripts": {
@@ -1516,11 +1470,9 @@
 		"watch": "tsc -watch -p ./",
 		"pretest": "npm run compile",
 		"test": "node ./out/test/runTest.js",
-		"grammar": "js-yaml syntaxes/dml.yml > syntaxes/dml.json; js-yaml syntaxes/diet.yml > syntaxes/diet.json; js-yaml syntaxes/d.yml > syntaxes/d.json; js-yaml syntaxes/sdl.yml > syntaxes/sdl.json; mocha out/test/ci"
+		"grammar": "js-yaml syntaxes/dml.yml > syntaxes/dml.json; js-yaml syntaxes/diet.yml > syntaxes/diet.json; js-yaml syntaxes/d.yml > syntaxes/d.json; mocha out/test/ci"
 	},
 	"dependencies": {
-		"@vscode/codicons": "^0.0.36",
-		"@vscode/webview-ui-toolkit": "^1.4.0",
 		"@xmldom/xmldom": "^0.9.3",
 		"adm-zip": "^0.5.16",
 		"async": "^3.2.6",
@@ -1528,7 +1480,6 @@
 		"code-d-api": "^0.2.1",
 		"expand-tilde": "^2.0.2",
 		"jsdom": "^25.0.0",
-		"jsonc-parser": "^3.3.1",
 		"line-by-line": "^0.1.6",
 		"mkdirp": "^3.0.1",
 		"ncp": "^2.0.0",

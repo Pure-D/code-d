@@ -8,8 +8,6 @@ import * as ChildProcess from "child_process";
 
 import * as mode from "./dmode";
 import * as statusbar from "./statusbar";
-import { addSDLProviders } from "./sdl/sdl-contributions";
-import { addJSONProviders } from "./json-contributions";
 import { GCProfiler } from "./gcprofiler";
 import { CoverageAnalyzer } from "./coverage";
 import { registerCommands, registerClientCommands } from "./commands";
@@ -532,8 +530,6 @@ export function activate(context: vscode.ExtensionContext): CodedAPI {
 
 	preStartup(context);
 
-	context.subscriptions.push(addSDLProviders());
-	context.subscriptions.push(addJSONProviders());
 	context.subscriptions.push(createConfigUpdateWatcher());
 
 	context.subscriptions.push(registerCompilerInstaller(context));

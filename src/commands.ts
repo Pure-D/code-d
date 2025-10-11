@@ -1,7 +1,6 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
-import { DubEditor } from "./dub-editor";
 import { LanguageClient, TextEdit } from "vscode-languageclient/node";
 import { config, served, ServeD } from "./extension";
 import { showProjectCreator, performTemplateCopy, openFolderWithExtension } from "./project-creator";
@@ -421,7 +420,6 @@ export function registerCommands(context: vscode.ExtensionContext) {
 
 	vscode.commands.executeCommand("setContext", "d.isActive", true);
 
-	subscriptions.push(DubEditor.register(context));
 	subscriptions.push(DTerminalLinkProvider.register());
 
 	subscriptions.push(vscode.commands.registerCommand("code-d.rdmdCurrent", async (file: vscode.Uri) => {
