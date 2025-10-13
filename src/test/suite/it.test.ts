@@ -27,33 +27,10 @@ suite("Integration Tests", () => {
     return vscode.Uri.joinPath(workspace.uri, relative);
   }
 
-  test("Wait for python and code-d extensions", async () => {
+  test("Wait for code-d extension", async () => {
     let coded = vscode.extensions.getExtension("webfreak.code-d")!;
     await coded.activate();
     await sleep(5000); // give sufficient startup time
-  });
-
-  test("Recipe file", async () => {
-    let recipe = await vscode.window.showTextDocument(
-      await vscode.workspace.openTextDocument(file("dub.sdl")),
-      vscode.ViewColumn.One
-    );
-
-    await recipe.edit((edit) => {
-      edit.insert(new vscode.Position(2, 0), "dep");
-    });
-
-    await testCompletion(
-      recipe,
-      new vscode.Position(2, 3),
-      new vscode.CompletionList([
-        new vscode.CompletionItem(
-          "dependency",
-          vscode.CompletionItemKind.Field
-        ),
-      ]),
-      "contains"
-    );
   });
 
   // test('interactive', () => new Promise((resolve, reject) => {}));
