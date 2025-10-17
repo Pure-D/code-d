@@ -1,11 +1,9 @@
 import * as assert from 'assert';
-import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as vsctm from 'vscode-textmate';
 import * as oniguruma from 'vscode-oniguruma';
 import { suite, test } from 'mocha';
-import { IRawGrammar } from 'vscode-textmate/release/rawGrammar';
 
 /**
  * Resolves a package relative path (relative to root folder / package.json folder) to the actual path
@@ -31,7 +29,7 @@ function readFile(pathStr: string): Promise<Buffer> {
 
 const registry = new vsctm.Registry({
 	onigLib: vscodeOnigurumaLib,
-	loadGrammar: async (scopeName): Promise<IRawGrammar | undefined | null> => {
+	loadGrammar: async (scopeName): Promise<vsctm.IRawGrammar | undefined | null> => {
 		if (scopeName === 'source.diet') {
 			const data = await readFile('syntaxes/diet.json');
 			return vsctm.parseRawGrammar(data.toString(), 'syntaxes/diet.json');

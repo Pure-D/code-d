@@ -13,7 +13,6 @@ import { CoverageAnalyzer } from "./coverage";
 import { registerCommands, registerClientCommands } from "./commands";
 import { DubDependency, DubDependencyInfo } from "./dub-view";
 
-import expandTilde = require("expand-tilde");
 import { CodedAPI, Snippet } from "code-d-api";
 import { builtinPlugins } from "./builtin_plugins";
 import { CodedAPIServedImpl } from "./api_impl";
@@ -21,6 +20,7 @@ import { restoreCreateProjectPackageBackup } from "./project-creator";
 import { registerDebuggers, linkDebuggersWithServed } from "./debug";
 import { DubTasksProvider } from "./dub-tasks";
 import { checkCompilers, DetectedCompiler, makeCompilerInstallButtons, registerCompilerInstaller } from "./compilers";
+import { homedir } from "os";
 
 class CustomErrorHandler implements ErrorHandler {
 	private restarts: number[];
@@ -1095,3 +1095,15 @@ export function hideNextPotentialConfigUpdateWarning() {
 	lastConfigUpdateWasInternal = new Date().getTime();
 }
 
+function expandTilde(filepath: string): string {
+	var home = homedir();
+
+	if (filepath.charCodeAt(0) === 126 /* ~ */) {
+		if (filepath.charCodeAt(1) === 43 /* + */) {
+		return path.join(process.cwd(), filepath.slice(2));
+		}
+		return home ? path.join(home, filepath.slice(1)) : filepath;
+	}
+
+	return filepath;
+};

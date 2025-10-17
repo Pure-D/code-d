@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { ServeD, served } from './extension';
+import { ServeD } from './extension';
 import { win32EscapeShellParam, unixEscapeShellParam } from './util';
 import * as which from "which";
 import * as path from "path";

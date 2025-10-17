@@ -4,7 +4,6 @@ import * as path from "path"
 import * as fs from "fs"
 import { reqJson, reqType } from "./util"
 import { config, extensionContext, hideNextPotentialConfigUpdateWarning } from "./extension"
-import expandTilde = require("expand-tilde");
 import { AxiosResponse } from "axios"
 import { Readable } from "stream"
 
