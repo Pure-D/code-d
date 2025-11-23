@@ -114,5 +114,21 @@
 			"beforeText": "^(\\t|(\\ \\ ))*\\ \\+(\\ ([^\\+]|\\+(?!\\/))*)?$",
 			"action": { "indent": "none", "appendText": "+ " }
 		},
+		{
+			"beforeText": "(?<!\\\\|\\w:)\/\/\/\\s*\\S",
+			"afterText": "^(?!\\s*$).+",
+			"action": {
+				"indent": "none",
+				"appendText": "/// "
+			}
+		},
+		{
+			"beforeText": "(?<!\\\\|\\w:)\/\/(?!\\/)\\s*\\S",
+			"afterText": "^(?!\\s*$).+",
+			"action": {
+				"indent": "none",
+				"appendText": "// "
+			}
+		}
 	]
 }
