@@ -60,10 +60,7 @@
 				"bindbc-opengl": "~>1.0",
 				"bindbc-sdl": "~>1.0"
 			},
-			"versions": [
-				"SDL_204",
-				"GL_32"
-			]
+			"versions": ["SDL_204", "GL_32"]
 		}
 	},
 	{
@@ -75,10 +72,7 @@
 				"bindbc-opengl": "~>1.0",
 				"bindbc-sdl": "~>1.0"
 			},
-			"versions": [
-				"SDL_204",
-				"GL_AllowDeprecated"
-			]
+			"versions": ["SDL_204", "GL_AllowDeprecated"]
 		}
 	},
 	{
@@ -112,15 +106,8 @@
 				"Diamond_Debug",
 				"Diamond_WebServer"
 			],
-			"sourcePaths": [
-				"core",
-				"models",
-				"controllers"
-			],
-			"stringImportPaths": [
-				"config",
-				"views"
-			]
+			"sourcePaths": ["core", "models", "controllers"],
+			"stringImportPaths": ["config", "views"]
 		}
 	},
 	{
@@ -133,19 +120,9 @@
 				"diamond": "~>3.0.0",
 				"mysql-native": "~>2.2.1"
 			},
-			"versions": [
-				"VibeDefaultMain",
-				"Diamond_Debug",
-				"Diamond_WebApi"
-			],
-			"sourcePaths": [
-				"core",
-				"models",
-				"controllers"
-			],
-			"stringImportPaths": [
-				"config"
-			]
+			"versions": ["VibeDefaultMain", "Diamond_Debug", "Diamond_WebApi"],
+			"sourcePaths": ["core", "models", "controllers"],
+			"stringImportPaths": ["config"]
 		}
 	}
 ]

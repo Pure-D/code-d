@@ -1501,6 +1501,7 @@
 		"glob": "^11.0.3",
 		"js-yaml": "^4.1.0",
 		"mocha": "^11.7.4",
+		"prettier": "3.7.4",
 		"source-map-support": "^0.5.21",
 		"typescript": "5.5",
 		"vscode-oniguruma": "^2.0.1",

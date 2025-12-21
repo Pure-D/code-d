@@ -4,19 +4,19 @@
 
 <div style="float: right; margin-left: 1em; padding: 1em; border: 1px solid white; position: relative; z-index: 10; outline: 1px solid black;">
 
-* [Home](index.md)
-* [Installation](install.md)
-* [Tutorial](intro-to-d.md)
-	* [Intro to D](intro-to-d.md)
-	* [Hello World](hello-world.md)
-	* [Building](building.md)
-	* **[Debugging](debugging.md)**
-	* [Editing](editing.md)
-	* [DUB Package Manager](dub.md)
-	* [vibe.d Web App](vibe-d.md)
-	* [Configuring non-DUB projects](non-dub.md)
-* [Troubleshooting](troubleshooting.md)
-* [Changelog](../CHANGELOG.md)
+- [Home](index.md)
+- [Installation](install.md)
+- [Tutorial](intro-to-d.md)
+  - [Intro to D](intro-to-d.md)
+  - [Hello World](hello-world.md)
+  - [Building](building.md)
+  - **[Debugging](debugging.md)**
+  - [Editing](editing.md)
+  - [DUB Package Manager](dub.md)
+  - [vibe.d Web App](vibe-d.md)
+  - [Configuring non-DUB projects](non-dub.md)
+- [Troubleshooting](troubleshooting.md)
+- [Changelog](../CHANGELOG.md)
 
 </div>
 
@@ -32,39 +32,39 @@ There exist multiple extension options for debugging. Installing all of them is 
 
 ![C/C++](images/ext_cpp.png)
 
-* Good issue support
+- Good issue support
 
-* Regularly updated
+- Regularly updated
 
-* Debugging using GDB, LLDB and the Visual Studio Debugger
+- Debugging using GDB, LLDB and the Visual Studio Debugger
 
-* Supports lightweight natvis for GDB/LLDB
+- Supports lightweight natvis for GDB/LLDB
 
-* Includes full Visual Studio Debugger with full natvis support
+- Includes full Visual Studio Debugger with full natvis support
 
-* Can show more variables/scope
+- Can show more variables/scope
 
 ### Native Debug extension by WebFreak: (webfreak.code-debug)
 
 ![native debug](images/ext_native_debug.png)
 
-* Debugging using GDB, LLDB or mago-mi
+- Debugging using GDB, LLDB or mago-mi
 
-* Some better remote debugging support
+- Some better remote debugging support
 
 ### CodeLLDB extension by vadimcn: (vadimcn.vscode-lldb)
 
 ![CodeLLDB](images/ext_code_lldb.png)
 
-* Debugging using LLDB only
+- Debugging using LLDB only
 
-* Better visualization support
+- Better visualization support
 
-* Communicates faster with debugger, may give debugging performance improvements
+- Communicates faster with debugger, may give debugging performance improvements
 
-* Can show more variables/scope
+- Can show more variables/scope
 
----------
+---
 
 ## Creating a debugging configuration
 
@@ -114,12 +114,12 @@ code-d ships with debug wrappers, which automatically loads the best installed r
 
 The following custom variables are available for the launch configuration:
 
-* `${command:dubPackageName}` - the name of the currently active DUB package
-* `${command:dubPackagePath}` - the absolute path to the currently active DUB package
-* `${command:dubWorkingDirectory}` - the absolute path to the configured working directory of the currently active DUB package
-* `${command:dubTarget}` - the absolute path to the currently active DUB package binary destination
-* `${command:dubTargetPath}` - the absolute path to the currently active DUB package binary folder
-* `${command:dubTargetName}` - the name of the target executable including platform suffix for the currently active DUB package
+- `${command:dubPackageName}` - the name of the currently active DUB package
+- `${command:dubPackagePath}` - the absolute path to the currently active DUB package
+- `${command:dubWorkingDirectory}` - the absolute path to the configured working directory of the currently active DUB package
+- `${command:dubTarget}` - the absolute path to the currently active DUB package binary destination
+- `${command:dubTargetPath}` - the absolute path to the currently active DUB package binary folder
+- `${command:dubTargetName}` - the name of the target executable including platform suffix for the currently active DUB package
 
 The "currently active DUB package" in the variables above means the DUB package associated with the last D file that was or is being edited. In case of projects with a single DUB configuration this will always be the project itself. In case of multiple opened folders or a folder with multiple dub.json/dub.sdl files, it will be the project associated with the last active D file loaded.
 
@@ -221,29 +221,28 @@ You can now also debug using the button in the status bar:
 
 ### Recommendation Summary
 
-* **Windows**: VS debugger or GDB through C/C++ (ms-vscode.cpptools)
+- **Windows**: VS debugger or GDB through C/C++ (ms-vscode.cpptools)
 
-* **Linux**: GDB or LLDB from usual distribution sources
+- **Linux**: GDB or LLDB from usual distribution sources
 
   depending on the debugger install C/C++ (ms-vscode.cpptools) or CodeLLDB (vadimcn.vscode-lldb)
 
-* **Mac**: install CodeLLDB (vadimcn.vscode-lldb)
+- **Mac**: install CodeLLDB (vadimcn.vscode-lldb)
 
 ---
 
 ### Windows
 
-* **Visual Studio Debugger** (recommended)
+- **Visual Studio Debugger** (recommended)
 
   This will use the debugger bundled with Visual Studio, which works well for D. This is a great option if you want a zero-hassle configuration that quickly is going to work.
 
   In order to use this debugger type, you will need to **install Visual Studio** with C/C++ (native Desktop) support, which might not be an option for everybody.
 
   Manual Extension configuration:
+  - `"type": "cppvsdbg"` (C/C++ extension)
 
-  * `"type": "cppvsdbg"` (C/C++ extension)
-
-* **GDB**
+- **GDB**
 
   In order to use GDB on Windows, you will need to install Cygwin or MinGW, which might be difficult for your environment and is not the easiest way to setup.
 
@@ -252,12 +251,11 @@ You can now also debug using the button in the status bar:
   GDB versions 9.1 and above add support for D which includes demangling of function names, so having an up-to-date installation is recommended.
 
   Manual Extension configuration:
+  - `"type": "cppdbg", "MIMode": "gdb"` (C/C++ extension)
 
-  * `"type": "cppdbg", "MIMode": "gdb"` (C/C++ extension)
+  - `"type": "gdb"` (Native Debug extension)
 
-  * `"type": "gdb"` (Native Debug extension)
-
-* **Mago**
+- **Mago**
 
   Mago is a debugging engine designed especially for debugging D code. When not having Visual Studio installed this might be a great alternative to use.
 
@@ -266,8 +264,7 @@ You can now also debug using the button in the status bar:
   If you don't want to globally install mago-mi, (added to `PATH`) you can specify the path to it using `magomipath`
 
   Manual Extension configuration:
-
-  * `"type": "mago-mi"` (Native Debug extension)
+  - `"type": "mago-mi"` (Native Debug extension)
 
 Official documentation for the C/C++ extension: https://code.visualstudio.com/docs/cpp/cpp-debug
 
@@ -275,34 +272,34 @@ Official documentation for the C/C++ extension: https://code.visualstudio.com/do
 
 ### Linux
 
-* **LLDB** (recommended)
+- **LLDB** (recommended)
 
   LLDB is a relatively new debugger which will work especially well when your program is compiled with LDC and functions a little bit differently compared to GDB. Refer to your distribution's documentation to learn how to install LLDB. Using CodeLLDB on Windows automatically installs LLDB.
 
   Manual Extension configuration:
+  - `"type": "lldb"` (CodeLLDB)
 
-  * `"type": "lldb"` (CodeLLDB)
+  - `"type": "cppdbg", "MIMode": "lldb"` (C/C++ extension)
 
-  * `"type": "cppdbg", "MIMode": "lldb"` (C/C++ extension)
+  - `"type": "lldb-mi"` (Native Debug extension)
 
-  * `"type": "lldb-mi"` (Native Debug extension)
-
-* **GDB**
+- **GDB**
 
   GDB is a very reliable debugger on linux and should just work out of the box with D. Refer to your distribution's documentation to learn how to install GDB.
 
   GDB versions 9.1 and above add support for D which includes demangling of function names, so having an up-to-date installation is recommended.
 
   Manual Extension configuration:
+  - `"type": "cppdbg", "MIMode": "gdb"` (C/C++ extension)
 
-  * `"type": "cppdbg", "MIMode": "gdb"` (C/C++ extension)
-
-  * `"type": "gdb"` (Native Debug extension)
+  - `"type": "gdb"` (Native Debug extension)
 
 To attach to programs without needing to enter the super user password it's possible to run
+
 ```
 echo 0 | sudo tee /proc/sys/kernel/yama/ptrace_scope
 ```
+
 This can also solve permission denied error whenever using an attach configuration.
 
 See https://linux-audit.com/protect-ptrace-processes-kernel-yama-ptrace_scope/
@@ -311,13 +308,12 @@ See https://linux-audit.com/protect-ptrace-processes-kernel-yama-ptrace_scope/
 
 ### Mac
 
-* **LLDB** (recommended)
+- **LLDB** (recommended)
 
   LLDB is the recommended debugger on Mac. It comes **installed with Xcode**.
 
   Manual Extension configuration:
-
-  * `"type": "lldb"` (CodeLLDB)
+  - `"type": "lldb"` (CodeLLDB)
 
   The C/C++ extension and Native Debug extensions requires an additional step to be fully usable:
 
@@ -328,23 +324,20 @@ See https://linux-audit.com/protect-ptrace-processes-kernel-yama-ptrace_scope/
   Alternatively you can specify the path to lldb-mi inside your debugger configuration (`miDebuggerPath` or `lldbmipath`) every time you create a debug configuration, however this is not recommended if you have many projects.
 
   Manual Extension configuration:
+  - `"type": "cppdbg", "MIMode": "lldb"` (C/C++ extension)
 
-  * `"type": "cppdbg", "MIMode": "lldb"` (C/C++ extension)
+  - `"type": "lldb-mi"` (Native Debug extension)
 
-  * `"type": "lldb-mi"` (Native Debug extension)
-
-* **GDB**
+- **GDB**
 
   GDB on Mac must be separately installed and might not function correctly in every case. It should be used as fallback but can be made to work.
 
   GDB versions 9.1 and above add support for D which includes demangling of function names, so having an up-to-date installation is recommended.
 
   Manual Extension configuration:
+  - `"type": "cppdbg", "MIMode": "gdb"` (C/C++ extension)
 
-  * `"type": "cppdbg", "MIMode": "gdb"` (C/C++ extension)
-
-  * `"type": "gdb"` (Native Debug extension)
-
+  - `"type": "gdb"` (Native Debug extension)
 
 ## Next Steps
 

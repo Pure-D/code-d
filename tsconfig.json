@@ -3,16 +3,10 @@
 		"module": "commonjs",
 		"target": "es6",
 		"outDir": "out",
-		"lib": [
-			"es2019",
-			"dom"
-		],
+		"lib": ["es2019", "dom"],
 		"sourceMap": true,
 		"rootDir": "src",
 		"strict": true
 	},
-	"exclude": [
-		"node_modules",
-		".vscode-test"
-	]
+	"exclude": ["node_modules", ".vscode-test"]
 }

@@ -4,19 +4,19 @@
 
 <div style="float: right; margin-left: 1em; padding: 1em; border: 1px solid white; position: relative; z-index: 10; outline: 1px solid black;">
 
-* [Home](index.md)
-* [Installation](install.md)
-* [Tutorial](intro-to-d.md)
-	* [Intro to D](intro-to-d.md)
-	* [Hello World](hello-world.md)
-	* [Building](building.md)
-	* [Debugging](debugging.md)
-	* [Editing](editing.md)
-	* [DUB Package Manager](dub.md)
-	* **[vibe.d Web App](vibe-d.md)**
-	* [Configuring non-DUB projects](non-dub.md)
-* [Troubleshooting](troubleshooting.md)
-* [Changelog](../CHANGELOG.md)
+- [Home](index.md)
+- [Installation](install.md)
+- [Tutorial](intro-to-d.md)
+  - [Intro to D](intro-to-d.md)
+  - [Hello World](hello-world.md)
+  - [Building](building.md)
+  - [Debugging](debugging.md)
+  - [Editing](editing.md)
+  - [DUB Package Manager](dub.md)
+  - **[vibe.d Web App](vibe-d.md)**
+  - [Configuring non-DUB projects](non-dub.md)
+- [Troubleshooting](troubleshooting.md)
+- [Changelog](../CHANGELOG.md)
 
 </div>
 
@@ -34,9 +34,9 @@ You will find that several template files have been inserted in your project fol
 
 In general:
 
-* `public/` contains all the HTTP-accessible static files such as images, stylesheets and scripts.
-* `source/` contains all the server-side D code
-* `views/` contains all the server-side templates for rendering into HTML
+- `public/` contains all the HTTP-accessible static files such as images, stylesheets and scripts.
+- `source/` contains all the server-side D code
+- `views/` contains all the server-side templates for rendering into HTML
 
 ### Running the Web App
 
@@ -77,4 +77,3 @@ html
 ```
 
 code-d provides full auto completion support for HTML5 tags and attributes. Additionally it fully supports auto completing inline D code inside diet template files.
-

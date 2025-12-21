@@ -6,7 +6,7 @@ import { served } from "./extension";
 import { DubDependencyInfo } from "./dub-view";
 import { DOMParser, Element } from "@xmldom/xmldom";
 
-export type DocItem = vscode.QuickPickItem & { href: string, score: number, dependency?: DubDependencyInfo };
+export type DocItem = vscode.QuickPickItem & { href: string; score: number; dependency?: DubDependencyInfo };
 
 class WorkState {
 	working: number = 0;
@@ -17,57 +17,60 @@ class WorkState {
 
 	private resolve?: Function;
 
-	constructor(public quickPick: vscode.QuickPick<any>, public query: string | undefined, public fastOpen: boolean) {
+	constructor(
+		public quickPick: vscode.QuickPick<any>,
+		public query: string | undefined,
+		public fastOpen: boolean,
+	) {
 		if (fastOpen)
-			vscode.window.withProgress({
-				location: vscode.ProgressLocation.Notification,
-				cancellable: true
-			}, (progress, token) => {
-				progress.report({ message: "Looking up documentation" });
-				return new Promise((resolve, reject) => {
-					token.onCancellationRequested((e) => {
-						this.done = true;
-						reject();
-					});
-					this.resolve = resolve;
+			vscode.window
+				.withProgress(
+					{
+						location: vscode.ProgressLocation.Notification,
+						cancellable: true,
+					},
+					(progress, token) => {
+						progress.report({ message: "Looking up documentation" });
+						return new Promise((resolve, reject) => {
+							token.onCancellationRequested((e) => {
+								this.done = true;
+								reject();
+							});
+							this.resolve = resolve;
+						});
+					},
+				)
+				.then((result) => {
+					// done
 				});
-			}).then((result) => {
-				// done
-			});
 	}
 
 	startWork() {
-		if (this.done)
-			return;
+		if (this.done) return;
 
 		this.working++;
 		this.quickPick.busy = this.working > 0;
 	}
 
 	finishWork() {
-		if (this.done)
-			return;
+		if (this.done) return;
 
 		this.working--;
 		this.quickPick.busy = this.working > 0;
 	}
 
 	refreshItems() {
-		if (this.done)
-			return;
+		if (this.done) return;
 
 		var ret: DocItem[] = this.items.slice();
-		for (var key in this.depItems)
-			if (this.depItems.hasOwnProperty(key))
-				ret.push.apply(ret, this.depItems[key]);
+		for (var key in this.depItems) if (this.depItems.hasOwnProperty(key)) ret.push.apply(ret, this.depItems[key]);
 		ret.sort((a, b) => b.score - a.score);
 		this.quickPick.items = ret;
 
 		if (!this.visible && this.working <= 0) {
 			if (!this.finishQuick()) {
 				this.quickPick.show();
-				if (this.resolve)
-					this.resolve();
+				if (this.resolve) this.resolve();
 			}
 
 			this.visible = true;
@@ -78,22 +81,19 @@ class WorkState {
 		this.quickPick.items = this.items;
 		if (this.fastOpen) {
 			this.finishQuick();
-		}
-		else {
+		} else {
 			this.quickPick.show();
 			this.visible = true;
 		}
 
 		this.quickPick.onDidHide((e) => {
-			if (this.resolve)
-				this.resolve();
+			if (this.resolve) this.resolve();
 			this.done = true;
 		});
 	}
 
 	finishQuick(): boolean {
-		if (!this.items || !this.items.length)
-			return false;
+		if (!this.items || !this.items.length) return false;
 
 		let singleItem: DocItem | undefined;
 
@@ -131,8 +131,7 @@ class WorkState {
 
 		this.visible = true;
 
-		if (this.resolve)
-			this.resolve();
+		if (this.resolve) this.resolve();
 
 		return true;
 	}
@@ -153,8 +152,7 @@ export function showDpldocsSearch(query?: string, fastOpen: boolean = false) {
 	quickpick.placeholder = "Enter search term for symbol...";
 	quickpick.onDidAccept(() => {
 		var selection = quickpick.selectedItems[0];
-		if (selection)
-			showDocItemUI(selection);
+		if (selection) showDocItemUI(selection);
 	});
 	state.show();
 
@@ -167,11 +165,9 @@ export function showDpldocsSearch(query?: string, fastOpen: boolean = false) {
 export async function fillDplDocs(panel: vscode.WebviewPanel, label: string, href: string) {
 	panel.webview.html = "<h1>" + label + "</h1>";
 
-	if (href.startsWith("//"))
-		href = "https:" + href;
+	if (href.startsWith("//")) href = "https:" + href;
 
-	if (!href.startsWith("http:") && !href.startsWith("https:"))
-	{
+	if (!href.startsWith("http:") && !href.startsWith("https:")) {
 		panel.webview.html = `<h1>${label}</h1><p>Non-docs URL: <a href="${href}">${href}</a></p>`;
 
 		return;
@@ -182,7 +178,10 @@ export async function fillDplDocs(panel: vscode.WebviewPanel, label: string, hre
 	let content = new JSDOM(body);
 	let page = content.window.document.getElementById("page-body");
 	if (page) {
-		let nonce = Math.random().toString(36).substr(2) + Math.random().toString(36).substr(2) + Math.random().toString(36).substr(2);
+		let nonce =
+			Math.random().toString(36).substr(2) +
+			Math.random().toString(36).substr(2) +
+			Math.random().toString(36).substr(2);
 		let font = vscode.workspace.getConfiguration("editor").get("fontFamily") || "monospace";
 		panel.webview.html = `<!DOCTYPE html>
 			<html lang="en">
@@ -408,30 +407,25 @@ export async function fillDplDocs(panel: vscode.WebviewPanel, label: string, hre
 }
 
 async function loadDependencyPackageDocumentations(state: WorkState) {
-	if (!served)
-		return;
+	if (!served) return;
 
 	let deps = await served.getChildren();
 	var checked: string[] = [];
-	deps.forEach(dep => {
+	deps.forEach((dep) => {
 		if (dep.info) {
 			var strippedVersion = dep.info.version;
-			if (strippedVersion.startsWith("~"))
-				strippedVersion = strippedVersion.substr(1);
+			if (strippedVersion.startsWith("~")) strippedVersion = strippedVersion.substr(1);
 
 			var strippedName = dep.info.name;
 			var colon = strippedName.indexOf(":");
-			if (colon != -1)
-				strippedName = strippedName.substr(0, colon);
-			if (checked.indexOf(strippedName) != -1)
-				return;
+			if (colon != -1) strippedName = strippedName.substr(0, colon);
+			if (checked.indexOf(strippedName) != -1) return;
 			checked.push(strippedName);
 
-			if (state.done)
-				return;
+			if (state.done) return;
 
 			state.startWork();
-			loadDependencySymbolsOnline(dep.info, strippedName, strippedVersion).then(docs => {
+			loadDependencySymbolsOnline(dep.info, strippedName, strippedVersion).then((docs) => {
 				state.finishWork();
 				state.depItems[dep.info!.name] = docs;
 				state.refreshItems();
@@ -443,34 +437,44 @@ async function loadDependencyPackageDocumentations(state: WorkState) {
 export function loadDependencySymbolsOnline(
 	dep: DubDependencyInfo | undefined,
 	strippedDependencyName: string,
-	strippedDependencyVersion: string): Promise<DocItem[]> {
+	strippedDependencyVersion: string,
+): Promise<DocItem[]> {
 	let url = `https://${encodeURIComponent(strippedDependencyName)}.dpldocs.info/${encodeURIComponent(strippedDependencyVersion)}/search-results.html`;
 
 	let retried = false;
 	let doTry = function (url: string): Promise<DocItem[]> {
-		return reqText().get(url, { headers: { "Accept-Encoding": "gzip" } }).then((body) => {
-			if (body.status == 200) {
-				if ((body.headers["content-length"] || body.headers["Content-Length"])) {
-					return parseDependencySearchResult(body.data, dep, strippedDependencyName, strippedDependencyVersion);
-				} else if (!retried) {
-					retried = true;
-					return doTry(url);
-				} else {
-					throw body;
-				}
-			} else throw body;
-		});
-	}
+		return reqText()
+			.get(url, { headers: { "Accept-Encoding": "gzip" } })
+			.then((body) => {
+				if (body.status == 200) {
+					if (body.headers["content-length"] || body.headers["Content-Length"]) {
+						return parseDependencySearchResult(
+							body.data,
+							dep,
+							strippedDependencyName,
+							strippedDependencyVersion,
+						);
+					} else if (!retried) {
+						retried = true;
+						return doTry(url);
+					} else {
+						throw body;
+					}
+				} else throw body;
+			});
+	};
 	return doTry(url);
 }
 
-
-function updateRootSearchQuery(timeout: NodeJS.Timeout | undefined, value: string, state: WorkState, delay: number = 500): NodeJS.Timeout {
-	if (timeout !== undefined)
-		clearTimeout(timeout);
+function updateRootSearchQuery(
+	timeout: NodeJS.Timeout | undefined,
+	value: string,
+	state: WorkState,
+	delay: number = 500,
+): NodeJS.Timeout {
+	if (timeout !== undefined) clearTimeout(timeout);
 	return setTimeout(async () => {
-		if (state.done)
-			return;
+		if (state.done) return;
 
 		state.startWork();
 		try {
@@ -478,14 +482,12 @@ function updateRootSearchQuery(timeout: NodeJS.Timeout | undefined, value: strin
 			state.finishWork();
 			state.items = [];
 			let dom = new JSDOM(body);
-			let results = <Element[]><any>dom.window.document.querySelectorAll("dt.search-result");
-			results.forEach(dt => {
+			let results = <Element[]>(<any>dom.window.document.querySelectorAll("dt.search-result"));
+			results.forEach((dt) => {
 				let item = parseDocItem(dt);
-				if (item)
-					state.items.push(item);
+				if (item) state.items.push(item);
 			});
-		}
-		catch (e) {
+		} catch (e) {
 			console.error("Failed searching dpldocs: ", e);
 			state.finishWork();
 			state.items = [];
@@ -498,13 +500,12 @@ function parseDependencySearchResult(
 	body: string,
 	dep: DubDependencyInfo | undefined,
 	strippedDependencyName: string,
-	strippedDependencyVersion: string): DocItem[] {
+	strippedDependencyVersion: string,
+): DocItem[] {
 	let start = body.indexOf("<adrdox>");
-	if (start == -1)
-		return [];
+	if (start == -1) return [];
 	let end = body.indexOf("</adrdox>", start);
-	if (end == -1)
-		return [];
+	if (end == -1) return [];
 
 	let content = body.substring(start, end + "</adrdox>".length);
 	let xml = new DOMParser().parseFromString(content, "text/xml");
@@ -515,17 +516,14 @@ function parseDependencySearchResult(
 		if (docEntry.name && docEntry.link) {
 			let href = docEntry.link;
 			let m;
-			if (m = /\.(\d+)\.html/.exec(href))
-				if (parseInt(m[1]) > 1)
-					continue;
+			if ((m = /\.(\d+)\.html/.exec(href))) if (parseInt(m[1]) > 1) continue;
 			let obj: DocItem = {
 				dependency: dep,
 				label: strippedDependencyName + "/" + docEntry.name,
 				href: `https://${encodeURIComponent(strippedDependencyName)}.dpldocs.info/${encodeURIComponent(strippedDependencyVersion)}/${encodeURIComponent(href)}`,
-				score: 0
+				score: 0,
 			};
-			if (docEntry.desc)
-				obj.detail = docEntry.desc;
+			if (docEntry.desc) obj.detail = docEntry.desc;
 			localItems.push(obj);
 		}
 	}
@@ -545,84 +543,94 @@ function parseDocEntry(declElem: Element): DocEntry {
 	for (let i = 0; i < declElem.childNodes.length; i++) {
 		let child = <any>declElem.childNodes[i];
 		if (child.tagName) {
-			if (child.tagName.toLowerCase() == "name")
-				name = child;
-			else if (child.tagName.toLowerCase() == "link")
-				link = child;
-			else if (child.tagName.toLowerCase() == "desc")
-				desc = child;
+			if (child.tagName.toLowerCase() == "name") name = child;
+			else if (child.tagName.toLowerCase() == "link") link = child;
+			else if (child.tagName.toLowerCase() == "desc") desc = child;
 		}
 	}
 	return {
 		name: getCleanSimpleTextContent(name),
 		link: getCleanSimpleTextContent(link),
-		desc: getCleanSimpleTextContent(desc)
+		desc: getCleanSimpleTextContent(desc),
 	};
 }
 
 function parseDocItem(dt: Element): DocItem | undefined {
 	let a = dt.getElementsByTagName("a")[0];
-	if (!a)
-		return;
+	if (!a) return;
 	let href = a.getAttribute("href");
-	if (!href)
-		return;
+	if (!href) return;
 
 	let score = parseInt(dt.getAttribute("data-score") || "0");
 	let obj: DocItem = {
 		label: (a.textContent || "").replace(/[\s\u2000-\u200F]+/g, ""),
 		href: href,
-		score: score
+		score: score,
 	};
 
-	if (score > 0)
-		obj.description = "Search Score: " + score;
+	if (score > 0) obj.description = "Search Score: " + score;
 
 	let next = dt.nextSibling;
 	while (next && !(next instanceof Element)) {
 		next = next.nextSibling;
 	}
 	if (next && next instanceof Element)
-		obj.detail = (next.textContent || "").replace(/[\u2000-\u200F]+/g, "").replace(/([^\S\n]*\n[^\S\n]*\n[^\S\n]*)+/g, "\n\n");
+		obj.detail = (next.textContent || "")
+			.replace(/[\u2000-\u200F]+/g, "")
+			.replace(/([^\S\n]*\n[^\S\n]*\n[^\S\n]*)+/g, "\n\n");
 
 	return obj;
 }
 
 function getCleanSimpleTextContent(elem: Element | null): string | null {
-	return elem ? ((<any>elem).innerText || elem.textContent || "").replace(/<\/?.*?>/g, "").replace(/[\u2000-\u200F]+/g, "").trim() : elem;
+	return elem
+		? ((<any>elem).innerText || elem.textContent || "")
+				.replace(/<\/?.*?>/g, "")
+				.replace(/[\u2000-\u200F]+/g, "")
+				.trim()
+		: elem;
 }
 
 function showDocItemUI(docItem: DocItem) {
-	var panel = vscode.window.createWebviewPanel("dpldocs", docItem.label, {
-		viewColumn: vscode.ViewColumn.Active
-	}, {
-		enableCommandUris: false,
-		enableFindWidget: true,
-		enableScripts: true,
-		localResourceRoots: []
-	});
+	var panel = vscode.window.createWebviewPanel(
+		"dpldocs",
+		docItem.label,
+		{
+			viewColumn: vscode.ViewColumn.Active,
+		},
+		{
+			enableCommandUris: false,
+			enableFindWidget: true,
+			enableScripts: true,
+			localResourceRoots: [],
+		},
+	);
 	var baseUri = docItem.href;
 	panel.webview.onDidReceiveMessage((msg) => {
 		switch (msg.type) {
 			case "handle-link":
 				if (/^coded-internal:\/\/[^/?#]+\.dpldocs\.info(\/|$)/.test(msg.href)) {
 					// absolute dpldocs link, possibly with different subdomain
-					baseUri = vscode.Uri.parse(msg.href).with({"scheme":"https"}).toString();
+					baseUri = vscode.Uri.parse(msg.href).with({ scheme: "https" }).toString();
 					fillDplDocs(panel, msg.title, baseUri);
 				} else {
 					let href = path.posix.normalize(msg.href);
 					let uri = vscode.Uri.parse(baseUri);
 					if (href.startsWith("/")) {
-						baseUri = uri.with({
-							path: href
-						}).toString();
+						baseUri = uri
+							.with({
+								path: href,
+							})
+							.toString();
 					} else {
 						let file = uri.path;
 						let slash = file.lastIndexOf("/");
 						file = file.substring(0, slash + 1) + href;
-						baseUri = uri.with({
-							path: file
-						}).toString();
+						baseUri = uri
+							.with({
+								path: file,
+							})
+							.toString();
 					}
 					fillDplDocs(panel, msg.title, baseUri);
 				}
@@ -638,7 +646,7 @@ function showDocItemUI(docItem: DocItem) {
 }
 
 function focusModule(module_: string, line: number) {
-	served.findFilesByModule(module_).then(files => {
+	served.findFilesByModule(module_).then((files) => {
 		if (!files.length) {
 			vscode.window.showErrorMessage("Could not find module " + module_);
 		} else {

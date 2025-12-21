@@ -8,8 +8,8 @@ code-d offers full integration for the DUB package manager for all development p
 
 - Full file support for dub.json and dub.sdl
 - Dependency management within VSCode
-	- Add/Remove/Upgrade dependencies
-	- Go to definition, auto complete, etc.
+  - Add/Remove/Upgrade dependencies
+  - Go to definition, auto complete, etc.
 - Building
 - Creation
 

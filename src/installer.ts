@@ -1,11 +1,11 @@
-import * as ChildProcess from "child_process"
-import * as vscode from "vscode"
-import * as path from "path"
-import * as fs from "fs"
-import { reqJson, reqType } from "./util"
-import { config, extensionContext, hideNextPotentialConfigUpdateWarning } from "./extension"
-import { AxiosResponse } from "axios"
-import { Readable } from "stream"
+import * as ChildProcess from "child_process";
+import * as vscode from "vscode";
+import * as path from "path";
+import * as fs from "fs";
+import { reqJson, reqType } from "./util";
+import { config, extensionContext, hideNextPotentialConfigUpdateWarning } from "./extension";
+import { AxiosResponse } from "axios";
+import { Readable } from "stream";
 
 var rimraf = require("rimraf");
 var AdmZip = require("adm-zip");
@@ -20,13 +20,10 @@ export function determineOutputFolder(): string {
 	if (process.platform == "linux" && process.env.HOME) {
 		if (fs.existsSync(path.join(process.env.HOME, ".local", "share")))
 			return path.join(process.env.HOME, ".local", "share", "code-d", "bin");
-		else
-			return path.join(process.env.HOME, ".code-d", "bin");
-	}
-	else if (process.platform == "win32" && process.env.APPDATA) {
+		else return path.join(process.env.HOME, ".code-d", "bin");
+	} else if (process.platform == "win32" && process.env.APPDATA) {
 		return path.join(process.env.APPDATA, "code-d", "bin");
-	}
-	else {
+	} else {
 		return path.join(extensionContext.extensionPath, "bin");
 	}
 }
@@ -48,58 +45,60 @@ export function downloadFileInteractive(url: string, title: string, aborted: Fun
 	let cancel: vscode.CancellationToken | undefined;
 	let done: Function | false | undefined;
 
-	let stream = reqType("stream").get<Readable>(url).then((body): Readable => {
-		// manually aborting request object because we are consuming a stream, otherwise it would try to "reject" an already resolved promise
-		if (cancel) {
-			cancel.onCancellationRequested(() => {
-				if (body.request.aborted) return;
-				body.request.abort();
-				aborted();
-			});
-		} else {
-			console.error("failed registering cancel token");
-		}
-
-		let len = parseInt(body.headers["Content-Length"] || body.headers["content-length"] || "0");
-		if (len == 0)
-			return body.data;
-
-		let totalPercent: number = 0;
-		console.log(typeof (body.data));
-		console.log(body.data.constructor.name);
-		console.log(body.data);
-		return body.data.on("data", (chunk) => {
-			let increment = chunk.length / len;
-			totalPercent += increment;
-			if (progress)
-				progress.report({
-					message: `Downloaded ${(totalPercent * 100).toFixed(2)}%`,
-					increment: increment * 100
+	let stream = reqType("stream")
+		.get<Readable>(url)
+		.then((body): Readable => {
+			// manually aborting request object because we are consuming a stream, otherwise it would try to "reject" an already resolved promise
+			if (cancel) {
+				cancel.onCancellationRequested(() => {
+					if (body.request.aborted) return;
+					body.request.abort();
+					aborted();
 				});
-		}).on("end", () => {
-			if (done)
-				done();
-			else
-				done = false;
+			} else {
+				console.error("failed registering cancel token");
+			}
 
-			if (installationLog)
-				installationLog.appendLine("Finished downloading");
-		});
-	});
+			let len = parseInt(body.headers["Content-Length"] || body.headers["content-length"] || "0");
+			if (len == 0) return body.data;
 
-	vscode.window.withProgress({
-		cancellable: true,
-		location: vscode.ProgressLocation.Notification,
-		title: title
-	}, (_progress, _cancel) => {
-		progress = _progress;
-		cancel = _cancel;
-		return new Promise((resolve) => {
-			if (done === false)
-				return resolve(undefined);
-			done = resolve;
+			let totalPercent: number = 0;
+			console.log(typeof body.data);
+			console.log(body.data.constructor.name);
+			console.log(body.data);
+			return body.data
+				.on("data", (chunk) => {
+					let increment = chunk.length / len;
+					totalPercent += increment;
+					if (progress)
+						progress.report({
+							message: `Downloaded ${(totalPercent * 100).toFixed(2)}%`,
+							increment: increment * 100,
+						});
+				})
+				.on("end", () => {
+					if (done) done();
+					else done = false;
+
+					if (installationLog) installationLog.appendLine("Finished downloading");
+				});
 		});
-	});
+
+	vscode.window.withProgress(
+		{
+			cancellable: true,
+			location: vscode.ProgressLocation.Notification,
+			title: title,
+		},
+		(_progress, _cancel) => {
+			progress = _progress;
+			cancel = _cancel;
+			return new Promise((resolve) => {
+				if (done === false) return resolve(undefined);
+				done = resolve;
+			});
+		},
+	);
 
 	return stream;
 }
@@ -121,21 +120,17 @@ export interface Release {
 const nightlyReleaseId = 20717582;
 let servedVersionCache = {
 	release: <Release | undefined>undefined,
-	channel: ""
+	channel: "",
 };
 
 export function findLatestServeD(force: boolean = false, channel?: string): Thenable<Release | undefined> {
-	if (!channel)
-		channel = config(null).get("servedReleaseChannel", "stable");
+	if (!channel) channel = config(null).get("servedReleaseChannel", "stable");
 
-	if (channel == "frozen" && force)
-		channel = "stable";
+	if (channel == "frozen" && force) channel = "stable";
 
-	if (channel == "frozen" || config(null).get("forceCompileServeD", false))
-		return Promise.resolve(undefined);
+	if (channel == "frozen" || config(null).get("forceCompileServeD", false)) return Promise.resolve(undefined);
 
-	if (servedVersionCache.channel == channel)
-		return Promise.resolve(servedVersionCache.release);
+	if (servedVersionCache.channel == channel) return Promise.resolve(servedVersionCache.release);
 
 	let randomUpdateReduction = config(null).get("smartServedUpdates", true);
 	if (randomUpdateReduction && channel == "stable" && !force) {
@@ -145,8 +140,7 @@ export function findLatestServeD(force: boolean = false, channel?: string): Then
 			return Promise.resolve(undefined);
 		}
 
-		if ((new Date()).getDay() == 5
-			&& Math.floor(Math.random() * 3) == 0) {
+		if (new Date().getDay() == 5 && Math.floor(Math.random() * 3) == 0) {
 			// furthermore reduce updates on fridays
 			// avoids breaking peoples workflow right at the end of their work week
 			return Promise.resolve(undefined);
@@ -164,14 +158,17 @@ export function findLatestServeD(force: boolean = false, channel?: string): Then
 }
 
 async function fetchNightlyRelease(timeout: number): Promise<Release | undefined> {
-	let res: AxiosResponse<{assets:ReleaseAsset[]}>;
+	let res: AxiosResponse<{ assets: ReleaseAsset[] }>;
 	try {
-		res = await reqJson().get<{assets:ReleaseAsset[]}>("https://api.github.com/repos/Pure-D/serve-d/releases/" + nightlyReleaseId, {
-			headers: {
-				"User-Agent": "https://github.com/Pure-D/code-d"
+		res = await reqJson().get<{ assets: ReleaseAsset[] }>(
+			"https://api.github.com/repos/Pure-D/serve-d/releases/" + nightlyReleaseId,
+			{
+				headers: {
+					"User-Agent": "https://github.com/Pure-D/code-d",
+				},
+				timeout: timeout,
 			},
-			timeout: timeout
-		});
+		);
 	} catch (e) {
 		console.error("Error fetching nightly code-d release: ", e);
 		return undefined;
@@ -179,8 +176,7 @@ async function fetchNightlyRelease(timeout: number): Promise<Release | undefined
 
 	let body = res.data;
 
-	if (typeof body != "object")
-		return undefined;
+	if (typeof body != "object") return undefined;
 
 	var assets = body.assets;
 	// reverse sort (largest date first)
@@ -189,7 +185,7 @@ async function fetchNightlyRelease(timeout: number): Promise<Release | undefined
 	let targetAsset = findFirstMatchingAsset("nightly", assets);
 	let ret: Release = {
 		name: "nightly",
-		asset: targetAsset
+		asset: targetAsset,
 	};
 
 	servedVersionCache.release = ret;
@@ -202,9 +198,9 @@ async function fetchLatestTaggedRelease(channel: "stable" | "beta", timeout: num
 	try {
 		res = await reqJson().get("https://api.github.com/repos/Pure-D/serve-d/releases", {
 			headers: {
-				"User-Agent": "https://github.com/Pure-D/code-d"
+				"User-Agent": "https://github.com/Pure-D/code-d",
 			},
-			timeout: timeout
+			timeout: timeout,
 		});
 	} catch (e) {
 		console.error("Error fetching nightly code-d release: ", e);
@@ -213,22 +209,19 @@ async function fetchLatestTaggedRelease(channel: "stable" | "beta", timeout: num
 
 	let body = res.data;
 
-	if (!Array.isArray(body))
-		return undefined;
+	if (!Array.isArray(body)) return undefined;
 
 	let numMatching = 0;
 
 	let ret: Release = {
-		name: "master"
+		name: "master",
 	};
 
 	for (let i = 0; i < body.length; i++) {
 		const release = body[i];
-		if (release.id == nightlyReleaseId)
-			continue;
+		if (release.id == nightlyReleaseId) continue;
 
-		if (channel == "stable" && release.prerelease)
-			continue;
+		if (channel == "stable" && release.prerelease) continue;
 
 		let targetAsset = findFirstMatchingAsset(release.tag_name, release.assets);
 		if (!targetAsset) {
@@ -242,8 +235,7 @@ async function fetchLatestTaggedRelease(channel: "stable" | "beta", timeout: num
 		}
 
 		// search last 3 releases for binaries
-		if (numMatching++ >= 3)
-			break;
+		if (numMatching++ >= 3) break;
 	}
 
 	servedVersionCache.release = ret;
@@ -252,29 +244,19 @@ async function fetchLatestTaggedRelease(channel: "stable" | "beta", timeout: num
 }
 
 function getSystemArch(): string {
-	if (process.arch == "x64")
-		return "x86_64";
-	else if (process.arch == "ia32")
-	{
-		if (process.platform == "win32")
-		{
+	if (process.arch == "x64") return "x86_64";
+	else if (process.arch == "ia32") {
+		if (process.platform == "win32") {
 			// we might be on WOW:
 			// https://ss64.com/nt/syntax-64bit.html
 			// https://learn.microsoft.com/en-us/windows/win32/api/sysinfoapi/ns-sysinfoapi-system_info
 			if (process.env.PROCESSOR_ARCHITEW6432 === "AMD64" || process.env.PROCESSOR_ARCHITEW6432 === "IA64")
 				return "x86_64";
-			else if (process.env.PROCESSOR_ARCHITECTURE === "ARM64")
-				return "arm64";
-			else if (process.env.PROCESSOR_ARCHITECTURE === "ARM")
-				return "arm";
-			else
-				return "x86";
-		}
-		else
-			return "x86";
-	}
-	else
-		return process.arch;
+			else if (process.env.PROCESSOR_ARCHITECTURE === "ARM64") return "arm64";
+			else if (process.env.PROCESSOR_ARCHITECTURE === "ARM") return "arm";
+			else return "x86";
+		} else return "x86";
+	} else return process.arch;
 }
 
 function findFirstMatchingAsset(name: string | "nightly", assets: ReleaseAsset[]): ReleaseAsset | undefined {
@@ -283,8 +265,7 @@ function findFirstMatchingAsset(name: string | "nightly", assets: ReleaseAsset[]
 
 	if (os == "win32") {
 		os = "windows";
-	}
-	else if (os == "darwin") {
+	} else if (os == "darwin") {
 		os = "osx";
 	}
 
@@ -292,139 +273,151 @@ function findFirstMatchingAsset(name: string | "nightly", assets: ReleaseAsset[]
 		for (let i = 0; i < assets.length; i++) {
 			const asset = assets[i];
 			let test = asset.name;
-			if (test.startsWith("serve-d"))
-				test = test.substr("serve-d".length);
-			if (test.startsWith("-") || test.startsWith("_"))
-				test = test.substr(1);
+			if (test.startsWith("serve-d")) test = test.substr("serve-d".length);
+			if (test.startsWith("-") || test.startsWith("_")) test = test.substr(1);
 
-			if (!test.startsWith(os))
-				continue;
+			if (!test.startsWith(os)) continue;
 			test = test.substr(os.length);
-			if (test.startsWith("-") || test.startsWith("_"))
-				test = test.substr(1);
-			if (test.startsWith("nightly"))
-				test = test.substr("nightly".length);
-			if (test.startsWith("-") || test.startsWith("_"))
-				test = test.substr(1);
+			if (test.startsWith("-") || test.startsWith("_")) test = test.substr(1);
+			if (test.startsWith("nightly")) test = test.substr("nightly".length);
+			if (test.startsWith("-") || test.startsWith("_")) test = test.substr(1);
 
 			// remaining:
 			// either x86_64-20191017-4b5427.tar.xz
 			// or (platformless) 20191017-4b5427.tar.xz
-			if (test.startsWith(arch) || test.startsWith("2")) // 2 for 2019 and the next 980 years of support, indicating no architecture (windows)
+			if (test.startsWith(arch) || test.startsWith("2"))
+				// 2 for 2019 and the next 980 years of support, indicating no architecture (windows)
 				return asset;
 		}
 		return undefined;
 	} else {
-		if (name.startsWith("v"))
-			name = name.substr(1);
+		if (name.startsWith("v")) name = name.substr(1);
 
 		for (let i = 0; i < assets.length; i++) {
 			const asset = assets[i];
 			let test = asset.name;
-			if (test.startsWith("serve-d"))
-				test = test.substr("serve-d".length);
-			if (test.startsWith("-") || test.startsWith("_"))
-				test = test.substr(1);
-			if (test.startsWith(name))
-				test = test.substr(name.length);
-			if (test.startsWith("-") || test.startsWith("_"))
-				test = test.substr(1);
+			if (test.startsWith("serve-d")) test = test.substr("serve-d".length);
+			if (test.startsWith("-") || test.startsWith("_")) test = test.substr(1);
+			if (test.startsWith(name)) test = test.substr(name.length);
+			if (test.startsWith("-") || test.startsWith("_")) test = test.substr(1);
 
-			const dot = test.indexOf('.');
-			if (dot != -1)
-				test = test.substr(0, dot);
+			const dot = test.indexOf(".");
+			if (dot != -1) test = test.substr(0, dot);
 
-			if (test == `${os}-${arch}` || test == os)
-				return asset;
+			if (test == `${os}-${arch}` || test == os) return asset;
 		}
 		return undefined;
 	}
 }
 
 export function updateAndInstallServeD(env: any): Thenable<boolean | undefined | "retry"> {
-	return vscode.window.withProgress({
-		location: vscode.ProgressLocation.Notification,
-		title: "Searching for updates..."
-	}, (progress, token) => {
-		return findLatestServeD(true).then((version): Thenable<boolean | undefined | "retry"> => {
-			if (version === undefined) {
-				const compile = "Compile";
-				const userSettings = "Open User Settings";
-				return vscode.window.showInformationMessage("Updates can currently not be determined. Would you like "
-					+ "to try and compile serve-d from source or specify a path to the serve-d executable in your user settings?",
-					compile, userSettings).then(option => {
-						if (option == compile)
-							return compileServeD("master")(env);
-						else if (userSettings)
-							vscode.commands.executeCommand("workbench.action.openGlobalSettings");
-						return Promise.resolve(undefined);
-					});
-			} else if (!version.asset || config(null).get("forceCompileServeD", false)) {
-				return compileServeD("master")(env);
-			} else {
-				return installServeD([{ url: version.asset.browser_download_url, title: "Serve-D" }], version.name)(env);
-			}
-		});
-	});
+	return vscode.window.withProgress(
+		{
+			location: vscode.ProgressLocation.Notification,
+			title: "Searching for updates...",
+		},
+		(progress, token) => {
+			return findLatestServeD(true).then((version): Thenable<boolean | undefined | "retry"> => {
+				if (version === undefined) {
+					const compile = "Compile";
+					const userSettings = "Open User Settings";
+					return vscode.window
+						.showInformationMessage(
+							"Updates can currently not be determined. Would you like " +
+								"to try and compile serve-d from source or specify a path to the serve-d executable in your user settings?",
+							compile,
+							userSettings,
+						)
+						.then((option) => {
+							if (option == compile) return compileServeD("master")(env);
+							else if (userSettings)
+								vscode.commands.executeCommand("workbench.action.openGlobalSettings");
+							return Promise.resolve(undefined);
+						});
+				} else if (!version.asset || config(null).get("forceCompileServeD", false)) {
+					return compileServeD("master")(env);
+				} else {
+					return installServeD(
+						[{ url: version.asset.browser_download_url, title: "Serve-D" }],
+						version.name,
+					)(env);
+				}
+			});
+		},
+	);
 }
 
-export function installServeD(urls: { url: string, title: string }[], ref: string): (env: NodeJS.ProcessEnv) => Thenable<boolean | undefined | "retry"> {
+export function installServeD(
+	urls: { url: string; title: string }[],
+	ref: string,
+): (env: NodeJS.ProcessEnv) => Thenable<boolean | undefined | "retry"> {
 	if (urls.length == 0)
 		return (env: any) => {
-			return vscode.window.showErrorMessage("No precompiled serve-d binary for this platform/architecture", "Compile from source").then((r?: string) => {
-				if (r == "Compile from source")
-					return compileServeD(ref)(env);
-				else
-					return Promise.resolve(undefined);
-			});
+			return vscode.window
+				.showErrorMessage("No precompiled serve-d binary for this platform/architecture", "Compile from source")
+				.then((r?: string) => {
+					if (r == "Compile from source") return compileServeD(ref)(env);
+					else return Promise.resolve(undefined);
+				});
 		};
 
 	// add DCD binaries here as well
 	if (process.platform == "linux" && process.arch == "x64") {
-		urls.push({ url: "https://github.com/dlang-community/DCD/releases/download/v0.15.2/dcd-v0.15.2-linux-x86_64.tar.gz", title: "DCD" });
-	}
-	else if (process.platform == "darwin" && process.arch == "x64") {
-		urls.push({ url: "https://github.com/dlang-community/DCD/releases/download/v0.15.2/dcd-v0.15.2-osx-x86_64.tar.gz", title: "DCD" });
-	}
-	else if (process.platform == "darwin" && process.arch == "arm64") {
-		urls.push({ url: "https://github.com/dlang-community/DCD/releases/download/v0.15.2/dcd-v0.15.2-osx-arm64.tar.gz", title: "DCD" });
-	}
-	else if (process.platform == "win32") {
+		urls.push({
+			url: "https://github.com/dlang-community/DCD/releases/download/v0.15.2/dcd-v0.15.2-linux-x86_64.tar.gz",
+			title: "DCD",
+		});
+	} else if (process.platform == "darwin" && process.arch == "x64") {
+		urls.push({
+			url: "https://github.com/dlang-community/DCD/releases/download/v0.15.2/dcd-v0.15.2-osx-x86_64.tar.gz",
+			title: "DCD",
+		});
+	} else if (process.platform == "darwin" && process.arch == "arm64") {
+		urls.push({
+			url: "https://github.com/dlang-community/DCD/releases/download/v0.15.2/dcd-v0.15.2-osx-arm64.tar.gz",
+			title: "DCD",
+		});
+	} else if (process.platform == "win32") {
 		if (process.arch == "x64")
-			urls.push({ url: "https://github.com/dlang-community/DCD/releases/download/v0.15.2/dcd-v0.15.2-windows-x86_64.zip", title: "DCD" });
+			urls.push({
+				url: "https://github.com/dlang-community/DCD/releases/download/v0.15.2/dcd-v0.15.2-windows-x86_64.zip",
+				title: "DCD",
+			});
 		else
-			urls.push({ url: "https://github.com/dlang-community/DCD/releases/download/v0.15.2/dcd-v0.15.2-windows-x86.zip", title: "DCD" });
+			urls.push({
+				url: "https://github.com/dlang-community/DCD/releases/download/v0.15.2/dcd-v0.15.2-windows-x86.zip",
+				title: "DCD",
+			});
 	}
 
-	return (env: any) => new Promise((done) => {
-		getInstallOutput().show(true);
-		var outputFolder = determineOutputFolder();
-		mkdirp.sync(outputFolder);
-		var finalDestination = path.join(outputFolder, "serve-d" + (process.platform == "win32" ? ".exe" : ""));
-		installationLog.appendLine("Installing into " + outputFolder);
-		if (!fs.existsSync(outputFolder))
-			fs.mkdirSync(outputFolder);
-		if (fs.existsSync(finalDestination))
-			rimraf.sync(finalDestination);
-		async.each(urls, installServeDEntry(outputFolder), async function (err: any) {
-			if (err) {
-				let r: string | undefined = await vscode.window.showErrorMessage("Failed to download release", "Compile from source");
-				if (r == "Compile from source")
-					return done(compileServeD(ref)(env));
-				else
-					return done(undefined);
-			}
-			else {
-				hideNextPotentialConfigUpdateWarning();
-				await config(null).update("servedPath", finalDestination, true);
-				installationLog.appendLine("Finished installing into " + finalDestination);
-				done(true);
-			}
+	return (env: any) =>
+		new Promise((done) => {
+			getInstallOutput().show(true);
+			var outputFolder = determineOutputFolder();
+			mkdirp.sync(outputFolder);
+			var finalDestination = path.join(outputFolder, "serve-d" + (process.platform == "win32" ? ".exe" : ""));
+			installationLog.appendLine("Installing into " + outputFolder);
+			if (!fs.existsSync(outputFolder)) fs.mkdirSync(outputFolder);
+			if (fs.existsSync(finalDestination)) rimraf.sync(finalDestination);
+			async.each(urls, installServeDEntry(outputFolder), async function (err: any) {
+				if (err) {
+					let r: string | undefined = await vscode.window.showErrorMessage(
+						"Failed to download release",
+						"Compile from source",
+					);
+					if (r == "Compile from source") return done(compileServeD(ref)(env));
+					else return done(undefined);
+				} else {
+					hideNextPotentialConfigUpdateWarning();
+					await config(null).update("servedPath", finalDestination, true);
+					installationLog.appendLine("Finished installing into " + finalDestination);
+					done(true);
+				}
+			});
 		});
-	});
 }
 
-function installServeDEntry(outputFolder: string): (data: { url: string, title: string }, cb: Function) => any {
+function installServeDEntry(outputFolder: string): (data: { url: string; title: string }, cb: Function) => any {
 	return async ({ url, title }, cb: Function) => {
 		installationLog.appendLine("Downloading from " + url + " into " + outputFolder);
 		var ext = url.endsWith(".tar.xz") ? ".tar.xz" : url.endsWith(".tar.gz") ? ".tar.gz" : path.extname(url);
@@ -434,7 +427,7 @@ function installServeDEntry(outputFolder: string): (data: { url: string, title: 
 		let stream = await downloadFileInteractive(url, title + " Download", () => {
 			aborted = true;
 			installationLog.appendLine("Aborted download");
-			fs.unlink(outputPath, function () { });
+			fs.unlink(outputPath, function () {});
 		});
 
 		stream.pipe(fs.createWriteStream(outputPath)).on("finish", () => {
@@ -446,24 +439,20 @@ function installServeDEntry(outputFolder: string): (data: { url: string, title: 
 					try {
 						installationLog.appendLine("Deleting " + outputPath);
 						fs.unlink(outputPath, (err) => {
-							if (err)
-								installationLog.appendLine("Failed to delete " + outputPath);
+							if (err) installationLog.appendLine("Failed to delete " + outputPath);
 						});
-					}
-					catch (e) {
+					} catch (e) {
 						vscode.window.showErrorMessage("Failed to delete temporary file: " + outputPath);
 					}
 					cb();
-				}
-				catch (e) {
+				} catch (e) {
 					return cb(e);
 				}
-			}
-			else if (ext == ".tar.xz" || ext == ".tar.gz") {
+			} else if (ext == ".tar.xz" || ext == ".tar.gz") {
 				var mod = ext == ".tar.xz" ? "J" : "z";
 				installationLog.appendLine("> tar xvf" + mod + " " + fileName);
 				ChildProcess.spawn("tar", ["xvf" + mod, fileName], {
-					cwd: outputFolder
+					cwd: outputFolder,
 				}).on("exit", function (code) {
 					if (code != 0) {
 						return cb(code);
@@ -471,11 +460,9 @@ function installServeDEntry(outputFolder: string): (data: { url: string, title: 
 					try {
 						installationLog.appendLine("Deleting " + outputPath);
 						fs.unlink(outputPath, (err) => {
-							if (err)
-								installationLog.appendLine("Failed to delete " + outputPath);
+							if (err) installationLog.appendLine("Failed to delete " + outputPath);
 						});
-					}
-					catch (e) {
+					} catch (e) {
 						vscode.window.showErrorMessage("Failed to delete temporary file: " + outputPath);
 					}
 					return cb();
@@ -487,79 +474,88 @@ function installServeDEntry(outputFolder: string): (data: { url: string, title: 
 
 export function extractServedBuiltDate(log: string): Date | false {
 	var parsed = /Built: \w+\s+(\w+)\s+(\d+)\s+(\d+:\d+:\d+)\s+(\d+)/.exec(log);
-	if (!parsed)
-		return false;
-	var month = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"].indexOf(parsed[1].toLowerCase());
-	if (month < 0)
-		return false;
+	if (!parsed) return false;
+	var month = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"].indexOf(
+		parsed[1].toLowerCase(),
+	);
+	if (month < 0) return false;
 	var date = parseInt(parsed[2]);
-	var parts = parsed[3].split(':');
+	var parts = parsed[3].split(":");
 	var year = parseInt(parsed[4]);
 	var hour = parseInt(parts[0]);
 	var minute = parseInt(parts[1]);
 	var second = parseInt(parts[2]);
-	if (isNaN(year) || isNaN(date) || isNaN(hour) || isNaN(minute) || isNaN(second))
-		return false;
+	if (isNaN(year) || isNaN(date) || isNaN(hour) || isNaN(minute) || isNaN(second)) return false;
 	return new Date(Date.UTC(year, month, date, hour, minute, second));
 }
 
 export function compileServeD(ref?: string): (env: NodeJS.ProcessEnv) => Promise<boolean | undefined | "retry"> {
-	return (env: any) => new Promise<boolean | undefined | "retry">(async() => {
-		var outputFolder = determineOutputFolder();
-		mkdirp.sync(outputFolder);
-		const dubPath = config(null).get("dubPath", "dub");
-		const dmdPath = config(null).get("dmdPath", undefined);
-		const dubCompiler = config(null).get("dubCompiler", undefined);
-		env["DFLAGS"] = "-O -release";
-		let buildArgs = ["build"];
-		if (process.platform == "win32") {
-			env["DFLAGS"] = "-release";
-			buildArgs.push("--arch=x86_mscoff");
-		}
-		if (dubCompiler) {
-			buildArgs.push("--compiler=" + dubCompiler);
-		}
-		else if (dubPath != "dub" && dmdPath) {
-			// explicit dub path specified, it won't automatically find dmd if it's not in the same folder so we just pass the path if we have it
-			buildArgs.push("--compiler=" + dmdPath);
-		}
-		await compileDependency(outputFolder, "serve-d", "https://github.com/Pure-D/serve-d.git", [
-			[dubPath, buildArgs]
-		], env, ref);
-		var finalDestination = path.join(outputFolder, "serve-d", "serve-d" + (process.platform == "win32" ? ".exe" : ""));
+	return (env: any) =>
+		new Promise<boolean | undefined | "retry">(async () => {
+			var outputFolder = determineOutputFolder();
+			mkdirp.sync(outputFolder);
+			const dubPath = config(null).get("dubPath", "dub");
+			const dmdPath = config(null).get("dmdPath", undefined);
+			const dubCompiler = config(null).get("dubCompiler", undefined);
+			env["DFLAGS"] = "-O -release";
+			let buildArgs = ["build"];
+			if (process.platform == "win32") {
+				env["DFLAGS"] = "-release";
+				buildArgs.push("--arch=x86_mscoff");
+			}
+			if (dubCompiler) {
+				buildArgs.push("--compiler=" + dubCompiler);
+			} else if (dubPath != "dub" && dmdPath) {
+				// explicit dub path specified, it won't automatically find dmd if it's not in the same folder so we just pass the path if we have it
+				buildArgs.push("--compiler=" + dmdPath);
+			}
+			await compileDependency(
+				outputFolder,
+				"serve-d",
+				"https://github.com/Pure-D/serve-d.git",
+				[[dubPath, buildArgs]],
+				env,
+				ref,
+			);
+			var finalDestination = path.join(
+				outputFolder,
+				"serve-d",
+				"serve-d" + (process.platform == "win32" ? ".exe" : ""),
+			);
 
-		hideNextPotentialConfigUpdateWarning();
-		await config(null).update("servedPath", finalDestination, true);
-		return true;
-	});
+			hideNextPotentialConfigUpdateWarning();
+			await config(null).update("servedPath", finalDestination, true);
+			return true;
+		});
 }
 
 function spawnCommand(cmd: string, args: string[], options: ChildProcess.SpawnOptions, cb: Function, onLog?: Function) {
 	function log(chunk: any) {
 		var dat = chunk.toString() || "null";
 		installationLog.append(dat);
-		if (typeof onLog === "function")
-			onLog(dat);
+		if (typeof onLog === "function") onLog(dat);
 	}
 
 	installationLog.appendLine("> " + cmd + " " + args.join(" "));
 	try {
 		var proc = ChildProcess.spawn(cmd, args, options);
-		if (proc.stdout)
-			proc.stdout.on("data", log);
-		if (proc.stderr)
-			proc.stderr.on("data", log);
+		if (proc.stdout) proc.stdout.on("data", log);
+		if (proc.stderr) proc.stderr.on("data", log);
 
 		proc.on("error", function (error: any) {
-			if (((error ? error.message : "").toString()).endsWith("ENOENT")) {
-				installationLog.appendLine("The program '" + cmd + "' could not be found! Did you perhaps not install it or misconfigure some path?");
+			if ((error ? error.message : "").toString().endsWith("ENOENT")) {
+				installationLog.appendLine(
+					"The program '" +
+						cmd +
+						"' could not be found! Did you perhaps not install it or misconfigure some path?",
+				);
 			} else {
 				installationLog.appendLine("An internal error occured while running the command: " + error);
 			}
 			cb(-1);
 		});
 		proc.on("exit", function (d: any) {
-			return cb(typeof d == "number" ? d : (d.code || -1));
+			return cb(typeof d == "number" ? d : d.code || -1);
 		});
 	} catch (e) {
 		installationLog.appendLine("An internal error occured while running the command: " + e);
@@ -567,7 +563,14 @@ function spawnCommand(cmd: string, args: string[], options: ChildProcess.SpawnOp
 	}
 }
 
-export function compileDependency(cwd: string, name: string, gitURI: string, commands: [string, string[]][], env: any, ref?: string): Promise<any> {
+export function compileDependency(
+	cwd: string,
+	name: string,
+	gitURI: string,
+	commands: [string, string[]][],
+	env: any,
+	ref?: string,
+): Promise<any> {
 	return new Promise<any>((callback) => {
 		if (!installationLog) {
 			installationLog = vscode.window.createOutputChannel(installationTitle);
@@ -582,55 +585,65 @@ export function compileDependency(cwd: string, name: string, gitURI: string, com
 		var startCompile = () => {
 			const git = gitPath();
 			spawnCommand(git, ["clone", "--recursive", gitURI, name], { cwd: cwd, env: env }, (err: any) => {
-				if (err !== 0)
-					return error(err);
-				if (ref)
-					commands.unshift([git, ["checkout", ref]]);
-				async.eachSeries(commands, function (command: [string, string[]], cb: Function) {
-					var failedArch = false;
-					var prevLog = "";
-					spawnCommand(command[0], command[1], {
-						cwd: newCwd
-					}, function (err: any) {
-						var index = command[1].indexOf("--arch=x86_mscoff"); // must be this format for it to work
-						if (err && failedArch && command[0] == "dub" && index != -1) {
-							// failed because we tried to build with x86_mscoff but it wasn't available (LDC was probably used)
-							// try again with x86
-							command[1][index] = "--arch=x86";
-							installationLog.appendLine("Retrying with --arch=x86...");
-							spawnCommand(command[0], command[1], {
-								cwd: newCwd
-							}, function (err: any) {
-								cb(err);
-							});
-						}
-						else
-							cb(err);
-					}, function (log: string) {
-						// concat with previous log just to make it very unlikely to split in middle because of buffering
-						if ((prevLog + log).toLowerCase().indexOf("unsupported architecture: x86_mscoff") != -1) {
-							failedArch = true;
-						}
-						prevLog = log;
-					});
-				}, function (err: any) {
-					if (err)
-						return error(err);
-					installationLog.appendLine("Done compiling");
-					callback(undefined);
-				});
+				if (err !== 0) return error(err);
+				if (ref) commands.unshift([git, ["checkout", ref]]);
+				async.eachSeries(
+					commands,
+					function (command: [string, string[]], cb: Function) {
+						var failedArch = false;
+						var prevLog = "";
+						spawnCommand(
+							command[0],
+							command[1],
+							{
+								cwd: newCwd,
+							},
+							function (err: any) {
+								var index = command[1].indexOf("--arch=x86_mscoff"); // must be this format for it to work
+								if (err && failedArch && command[0] == "dub" && index != -1) {
+									// failed because we tried to build with x86_mscoff but it wasn't available (LDC was probably used)
+									// try again with x86
+									command[1][index] = "--arch=x86";
+									installationLog.appendLine("Retrying with --arch=x86...");
+									spawnCommand(
+										command[0],
+										command[1],
+										{
+											cwd: newCwd,
+										},
+										function (err: any) {
+											cb(err);
+										},
+									);
+								} else cb(err);
+							},
+							function (log: string) {
+								// concat with previous log just to make it very unlikely to split in middle because of buffering
+								if (
+									(prevLog + log).toLowerCase().indexOf("unsupported architecture: x86_mscoff") != -1
+								) {
+									failedArch = true;
+								}
+								prevLog = log;
+							},
+						);
+					},
+					function (err: any) {
+						if (err) return error(err);
+						installationLog.appendLine("Done compiling");
+						callback(undefined);
+					},
+				);
 			});
 		};
 		if (fs.existsSync(newCwd)) {
 			installationLog.appendLine("Removing old version");
 			rimraf(newCwd, function (e: any) {
-				if (e)
-					installationLog.appendLine(e.toString());
+				if (e) installationLog.appendLine(e.toString());
 				installationLog.appendLine("Removed old version");
 				startCompile();
 			});
-		}
-		else startCompile();
+		} else startCompile();
 	});
 }
 
@@ -638,26 +651,24 @@ export function parseSimpleSemver(a: string): [number, number, number, (string |
 	if (a.startsWith("~")) return [0, 0, 0, [a]];
 	if (a.startsWith("v")) a = a.substr(1);
 
-	const plus = a.indexOf('+');
+	const plus = a.indexOf("+");
 	if (plus != -1) a = a.substr(0, plus);
 
-	const hyphen = a.indexOf('-');
+	const hyphen = a.indexOf("-");
 	let preRelease: (string | number)[] = [];
 	if (hyphen != -1) {
 		let part = a.substr(hyphen + 1);
 		a = a.substr(0, hyphen);
 
-		preRelease = part.split('.');
+		preRelease = part.split(".");
 		for (let i = 0; i < preRelease.length; i++) {
 			const n = parseInt(<string>preRelease[i]);
-			if (isFinite(n))
-				preRelease[i] = n;
+			if (isFinite(n)) preRelease[i] = n;
 		}
 	}
 
-	const parts = a.split('.');
-	if (parts.length != 3)
-		throw new Error("Version specification '" + a + "' not parsable by simple semver rules");
+	const parts = a.split(".");
+	if (parts.length != 3) throw new Error("Version specification '" + a + "' not parsable by simple semver rules");
 	return [parseInt(parts[0]), parseInt(parts[1]), parseInt(parts[2]), preRelease];
 }
 
@@ -677,10 +688,8 @@ export function cmpSemver(as: string, bs: string): number {
 
 	const min = Math.min(a[3].length, b[3].length);
 	for (let i = 0; i < min; i++) {
-		if (a[3][i] < b[3][i])
-			return -1;
-		else if (a[3][i] > b[3][i])
-			return 1;
+		if (a[3][i] < b[3][i]) return -1;
+		else if (a[3][i] > b[3][i]) return 1;
 	}
 
 	if (a[3].length == b[3].length) return 0;

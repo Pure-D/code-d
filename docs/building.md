@@ -4,19 +4,19 @@
 
 <div style="float: right; margin-left: 1em; padding: 1em; border: 1px solid white; position: relative; z-index: 10; outline: 1px solid black;">
 
-* [Home](index.md)
-* [Installation](install.md)
-* [Tutorial](intro-to-d.md)
-	* [Intro to D](intro-to-d.md)
-	* [Hello World](hello-world.md)
-	* **[Building](building.md)**
-	* [Debugging](debugging.md)
-	* [Editing](editing.md)
-	* [DUB Package Manager](dub.md)
-	* [vibe.d Web App](vibe-d.md)
-	* [Configuring non-DUB projects](non-dub.md)
-* [Troubleshooting](troubleshooting.md)
-* [Changelog](../CHANGELOG.md)
+- [Home](index.md)
+- [Installation](install.md)
+- [Tutorial](intro-to-d.md)
+  - [Intro to D](intro-to-d.md)
+  - [Hello World](hello-world.md)
+  - **[Building](building.md)**
+  - [Debugging](debugging.md)
+  - [Editing](editing.md)
+  - [DUB Package Manager](dub.md)
+  - [vibe.d Web App](vibe-d.md)
+  - [Configuring non-DUB projects](non-dub.md)
+- [Troubleshooting](troubleshooting.md)
+- [Changelog](../CHANGELOG.md)
 
 </div>
 
@@ -50,9 +50,9 @@ In here you can select the configuration of your application to run. You can man
 
 DUB provides an `application` configuration and a `library` configuration by default:
 
-* the `application` configuration includes all source files and runs your program as executable file.
+- the `application` configuration includes all source files and runs your program as executable file.
 
-* the `library` configuration is nearly the same, except it will generate a statically linkable library for use in other applications. By default it also doesn't compile in the main source file (source/app.d)
+- the `library` configuration is nearly the same, except it will generate a statically linkable library for use in other applications. By default it also doesn't compile in the main source file (source/app.d)
 
 The configurations `application` and `library` are usually automatically picked. When only running `dub build` or `dub run` it will always pick `application` if a main source file exists. Otherwise when no main source file exists, or when the project is used as a dependency in another project, it will use the `library` configuration.
 
@@ -64,9 +64,9 @@ See https://dub.pm/package-format-json.html#configurations
 
 The architecture determines for which platform architecture the binary is going to be generated. Commonly these include:
 
-* `x86` for 32-bit apps on an Intel-based CPU
+- `x86` for 32-bit apps on an Intel-based CPU
 
-* `x86_64` for 64-bit apps on an Intel-based CPU
+- `x86_64` for 64-bit apps on an Intel-based CPU
 
 Depending on the selected compiler this might include more architectures for cross compiling.
 
@@ -108,7 +108,7 @@ Use the auto completion and validation to discover possible fields and values in
 
 ```js
 {
-	// See https://go.microsoft.com/fwlink/?LinkId=733558 
+	// See https://go.microsoft.com/fwlink/?LinkId=733558
 	// for the documentation about the tasks.json format
 	"version": "2.0.0",
 	"tasks": [

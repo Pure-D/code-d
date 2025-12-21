@@ -62,26 +62,17 @@
 	},
 	"style": {
 		"prefix": "style",
-		"body": [
-			":css",
-			"\t"
-		],
+		"body": [":css", "\t"],
 		"description": "Snippet emmet emulation for diet"
 	},
 	"script": {
 		"prefix": "script",
-		"body": [
-			":javascript",
-			"\t"
-		],
+		"body": [":javascript", "\t"],
 		"description": "Snippet emmet emulation for diet"
 	},
 	"markdown": {
 		"prefix": "markdown",
-		"body": [
-			":markdown",
-			"\t"
-		],
+		"body": [":markdown", "\t"],
 		"description": "Snippet emmet emulation for diet"
 	}
 }

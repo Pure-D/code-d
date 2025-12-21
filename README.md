@@ -8,12 +8,12 @@ Also [available for Atom](https://github.com/Pure-D/atomize-d)!
 
 ## Features
 
-* Auto-Completion
-* Code formatting
-* Static linting + Build linting
-* Outlining and searching for symbols
-* Refactorings for code diagnostics
-* and [much more](https://github.com/Pure-D/code-d/wiki)
+- Auto-Completion
+- Code formatting
+- Static linting + Build linting
+- Outlining and searching for symbols
+- Refactorings for code diagnostics
+- and [much more](https://github.com/Pure-D/code-d/wiki)
 
 ## Special Thanks
 
@@ -22,8 +22,8 @@ Also [available for Atom](https://github.com/Pure-D/atomize-d)!
 Development on code-d/serve-d tools is sponsored by
 
 | [![Weka.IO Logo](sponsors/weka.png)](https://weka.io) |
-|:---:|
-| **[Weka.IO](https://weka.io)** |
+| :---------------------------------------------------: |
+|            **[Weka.IO](https://weka.io)**             |
 
 If you are looking for a Job with D, check out the companies listed above!
 
@@ -33,9 +33,9 @@ _For professional D consulting, programming services or corporate support with D
 
 **Thanks to the following big GitHub sponsors** financially supporting the code-d/serve-d tools:
 
-| [![ZyeByte's GitHub avatar](https://avatars.githubusercontent.com/u/102230672?s=96&v=4)]((https://github.com/zyebytevt)) |
-|:---:|
-| [@zyebytevt](https://github.com/zyebytevt) |
+| [![ZyeByte's GitHub avatar](https://avatars.githubusercontent.com/u/102230672?s=96&v=4)](<(https://github.com/zyebytevt)>) |
+| :------------------------------------------------------------------------------------------------------------------------: |
+|                                         [@zyebytevt](https://github.com/zyebytevt)                                         |
 
 <!-- additional thanks to the following sponsors:
 
@@ -54,11 +54,12 @@ Thanks to all contributors to [code-d](https://github.com/Pure-D/code-d/graphs/c
 ## Installation
 
 ### Prerequirements:
+
 D compiler with environment variables set. Downloads [here](https://dlang.org/download.html), details [here](https://wiki.dlang.org/Compilers)
 
 ### code-d installation
 
-* Automatic:
+- Automatic:
   Open Visual Studio Code and install the _code-d_ extension the normal way:
 
   ```
@@ -67,17 +68,17 @@ D compiler with environment variables set. Downloads [here](https://dlang.org/do
 
   Or search for code-d and select the "D Programming Language (code-d)" extension from the list.
 
-* Manual (if the automatic way doesn't work)
+- Manual (if the automatic way doesn't work)
 
-    ```
-    # discouraged if you are trying out code-d, you should preferably install it from the marketplace
+  ```
+  # discouraged if you are trying out code-d, you should preferably install it from the marketplace
 
-    cd ~/.vscode/extensions/
-    git clone https://github.com/Pure-D/code-d.git
-    cd code-d
-    npm install
-    npx tsc -p .
-    ```
+  cd ~/.vscode/extensions/
+  git clone https://github.com/Pure-D/code-d.git
+  cd code-d
+  npm install
+  npx tsc -p .
+  ```
 
 code-d will automatically install [serve-d](https://github.com/Pure-D/serve-d),
 [dcd](https://github.com/dlang-community/DCD) and [dub](https://code.dlang.org/download)

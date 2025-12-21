@@ -16,9 +16,9 @@ You will find that several template files have been inserted in your project fol
 
 In general:
 
-* `public/` contains all the HTTP-accessible static files such as images, stylesheets and scripts.
-* `source/` contains all the server-side D code
-* `views/` contains all the server-side templates for rendering into HTML
+- `public/` contains all the HTTP-accessible static files such as images, stylesheets and scripts.
+- `source/` contains all the server-side D code
+- `views/` contains all the server-side templates for rendering into HTML
 
 ### Running the Web App
 
@@ -59,4 +59,3 @@ html
 ```
 
 code-d provides full auto completion support for HTML5 tags and attributes. Additionally it fully supports auto completing inline D code inside diet template files.
-

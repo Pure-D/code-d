@@ -1,11 +1,10 @@
-import * as assert from 'assert';
-import { cmpSemver, parseSimpleSemver } from '../../installer';
+import * as assert from "assert";
+import { cmpSemver, parseSimpleSemver } from "../../installer";
 
 // Defines a Mocha test suite to group tests of similar kind together
 suite("semver", () => {
 	test("test parsing", () => {
-		assert.deepStrictEqual(parseSimpleSemver("v1.0.0-beta.1.2"),
-			[1, 0, 0, ["beta", 1, 2]]);
+		assert.deepStrictEqual(parseSimpleSemver("v1.0.0-beta.1.2"), [1, 0, 0, ["beta", 1, 2]]);
 	});
 	test("test comparision", () => {
 		assert.strictEqual(cmpSemver("v1.0.0", "v1.0.0"), 0);

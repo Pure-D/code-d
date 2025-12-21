@@ -9,6 +9,7 @@ By default code-d loads the project folder itself and then each dub project in c
 Without dub by default it will only load the project folder itself as root but it's possible to specify multiple roots in one folder for multiple projects in one folder. For this, specify `d.extraRoots` in your workspace settings with relative paths to each folder that is supposed to be treated as separate project.
 
 In each root code-d checks if one of the following folders exist if there is no dub and the `d.projectImportPaths` user setting is not set:
+
 - `source/`
 - `src/`
 

@@ -3,31 +3,33 @@ import * as osPath from "path";
 import * as fs from "fs";
 import { openTextDocumentAtRange } from "./util";
 
-export type TerminalFileLink = vscode.TerminalLink & { file: { path: vscode.Uri, line?: number, column?: number } };
+export type TerminalFileLink = vscode.TerminalLink & { file: { path: vscode.Uri; line?: number; column?: number } };
 
 export class DTerminalLinkProvider implements vscode.TerminalLinkProvider {
-	provideTerminalLinks(context: { line: string, cwd?: string }, token?: vscode.CancellationToken): Thenable<TerminalFileLink[]> {
-		let cwd = context.cwd || (vscode.workspace.workspaceFolders
-			? vscode.workspace.workspaceFolders[0].uri.fsPath
-			: process.cwd());
+	provideTerminalLinks(
+		context: { line: string; cwd?: string },
+		token?: vscode.CancellationToken,
+	): Thenable<TerminalFileLink[]> {
+		let cwd =
+			context.cwd ||
+			(vscode.workspace.workspaceFolders ? vscode.workspace.workspaceFolders[0].uri.fsPath : process.cwd());
 		// context.terminal.creationOptions.cwd is useless here, possibly
 		// pointing to entirely different paths because vscode reuses terminals
 		// (or sessions) across different workspaces, keeping old defaults.
-		return Promise.all(findDErrorLines(cwd, context.line))
-			.then(v => <TerminalFileLink[]>v.filter(l => l !== null));
+		return Promise.all(findDErrorLines(cwd, context.line)).then(
+			(v) => <TerminalFileLink[]>v.filter((l) => l !== null),
+		);
 	}
 
 	handleTerminalLink(link: TerminalFileLink): vscode.ProviderResult<void> {
 		var range: null | number | vscode.Position = null;
-		if (link.file.line && link.file.column)
-			range = new vscode.Position(link.file.line - 1, link.file.column - 1);
-		else if (link.file.line)
-			range = link.file.line - 1;
+		if (link.file.line && link.file.column) range = new vscode.Position(link.file.line - 1, link.file.column - 1);
+		else if (link.file.line) range = link.file.line - 1;
 
 		openTextDocumentAtRange(link.file.path, range);
 	}
 
-	static register(): { dispose(): any; } {
+	static register(): { dispose(): any } {
 		const provider = new DTerminalLinkProvider();
 		return vscode.window.registerTerminalLinkProvider(provider);
 	}
@@ -37,19 +39,18 @@ const dubFileSearch = process.platform == "win32" ? "dub\\packages\\" : "dub/pac
 function findDErrorLines(cwd: string, line: string): Promise<TerminalFileLink | null>[] {
 	const ret: Promise<TerminalFileLink | null>[] = [];
 	let i = 0;
-	while (true)
-	{
+	while (true) {
 		i = line.indexOf("(", i);
-		if (i == -1)
-			break;
+		if (i == -1) break;
 
 		let firstLineDigit = line[i + 1];
-		if (isDigit(firstLineDigit) && (
-			line.endsWith(".d", i)
-			|| line.endsWith(".di", i)
-			|| line.endsWith(".dt", i) // diet templates
-			|| endsWithMixin(line, i)
-		))
+		if (
+			isDigit(firstLineDigit) &&
+			(line.endsWith(".d", i) ||
+				line.endsWith(".di", i) ||
+				line.endsWith(".dt", i) || // diet templates
+				endsWithMixin(line, i))
+		)
 			ret.push(extractFileLinkAt(cwd, line, i));
 
 		i++;
@@ -59,32 +60,35 @@ function findDErrorLines(cwd: string, line: string): Promise<TerminalFileLink | 
 
 function endsWithMixin(line: string, endIndex: number): boolean {
 	// format = "file.d-mixin-5(5, 8)"
-	if (endIndex == 0 || !isDigit(line[endIndex - 1]))
-		return false;
+	if (endIndex == 0 || !isDigit(line[endIndex - 1])) return false;
 
 	endIndex--;
-	while (endIndex > 0 && isDigit(line[endIndex - 1]))
-		endIndex--;
+	while (endIndex > 0 && isDigit(line[endIndex - 1])) endIndex--;
 
 	return line.endsWith("-mixin-", endIndex);
 }
 
 function isDigit(c: string): boolean {
-	return c >= '0' && c <= '9';
+	return c >= "0" && c <= "9";
 }
 
-async function extractFileLinkAt(
-	cwd: string,
-	line: string,
-	i: number,
-): Promise<TerminalFileLink | null> {
+async function extractFileLinkAt(cwd: string, line: string, i: number): Promise<TerminalFileLink | null> {
 	function isValidFilePathPart(c: string) {
-		return c != ' '
-			&& c != '(' && c != ')'
-			&& c != '[' && c != ']'
-			&& c != ':' && c != '@'
-			&& c != '`' && c != '"' && c != '\''
-			&& c != ',' && c != '!' && c != '?';
+		return (
+			c != " " &&
+			c != "(" &&
+			c != ")" &&
+			c != "[" &&
+			c != "]" &&
+			c != ":" &&
+			c != "@" &&
+			c != "`" &&
+			c != '"' &&
+			c != "'" &&
+			c != "," &&
+			c != "!" &&
+			c != "?"
+		);
 	}
 
 	let endOffset = 0;
@@ -92,16 +96,15 @@ async function extractFileLinkAt(
 	let gotDriveLetter = false;
 	let prefixDone = false;
 	function isValidPrefix(c: string) {
-		if (prefixDone)
-			return false;
+		if (prefixDone) return false;
 
-		if (process.platform == "win32" && c == ':' && !gotDriveLetter) {
+		if (process.platform == "win32" && c == ":" && !gotDriveLetter) {
 			gotDriveLetter = true;
 			return true;
 		}
 
 		if (gotDriveLetter) {
-			if (c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z') {
+			if ((c >= "a" && c <= "z") || (c >= "A" && c <= "Z")) {
 				prefixDone = true;
 				return true;
 			} else {
@@ -110,49 +113,40 @@ async function extractFileLinkAt(
 			}
 		}
 
-		return isValidFilePathPart(c) || c == ':';
+		return isValidFilePathPart(c) || c == ":";
 	}
 
 	let lineNo: number | undefined = undefined;
 	let column: number | undefined = undefined;
-	while (i > 0 && isValidPrefix(line[i - 1]))
-		i--;
+	while (i > 0 && isValidPrefix(line[i - 1])) i--;
 	let file = line.substring(i);
 
 	let end = 0;
-	while (isValidFilePathPart(file[end]))
-		end++;
+	while (isValidFilePathPart(file[end])) end++;
 
-	if (end == 0 || file[end - 1] == '.')
-		return null;
+	if (end == 0 || file[end - 1] == ".") return null;
 
 	const lineNoMatcher = /^[(:](\d+)(?:[,:](\d+))?/;
 	const lineNoMatch = file.substring(end).match(lineNoMatcher);
 
-	if (lineNoMatch)
-	{
+	if (lineNoMatch) {
 		lineNo = parseInt(lineNoMatch[1]);
-		if (lineNoMatch[2])
-			column = parseInt(lineNoMatch[2]);
+		if (lineNoMatch[2]) column = parseInt(lineNoMatch[2]);
 		endOffset += lineNoMatch[0].length;
-		if (lineNoMatch[0][0] == '(')
-			endOffset++;
+		if (lineNoMatch[0][0] == "(") endOffset++;
 	}
 
-	if (endsWithMixin(file, end))
-	{
+	if (endsWithMixin(file, end)) {
 		let newEnd = file.lastIndexOf("-mixin-", end);
-		if (newEnd == -1)
-			throw new Error("this should not happen");
+		if (newEnd == -1) throw new Error("this should not happen");
 		lineNo = parseInt(file.substring(newEnd + 7, end));
 		column = undefined;
-		endOffset += (end - newEnd);
+		endOffset += end - newEnd;
 		end = newEnd;
 	}
 
 	let filePath = await resolveFilePath(cwd, file.substring(0, end));
-	if (!filePath)
-		return null;
+	if (!filePath) return null;
 
 	return {
 		startIndex: i,
@@ -160,8 +154,8 @@ async function extractFileLinkAt(
 		file: {
 			path: filePath,
 			line: lineNo,
-			column: column
-		}
+			column: column,
+		},
 	};
 }
 
@@ -169,21 +163,19 @@ export const dubPackagesHome = determineDubPackageHome();
 
 let resolveAllFilePathsForTest: boolean = false;
 export function enableResolveAllFilePathsForTest() {
-	return resolveAllFilePathsForTest = true;
+	return (resolveAllFilePathsForTest = true);
 }
 
 function resolveFilePath(cwd: string, path: string): Promise<vscode.Uri | null> {
-	return new Promise(function(resolve) {
-		if (!osPath.isAbsolute(path))
-			path = osPath.join(cwd, path);
-		fs.stat(path, function(err, stats) {
-			if (!err && stats.isFile())
-				return resolve(vscode.Uri.file(path));
+	return new Promise(function (resolve) {
+		if (!osPath.isAbsolute(path)) path = osPath.join(cwd, path);
+		fs.stat(path, function (err, stats) {
+			if (!err && stats.isFile()) return resolve(vscode.Uri.file(path));
 
 			var dubPathStart = path.indexOf(dubFileSearch);
 			if (dubPathStart != -1) {
 				path = osPath.join(dubPackagesHome, path.substring(dubPathStart + dubFileSearch.length));
-				fs.stat(path, function(err, stats) {
+				fs.stat(path, function (err, stats) {
 					if ((!err && stats.isFile()) || resolveAllFilePathsForTest) {
 						resolve(vscode.Uri.file(path));
 					} else {
@@ -191,10 +183,8 @@ function resolveFilePath(cwd: string, path: string): Promise<vscode.Uri | null> 
 					}
 				});
 			} else {
-				if (resolveAllFilePathsForTest)
-					return resolve(vscode.Uri.file(path));
-				else
-					resolve(null);
+				if (resolveAllFilePathsForTest) return resolve(vscode.Uri.file(path));
+				else resolve(null);
 			}
 		});
 	});

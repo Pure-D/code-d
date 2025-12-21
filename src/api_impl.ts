@@ -14,12 +14,12 @@ export class CodedAPIServedImpl implements CodedAPI {
 
 		this.served?.addDependencySnippet({
 			requiredDependencies: requiredDependencies,
-			snippet: snippet
+			snippet: snippet,
 		});
 	}
 
 	registerDependencyBasedSnippets(requiredDependencies: string[], snippets: Snippet[]): void {
-		snippets.forEach(snippet => {
+		snippets.forEach((snippet) => {
 			this.registerDependencyBasedSnippet(requiredDependencies, snippet);
 		});
 	}
@@ -35,9 +35,8 @@ export class CodedAPIServedImpl implements CodedAPI {
 
 	triggerDscanner(uri: string | vscode.Uri): boolean {
 		if (this.served) {
-			if (typeof uri == "string")
-				uri = vscode.Uri.parse(uri);
-	
+			if (typeof uri == "string") uri = vscode.Uri.parse(uri);
+
 			this.served.triggerDscanner(uri);
 			return true;
 		} else {
@@ -46,8 +45,7 @@ export class CodedAPIServedImpl implements CodedAPI {
 	}
 
 	async listDscannerConfig(uri: string | vscode.Uri): Promise<DScannerIniSection[]> {
-		if (typeof uri == "string")
-			uri = vscode.Uri.parse(uri);
+		if (typeof uri == "string") uri = vscode.Uri.parse(uri);
 
 		const served = await this.waitForInternalImplementation();
 		return await served.listDScannerConfig(uri);
@@ -63,7 +61,7 @@ export class CodedAPIServedImpl implements CodedAPI {
 		return await served.findFilesByModule(query);
 	}
 
-	async getActiveDubConfig(): Promise<{ packagePath: string, packageName: string, [unstableExtras: string]: any }> {
+	async getActiveDubConfig(): Promise<{ packagePath: string; packageName: string; [unstableExtras: string]: any }> {
 		const served = await this.waitForInternalImplementation();
 		return await served.getActiveDubConfig();
 	}
@@ -82,11 +80,13 @@ export class CodedAPIServedImpl implements CodedAPI {
 	started(served: ServeD) {
 		this.served = served;
 		let promises: Thenable<boolean>[] = [];
-		this.dependencySnippetsToRegister.forEach(snip => {
-			promises.push(served.addDependencySnippet({
-				requiredDependencies: snip[0],
-				snippet: snip[1]
-			}));
+		this.dependencySnippetsToRegister.forEach((snip) => {
+			promises.push(
+				served.addDependencySnippet({
+					requiredDependencies: snip[0],
+					snippet: snip[1],
+				}),
+			);
 		});
 		Promise.all(promises).then((all) => {
 			// done
@@ -94,23 +94,18 @@ export class CodedAPIServedImpl implements CodedAPI {
 	}
 
 	waitForInternalImplementation(): Thenable<ServeD> {
-		if (this.served)
-			return Promise.resolve(this.served);
+		if (this.served) return Promise.resolve(this.served);
 		else
 			return new Promise((resolve) => {
-				if (this.served)
-					resolve(this.served);
-				else
-					this.onInternalImplementationReady(resolve);
+				if (this.served) resolve(this.served);
+				else this.onInternalImplementationReady(resolve);
 			});
 	}
 
 	// singleton
 	static instance?: CodedAPIServedImpl;
 	static getInstance(): CodedAPIServedImpl {
-		if (this.instance)
-			return this.instance;
-		else
-			return this.instance = new CodedAPIServedImpl();
+		if (this.instance) return this.instance;
+		else return (this.instance = new CodedAPIServedImpl());
 	}
 }

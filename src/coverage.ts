@@ -1,6 +1,6 @@
-import * as vscode from "vscode"
-import * as path from "path"
-import * as fs from "fs"
+import * as vscode from "vscode";
+import * as path from "path";
+import * as fs from "fs";
 import { config } from "./extension";
 import { checkStatusbarVisibility } from "./statusbar";
 
@@ -21,9 +21,8 @@ const totalCoveragePattern = /^(.*?) is (.*?)% covered$/;
 
 function pathToName(root: string, fspath: string) {
 	var file = path.relative(root, fspath).replace(/[\\/]/g, "-");
-	if (!file.endsWith(".d"))
-		return undefined;
-	return file.substr(0, file.length - 2);
+	if (!file.endsWith(".d")) return undefined;
+	return file.substring(0, file.length - 2);
 }
 
 export class CoverageAnalyzer implements vscode.TextDocumentContentProvider, vscode.Disposable {
@@ -35,11 +34,11 @@ export class CoverageAnalyzer implements vscode.TextDocumentContentProvider, vsc
 			backgroundColor: "rgba(255, 128, 16, 0.1)",
 			isWholeLine: true,
 			overviewRulerColor: "rgba(255, 128, 16, 0.15)",
-			overviewRulerLane: vscode.OverviewRulerLane.Center
+			overviewRulerLane: vscode.OverviewRulerLane.Center,
 		});
 		this.covDecorator = vscode.window.createTextEditorDecorationType({
 			backgroundColor: "rgba(32, 255, 16, 0.03)",
-			isWholeLine: true
+			isWholeLine: true,
 		});
 		this.coverageStat = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 0.72136);
 		this.coverageStat.text = "0.00% Coverage";
@@ -51,16 +50,17 @@ export class CoverageAnalyzer implements vscode.TextDocumentContentProvider, vsc
 		this.subscriptions.push(this.uncovDecorator);
 		this.subscriptions.push(this.covDecorator);
 		this.subscriptions.push(this.coverageStat);
-		this.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(editor => {
-			this.refreshStatusBar(editor);
-		}));
+		this.subscriptions.push(
+			vscode.window.onDidChangeActiveTextEditor((editor) => {
+				this.refreshStatusBar(editor);
+			}),
+		);
 	}
 
 	updateCache(uri: vscode.Uri) {
 		var cache: CoverageLine[] = [];
 		var file = path.basename(uri.fsPath, ".lst");
-		if (file.indexOf("dub_test_root-") != -1)
-			return; // dub cache file for unittests
+		if (file.indexOf("dub_test_root-") != -1) return; // dub cache file for unittests
 		fs.readFile(uri.fsPath, "utf-8", (err, data) => {
 			var lines = data.split("\n");
 			var offsetAdd = 0;
@@ -68,8 +68,7 @@ export class CoverageAnalyzer implements vscode.TextDocumentContentProvider, vsc
 			var source = "";
 			for (var i = 0; i < lines.length; i++) {
 				var line = lines[i];
-				if (line.trim().length == 0)
-					continue;
+				if (line.trim().length == 0) continue;
 				var match = coveragePattern.exec(line);
 				if (!match) {
 					var totalCovMatch = totalCoveragePattern.exec(line);
@@ -84,18 +83,19 @@ export class CoverageAnalyzer implements vscode.TextDocumentContentProvider, vsc
 					cache.push({
 						hits: parseInt(match[1]),
 						trimmedLine: match[2].trim(),
-						offsetAdd: offsetAdd
+						offsetAdd: offsetAdd,
 					});
 					offsetAdd = 0;
-				}
-				else
-					offsetAdd++;
+				} else offsetAdd++;
 			}
 			console.log("Cache for " + source + " with " + totalCov + "% coverage");
-			if (source && totalCov)
-				this.cache.set(file, { lines: cache, totalCov: totalCov, source: source });
+			if (source && totalCov) this.cache.set(file, { lines: cache, totalCov: totalCov, source: source });
 			var folder = vscode.workspace.getWorkspaceFolder(uri);
-			if (folder && vscode.window.activeTextEditor && pathToName(folder.uri.fsPath, vscode.window.activeTextEditor.document.uri.fsPath) == file)
+			if (
+				folder &&
+				vscode.window.activeTextEditor &&
+				pathToName(folder.uri.fsPath, vscode.window.activeTextEditor.document.uri.fsPath) == file
+			)
 				this.populateCurrent();
 		});
 	}
@@ -106,14 +106,11 @@ export class CoverageAnalyzer implements vscode.TextDocumentContentProvider, vsc
 
 	populateCurrent() {
 		var editor = vscode.window.activeTextEditor;
-		if (!editor || !editor.document)
-			return;
+		if (!editor || !editor.document) return;
 		var folder = vscode.workspace.getWorkspaceFolder(editor.document.uri);
 		var name;
-		if (folder)
-			name = pathToName(folder.uri.fsPath, editor.document.uri.fsPath);
-		if (!name)
-			return;
+		if (folder) name = pathToName(folder.uri.fsPath, editor.document.uri.fsPath);
+		if (!name) return;
 
 		var info = this.cache.get(name);
 		var cache = info ? info.lines : undefined;
@@ -126,13 +123,15 @@ export class CoverageAnalyzer implements vscode.TextDocumentContentProvider, vsc
 			var lineCount = editor.document.lineCount;
 			for (var i = 0; i < cache.length; i++) {
 				searchOffset = 0;
-				for (; lineIndex + searchOffset < lineCount && searchOffset < maxLineSkip + cache[i].offsetAdd; searchOffset++) {
+				for (
+					;
+					lineIndex + searchOffset < lineCount && searchOffset < maxLineSkip + cache[i].offsetAdd;
+					searchOffset++
+				) {
 					var line = editor.document.lineAt(lineIndex + searchOffset);
 					if (line.text.trim() == cache[i].trimmedLine) {
-						if (cache[i].hits > 0)
-							covRanges.push(line.range);
-						else
-							uncovRanges.push(line.range);
+						if (cache[i].hits > 0) covRanges.push(line.range);
+						else uncovRanges.push(line.range);
 						lineIndex += searchOffset;
 						break;
 					}
@@ -141,8 +140,7 @@ export class CoverageAnalyzer implements vscode.TextDocumentContentProvider, vsc
 			this.coverageStat.text = (info ? info.totalCov : "unknown") + "% Coverage";
 			this.gotCoverage = true;
 			this.refreshStatusBar();
-		}
-		else {
+		} else {
 			this.gotCoverage = false;
 			this.coverageStat.hide();
 		}
@@ -157,16 +155,16 @@ export class CoverageAnalyzer implements vscode.TextDocumentContentProvider, vsc
 	}
 
 	refreshStatusBar(editor?: vscode.TextEditor | null): any {
-		if (this.gotCoverage && checkStatusbarVisibility("alwaysShowCoverageStatus", editor))
-			this.coverageStat.show();
-		else
-			this.coverageStat.hide();
+		if (this.gotCoverage && checkStatusbarVisibility("alwaysShowCoverageStatus", editor)) this.coverageStat.show();
+		else this.coverageStat.hide();
 	}
 
 	provideTextDocumentContent(uri: vscode.Uri, token: vscode.CancellationToken): string {
-		var report = '<!DOCTYPE html>\n<html><head><meta http-equiv="Content-type" content="text/html;charset=UTF-8"><title>Coverage Report</title><style>th{padding:0 12px}</style></head><body>';
+		var report =
+			'<!DOCTYPE html>\n<html><head><meta http-equiv="Content-type" content="text/html;charset=UTF-8"><title>Coverage Report</title><style>th{padding:0 12px}</style></head><body>';
 		report += "<table><thead>";
-		report += "<tr><th>Source</th><th>Coverage</th><th>Lines not covered</th><th>Lines covered</th><th>Average hits/line</th></tr>";
+		report +=
+			"<tr><th>Source</th><th>Coverage</th><th>Lines not covered</th><th>Lines covered</th><th>Average hits/line</th></tr>";
 		report += "</thead><tbody>";
 		var totalLinesWithout = 0;
 		var totalLinesWith = 0;
@@ -178,24 +176,35 @@ export class CoverageAnalyzer implements vscode.TextDocumentContentProvider, vsc
 		while (!(next = it.next()).done) {
 			values.push(next.value);
 		}
-		values = values.sort((a, b) => a.source < b.source ? -1 : 1);
+		values = values.sort((a, b) => (a.source < b.source ? -1 : 1));
 		for (var info of values) {
 			var linesWithout = 0;
 			var linesWith = 0;
 			var sum = 0;
 			for (var i = 0; i < info.lines.length; i++) {
 				var line = info.lines[i];
-				if (line.hits > 0)
-					linesWith++;
-				else
-					linesWithout++;
+				if (line.hits > 0) linesWith++;
+				else linesWithout++;
 				sum += line.hits;
 				totalCount++;
 			}
 			totalLinesWith += linesWith;
 			totalLinesWithout += linesWithout;
 			totalSum += sum;
-			report += "<tr><td><a style='color:inherit' href='" + info.source + "'>" + info.source + "</a></td><td style='text-align:right'>" + info.totalCov + "%</td><td style='text-align:right'>" + linesWithout + "</td><td style='text-align:right'>" + linesWith + "</td><td style='text-align:right'>" + (sum / info.lines.length).toFixed(2) + "</td></tr>";
+			report +=
+				"<tr><td><a style='color:inherit' href='" +
+				info.source +
+				"'>" +
+				info.source +
+				"</a></td><td style='text-align:right'>" +
+				info.totalCov +
+				"%</td><td style='text-align:right'>" +
+				linesWithout +
+				"</td><td style='text-align:right'>" +
+				linesWith +
+				"</td><td style='text-align:right'>" +
+				(sum / info.lines.length).toFixed(2) +
+				"</td></tr>";
 		}
 		report += "</tbody></table><hr>";
 		report += "Total lines covered: <b>" + totalLinesWith + "</b><br>";

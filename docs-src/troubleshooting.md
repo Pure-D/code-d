@@ -102,4 +102,3 @@ I recommend pasting longer than 50 line logs to [GitHub Gist](https://gist.githu
 ![example output tab](images/verbose_output_tab.png)
 
 Warning: the output tab might contain sensitive information about your code, so do it in a neutral temporary path with a neutral temporary minimal project like the hello world template.
-

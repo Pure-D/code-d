@@ -1,8 +1,33 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
-import { LanguageClient, LanguageClientOptions, ServerOptions, DocumentFilter, NotificationType, CloseAction, ErrorAction, ErrorHandler, Message, State, MessageType, RevealOutputChannelOn, ErrorHandlerResult, CloseHandlerResult } from "vscode-languageclient/node";
-import { installServeD, compileServeD, getInstallOutput, downloadFileInteractive, findLatestServeD, cmpSemver, extractServedBuiltDate, Release, updateAndInstallServeD } from "./installer";
+import {
+	LanguageClient,
+	LanguageClientOptions,
+	ServerOptions,
+	DocumentFilter,
+	NotificationType,
+	CloseAction,
+	ErrorAction,
+	ErrorHandler,
+	Message,
+	State,
+	MessageType,
+	RevealOutputChannelOn,
+	ErrorHandlerResult,
+	CloseHandlerResult,
+} from "vscode-languageclient/node";
+import {
+	installServeD,
+	compileServeD,
+	getInstallOutput,
+	downloadFileInteractive,
+	findLatestServeD,
+	cmpSemver,
+	extractServedBuiltDate,
+	Release,
+	updateAndInstallServeD,
+} from "./installer";
 import { EventEmitter } from "events";
 import * as ChildProcess from "child_process";
 
@@ -53,8 +78,12 @@ class CustomErrorHandler implements ErrorHandler {
 
 export var served: ServeD;
 
-export type DScannerIniFeature = { description: string, name: string, enabled: "disabled" | "enabled" | "skip-unittest" };
-export type DScannerIniSection = { description: string, name: string, features: DScannerIniFeature[] };
+export type DScannerIniFeature = {
+	description: string;
+	name: string;
+	enabled: "disabled" | "enabled" | "skip-unittest";
+};
+export type DScannerIniSection = { description: string; name: string; features: DScannerIniFeature[] };
 export interface ActiveDubConfig {
 	packagePath: string;
 	packageName: string;
@@ -84,15 +113,20 @@ export interface ActiveDubConfig {
 	postRunCommands: string[];
 	buildOptions: string[];
 	buildRequirements: string[];
-	[unstableExtras: string]: any
-};
+	[unstableExtras: string]: any;
+}
 
 export class ServeD extends EventEmitter implements vscode.TreeDataProvider<DubDependency> {
-	constructor(public client: LanguageClient, public outputChannel: vscode.OutputChannel) {
+	constructor(
+		public client: LanguageClient,
+		public outputChannel: vscode.OutputChannel,
+	) {
 		super();
 	}
 
-	private _onDidChangeTreeData: vscode.EventEmitter<DubDependency | undefined> = new vscode.EventEmitter<DubDependency | undefined>();
+	private _onDidChangeTreeData: vscode.EventEmitter<DubDependency | undefined> = new vscode.EventEmitter<
+		DubDependency | undefined
+	>();
 	readonly onDidChangeTreeData: vscode.Event<DubDependency | undefined> = this._onDidChangeTreeData.event;
 
 	public tasksProvider?: DubTasksProvider;
@@ -106,34 +140,38 @@ export class ServeD extends EventEmitter implements vscode.TreeDataProvider<DubD
 	}
 
 	getChildren(element?: DubDependency): Thenable<DubDependency[]> {
-		return new Promise(resolve => {
-			var req = (element && element.info) ? element.info.name : "";
+		return new Promise((resolve) => {
+			var req = element && element.info ? element.info.name : "";
 			var items: DubDependency[] = [];
 			if (element && element.info) {
 				if (element.info.description)
 					items.push(new DubDependency(element.info.description, undefined, "description"));
 				if (element.info.homepage)
-					items.push(new DubDependency(element.info.homepage, {
-						command: "open",
-						title: "Open",
-						arguments: [vscode.Uri.parse(element.info.homepage)]
-					}, "web"));
+					items.push(
+						new DubDependency(
+							element.info.homepage,
+							{
+								command: "open",
+								title: "Open",
+								arguments: [vscode.Uri.parse(element.info.homepage)],
+							},
+							"web",
+						),
+					);
 				if (element.info.authors && element.info.authors.join("").trim())
 					items.push(new DubDependency("Authors: " + element.info.authors.join(), undefined, "authors"));
 				if (element.info.license)
 					items.push(new DubDependency("License: " + element.info.license, undefined, "license"));
-				if (element.info.copyright)
-					items.push(new DubDependency(element.info.copyright));
+				if (element.info.copyright) items.push(new DubDependency(element.info.copyright));
 			}
 			if (!element || req)
 				this.client.sendRequest<DubDependencyInfo[]>("served/listDependencies", req).then((deps) => {
-					deps.forEach(dep => {
+					deps.forEach((dep) => {
 						items.push(new DubDependency(dep));
 					});
 					resolve(items);
 				});
-			else
-				resolve(items);
+			else resolve(items);
 		});
 	}
 
@@ -144,17 +182,22 @@ export class ServeD extends EventEmitter implements vscode.TreeDataProvider<DubD
 	triggerDscanner(uri: vscode.Uri) {
 		this.client.sendNotification("served/doDscanner", {
 			textDocument: {
-				uri: uri.toString()
-			}
+				uri: uri.toString(),
+			},
 		});
 	}
 
 	listDScannerConfig(uri?: vscode.Uri): Thenable<DScannerIniSection[]> {
-		return this.client.sendRequest("served/getDscannerConfig", uri ? {
-			textDocument: {
-				uri: uri.toString()
-			}
-		} : {});
+		return this.client.sendRequest(
+			"served/getDscannerConfig",
+			uri
+				? {
+						textDocument: {
+							uri: uri.toString(),
+						},
+					}
+				: {},
+		);
 	}
 
 	findFiles(query: string): Thenable<string[]> {
@@ -165,7 +208,7 @@ export class ServeD extends EventEmitter implements vscode.TreeDataProvider<DubD
 		return this.client.sendRequest("served/findFilesByModule", query);
 	}
 
-	addDependencySnippet(params: { requiredDependencies: string[], snippet: Snippet }): Thenable<boolean> {
+	addDependencySnippet(params: { requiredDependencies: string[]; snippet: Snippet }): Thenable<boolean> {
 		return this.client.sendRequest("served/addDependencySnippet", params);
 	}
 
@@ -188,14 +231,22 @@ export class ServeD extends EventEmitter implements vscode.TreeDataProvider<DubD
 async function startClient(context: vscode.ExtensionContext) {
 	let servedPath = expandTilde(config(null).get("servedPath", "serve-d"));
 	let args = [
-		"--require", "D",
-		"--lang", vscode.env.language,
-		"--provide", "http",
-		"--provide", "implement-snippets",
-		"--provide", "context-snippets",
-		"--provide", "default-snippets",
-		"--provide", "tasks-current",
-		"--provide", "async-ask-load",
+		"--require",
+		"D",
+		"--lang",
+		vscode.env.language,
+		"--provide",
+		"http",
+		"--provide",
+		"implement-snippets",
+		"--provide",
+		"context-snippets",
+		"--provide",
+		"default-snippets",
+		"--provide",
+		"tasks-current",
+		"--provide",
+		"async-ask-load",
 	];
 
 	let executable: ServerOptions = {
@@ -203,8 +254,8 @@ async function startClient(context: vscode.ExtensionContext) {
 			command: servedPath,
 			args: args,
 			options: {
-				cwd: context.extensionPath
-			}
+				cwd: context.extensionPath,
+			},
 		},
 		debug: {
 			//command: "gdbserver",
@@ -212,13 +263,21 @@ async function startClient(context: vscode.ExtensionContext) {
 			command: servedPath,
 			args: args.concat("--wait"),
 			options: {
-				cwd: context.extensionPath
-			}
-		}
+				cwd: context.extensionPath,
+			},
+		},
 	};
 	var outputChannel = vscode.window.createOutputChannel("code-d & serve-d");
 	let clientOptions: LanguageClientOptions = {
-		documentSelector: <DocumentFilter[]>[mode.D_MODE, mode.SDL_MODE, mode.DUB_MODE, mode.DIET_MODE, mode.DML_MODE, mode.DSCANNER_INI_MODE, mode.PROFILEGC_MODE],
+		documentSelector: <DocumentFilter[]>[
+			mode.D_MODE,
+			mode.SDL_MODE,
+			mode.DUB_MODE,
+			mode.DIET_MODE,
+			mode.DML_MODE,
+			mode.DSCANNER_INI_MODE,
+			mode.PROFILEGC_MODE,
+		],
 		synchronize: {
 			configurationSection: ["d", "dfmt", "dscanner", "sdl", "editor", "git"],
 			fileEvents: [
@@ -227,15 +286,15 @@ async function startClient(context: vscode.ExtensionContext) {
 				vscode.workspace.createFileSystemWatcher("**/dub.sdl"),
 				vscode.workspace.createFileSystemWatcher("**/profilegc.log"),
 				vscode.workspace.createFileSystemWatcher("**/compile_commands.json"),
-			]
+			],
 		},
 		revealOutputChannelOn: RevealOutputChannelOn.Never,
 		outputChannel: outputChannel,
 		errorHandler: new CustomErrorHandler(outputChannel),
 		markdown: {
 			isTrusted: true,
-			supportHtml: true
-		}
+			supportHtml: true,
+		},
 	};
 	let client = new LanguageClient("serve-d", "code-d & serve-d", executable, clientOptions);
 	await client.start();
@@ -244,14 +303,14 @@ async function startClient(context: vscode.ExtensionContext) {
 	context.subscriptions.push({
 		dispose() {
 			client.stop();
-		}
+		},
 	});
 
 	registerClientCommands(context, client, served);
 	linkDebuggersWithServed(served);
 
-	var updateSetting = new NotificationType<{ section: string, value: any, global: boolean }>("coded/updateSetting");
-	client.onNotification(updateSetting, (arg: { section: string, value: any, global: boolean }) => {
+	var updateSetting = new NotificationType<{ section: string; value: any; global: boolean }>("coded/updateSetting");
+	client.onNotification(updateSetting, (arg: { section: string; value: any; global: boolean }) => {
 		hideNextPotentialConfigUpdateWarning();
 		config(null).update(arg.section, arg.value, arg.global);
 	});
@@ -277,11 +336,9 @@ async function startClient(context: vscode.ExtensionContext) {
 	});
 
 	client.onNotification("coded/skippedLoads", async function (roots: string[]) {
-		if (typeof(roots) === "object" && !Array.isArray(roots))
-			roots = (<any>roots).roots;
+		if (typeof roots === "object" && !Array.isArray(roots)) roots = (<any>roots).roots;
 
-		if (typeof(roots) === "string")
-			roots = <string[]>[roots];
+		if (typeof roots === "string") roots = <string[]>[roots];
 		else if (!Array.isArray(roots))
 			throw new Error("Unexpected roots with coded/skippedLoads: " + JSON.stringify(roots));
 
@@ -291,107 +348,111 @@ async function startClient(context: vscode.ExtensionContext) {
 		let decidedNum = 0;
 		for (let i = 0; i < roots.length; i++) {
 			const root = roots[i];
-			if (allowList.includes(root))
-				decisions[i] = true;
-			else if (denyList.includes(root))
-				decisions[i] = false;
-			else
-				continue;
+			if (allowList.includes(root)) decisions[i] = true;
+			else if (denyList.includes(root)) decisions[i] = false;
+			else continue;
 			decidedNum++;
 		}
 
-		console.log("Asking for late init for projects ", roots, " (allowlist: ", allowList, ", denylist: ", denyList, ")");
+		console.log(
+			"Asking for late init for projects ",
+			roots,
+			" (allowlist: ",
+			allowList,
+			", denylist: ",
+			denyList,
+			")",
+		);
 
-		let btnLoadAll = decidedNum > 0
-			? "Load Remaining (" + (roots.length - decidedNum) + ")"
-			: roots.length == 1
-				? "Load"
-				: "Load All (" + roots.length + ")";
-		let btnSkipAll = decidedNum > 0
-			? "Skip Remaining"
-			: roots.length == 1
-				? "Skip"
-				: "Skip All";
+		let btnLoadAll =
+			decidedNum > 0
+				? "Load Remaining (" + (roots.length - decidedNum) + ")"
+				: roots.length == 1
+					? "Load"
+					: "Load All (" + roots.length + ")";
+		let btnSkipAll = decidedNum > 0 ? "Skip Remaining" : roots.length == 1 ? "Skip" : "Skip All";
 		let btnInteractive = "More Options...";
-		let msg = "There are too many subprojects in this project according to d.manyProjectsThreshold. Load "
-			+ (roots.length == 1 ? "1 extra project?" : roots.length + " extra projects?")
-			+ (decidedNum > 0 ? ("\n" + (decidedNum == 1 ? "1 project has" : decidedNum + " projects have")
-			+ " been decided on based on d.manyProjects{Allow/Deny}List already.") : "");
-		let result = await vscode.window.showInformationMessage(msg,
-				btnLoadAll, btnSkipAll, btnInteractive);
+		let msg =
+			"There are too many subprojects in this project according to d.manyProjectsThreshold. Load " +
+			(roots.length == 1 ? "1 extra project?" : roots.length + " extra projects?") +
+			(decidedNum > 0
+				? "\n" +
+					(decidedNum == 1 ? "1 project has" : decidedNum + " projects have") +
+					" been decided on based on d.manyProjects{Allow/Deny}List already."
+				: "");
+		let result = await vscode.window.showInformationMessage(msg, btnLoadAll, btnSkipAll, btnInteractive);
 
 		function setRemaining(b: boolean) {
-			for (let i = 0; i < decisions.length; i++)
-				if (decisions[i] === undefined)
-					decisions[i] = b;
+			for (let i = 0; i < decisions.length; i++) if (decisions[i] === undefined) decisions[i] = b;
 		}
 
-		switch (result)
-		{
-		case btnLoadAll:
-			setRemaining(true);
-			break;
-		case btnInteractive:
-			let result = await vscode.window.showQuickPick<vscode.QuickPickItem>(roots.map((r, i) => <vscode.QuickPickItem>{
-				_root: r,
-				_id: i,
-				label: r,
-				picked: decisions[i],
-			}).concat([
-				{
-					kind: vscode.QuickPickItemKind.Separator,
-					label: "Options",
-					alwaysShow: true,
-				},
-				<any>{
-					_id: "remember",
-					label: "Remember Selection (workspace settings)",
-					alwaysShow: true
+		switch (result) {
+			case btnLoadAll:
+				setRemaining(true);
+				break;
+			case btnInteractive:
+				let result = await vscode.window.showQuickPick<vscode.QuickPickItem>(
+					roots
+						.map(
+							(r, i) =>
+								<vscode.QuickPickItem>{
+									_root: r,
+									_id: i,
+									label: r,
+									picked: decisions[i],
+								},
+						)
+						.concat([
+							{
+								kind: vscode.QuickPickItemKind.Separator,
+								label: "Options",
+								alwaysShow: true,
+							},
+							<any>{
+								_id: "remember",
+								label: "Remember Selection (workspace settings)",
+								alwaysShow: true,
+							},
+						]),
+					{
+						canPickMany: true,
+						ignoreFocusOut: true,
+						title: "Select projects to load",
+					},
+				);
+
+				result?.forEach((r) => {
+					let root = <string>(<any>r)._root;
+					let id = <number>(<any>r)._id;
+					if (!root) return;
+
+					if (!allowList.includes(root)) allowList.push(root);
+					let denyIndex = denyList.indexOf(root);
+					if (denyIndex != -1) denyList.splice(denyIndex, 1);
+
+					decisions[id] = true;
+				});
+
+				for (let i = 0; i < decisions.length; i++) {
+					if (decisions[i] === undefined) {
+						let root = roots[i];
+						if (!denyList.includes(root)) denyList.push(root);
+						let allowIndex = allowList.indexOf(root);
+						if (allowIndex != -1) allowList.splice(allowIndex, 1);
+						decisions[i] = false;
+					}
 				}
-			]), {
-				canPickMany: true,
-				ignoreFocusOut: true,
-				title: "Select projects to load"
-			});
-			
-			result?.forEach(r => {
-				let root = <string>(<any>r)._root;
-				let id = <number>(<any>r)._id;
-				if (!root)
-					return;
 
-				if (!allowList.includes(root))
-					allowList.push(root);
-				let denyIndex = denyList.indexOf(root);
-				if (denyIndex != -1)
-					denyList.splice(denyIndex, 1);
-
-				decisions[id] = true;
-			});
-
-			for (let i = 0; i < decisions.length; i++) {
-				if (decisions[i] === undefined) {
-					let root = roots[i];
-					if (!denyList.includes(root))
-						denyList.push(root);
-					let allowIndex = allowList.indexOf(root);
-					if (allowIndex != -1)
-						allowList.splice(allowIndex, 1);
-					decisions[i] = false;
+				let save = (result?.findIndex((r) => (<any>r)._id == "remember") ?? -1) >= 0;
+				if (save) {
+					config(null).update("manyProjectsAllowList", allowList, vscode.ConfigurationTarget.Workspace);
+					config(null).update("manyProjectsDenyList", denyList, vscode.ConfigurationTarget.Workspace);
 				}
-			}
-
-			let save = (result?.findIndex(r => (<any>r)._id == "remember") ?? -1) >= 0;
-			if (save)
-			{
-				config(null).update("manyProjectsAllowList", allowList, vscode.ConfigurationTarget.Workspace);
-				config(null).update("manyProjectsDenyList", denyList, vscode.ConfigurationTarget.Workspace);
-			}
-			return;
-		case btnSkipAll:
-		default:
-			setRemaining(false);
-			break;
+				return;
+			case btnSkipAll:
+			default:
+				setRemaining(false);
+				break;
 		}
 
 		let toLoad = roots.filter((_, i) => decisions[i] === true);
@@ -399,7 +460,7 @@ async function startClient(context: vscode.ExtensionContext) {
 	});
 
 	const startupProgress = new statusbar.StartupProgress();
-	client.onNotification("window/logMessage", function (info: { type: MessageType, message: string }) {
+	client.onNotification("window/logMessage", function (info: { type: MessageType; message: string }) {
 		if (info.type == MessageType.Log && info.message.startsWith("[progress]")) {
 			let m = /^\[progress\] \[(\d+\.\d+)\] \[(\w+)\](?:\s*(\d+)?\s*(?:\/\s*(\d+))?:\s)?(.*)/.exec(info.message);
 			if (!m) return;
@@ -413,19 +474,18 @@ async function startClient(context: vscode.ExtensionContext) {
 				startupProgress.startGlobal();
 				const p = vscode.Uri.parse(args || "").fsPath;
 				startupProgress.setWorkspace(shortenPath(p));
-			}
-			else if (type == "configFinish") {
+			} else if (type == "configFinish") {
 				startupProgress.finishGlobal();
-			}
-			else if (type == "workspaceStartup" && step !== undefined && max) {
+			} else if (type == "workspaceStartup" && step !== undefined && max) {
 				startupProgress.workspaceStep(step * 0.5, max, "updating");
-			}
-			else if (type == "completionStartup" && step !== undefined && max) {
+			} else if (type == "completionStartup" && step !== undefined && max) {
 				startupProgress.workspaceStep(step * 0.5 + max * 0.5, max, "indexing");
-			}
-			else if ((type == "dubReload" || type == "importReload" || type == "importUpgrades") && step !== undefined && max) {
-				if (step == max)
-					startupProgress.finishGlobal();
+			} else if (
+				(type == "dubReload" || type == "importReload" || type == "importUpgrades") &&
+				step !== undefined &&
+				max
+			) {
+				if (step == max) startupProgress.finishGlobal();
 				else {
 					startupProgress.startGlobal();
 					const p = vscode.Uri.parse(args || "").fsPath;
@@ -444,7 +504,7 @@ async function startClient(context: vscode.ExtensionContext) {
 							label = "loading";
 							break;
 					}
-					startupProgress.globalStep(step, max, shortenPath(p), label)
+					startupProgress.globalStep(step, max, shortenPath(p), label);
 				}
 			}
 
@@ -452,18 +512,22 @@ async function startClient(context: vscode.ExtensionContext) {
 		}
 	});
 
-	client.onRequest<boolean, { url: string, title?: string, output: string }>("coded/interactiveDownload", function (e, token): Thenable<boolean> {
-		return new Promise((resolve, reject) => {
-			let aborted = false;
-			downloadFileInteractive(e.url, e.title || "Dependency Download", () => {
-				aborted = true;
-				resolve(false);
-			}).then(stream => stream.pipe(fs.createWriteStream(e.output)).on("finish", () => {
-				if (!aborted)
-					resolve(true);
-			}));
-		});
-	});
+	client.onRequest<boolean, { url: string; title?: string; output: string }>(
+		"coded/interactiveDownload",
+		function (e, token): Thenable<boolean> {
+			return new Promise((resolve, reject) => {
+				let aborted = false;
+				downloadFileInteractive(e.url, e.title || "Dependency Download", () => {
+					aborted = true;
+					resolve(false);
+				}).then((stream) =>
+					stream.pipe(fs.createWriteStream(e.output)).on("finish", () => {
+						if (!aborted) resolve(true);
+					}),
+				);
+			});
+		},
+	);
 
 	// this code is run on every restart too
 	CodedAPIServedImpl.getInstance().started(served);
@@ -546,7 +610,9 @@ export function activate(context: vscode.ExtensionContext): CodedAPI {
 		{
 			let coverageanal = new CoverageAnalyzer();
 			context.subscriptions.push(coverageanal);
-			context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider("dcoveragereport", coverageanal));
+			context.subscriptions.push(
+				vscode.workspace.registerTextDocumentContentProvider("dcoveragereport", coverageanal),
+			);
 
 			let watcher = vscode.workspace.createFileSystemWatcher("**/*.lst", false, false, false);
 
@@ -557,8 +623,8 @@ export function activate(context: vscode.ExtensionContext): CodedAPI {
 
 			vscode.workspace.onDidOpenTextDocument(coverageanal.populateCurrent, coverageanal, context.subscriptions);
 
-			vscode.workspace.findFiles("**/*.lst", "").then(files => {
-				files.forEach(file => {
+			vscode.workspace.findFiles("**/*.lst", "").then((files) => {
+				files.forEach((file) => {
 					coverageanal.updateCache(file);
 				});
 			});
@@ -582,8 +648,7 @@ async function preStartup(context: vscode.ExtensionContext) {
 	const userConfig = "Open User Settings";
 
 	let proxy = vscode.workspace.getConfiguration("http").get("proxy", "");
-	if (proxy)
-		process.env["http_proxy"] = proxy;
+	if (proxy) process.env["http_proxy"] = proxy;
 
 	await restoreCreateProjectPackageBackup(context);
 
@@ -596,18 +661,22 @@ async function preStartup(context: vscode.ExtensionContext) {
 		let gettingStarted = "Getting Started";
 		if (presentCompiler && presentCompiler.has) {
 			let compilerSpec = presentCompiler.has;
-			if (presentCompiler.version)
-				compilerSpec += " " + presentCompiler.version;
+			if (presentCompiler.version) compilerSpec += " " + presentCompiler.version;
 			let [_, checked] = makeCompilerInstallButtons(presentCompiler);
 			for (let i = 0; i < checked.length; i++) {
 				let action = checked[i].action;
-				if (action !== undefined)
-					action();
+				if (action !== undefined) action();
 			}
-			vscode.window.showInformationMessage("code-d has auto-detected " + compilerSpec + " and preconfigured it. "
-				+ "If you would like to use another compiler, please click the button below.",
-				setupDCompiler, gettingStarted)
-				.then(btn => {
+			vscode.window
+				.showInformationMessage(
+					"code-d has auto-detected " +
+						compilerSpec +
+						" and preconfigured it. " +
+						"If you would like to use another compiler, please click the button below.",
+					setupDCompiler,
+					gettingStarted,
+				)
+				.then((btn) => {
 					if (btn == setupDCompiler) {
 						vscode.commands.executeCommand("code-d.setupCompiler");
 					} else if (btn == gettingStarted) {
@@ -616,12 +685,14 @@ async function preStartup(context: vscode.ExtensionContext) {
 				});
 		} else {
 			gettingStarted = "First time setup";
-			vscode.window.showWarningMessage(
-				"code-d has not detected any compatible D compiler. Please click the button below to install and configure "
-				+ "a D compiler on your system or just for code-d. Auto completion will not contain any standard "
-				+ "library symbols and building projects will not work until then.",
-				gettingStarted)
-				.then(btn => {
+			vscode.window
+				.showWarningMessage(
+					"code-d has not detected any compatible D compiler. Please click the button below to install and configure " +
+						"a D compiler on your system or just for code-d. Auto completion will not contain any standard " +
+						"library symbols and building projects will not work until then.",
+					gettingStarted,
+				)
+				.then((btn) => {
 					if (btn == gettingStarted) {
 						vscode.commands.executeCommand("workbench.action.openWalkthrough", "webfreak.code-d#welcome");
 					}
@@ -631,21 +702,17 @@ async function preStartup(context: vscode.ExtensionContext) {
 
 	async function checkDub(dubPath: string | undefined, updateSetting: boolean = false): Promise<boolean> {
 		let tryCompiler = !!dubPath;
-		if (!dubPath)
-			dubPath = <string>expandTilde(config(null).get("dubPath", "dub"));
+		if (!dubPath) dubPath = <string>expandTilde(config(null).get("dubPath", "dub"));
 
 		try {
 			await spawnOneShotCheck(dubPath, ["--version"], false, { cwd: vscode.workspace.rootPath });
 		} catch (e) {
 			// for example invalid executable error
-			if (!tryCompiler)
-				return false;
+			if (!tryCompiler) return false;
 
-			if (!presentCompiler)
-				presentCompiler = await checkCompilers();
+			if (!presentCompiler) presentCompiler = await checkCompilers();
 
-			if (!presentCompiler.has || !presentCompiler.path)
-				return false;
+			if (!presentCompiler.has || !presentCompiler.path) return false;
 			else {
 				let ext = process.platform == "win32" ? ".exe" : "";
 				return await checkDub(path.join(path.dirname(presentCompiler.path), "dub" + ext), true);
@@ -666,16 +733,20 @@ async function preStartup(context: vscode.ExtensionContext) {
 		name: string,
 		installFunc: (env: NodeJS.ProcessEnv) => Thenable<boolean | undefined | "retry">,
 		btn: string,
-		outdatedCheck?: (log: string) => (boolean | [boolean, string])
+		outdatedCheck?: (log: string) => boolean | [boolean, string],
 	): Promise<boolean | undefined | "retry"> {
 		var version = "";
 
 		try {
-			version = await spawnOneShotCheck(expandTilde(config(null).get(configName, defaultPath)), ["--version"], true, { cwd: vscode.workspace.rootPath });
+			version = await spawnOneShotCheck(
+				expandTilde(config(null).get(configName, defaultPath)),
+				["--version"],
+				true,
+				{ cwd: vscode.workspace.rootPath },
+			);
 		} catch (err: any) {
 			// for example invalid executable error
-			if (err && err.code != "ENOENT")
-				console.error(err);
+			if (err && err.code != "ENOENT") console.error(err);
 
 			const fullConfigName = "d." + configName;
 			if (btn == "Install" || btn == "Download") btn = "Reinstall";
@@ -683,35 +754,65 @@ async function preStartup(context: vscode.ExtensionContext) {
 			const userSettingsBtn = "Open User Settings";
 
 			let defaultHandler = (s: string | undefined) => {
-				if (s == userSettingsBtn)
-					vscode.commands.executeCommand("workbench.action.openGlobalSettings");
-				else if (s == reinstallBtn)
-					return installFunc(process.env);
+				if (s == userSettingsBtn) vscode.commands.executeCommand("workbench.action.openGlobalSettings");
+				else if (s == reinstallBtn) return installFunc(process.env);
 				return Promise.resolve(undefined);
 			};
 
 			if (err && err.code == "ENOENT") {
 				if (config(null).get("aggressiveUpdate", true) && !forced) {
 					return installFunc(process.env);
-				}
-				else {
+				} else {
 					var isDirectory = false;
 					try {
 						var testPath = config(null).get(configName, "");
 						isDirectory = path.isAbsolute(testPath) && fs.statSync(testPath).isDirectory();
-					} catch (e) { }
+					} catch (e) {}
 					if (isDirectory) {
-						return await vscode.window.showErrorMessage(name + " from setting " + fullConfigName + " points to a directory", reinstallBtn, userSettingsBtn).then(defaultHandler);
+						return await vscode.window
+							.showErrorMessage(
+								name + " from setting " + fullConfigName + " points to a directory",
+								reinstallBtn,
+								userSettingsBtn,
+							)
+							.then(defaultHandler);
 					} else {
-						return await vscode.window.showErrorMessage(name + " from setting " + fullConfigName + " is not installed or couldn't be found", reinstallBtn, userSettingsBtn).then(defaultHandler);
+						return await vscode.window
+							.showErrorMessage(
+								name + " from setting " + fullConfigName + " is not installed or couldn't be found",
+								reinstallBtn,
+								userSettingsBtn,
+							)
+							.then(defaultHandler);
 					}
 				}
 			} else if (err && err.code == "EACCES") {
-				return await vscode.window.showErrorMessage(name + " from setting " + fullConfigName + " is not marked as executable or is in a non-executable directory.", reinstallBtn, userSettingsBtn).then(defaultHandler);
+				return await vscode.window
+					.showErrorMessage(
+						name +
+							" from setting " +
+							fullConfigName +
+							" is not marked as executable or is in a non-executable directory.",
+						reinstallBtn,
+						userSettingsBtn,
+					)
+					.then(defaultHandler);
 			} else if (err && err.code) {
-				return await vscode.window.showErrorMessage(name + " from setting " + fullConfigName + " failed executing: " + err.code, reinstallBtn, userSettingsBtn).then(defaultHandler);
+				return await vscode.window
+					.showErrorMessage(
+						name + " from setting " + fullConfigName + " failed executing: " + err.code,
+						reinstallBtn,
+						userSettingsBtn,
+					)
+					.then(defaultHandler);
 			} else if (err) {
-				return await vscode.window.showErrorMessage(name + " from setting " + fullConfigName + " failed executing: " + err, reinstallBtn, userSettingsBtn).then(defaultHandler);
+				return await vscode.window
+					.showErrorMessage(
+						name + " from setting " + fullConfigName + " failed executing: " + err,
+						reinstallBtn,
+						userSettingsBtn,
+					)
+					.then(defaultHandler);
 			}
 			return false;
 		}
@@ -719,21 +820,20 @@ async function preStartup(context: vscode.ExtensionContext) {
 		let outdatedResult = outdatedCheck && outdatedCheck(version);
 		let isOutdated: boolean = false;
 		let msg: string | undefined;
-		if (typeof outdatedResult == "boolean")
-			isOutdated = outdatedResult;
-		else if (Array.isArray(outdatedResult))
-			[isOutdated, msg] = outdatedResult;
+		if (typeof outdatedResult == "boolean") isOutdated = outdatedResult;
+		else if (Array.isArray(outdatedResult)) [isOutdated, msg] = outdatedResult;
 
 		if (isOutdated) {
 			if (config(null).get("aggressiveUpdate", true)) {
 				return await installFunc(process.env);
-			}
-			else {
-				let s = await vscode.window.showErrorMessage(name + " is outdated. " + (msg || ""), btn + " " + name, "Continue Anyway");
-				if (s == "Continue Anyway")
-					return false;
-				else if (s == btn + " " + name)
-					return await installFunc(process.env);
+			} else {
+				let s = await vscode.window.showErrorMessage(
+					name + " is outdated. " + (msg || ""),
+					btn + " " + name,
+					"Continue Anyway",
+				);
+				if (s == "Continue Anyway") return false;
+				else if (s == btn + " " + name) return await installFunc(process.env);
 				return undefined;
 			}
 		}
@@ -741,16 +841,19 @@ async function preStartup(context: vscode.ExtensionContext) {
 	}
 
 	// disable dub checks for now because precompiled dub binaries on windows are broken
-	if (!await checkDub(undefined)) {
+	if (!(await checkDub(undefined))) {
 		console.error("Failed to automatically find dub or execute it! Please set d.dubPath properly.");
 
 		if (config(null).get("dubPath", "dub") != "dub")
-			vscode.window.showErrorMessage("The dub path specified in your user settings via d.dubPath is not a"
-				+ " valid dub executable. Please unset it to automatically find it through your compiler or manually"
-				+ " point it to a valid executable file.\n\nIssues building projects might occur.",
-				userConfig).then((item) => {
-					if (item == userConfig)
-						vscode.commands.executeCommand("workbench.action.openGlobalSettings");
+			vscode.window
+				.showErrorMessage(
+					"The dub path specified in your user settings via d.dubPath is not a" +
+						" valid dub executable. Please unset it to automatically find it through your compiler or manually" +
+						" point it to a valid executable file.\n\nIssues building projects might occur.",
+					userConfig,
+				)
+				.then((item) => {
+					if (item == userConfig) vscode.commands.executeCommand("workbench.action.openGlobalSettings");
 				});
 	}
 
@@ -769,21 +872,18 @@ async function preStartup(context: vscode.ExtensionContext) {
 			updated.then(() => {
 				vscode.commands.executeCommand("workbench.action.reloadWindow");
 			});
-		} else
-			outdated = true;
+		} else outdated = true;
 	}
 
-	function isServedOutdated(current: Release | undefined): (log: string) => (false | [boolean, string]) {
+	function isServedOutdated(current: Release | undefined): (log: string) => false | [boolean, string] {
 		return (log: string) => {
-			if (config(null).get("forceUpdateServeD", false))
-				return [true, "(forced by d.forceUpdateServeD)"];
+			if (config(null).get("forceUpdateServeD", false)) return [true, "(forced by d.forceUpdateServeD)"];
 			if (!current || !current.asset)
 				return false; // network failure or frozen release channel, let's not bother the user
 			else if (current.name == "nightly") {
 				let date = new Date(current.asset.created_at);
 				let installed = extractServedBuiltDate(log);
-				if (!installed)
-					return [true, "(target=nightly, installed=none)"];
+				if (!installed) return [true, "(target=nightly, installed=none)"];
 
 				date.setUTCHours(0);
 				date.setUTCMinutes(0);
@@ -793,7 +893,10 @@ async function preStartup(context: vscode.ExtensionContext) {
 				installed.setUTCMinutes(0);
 				installed.setUTCSeconds(0);
 
-				return [installed < date, `(target from ${date.toDateString()}, installed ${installed.toDateString()})`];
+				return [
+					installed < date,
+					`(target from ${date.toDateString()}, installed ${installed.toDateString()})`,
+				];
 			}
 
 			let installedChannel = context.globalState.get("serve-d-downloaded-release-channel");
@@ -824,11 +927,17 @@ async function preStartup(context: vscode.ExtensionContext) {
 
 		let stable = "Switch to Stable";
 		let beta = "Switch to Beta";
-		vscode.window.showInformationMessage("Hey! The setting 'd.betaStream' no longer exists and has been replaced with "
-			+ "'d.servedReleaseChannel'. Your settings have been automatically updated to fetch nightly builds, but you "
-			+ "probably want to remove the old setting.\n\n"
-			+ "Stable and beta releases are planned more frequently now, so they might be a better option for you.",
-			stable, beta, userConfig).then(item => {
+		vscode.window
+			.showInformationMessage(
+				"Hey! The setting 'd.betaStream' no longer exists and has been replaced with " +
+					"'d.servedReleaseChannel'. Your settings have been automatically updated to fetch nightly builds, but you " +
+					"probably want to remove the old setting.\n\n" +
+					"Stable and beta releases are planned more frequently now, so they might be a better option for you.",
+				stable,
+				beta,
+				userConfig,
+			)
+			.then((item) => {
 				if (item == userConfig) {
 					vscode.commands.executeCommand("workbench.action.openGlobalSettings");
 				} else if (item == stable) {
@@ -846,49 +955,52 @@ async function preStartup(context: vscode.ExtensionContext) {
 	let firstTimeUser = true; // force release lookup before first install
 	let force = false;
 	const currentCodedServedIteration = 1; // bump on new code-d releases that want new serve-d
-	if (context.globalState.get("serve-d-downloaded-release-channel"))
-		firstTimeUser = false;
+	if (context.globalState.get("serve-d-downloaded-release-channel")) firstTimeUser = false;
 	if (context.globalState.get<number>("serve-d-wanted-download-iteration", 0) != currentCodedServedIteration)
 		force = true;
 
 	let version = await findLatestServeD(firstTimeUser || force, channelString);
 	async function doUpdate(): Promise<boolean> {
-		let origUpdateFun = version ? (version.asset
-			? installServeD([{ url: version.asset.browser_download_url, title: "Serve-D" }], version.name)
-			: compileServeD((version && version.name != "nightly") ? version.name : undefined))
+		let origUpdateFun = version
+			? version.asset
+				? installServeD([{ url: version.asset.browser_download_url, title: "Serve-D" }], version.name)
+				: compileServeD(version && version.name != "nightly" ? version.name : undefined)
 			: updateAndInstallServeD;
 		let updateFun = origUpdateFun;
 
-		updateFun = async function(env: NodeJS.ProcessEnv): Promise<boolean | undefined | "retry"> {
+		updateFun = async function (env: NodeJS.ProcessEnv): Promise<boolean | undefined | "retry"> {
 			let [isBlocked, lock] = await acquireInstallLock("serve-d", context);
 			try {
 				context.subscriptions.push(lock);
 				if (isBlocked) {
-					return await waitForOtherInstanceInstall("serve-d", context, force)
-						.then((doUpdate) => doUpdate ? origUpdateFun(env) : "retry");
+					return await waitForOtherInstanceInstall("serve-d", context, force).then((doUpdate) =>
+						doUpdate ? origUpdateFun(env) : "retry",
+					);
 				}
 				return await origUpdateFun(env);
-			}
-			finally {
+			} finally {
 				let i = context.subscriptions.indexOf(lock);
 				context.subscriptions.splice(i, 1);
 				lock.dispose();
 			}
 		};
 
-		let upToDate = await checkProgram(force, "servedPath", "serve-d", "serve-d",
+		let upToDate = await checkProgram(
+			force,
+			"servedPath",
+			"serve-d",
+			"serve-d",
 			updateFun,
-			version ? (version.asset ? "Download" : "Compile") : "Install", isServedOutdated(version));
-		if (upToDate === undefined)
-			return false; /* user dismissed install dialogs, don't continue startup */
-		else if (upToDate === "retry")
-			return doUpdate();
+			version ? (version.asset ? "Download" : "Compile") : "Install",
+			isServedOutdated(version),
+		);
+		if (upToDate === undefined) return false; /* user dismissed install dialogs, don't continue startup */
+		else if (upToDate === "retry") return doUpdate();
 
 		return true;
 	}
 
-	if (!await doUpdate())
-		return;
+	if (!(await doUpdate())) return;
 
 	await context.globalState.update("serve-d-downloaded-release-channel", channelString);
 	await context.globalState.update("serve-d-wanted-download-iteration", currentCodedServedIteration);
@@ -911,50 +1023,69 @@ function lockIsStillAcquired(lock: any): boolean {
 	return lock && isFinite(parseInt(lock)) && new Date().getTime() - parseInt(lock) < 10000;
 }
 
-async function acquireInstallLock(depName: string, context: vscode.ExtensionContext): Promise<[boolean, vscode.Disposable]> {
+async function acquireInstallLock(
+	depName: string,
+	context: vscode.ExtensionContext,
+): Promise<[boolean, vscode.Disposable]> {
 	const installInProgress = "installInProgress-" + depName;
 	let existingLock = context.globalState.get(installInProgress, undefined);
 	if (lockIsStillAcquired(existingLock)) {
 		return [false, new vscode.Disposable(() => {})];
 	} else {
 		context.globalState.update(installInProgress, new Date().getTime());
-		let timer = setInterval(function() {
+		let timer = setInterval(function () {
 			context.globalState.update(installInProgress, new Date().getTime());
 		}, 2000);
-		return [true, new vscode.Disposable(() => {
-			clearInterval(timer);
-			context.globalState.update(installInProgress, false);
-		})];
+		return [
+			true,
+			new vscode.Disposable(() => {
+				clearInterval(timer);
+				context.globalState.update(installInProgress, false);
+			}),
+		];
 	}
 }
 
-async function waitForOtherInstanceInstall(depName: string, context: vscode.ExtensionContext, forced: boolean, showProgress: boolean = true): Promise<boolean> {
+async function waitForOtherInstanceInstall(
+	depName: string,
+	context: vscode.ExtensionContext,
+	forced: boolean,
+	showProgress: boolean = true,
+): Promise<boolean> {
 	// XXX: horrible polling code here because there is no other IPC API for vscode extensions
 	const installInProgress = "installInProgress-" + depName;
 	var lock = context.globalState.get(installInProgress, undefined);
 	if (lockIsStillAcquired(lock)) {
 		if (forced) {
 			let ret = new Promise<boolean>((resolve) => {
-				setTimeout(function() {
+				setTimeout(function () {
 					resolve(waitForOtherInstanceInstall(depName, context, true, false));
 				}, 1000);
 			});
 
 			if (showProgress)
-				return vscode.window.withProgress<boolean>({
-					location: vscode.ProgressLocation.Window,
-					title: "Waiting for other VSCode window installing " + depName + "..."
-				}, (progress, token) => ret);
-			else
-				return ret;
+				return vscode.window.withProgress<boolean>(
+					{
+						location: vscode.ProgressLocation.Window,
+						title: "Waiting for other VSCode window installing " + depName + "...",
+					},
+					(progress, token) => ret,
+				);
+			else return ret;
 		} else {
 			let continueAnyway = "Continue Anyway";
 			let wait = "Wait";
-			let btn = await vscode.window.showWarningMessage("It looks like there is another vscode instance already installing "
-				+ depName + ". Click '" + continueAnyway + "' if you are sure there is no other vscode instance installing "
-				+ depName + " right now.",
+			let btn = await vscode.window.showWarningMessage(
+				"It looks like there is another vscode instance already installing " +
+					depName +
+					". Click '" +
+					continueAnyway +
+					"' if you are sure there is no other vscode instance installing " +
+					depName +
+					" right now.",
 				continueAnyway,
-				wait);
+				wait,
+			);
 			if (!btn || btn == wait) {
 				return waitForOtherInstanceInstall(depName, context, true);
 			} else if (btn == continueAnyway) {
@@ -967,7 +1098,12 @@ async function waitForOtherInstanceInstall(depName: string, context: vscode.Exte
 	return false;
 }
 
-function spawnOneShotCheck(program: string, args: string[], captureOutput: boolean = false, options: any = undefined): Promise<string> {
+function spawnOneShotCheck(
+	program: string,
+	args: string[],
+	captureOutput: boolean = false,
+	options: any = undefined,
+): Promise<string> {
 	let proc: ChildProcess.ChildProcessWithoutNullStreams;
 	try {
 		proc = ChildProcess.spawn(program, args, options);
@@ -977,10 +1113,8 @@ function spawnOneShotCheck(program: string, args: string[], captureOutput: boole
 
 	let result = "";
 	if (captureOutput) {
-		if (proc.stderr)
-			proc.stderr.on("data", (chunk) => result += chunk);
-		if (proc.stdout)
-			proc.stdout.on("data", (chunk) => result += chunk);
+		if (proc.stderr) proc.stderr.on("data", (chunk) => (result += chunk));
+		if (proc.stdout) proc.stdout.on("data", (chunk) => (result += chunk));
 	}
 
 	return new Promise((resolve, reject) => {
@@ -1009,14 +1143,28 @@ function greetNewUsers(context: vscode.ExtensionContext) {
 			context.globalState.update("lastCheckedCodedVersion", currentVersion);
 
 			if (config(null).get("showUpdateChangelogs", true)) {
-				vscode.commands.executeCommand("markdown.showPreview", vscode.Uri.file(context.asAbsolutePath("CHANGELOG.md")), { locked: true });
+				vscode.commands.executeCommand(
+					"markdown.showPreview",
+					vscode.Uri.file(context.asAbsolutePath("CHANGELOG.md")),
+					{ locked: true },
+				);
 				let disableChangelog = "Never show changelog";
 				let close = "Close";
-				vscode.window.showInformationMessage("Welcome to code-d " + currentVersion + "! See what has changed since " + (oldVersion || "last version") + "...", disableChangelog, close).then(action => {
-					if (action == disableChangelog) {
-						config(null).update("showUpdateChangelogs", false, vscode.ConfigurationTarget.Global);
-					}
-				});
+				vscode.window
+					.showInformationMessage(
+						"Welcome to code-d " +
+							currentVersion +
+							"! See what has changed since " +
+							(oldVersion || "last version") +
+							"...",
+						disableChangelog,
+						close,
+					)
+					.then((action) => {
+						if (action == disableChangelog) {
+							config(null).update("showUpdateChangelogs", false, vscode.ConfigurationTarget.Global);
+						}
+					});
 			}
 		}
 	}
@@ -1024,10 +1172,9 @@ function greetNewUsers(context: vscode.ExtensionContext) {
 
 function shortenPath(p: string) {
 	let short: string = p;
-	if (short.endsWith("serve-d-dummy-workspace"))
-		return "[dummy workspace]";
+	if (short.endsWith("serve-d-dummy-workspace")) return "[dummy workspace]";
 	if (vscode.workspace.workspaceFolders)
-		vscode.workspace.workspaceFolders.forEach(element => {
+		vscode.workspace.workspaceFolders.forEach((element) => {
 			const dir = element.uri.fsPath;
 			if (dir.startsWith(p)) {
 				short = path.relative(path.dirname(dir), p);
@@ -1037,11 +1184,10 @@ function shortenPath(p: string) {
 }
 
 function getOwnerWorkspace(p: string): vscode.WorkspaceFolder | null {
-	if (p.endsWith("serve-d-dummy-workspace"))
-		return null;
+	if (p.endsWith("serve-d-dummy-workspace")) return null;
 	let best: vscode.WorkspaceFolder | null = null;
 	if (vscode.workspace.workspaceFolders)
-		vscode.workspace.workspaceFolders.forEach(element => {
+		vscode.workspace.workspaceFolders.forEach((element) => {
 			const dir = element.uri.fsPath;
 			if (dir.length >= (best?.uri?.fsPath?.length ?? 0) && dir.startsWith(p)) {
 				best = element;
@@ -1067,25 +1213,27 @@ function createConfigUpdateWatcher(): vscode.Disposable {
 			"d.extraRoots",
 		];
 
-		if (lastConfigUpdateWasInternal && new Date().getTime() - lastConfigUpdateWasInternal < 1000)
-			return; // ignore config updates that come from code-d or serve-d
+		if (lastConfigUpdateWasInternal && new Date().getTime() - lastConfigUpdateWasInternal < 1000) return; // ignore config updates that come from code-d or serve-d
 
 		var changed: string | null = null;
-		needReloadSettings.forEach(setting => {
-			if (!changed && e.affectsConfiguration(setting))
-				changed = setting;
+		needReloadSettings.forEach((setting) => {
+			if (!changed && e.affectsConfiguration(setting)) changed = setting;
 		});
 
 		let reloadBtn = "Reload VSCode";
 		let ignoreBtn = "Ignore";
 
 		if (changed)
-			vscode.window.showInformationMessage("You have changed code-d's `"
-				+ changed + "` setting. To apply the new value, you need to reload VSCode.",
-				reloadBtn, ignoreBtn)
-				.then(btn => {
-					if (btn == reloadBtn)
-						vscode.commands.executeCommand("workbench.action.reloadWindow");
+			vscode.window
+				.showInformationMessage(
+					"You have changed code-d's `" +
+						changed +
+						"` setting. To apply the new value, you need to reload VSCode.",
+					reloadBtn,
+					ignoreBtn,
+				)
+				.then((btn) => {
+					if (btn == reloadBtn) vscode.commands.executeCommand("workbench.action.reloadWindow");
 				});
 	});
 }
@@ -1100,10 +1248,10 @@ function expandTilde(filepath: string): string {
 
 	if (filepath.charCodeAt(0) === 126 /* ~ */) {
 		if (filepath.charCodeAt(1) === 43 /* + */) {
-		return path.join(process.cwd(), filepath.slice(2));
+			return path.join(process.cwd(), filepath.slice(2));
 		}
 		return home ? path.join(home, filepath.slice(1)) : filepath;
 	}
 
 	return filepath;
-};
+}

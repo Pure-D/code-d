@@ -14,8 +14,8 @@ First create a launch.json file:
 
 Then follow up by selecting either
 
-* D (code-d: Native Debug / C++ / CodeLLDB)
-* DUB (code-d: Native Debug / C++ / CodeLLDB)
+- D (code-d: Native Debug / C++ / CodeLLDB)
+- DUB (code-d: Native Debug / C++ / CodeLLDB)
 
 Selecting the `D` variant will just run some D executable you have built before.
 

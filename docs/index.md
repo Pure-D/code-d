@@ -45,31 +45,30 @@ Click a link below to open pages about certain topics.
 
 <!-- #include menu.md -->
 
-* [Home](index.md)
+- [Home](index.md)
 
-* [Installation](install.md)
+- [Installation](install.md)
 
-* [Tutorial](intro-to-d.md)
+- [Tutorial](intro-to-d.md)
+  - [Intro to D](intro-to-d.md)
 
-	* [Intro to D](intro-to-d.md)
+  - [Hello World](hello-world.md)
 
-	* [Hello World](hello-world.md)
+  - [Building](building.md)
 
-	* [Building](building.md)
+  - [Debugging](debugging.md)
 
-	* [Debugging](debugging.md)
+  - [Editing](editing.md)
 
-	* [Editing](editing.md)
+  - [DUB Package Manager](dub.md)
 
-	* [DUB Package Manager](dub.md)
+  - [vibe.d Web App](vibe-d.md)
 
-	* [vibe.d Web App](vibe-d.md)
+  - [Configuring non-DUB projects](non-dub.md)
 
-	* [Configuring non-DUB projects](non-dub.md)
+- [Troubleshooting](troubleshooting.md)
 
-* [Troubleshooting](troubleshooting.md)
-
-* [Changelog](../CHANGELOG.md)
+- [Changelog](../CHANGELOG.md)
 
 ---
 

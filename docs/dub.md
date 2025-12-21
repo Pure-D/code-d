@@ -4,19 +4,19 @@
 
 <div style="float: right; margin-left: 1em; padding: 1em; border: 1px solid white; position: relative; z-index: 10; outline: 1px solid black;">
 
-* [Home](index.md)
-* [Installation](install.md)
-* [Tutorial](intro-to-d.md)
-	* [Intro to D](intro-to-d.md)
-	* [Hello World](hello-world.md)
-	* [Building](building.md)
-	* [Debugging](debugging.md)
-	* [Editing](editing.md)
-	* **[DUB Package Manager](dub.md)**
-	* [vibe.d Web App](vibe-d.md)
-	* [Configuring non-DUB projects](non-dub.md)
-* [Troubleshooting](troubleshooting.md)
-* [Changelog](../CHANGELOG.md)
+- [Home](index.md)
+- [Installation](install.md)
+- [Tutorial](intro-to-d.md)
+  - [Intro to D](intro-to-d.md)
+  - [Hello World](hello-world.md)
+  - [Building](building.md)
+  - [Debugging](debugging.md)
+  - [Editing](editing.md)
+  - **[DUB Package Manager](dub.md)**
+  - [vibe.d Web App](vibe-d.md)
+  - [Configuring non-DUB projects](non-dub.md)
+- [Troubleshooting](troubleshooting.md)
+- [Changelog](../CHANGELOG.md)
 
 </div>
 
@@ -26,8 +26,8 @@ code-d offers full integration for the DUB package manager for all development p
 
 - Full file support for dub.json and dub.sdl
 - Dependency management within VSCode
-	- Add/Remove/Upgrade dependencies
-	- Go to definition, auto complete, etc.
+  - Add/Remove/Upgrade dependencies
+  - Go to definition, auto complete, etc.
 - Building
 - Creation
 

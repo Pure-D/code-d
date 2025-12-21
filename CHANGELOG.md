@@ -110,14 +110,15 @@ Auto completion of dub.json has been improved and the issues with quoting have b
 Auto completion of DUB dependencies in dub.json/dub.sdl now show license and copyright information.
 
 The DUB Dependencies view got a few improvements:
-* Action taken when clicking on dependencies now is configurable (see `d.dependencyClickBehavior` setting)
-* by default clicking on a dependency now lists all the README/CHANGES/LICENSE files (configurable with `d.dependencyTextDocumentFilter` setting)
-* added preview of .rst files if either (preferred) [reStructuredText](https://marketplace.visualstudio.com/items?itemName=lextudio.restructuredtext) (lextudio.restructuredtext) or [RST Preview](https://marketplace.visualstudio.com/items?itemName=tht13.rst-vscode) (tht13.rst-vscode) is installed.
-* other added options:
-  * open DUB recipe (dub.json/dub.sdl)
-  * do nothing
-  * open file (dialog) in dependency path
-* icons are fixed
+
+- Action taken when clicking on dependencies now is configurable (see `d.dependencyClickBehavior` setting)
+- by default clicking on a dependency now lists all the README/CHANGES/LICENSE files (configurable with `d.dependencyTextDocumentFilter` setting)
+- added preview of .rst files if either (preferred) [reStructuredText](https://marketplace.visualstudio.com/items?itemName=lextudio.restructuredtext) (lextudio.restructuredtext) or [RST Preview](https://marketplace.visualstudio.com/items?itemName=tht13.rst-vscode) (tht13.rst-vscode) is installed.
+- other added options:
+  - open DUB recipe (dub.json/dub.sdl)
+  - do nothing
+  - open file (dialog) in dependency path
+- icons are fixed
 
 The new dependency click actions can also be accessed by right-clicking a dependency.
 
@@ -174,9 +175,9 @@ Adds debug settings `"d.forceUpdateServeD"` and `"d.forceCompileServeD"`.
 
 # 0.23.0
 
-*whew, has it really been 2 years already? Sorry for the delay, here is the update! (finally)*
+_whew, has it really been 2 years already? Sorry for the delay, here is the update! (finally)_
 
-*I have often taken breaks while developing code-d/serve-d/workspace-d, so there will ~~probably~~ definitely be bugs and inconsistencies with features that were started but not properly finished. Be sure to report issues you find to https://github.com/Pure-D/code-d/issues!*
+_I have often taken breaks while developing code-d/serve-d/workspace-d, so there will ~~probably~~ definitely be bugs and inconsistencies with features that were started but not properly finished. Be sure to report issues you find to https://github.com/Pure-D/code-d/issues!_
 
 ## Getting Started
 
@@ -215,21 +216,25 @@ Building projects in subdirectories have been fixed.
 Several improvements to warning/error diagnostics have been made. While editing syntax errors are now properly marked as error instead of as warning and have better locations.
 
 Improved examples:
+
 ```d
 void foo() {
     writeln("hello")
 }
 ```
+
 will now show the missing semicolon error at the end of the line.
 
 ```d
 if (myObject == null) {}
 ```
+
 will now mark the `==` as error for the "use `is` instead of `==` when comparing with `null`" error message. There is also now a quick fix available to automatically fix this issue quickly.
 
 ```d
 foreach (auto key; value) {}
 ```
+
 while looking nice is not valid D code. The syntax error will now properly explain that the `auto` is wrong and suggest removing it with a quick fix.
 
 Among several other improvements of error locations, without any new quick fixes. The experience for newcomers has especially been improved by this.
@@ -245,6 +250,7 @@ The `d.completeNoDupes` setting has been removed as it is fully implemented by `
 ## D-Scanner
 
 The following D-Scanner warnings have been disabled by default:
+
 - Public declaration '...' is undocumented
 - Variable ... is never modified and could have been declared const or immutable.
 
@@ -279,11 +285,9 @@ Example of full `writeln` ddoc detail now:
 
 <div style="padding: 0.2em 1.5em; background-color: rgba(0, 0, 0, 0.2)">
 
-Equivalent to `write(args, '\n')`.  Calling `writeln` without
+Equivalent to `write(args, '\n')`. Calling `writeln` without
 arguments is valid and just prints a newline to the standard
 output.
-
-
 
 **Params**
 
@@ -294,10 +298,7 @@ output.
 **Example**
 
 Reads `stdin` and writes it to `stdout` with a argument
-       counter.
-
-
-
+counter.
 
 ```d
 import std.stdio;
@@ -327,27 +328,28 @@ You can now use new context variables in `when` clauses in vscode settings like 
 
 ## Other
 
-* Many improvements in syntax highlighting
-* Updated DCD to 0.13.6
-  * Windows will download precompiled releases again
-* Updated D-Scanner to 0.11.1
-* Updated dfmt to 0.14.0
-* Enabled the extension in untrusted workspaces - secured user settings that could be used maliciously
-* `"d.stdlibPath": "auto"` now uses the `d.dubCompiler` setting first to detect stdlibs with the given compiler
-* added a highlight provider
-  * Highlights selected variable in scope
-  * Highlights which statement `return`, `break`, `continue` affects
-* Tasks can use `$current` to use the currently configured project compiler/buildType/configuration/architecture for DUB tasks instead of using the platform default
+- Many improvements in syntax highlighting
+- Updated DCD to 0.13.6
+  - Windows will download precompiled releases again
+- Updated D-Scanner to 0.11.1
+- Updated dfmt to 0.14.0
+- Enabled the extension in untrusted workspaces - secured user settings that could be used maliciously
+- `"d.stdlibPath": "auto"` now uses the `d.dubCompiler` setting first to detect stdlibs with the given compiler
+- added a highlight provider
+  - Highlights selected variable in scope
+  - Highlights which statement `return`, `break`, `continue` affects
+- Tasks can use `$current` to use the currently configured project compiler/buildType/configuration/architecture for DUB tasks instead of using the platform default
 
 Minor Changes:
-* the "insert dscanner.ini" command now inserts the exact current D-Scanner config for the document instead of some hardcoded one to simplify changing it.
-* Running the predefined tasks will auto focus the console now. If you want to do this to your own tasks as well, set `"presentation": {"focus": true}`
-* Several dub diagnostics improvements
-* Added auto completion for `else` blocks after `if`
-* Fixed many snippet issues
-* Fixed various crashes
-* dfmt on/off, profilegc and dlangui features are now part of serve-d instead of code-d (available in other editors as well now)
-* auto completion and syntax highlighting is off after the `__EOF__` token now
+
+- the "insert dscanner.ini" command now inserts the exact current D-Scanner config for the document instead of some hardcoded one to simplify changing it.
+- Running the predefined tasks will auto focus the console now. If you want to do this to your own tasks as well, set `"presentation": {"focus": true}`
+- Several dub diagnostics improvements
+- Added auto completion for `else` blocks after `if`
+- Fixed many snippet issues
+- Fixed various crashes
+- dfmt on/off, profilegc and dlangui features are now part of serve-d instead of code-d (available in other editors as well now)
+- auto completion and syntax highlighting is off after the `__EOF__` token now
 
 # 0.22.0
 
@@ -379,10 +381,10 @@ You can now right-click on symbols and press `Search in dpldocs` to look up docu
 
 Syntax highlighting was improved
 
-* otbs style D code was improved a lot. (fixes `if`, `while`, `for`, `foreach`, `switch`, `final switch`, `with`, `synchronized` and `catch` blocks with braces on same line)
-* `typeof` highlighting
-* `asm` block fixes
-* fixed delegate highlighting without arguments
+- otbs style D code was improved a lot. (fixes `if`, `while`, `for`, `foreach`, `switch`, `final switch`, `with`, `synchronized` and `catch` blocks with braces on same line)
+- `typeof` highlighting
+- `asm` block fixes
+- fixed delegate highlighting without arguments
 
 ## Other
 
@@ -391,14 +393,16 @@ The custom serve-d commands and initialization have all been documented in the R
 The serve-d installer has been refactored a lot, please report any issues in case of any failures with OS & release information!
 
 Minor Changes:
-* `~~deprecated~~` and `unused` variables warnings will now be rendered using the standard vscode formatting
-* Removed upload code selection feature. Use a dedicated extension for this instead. (for example "Share Code" `rolandgreim.sharecode`)
-* Sort imports is now bound to `Ctrl-Q Ctrl-S` by default.
-* The changelog now opens in every new version. Add `"d.showUpdateChangelogs": false` to disable.
+
+- `~~deprecated~~` and `unused` variables warnings will now be rendered using the standard vscode formatting
+- Removed upload code selection feature. Use a dedicated extension for this instead. (for example "Share Code" `rolandgreim.sharecode`)
+- Sort imports is now bound to `Ctrl-Q Ctrl-S` by default.
+- The changelog now opens in every new version. Add `"d.showUpdateChangelogs": false` to disable.
 
 Bug Fixes:
-* Fixed sorting imports inside functions sometimes replacing commented imports.
-* Fixes build tasks on windows with CMD
+
+- Fixed sorting imports inside functions sometimes replacing commented imports.
+- Fixes build tasks on windows with CMD
 
 # 0.21.0
 
@@ -418,6 +422,7 @@ The `d.betaStream` setting is now obsolete and got replaced by `d.servedReleaseC
 Diet completion got a lot of bug fixes and will work a lot better with more D code now.
 
 Adding
+
 ```
 //-context=app.d
 ```
@@ -449,29 +454,31 @@ You can now use new context variables in `when` clauses in vscode settings like 
 DCD upgrade to 0.11.1
 
 Minor Changes:
-* DCD now downloads with a rich download UI in newer code-d and with console progress bar in older code-d or other editors
-* Import paths are now much better resolved if dmd is installed. They will use a very accurate search on Posix platforms using dmd.conf and on windows relative to the exe path. Also per-project overrides using dmd.conf are possible with this.
-* Added `d.lintOnFileOpen` with possible values `"always", "project", "never"` which controls whether files should be linted with DScanner when opening. (defaults to "project") To revert this to always lint every file, including phobos and other libraries, change it to `"always"`
-* Files external to the project no longer persist linting warnings when closing anymore.
-* Added `$dmd` problem matcher to build tasks.
+
+- DCD now downloads with a rich download UI in newer code-d and with console progress bar in older code-d or other editors
+- Import paths are now much better resolved if dmd is installed. They will use a very accurate search on Posix platforms using dmd.conf and on windows relative to the exe path. Also per-project overrides using dmd.conf are possible with this.
+- Added `d.lintOnFileOpen` with possible values `"always", "project", "never"` which controls whether files should be linted with DScanner when opening. (defaults to "project") To revert this to always lint every file, including phobos and other libraries, change it to `"always"`
+- Files external to the project no longer persist linting warnings when closing anymore.
+- Added `$dmd` problem matcher to build tasks.
 
 Bug Fixes:
-* **Build tasks now finally work properly**
-* The statusbar now only loads once dub is ready.
-* Some memory optimizations and segfault fixes.
-* Dub build task doesn't break anymore for not loaded workspaces.
-* Some threading issues fixed which previously caused random crashes.
-* Unreadable directories don't crash serve-d startup anymore.
-* Fixed several "Sort imports" bugs.
-* Module name insertion properly takes the longest import path now for determining the module name, so it will always insert the shortest module name for your imports.
-* When uninstalling code-d an uninstall script deleting the code-d folder should run now.
-* Code actions now properly show on all characters on diagnostics instead of just the first character.
-* DML autocompletes again
-* Installation will no longer silently halt if dependencies aren't installed
-* Serve-D installation will now fall back to x86 if x86_mscoff isn't available (fixes installation if only LDC is available)
-* Fixed DCD stdout error message box on Windows on shutdown
-* Sorting imports now supports `public import` and `static import` and will also sort those before the other imports.
-* Fixed code coverage highlighting on Windows
+
+- **Build tasks now finally work properly**
+- The statusbar now only loads once dub is ready.
+- Some memory optimizations and segfault fixes.
+- Dub build task doesn't break anymore for not loaded workspaces.
+- Some threading issues fixed which previously caused random crashes.
+- Unreadable directories don't crash serve-d startup anymore.
+- Fixed several "Sort imports" bugs.
+- Module name insertion properly takes the longest import path now for determining the module name, so it will always insert the shortest module name for your imports.
+- When uninstalling code-d an uninstall script deleting the code-d folder should run now.
+- Code actions now properly show on all characters on diagnostics instead of just the first character.
+- DML autocompletes again
+- Installation will no longer silently halt if dependencies aren't installed
+- Serve-D installation will now fall back to x86 if x86_mscoff isn't available (fixes installation if only LDC is available)
+- Fixed DCD stdout error message box on Windows on shutdown
+- Sorting imports now supports `public import` and `static import` and will also sort those before the other imports.
+- Fixed code coverage highlighting on Windows
 
 # 0.20.2
 
@@ -505,8 +512,8 @@ vibe.d Diet templates have gotten a lot of love.
 
 New features include:
 
-* Auto-Completion + Calltips of D code inside diet + HTML Tag & Attribute Name & Value completions
-* Proper language config (autoclosing quotes)
+- Auto-Completion + Calltips of D code inside diet + HTML Tag & Attribute Name & Value completions
+- Proper language config (autoclosing quotes)
 
 ## New Syntax Highlighting
 
@@ -556,13 +563,13 @@ The installation of DCD is fixed and reloading after installation is no longer r
 
 Minor stuff:
 
-* removed long gone dscannerPath and dfmtPath from the settings (as they are integrated into serve-d and have been ignored ever since)
+- removed long gone dscannerPath and dfmtPath from the settings (as they are integrated into serve-d and have been ignored ever since)
 
 # 0.19.0
 
-* Workspace symbol search now shows all symbols starting with the search query.
-* DScanner issues can now be disabled per workspace and per line of code (using `@suppress(all)`, `@suppress(dscanner.xxx)` or `@supress(xxx)` in the same line as the issue, a code fix helps removing it)
-* Build tasks replace the old compile buttons in the status bar (Ctrl-Shift-B)
+- Workspace symbol search now shows all symbols starting with the search query.
+- DScanner issues can now be disabled per workspace and per line of code (using `@suppress(all)`, `@suppress(dscanner.xxx)` or `@supress(xxx)` in the same line as the issue, a code fix helps removing it)
+- Build tasks replace the old compile buttons in the status bar (Ctrl-Shift-B)
 
 serve-d upgrade to 0.3.0
 
@@ -581,13 +588,14 @@ Some bugs may occur and some old ones may have been fixed during this transition
 Project dependent settings such as the status bar buttons or the dub dependencies are linked to the project containing the file you are currently editing.
 
 Minor things:
-* Dependency upgrades (dub to 1.10.0, dfmt to 0.8.2, dscanner to 0.5.7)
-* Settings are now properly categorized for multi-workspace projects and some settings can be set in all cases and some only in user settings.
-* DCD is now fetched from the official github releases (0.9.9)
-* dub.json completion now properly inserts quotes
-* some dub startup errors were fixed
-* import timing takes into account possible second-run optimizations.
-* some requests in code-d were previously decoded wrong, causing silent ignoring of some configuration and parameters. This has been fixed with a single character.
+
+- Dependency upgrades (dub to 1.10.0, dfmt to 0.8.2, dscanner to 0.5.7)
+- Settings are now properly categorized for multi-workspace projects and some settings can be set in all cases and some only in user settings.
+- DCD is now fetched from the official github releases (0.9.9)
+- dub.json completion now properly inserts quotes
+- some dub startup errors were fixed
+- import timing takes into account possible second-run optimizations.
+- some requests in code-d were previously decoded wrong, causing silent ignoring of some configuration and parameters. This has been fixed with a single character.
 
 # 0.17.2
 
@@ -603,75 +611,76 @@ DCD Installation fixes, especially on windows.
 
 The switch to serve-d / Microsoft Language Server Protocol!
 
-* Added dub dependencies view in the UI that shows a dependency tree in the currently opened project
-* New syntax highlighting using [ysgard/d-struct](https://github.com/ysgard/d-struct) grammar
-* automatic module naming: when you rename a file you are currently in or create a new file a module statement will be added/changed
-* the English, German and Japanese translations are finally used! Thanks to @SeijiFujita for the Japanese translation
-* dfmt and dscanner are now included in serve-d and workspace-d and no longer need to be installed
-* Fancy new ddoc renderer when hovering over symbols
-* Live DScanner linting: you get errors from dscanner while you type now
-* dscanner.ini auto completion of sections, fields & values
-* ddoc auto completion: press ctrl-space before a function definition and select the /// or the /** completion option to get a documentation template with arguments and sections
-* added sort imports command only sorting the "block" (separated by whitespaces) and not all imports in the file for more user control (but not compatible with the dscanner sortedness linting)
-* When autocompleting functions automatically insert the signature as snippet which can be navigated using tab. (configuration d.argumentSnippets)
-* Automatically implement classes and interfaces using the new `Implement selected interface/base class` command or by using the code actions
-* All imports are annotated with a code lens to show how long they need to import. For this just a dmd call using just the import is called multiple times (up to 500ms per import).
-* DCD Compilation is fixed (especially on windows)
+- Added dub dependencies view in the UI that shows a dependency tree in the currently opened project
+- New syntax highlighting using [ysgard/d-struct](https://github.com/ysgard/d-struct) grammar
+- automatic module naming: when you rename a file you are currently in or create a new file a module statement will be added/changed
+- the English, German and Japanese translations are finally used! Thanks to @SeijiFujita for the Japanese translation
+- dfmt and dscanner are now included in serve-d and workspace-d and no longer need to be installed
+- Fancy new ddoc renderer when hovering over symbols
+- Live DScanner linting: you get errors from dscanner while you type now
+- dscanner.ini auto completion of sections, fields & values
+- ddoc auto completion: press ctrl-space before a function definition and select the /// or the /\*\* completion option to get a documentation template with arguments and sections
+- added sort imports command only sorting the "block" (separated by whitespaces) and not all imports in the file for more user control (but not compatible with the dscanner sortedness linting)
+- When autocompleting functions automatically insert the signature as snippet which can be navigated using tab. (configuration d.argumentSnippets)
+- Automatically implement classes and interfaces using the new `Implement selected interface/base class` command or by using the code actions
+- All imports are annotated with a code lens to show how long they need to import. For this just a dmd call using just the import is called multiple times (up to 500ms per import).
+- DCD Compilation is fixed (especially on windows)
 
 Minor changes:
-* Installing dependencies uses the dubPath setting now for dub
-* dub.json auto completion was broken in an vscode update, should work again now
-* Added `d.enableStaticLinting` & `d.enableFormatting`
-* Dub installer upgraded to 1.4.0
-* Dependent programs are now installed without user confirmation by default
-  * Use `"d.aggressiveUpdate": false` to disable this behaviour.
-  * On linux files are installed into `~/.local/share/code-d` or as fallback (and also on mac) into `~/.code-d`. On Windows files are installed into `%APPDATA%/code-d`
-* Will now install dub before trying to compile dependencies
-* If no D compiler is present the browser will be opened on the D download page
-* Dedicated output channel in the output tab for error messages & alike
-* Current parameter in calltips is more exact now
-* Goto definition got more efficient
+
+- Installing dependencies uses the dubPath setting now for dub
+- dub.json auto completion was broken in an vscode update, should work again now
+- Added `d.enableStaticLinting` & `d.enableFormatting`
+- Dub installer upgraded to 1.4.0
+- Dependent programs are now installed without user confirmation by default
+  - Use `"d.aggressiveUpdate": false` to disable this behaviour.
+  - On linux files are installed into `~/.local/share/code-d` or as fallback (and also on mac) into `~/.code-d`. On Windows files are installed into `%APPDATA%/code-d`
+- Will now install dub before trying to compile dependencies
+- If no D compiler is present the browser will be opened on the D download page
+- Dedicated output channel in the output tab for error messages & alike
+- Current parameter in calltips is more exact now
+- Goto definition got more efficient
 
 # 0.16.2
 
-* Fix dub.json/dub.sdl snippets on vscode 1.13.0 and above
+- Fix dub.json/dub.sdl snippets on vscode 1.13.0 and above
 
 # 0.16.1
 
-* Auto-fix broken tool paths when upgrading code-d
+- Auto-fix broken tool paths when upgrading code-d
 
 # 0.16.0
 
-* Fixed windows dscanner exe path
-* Fixed goto definition in unopened files
-* Better default stdlibPath values (platform dependent) + snippets for it
-* Import fixer will suggest stdlib & works with UFCS
-* Bump to workspace-d 2.10.0
-	* Primarily makes importer better
-	* Finds outdated DCD/Dscanner/dfmt now (warnings/update not yet implemented in code-d)
+- Fixed windows dscanner exe path
+- Fixed goto definition in unopened files
+- Better default stdlibPath values (platform dependent) + snippets for it
+- Import fixer will suggest stdlib & works with UFCS
+- Bump to workspace-d 2.10.0
+  - Primarily makes importer better
+  - Finds outdated DCD/Dscanner/dfmt now (warnings/update not yet implemented in code-d)
 
 # 0.15.1
 
-* Fixed installation on macOS
+- Fixed installation on macOS
 
 # 0.15.0
 
-* Installer uses the http.proxy settings now
-* Better error checks for invalid executables
-* "line is longer than" error now starts at the correct column
-* Fixed installer with portable/custom git/vscode installation
-* Auto fix for suggested imports from compiler
-* Dscanner symbol search fix for missing symbols from compiler
+- Installer uses the http.proxy settings now
+- Better error checks for invalid executables
+- "line is longer than" error now starts at the correct column
+- Fixed installer with portable/custom git/vscode installation
+- Auto fix for suggested imports from compiler
+- Dscanner symbol search fix for missing symbols from compiler
 
 # 0.14.2
 
-* File paths from any custom error messages generated using pragma(msg) will get checked through string import paths now to fix file names (for example compiling diet template files will have the correct path now)
-* Running a dub build for linting when a diet file is saved
+- File paths from any custom error messages generated using pragma(msg) will get checked through string import paths now to fix file names (for example compiling diet template files will have the correct path now)
+- Running a dub build for linting when a diet file is saved
 
 # 0.14.1
 
-* Switched from .editorconfig to vscode user settings for dfmt formatting settings.
-* Updating workspace-d when outdated
+- Switched from .editorconfig to vscode user settings for dfmt formatting settings.
+- Updating workspace-d when outdated
 
 ## Moving to new vscode dfmt settings
 
