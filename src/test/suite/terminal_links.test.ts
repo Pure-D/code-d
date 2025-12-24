@@ -10,7 +10,7 @@ import * as vscode from "vscode";
 
 suite("terminal links", () => {
 	enableResolveAllFilePathsForTest();
-	let provider = new DTerminalLinkProvider();
+	const provider = new DTerminalLinkProvider();
 
 	test("DUB path rewriting", async () => {
 		assert.deepStrictEqual(

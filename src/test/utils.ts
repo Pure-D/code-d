@@ -53,7 +53,7 @@ export async function testCompletion(
 				" completions, but only got " +
 				actualCompletionList.items.length,
 		);
-		expectedCompletionList.items.forEach((expectedItem, i) => {
+		expectedCompletionList.items.forEach((expectedItem) => {
 			const actualItem = actualCompletionList.items.find((i) => i.label == expectedItem.label);
 			if (!actualItem)
 				assert.fail(

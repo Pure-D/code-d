@@ -15,10 +15,10 @@ class WorkState {
 	visible: boolean = false;
 	done: boolean = false;
 
-	private resolve?: Function;
+	private resolve?: () => void;
 
 	constructor(
-		public quickPick: vscode.QuickPick<any>,
+		public quickPick: vscode.QuickPick<DocItem>,
 		public query: string | undefined,
 		public fastOpen: boolean,
 	) {
@@ -31,8 +31,8 @@ class WorkState {
 					},
 					(progress, token) => {
 						progress.report({ message: "Looking up documentation" });
-						return new Promise((resolve, reject) => {
-							token.onCancellationRequested((e) => {
+						return new Promise<void>((resolve, reject) => {
+							token.onCancellationRequested(() => {
 								this.done = true;
 								reject();
 							});
@@ -40,7 +40,7 @@ class WorkState {
 						});
 					},
 				)
-				.then((result) => {
+				.then(() => {
 					// done
 				});
 	}
@@ -62,8 +62,8 @@ class WorkState {
 	refreshItems() {
 		if (this.done) return;
 
-		var ret: DocItem[] = this.items.slice();
-		for (var key in this.depItems) if (this.depItems.hasOwnProperty(key)) ret.push.apply(ret, this.depItems[key]);
+		const ret: DocItem[] = this.items.slice();
+		for (const value of Object.values(this.depItems)) ret.push(...value);
 		ret.sort((a, b) => b.score - a.score);
 		this.quickPick.items = ret;
 
@@ -86,7 +86,7 @@ class WorkState {
 			this.visible = true;
 		}
 
-		this.quickPick.onDidHide((e) => {
+		this.quickPick.onDidHide(() => {
 			if (this.resolve) this.resolve();
 			this.done = true;
 		});
@@ -100,7 +100,7 @@ class WorkState {
 		if (this.items.length == 1) {
 			singleItem = this.items[0];
 		} else if (this.query) {
-			let perfect = [];
+			const perfect = [];
 			let bestScore = 60;
 			for (let i = 0; i < this.items.length; i++) {
 				const item = this.items[i];
@@ -138,12 +138,12 @@ class WorkState {
 }
 
 export function showDpldocsSearch(query?: string, fastOpen: boolean = false) {
-	var quickpick = vscode.window.createQuickPick<DocItem>();
+	const quickpick = vscode.window.createQuickPick<DocItem>();
 	const state = new WorkState(quickpick, query, fastOpen);
 
 	loadDependencyPackageDocumentations(state);
 
-	var timeout: NodeJS.Timeout | undefined;
+	let timeout: NodeJS.Timeout | undefined;
 	function updateSearch(query: string, delay: number = 500) {
 		timeout = updateRootSearchQuery(timeout, query, state, delay);
 	}
@@ -151,7 +151,7 @@ export function showDpldocsSearch(query?: string, fastOpen: boolean = false) {
 
 	quickpick.placeholder = "Enter search term for symbol...";
 	quickpick.onDidAccept(() => {
-		var selection = quickpick.selectedItems[0];
+		const selection = quickpick.selectedItems[0];
 		if (selection) showDocItemUI(selection);
 	});
 	state.show();
@@ -173,16 +173,16 @@ export async function fillDplDocs(panel: vscode.WebviewPanel, label: string, hre
 		return;
 	}
 
-	let body = (await reqText().get(href)).data;
+	const body = (await reqText().get(href)).data;
 
-	let content = new JSDOM(body);
-	let page = content.window.document.getElementById("page-body");
+	const content = new JSDOM(body);
+	const page = content.window.document.getElementById("page-body");
 	if (page) {
-		let nonce =
+		const nonce =
 			Math.random().toString(36).substr(2) +
 			Math.random().toString(36).substr(2) +
 			Math.random().toString(36).substr(2);
-		let font = vscode.workspace.getConfiguration("editor").get("fontFamily") || "monospace";
+		const font = vscode.workspace.getConfiguration("editor").get("fontFamily") || "monospace";
 		panel.webview.html = `<!DOCTYPE html>
 			<html lang="en">
 			<head>
@@ -409,15 +409,15 @@ export async function fillDplDocs(panel: vscode.WebviewPanel, label: string, hre
 async function loadDependencyPackageDocumentations(state: WorkState) {
 	if (!served) return;
 
-	let deps = await served.getChildren();
-	var checked: string[] = [];
+	const deps = await served.getChildren();
+	const checked: string[] = [];
 	deps.forEach((dep) => {
 		if (dep.info) {
-			var strippedVersion = dep.info.version;
+			let strippedVersion = dep.info.version;
 			if (strippedVersion.startsWith("~")) strippedVersion = strippedVersion.substr(1);
 
-			var strippedName = dep.info.name;
-			var colon = strippedName.indexOf(":");
+			let strippedName = dep.info.name;
+			const colon = strippedName.indexOf(":");
 			if (colon != -1) strippedName = strippedName.substr(0, colon);
 			if (checked.indexOf(strippedName) != -1) return;
 			checked.push(strippedName);
@@ -439,10 +439,10 @@ export function loadDependencySymbolsOnline(
 	strippedDependencyName: string,
 	strippedDependencyVersion: string,
 ): Promise<DocItem[]> {
-	let url = `https://${encodeURIComponent(strippedDependencyName)}.dpldocs.info/${encodeURIComponent(strippedDependencyVersion)}/search-results.html`;
+	const url = `https://${encodeURIComponent(strippedDependencyName)}.dpldocs.info/${encodeURIComponent(strippedDependencyVersion)}/search-results.html`;
 
 	let retried = false;
-	let doTry = function (url: string): Promise<DocItem[]> {
+	const doTry = function (url: string): Promise<DocItem[]> {
 		return reqText()
 			.get(url, { headers: { "Accept-Encoding": "gzip" } })
 			.then((body) => {
@@ -478,13 +478,13 @@ function updateRootSearchQuery(
 
 		state.startWork();
 		try {
-			let body = (await reqText().get("https://dpldocs.info/locate?q=" + encodeURIComponent(value))).data;
+			const body = (await reqText().get("https://dpldocs.info/locate?q=" + encodeURIComponent(value))).data;
 			state.finishWork();
 			state.items = [];
-			let dom = new JSDOM(body);
-			let results = <Element[]>(<any>dom.window.document.querySelectorAll("dt.search-result"));
+			const dom = new JSDOM(body);
+			const results = dom.window.document.querySelectorAll("dt.search-result");
 			results.forEach((dt) => {
-				let item = parseDocItem(dt);
+				const item = parseDocItem(dt);
 				if (item) state.items.push(item);
 			});
 		} catch (e) {
@@ -502,22 +502,22 @@ function parseDependencySearchResult(
 	strippedDependencyName: string,
 	strippedDependencyVersion: string,
 ): DocItem[] {
-	let start = body.indexOf("<adrdox>");
+	const start = body.indexOf("<adrdox>");
 	if (start == -1) return [];
-	let end = body.indexOf("</adrdox>", start);
+	const end = body.indexOf("</adrdox>", start);
 	if (end == -1) return [];
 
-	let content = body.substring(start, end + "</adrdox>".length);
-	let xml = new DOMParser().parseFromString(content, "text/xml");
-	let decls = xml.getElementsByTagName("decl");
-	let localItems: DocItem[] = [];
+	const content = body.substring(start, end + "</adrdox>".length);
+	const xml = new DOMParser().parseFromString(content, "text/xml");
+	const decls = xml.getElementsByTagName("decl");
+	const localItems: DocItem[] = [];
 	for (let j = 0; j < decls.length; j++) {
-		let docEntry = parseDocEntry(decls[j]);
+		const docEntry = parseDocEntry(decls[j]);
 		if (docEntry.name && docEntry.link) {
-			let href = docEntry.link;
+			const href = docEntry.link;
 			let m;
 			if ((m = /\.(\d+)\.html/.exec(href))) if (parseInt(m[1]) > 1) continue;
-			let obj: DocItem = {
+			const obj: DocItem = {
 				dependency: dep,
 				label: strippedDependencyName + "/" + docEntry.name,
 				href: `https://${encodeURIComponent(strippedDependencyName)}.dpldocs.info/${encodeURIComponent(strippedDependencyVersion)}/${encodeURIComponent(href)}`,
@@ -536,13 +536,13 @@ interface DocEntry {
 	desc: string | null;
 }
 
-function parseDocEntry(declElem: Element): DocEntry {
-	let name: Element | null = null;
-	let link: Element | null = null;
-	let desc: Element | null = null;
+function parseDocEntry(declElem: Element | globalThis.Element): DocEntry {
+	let name: Element | globalThis.Element | null = null;
+	let link: Element | globalThis.Element | null = null;
+	let desc: Element | globalThis.Element | null = null;
 	for (let i = 0; i < declElem.childNodes.length; i++) {
-		let child = <any>declElem.childNodes[i];
-		if (child.tagName) {
+		const child = declElem.childNodes[i];
+		if ((child instanceof Element || child instanceof globalThis.Element) && typeof child.tagName === "string") {
 			if (child.tagName.toLowerCase() == "name") name = child;
 			else if (child.tagName.toLowerCase() == "link") link = child;
 			else if (child.tagName.toLowerCase() == "desc") desc = child;
@@ -555,14 +555,14 @@ function parseDocEntry(declElem: Element): DocEntry {
 	};
 }
 
-function parseDocItem(dt: Element): DocItem | undefined {
-	let a = dt.getElementsByTagName("a")[0];
+function parseDocItem(dt: Element | globalThis.Element): DocItem | undefined {
+	const a = dt.getElementsByTagName("a")[0];
 	if (!a) return;
-	let href = a.getAttribute("href");
+	const href = a.getAttribute("href");
 	if (!href) return;
 
-	let score = parseInt(dt.getAttribute("data-score") || "0");
-	let obj: DocItem = {
+	const score = parseInt(dt.getAttribute("data-score") || "0");
+	const obj: DocItem = {
 		label: (a.textContent || "").replace(/[\s\u2000-\u200F]+/g, ""),
 		href: href,
 		score: score,
@@ -582,9 +582,9 @@ function parseDocItem(dt: Element): DocItem | undefined {
 	return obj;
 }
 
-function getCleanSimpleTextContent(elem: Element | null): string | null {
+function getCleanSimpleTextContent(elem: Element | globalThis.Element | null): string | null {
 	return elem
-		? ((<any>elem).innerText || elem.textContent || "")
+		? (("innerText" in elem && typeof elem.innerText === "string" && elem.innerText) || elem.textContent || "")
 				.replace(/<\/?.*?>/g, "")
 				.replace(/[\u2000-\u200F]+/g, "")
 				.trim()
@@ -592,7 +592,7 @@ function getCleanSimpleTextContent(elem: Element | null): string | null {
 }
 
 function showDocItemUI(docItem: DocItem) {
-	var panel = vscode.window.createWebviewPanel(
+	const panel = vscode.window.createWebviewPanel(
 		"dpldocs",
 		docItem.label,
 		{
@@ -605,7 +605,7 @@ function showDocItemUI(docItem: DocItem) {
 			localResourceRoots: [],
 		},
 	);
-	var baseUri = docItem.href;
+	let baseUri = docItem.href;
 	panel.webview.onDidReceiveMessage((msg) => {
 		switch (msg.type) {
 			case "handle-link":
@@ -614,8 +614,8 @@ function showDocItemUI(docItem: DocItem) {
 					baseUri = vscode.Uri.parse(msg.href).with({ scheme: "https" }).toString();
 					fillDplDocs(panel, msg.title, baseUri);
 				} else {
-					let href = path.posix.normalize(msg.href);
-					let uri = vscode.Uri.parse(baseUri);
+					const href = path.posix.normalize(msg.href);
+					const uri = vscode.Uri.parse(baseUri);
 					if (href.startsWith("/")) {
 						baseUri = uri
 							.with({
@@ -624,7 +624,7 @@ function showDocItemUI(docItem: DocItem) {
 							.toString();
 					} else {
 						let file = uri.path;
-						let slash = file.lastIndexOf("/");
+						const slash = file.lastIndexOf("/");
 						file = file.substring(0, slash + 1) + href;
 						baseUri = uri
 							.with({
@@ -636,9 +636,7 @@ function showDocItemUI(docItem: DocItem) {
 				}
 				break;
 			case "open-module":
-				let module_ = <string>msg.module_;
-				let line = msg.line;
-				focusModule(module_, line);
+				focusModule(msg.module_, msg.line);
 				break;
 		}
 	});

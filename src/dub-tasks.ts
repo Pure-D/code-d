@@ -5,12 +5,12 @@ import { LanguageClient } from "vscode-languageclient/node";
 export class DubTasksProvider implements vscode.TaskProvider {
 	constructor(public served: LanguageClient) {}
 
-	provideTasks(token?: vscode.CancellationToken | undefined): vscode.ProviderResult<vscode.Task[]> {
-		let dubLint = config(null).get("enableDubLinting", true);
+	provideTasks(): vscode.ProviderResult<vscode.Task[]> {
+		const dubLint = config(null).get("enableDubLinting", true);
 		return this.served
 			.sendRequest<
 				{
-					definition: any;
+					definition: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 					scope: string;
 					exec: string[];
 					name: string;
@@ -21,20 +21,20 @@ export class DubTasksProvider implements vscode.TaskProvider {
 				}[]
 			>("served/buildTasks")
 			.then((tasks) => {
-				var ret: vscode.Task[] = [];
+				const ret: vscode.Task[] = [];
 				tasks.forEach((task) => {
-					var target: vscode.WorkspaceFolder | vscode.TaskScope | undefined;
+					let target: vscode.WorkspaceFolder | vscode.TaskScope | undefined;
 					let cwd: string = "";
 					if (task.scope == "global") target = vscode.TaskScope.Global;
 					else if (task.scope == "workspace") target = vscode.TaskScope.Workspace;
 					else {
-						let uri = vscode.Uri.parse(task.scope);
+						const uri = vscode.Uri.parse(task.scope);
 						target = vscode.workspace.getWorkspaceFolder(uri);
 						cwd = target?.uri.fsPath || uri.fsPath;
 					}
 					if (!target) return undefined;
-					var proc: string = task.exec.shift() || "exit";
-					var args: string[] = task.exec;
+					const proc: string = task.exec.shift() || "exit";
+					const args: string[] = task.exec;
 
 					if (task.definition.cwd) cwd = task.definition.cwd;
 
@@ -50,7 +50,7 @@ export class DubTasksProvider implements vscode.TaskProvider {
 					if ((!dubLint && !Array.isArray(task.problemMatchers)) || task.problemMatchers.length == 0)
 						task.problemMatchers = ["$dmd"];
 
-					var t = new vscode.Task(
+					const t = new vscode.Task(
 						task.definition,
 						target,
 						task.name,
@@ -62,7 +62,7 @@ export class DubTasksProvider implements vscode.TaskProvider {
 					t.presentationOptions = {
 						focus: !!task.definition.run,
 					};
-					(<any>t).detail = "dub " + args.join(" ");
+					t.detail = "dub " + args.join(" ");
 					switch (task.group) {
 						case "clean":
 							t.group = vscode.TaskGroup.Clean;
@@ -101,7 +101,6 @@ export class DubTasksProvider implements vscode.TaskProvider {
 				target_args?: string[];
 			};
 		},
-		token?: vscode.CancellationToken | undefined,
 	): Promise<vscode.Task> {
 		async function insertDollarCurrent(
 			args: string[],
@@ -128,10 +127,10 @@ export class DubTasksProvider implements vscode.TaskProvider {
 		await insertDollarCurrent(args, "--build=", task.definition.buildType, "served/getBuildType");
 		await insertDollarCurrent(args, "--config=", task.definition.configuration, "served/getConfig");
 
-		if (Array.isArray(task.definition.dub_args)) args.push.apply(args, task.definition.dub_args);
+		if (Array.isArray(task.definition.dub_args)) args.push(...task.definition.dub_args);
 
 		if (Array.isArray(task.definition.args)) {
-			args.push.apply(args, task.definition.args);
+			args.push(...task.definition.args);
 			vscode.window.showWarningMessage(
 				'Your task definition is using the deprecated "args" field and will be ignored in an upcoming release.\nPlease change "args": to "dub_args": to keep old behavior.',
 			);
@@ -140,17 +139,13 @@ export class DubTasksProvider implements vscode.TaskProvider {
 		if (Array.isArray(task.definition.target_args) && (task.definition.test || task.definition.run)) {
 			// want to validate test/run in JSON schema but tasks schema doesn't allow advanced JSON schema things to be put on the object validator, only on properties
 			args.push("--");
-			args.push.apply(args, task.definition.target_args);
+			args.push(...task.definition.target_args);
 		}
 
-		let options: any = task.scope && (<vscode.WorkspaceFolder>task.scope).uri;
-		let exec = makeExecutor(
-			args.shift() || "exit",
-			args,
-			(options && options.fsPath) || task.definition.cwd || undefined,
-		);
+		const options = task.scope ? (<vscode.WorkspaceFolder>task.scope).uri : undefined;
+		const exec = makeExecutor(args.shift() || "exit", args, options?.fsPath || task.definition.cwd || undefined);
 
-		let ret = new vscode.Task(
+		const ret = new vscode.Task(
 			task.definition,
 			task.scope || vscode.TaskScope.Global,
 			task.name || `dub ${task.definition.test ? "Test" : task.definition.run ? "Run" : "Build"}`,
@@ -166,13 +161,17 @@ export class DubTasksProvider implements vscode.TaskProvider {
 				focus: !!task.definition.run,
 			};
 		}
-		(<any>ret).detail = "dub " + args.join(" ");
+		ret.detail = "dub " + args.join(" ");
 		return ret;
 	}
 }
 
-function makeExecutor(proc: string, args: string[], cwd: string): vscode.ProcessExecution | vscode.ShellExecution {
-	let options: vscode.ProcessExecutionOptions | undefined = cwd ? { cwd: cwd } : undefined;
+function makeExecutor(
+	proc: string,
+	args: string[],
+	cwd: string | undefined,
+): vscode.ProcessExecution | vscode.ShellExecution {
+	const options: vscode.ProcessExecutionOptions | undefined = cwd ? { cwd: cwd } : undefined;
 	//return new vscode.ProcessExecution(proc, args, options);
 	return new vscode.ShellExecution(
 		{

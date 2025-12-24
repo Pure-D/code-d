@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import * as path from "path";
-import { ServeD, served } from "./extension";
+import { ServeD } from "./extension";
 import {
 	TestLoadStartedEvent,
 	TestLoadFinishedEvent,
@@ -103,7 +103,7 @@ export class ServeDTestProvider implements TestAdapter, vscode.Disposable {
 	updateModules(needsLoad: boolean, modules: UnittestModule[]) {
 		this.needsLoad = needsLoad;
 		this.modules = modules;
-		let suite: TestSuiteInfo = {
+		const suite: TestSuiteInfo = {
 			id: "project_" + this.folderId,
 			label: this.folderName,
 			type: "suite",
@@ -113,7 +113,7 @@ export class ServeDTestProvider implements TestAdapter, vscode.Disposable {
 
 		modules.forEach((module) => {
 			const file = vscode.Uri.parse(module.uri).fsPath;
-			let moduleInfo: TestSuiteInfo = {
+			const moduleInfo: TestSuiteInfo = {
 				type: "suite",
 				debuggable: true,
 				id: "module_" + module.uri,
@@ -156,9 +156,9 @@ export class ServeDTestProvider implements TestAdapter, vscode.Disposable {
 		this.served.client.sendRequest("served/rescanTests", { uri: this.folderId });
 	}
 
-	async run(tests: string[]): Promise<void> {}
+	async run(): Promise<void> {}
 
-	async debug(tests: string[]): Promise<void> {}
+	async debug(): Promise<void> {}
 
 	cancel(): void {
 		// in a "real" TestAdapter this would kill the child process for the current test run (if there is any)

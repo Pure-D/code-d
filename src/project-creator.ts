@@ -2,8 +2,6 @@ import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
 
-var ncp = require("ncp").ncp;
-
 export interface Template {
 	label: string;
 	description: string;
@@ -19,9 +17,9 @@ export function getTemplates(context: vscode.ExtensionContext): Thenable<Templat
 				console.log(err);
 				return vscode.window.showErrorMessage("Failed to read template list");
 			}
-			var templates = JSON.parse(data.toString());
-			var result: Template[] = [];
-			templates.forEach((template: any) => {
+			const templates = JSON.parse(data.toString());
+			const result: Template[] = [];
+			for (const template of templates) {
 				result.push({
 					label: template.name,
 					description: "",
@@ -29,7 +27,7 @@ export function getTemplates(context: vscode.ExtensionContext): Thenable<Templat
 					id: template.path,
 					json: template.dub,
 				});
-			});
+			}
 			return resolve(result);
 		});
 	});
@@ -44,7 +42,7 @@ export function showProjectCreator(context: vscode.ExtensionContext) {
 		})
 		.then((template) => {
 			if (!template) return undefined;
-			var folders = vscode.workspace.workspaceFolders;
+			const folders = vscode.workspace.workspaceFolders;
 			if (folders == undefined || folders.length == 0)
 				return vscode.window
 					.showInformationMessage("Select an empty folder to create the project in", "Select Folder")
@@ -54,11 +52,11 @@ export function showProjectCreator(context: vscode.ExtensionContext) {
 							openFolderWithExtension(context);
 						}
 					});
-			var path = folders[0].uri.fsPath;
+			const path = folders[0].uri.fsPath;
 			return fs.readdir(path, function (err, files) {
 				if (files.length == 0)
 					return performTemplateCopy(context, template.id, template.json, path, function () {
-						vscode.commands.executeCommand("workbench.action.reloadWindow");
+						vscode.commands.executeCommand("workbench.action.restartExtensionHost");
 					});
 				else
 					return vscode.window
@@ -73,7 +71,7 @@ export function showProjectCreator(context: vscode.ExtensionContext) {
 								openFolderWithExtension(context);
 							} else if (r == "Merge into Folder") {
 								performTemplateCopy(context, template.id, template.json, path, function () {
-									vscode.commands.executeCommand("workbench.action.reloadWindow");
+									vscode.commands.executeCommand("workbench.action.restartExtensionHost");
 								});
 							}
 						});
@@ -82,14 +80,14 @@ export function showProjectCreator(context: vscode.ExtensionContext) {
 }
 
 export function openFolderWithExtension(context: vscode.ExtensionContext) {
-	var pkgPath = path.join(context.extensionPath, "package.json");
+	const pkgPath = path.join(context.extensionPath, "package.json");
 	fs.readFile(pkgPath, function (err, data) {
 		if (err)
 			return vscode.window.showErrorMessage("Failed to reload. Reload manually and run some code-d command!");
 		return fs.writeFile(pkgPath + ".bak", data, function (err) {
 			if (err)
 				return vscode.window.showErrorMessage("Failed to reload. Reload manually and run some code-d command!");
-			var json = JSON.parse(data.toString());
+			const json = JSON.parse(data.toString());
 			json.activationEvents = ["*"];
 			return fs.writeFile(pkgPath, JSON.stringify(json), function (err) {
 				if (err)
@@ -108,7 +106,7 @@ export function restoreCreateProjectPackageBackup(context: vscode.ExtensionConte
 	return new Promise<boolean | undefined>((resolve) => {
 		if (context.globalState.get("restorePackageBackup", false)) {
 			context.globalState.update("restorePackageBackup", false);
-			var pkgPath = path.join(context.extensionPath, "package.json");
+			const pkgPath = path.join(context.extensionPath, "package.json");
 			fs.readFile(pkgPath + ".bak", function (err, data) {
 				if (err) {
 					resolve(false);
@@ -124,9 +122,9 @@ export function restoreCreateProjectPackageBackup(context: vscode.ExtensionConte
 						);
 					}
 
-					return fs.unlink(pkgPath + ".bak", function (err: any) {
+					return fs.unlink(pkgPath + ".bak", function (err) {
 						resolve(!err);
-						console.error(err.toString());
+						console.error("" + err);
 					});
 				});
 			});
@@ -137,8 +135,8 @@ export function restoreCreateProjectPackageBackup(context: vscode.ExtensionConte
 }
 
 function createDubName(folderName: string) {
-	var res = folderName[0].toLowerCase();
-	for (var i = 1; i < folderName.length; i++) {
+	let res = folderName[0].toLowerCase();
+	for (let i = 1; i < folderName.length; i++) {
 		if (
 			folderName[i] == folderName[i].toUpperCase() && // Is upper case
 			folderName[i] != folderName[i].toLowerCase()
@@ -153,17 +151,18 @@ function createDubName(folderName: string) {
 export function performTemplateCopy(
 	context: vscode.ExtensionContext,
 	templateName: string,
-	dubJson: any,
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	dubJson: { [index: string]: any },
 	resultPath: string,
-	callback: Function,
+	callback: () => void,
 ) {
-	var baseName = path.basename(resultPath);
+	const baseName = path.basename(resultPath);
 	dubJson["name"] = createDubName(baseName);
-	ncp(
+	fs.cp(
 		path.join(context.extensionPath, "templates", templateName),
 		resultPath,
-		{ clobber: false },
-		function (err: any) {
+		{ recursive: true, force: false },
+		(err) => {
 			if (err) {
 				console.log(err);
 				return vscode.window.showErrorMessage("Failed to copy template");

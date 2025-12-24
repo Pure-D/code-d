@@ -61,7 +61,11 @@ export class CodedAPIServedImpl implements CodedAPI {
 		return await served.findFilesByModule(query);
 	}
 
-	async getActiveDubConfig(): Promise<{ packagePath: string; packageName: string; [unstableExtras: string]: any }> {
+	async getActiveDubConfig(): Promise<{
+		packagePath: string;
+		packageName: string;
+		[unstableExtras: string]: unknown;
+	}> {
 		const served = await this.waitForInternalImplementation();
 		return await served.getActiveDubConfig();
 	}
@@ -79,7 +83,7 @@ export class CodedAPIServedImpl implements CodedAPI {
 
 	started(served: ServeD) {
 		this.served = served;
-		let promises: Thenable<boolean>[] = [];
+		const promises: Thenable<boolean>[] = [];
 		this.dependencySnippetsToRegister.forEach((snip) => {
 			promises.push(
 				served.addDependencySnippet({
@@ -88,7 +92,7 @@ export class CodedAPIServedImpl implements CodedAPI {
 				}),
 			);
 		});
-		Promise.all(promises).then((all) => {
+		Promise.all(promises).then(() => {
 			// done
 		});
 	}

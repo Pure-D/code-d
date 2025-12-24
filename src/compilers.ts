@@ -12,7 +12,7 @@ export interface DetectedCompiler {
 	 * `false` if not a valid executable compiler, set to the compiler name
 	 * (dmd, ldc or gdc) otherwise.
 	 */
-	has: "dmd" | "ldc" | "gdc" | false;
+	has: "dmd" | "ldc" | "gdc" | boolean;
 	version?: string;
 	frontendVersion?: string;
 	path?: string;
@@ -23,12 +23,12 @@ export interface DetectedCompiler {
 let codedContext: vscode.ExtensionContext;
 export function registerCompilerInstaller(context: vscode.ExtensionContext): vscode.Disposable {
 	codedContext = context;
-	return vscode.commands.registerCommand("code-d.setupCompiler", (args) => {
+	return vscode.commands.registerCommand("code-d.setupCompiler", () => {
 		setupCompilersUI();
 	});
 }
 
-type UIQuickPickItem = vscode.QuickPickItem & { kind?: number; installInfo?: any; action?: Function };
+type UIQuickPickItem = vscode.QuickPickItem & { kind?: number; installInfo?: DetectedCompiler; action?: () => void };
 export async function setupCompilersUI() {
 	const introQuickPick = vscode.window.createQuickPick();
 	introQuickPick.title = "Setup auto-detected compiler or manually configure compiler";
@@ -36,7 +36,7 @@ export async function setupCompilersUI() {
 	introQuickPick.items = [{ label: "Detecting compilers..." }];
 	introQuickPick.show();
 	const compilers: DetectedCompiler[] = await listCompilers();
-	let items: UIQuickPickItem[] = [];
+	const items: UIQuickPickItem[] = [];
 	for (let i = 0; i < compilers.length; i++) {
 		if (i == 0) {
 			items.push({
@@ -48,7 +48,7 @@ export async function setupCompilersUI() {
 		const compiler = compilers[i];
 		if (compiler.has && compiler.path) {
 			items.push({
-				label: compiler.has,
+				label: compiler.has + "",
 				description: makeCompilerDescription(compiler),
 				installInfo: compiler,
 			});
@@ -90,8 +90,8 @@ export async function setupCompilersUI() {
 	introQuickPick.items = items;
 	introQuickPick.busy = false;
 
-	introQuickPick.onDidAccept(async (e) => {
-		let selection = <UIQuickPickItem>introQuickPick.selectedItems[0];
+	introQuickPick.onDidAccept(async () => {
+		const selection = <UIQuickPickItem>introQuickPick.selectedItems[0];
 		if (selection.kind === vscode.QuickPickItemKind.Separator) return;
 
 		introQuickPick.hide();
@@ -99,8 +99,8 @@ export async function setupCompilersUI() {
 			showDetectedCompilerInstallPrompt(selection.installInfo);
 		} else {
 			function isGlobalInstallSh() {
-				let dir = getDefaultInstallShDir();
-				return dir && fs.existsSync(dir);
+				const dir = getDefaultInstallShDir();
+				return dir ? fs.existsSync(dir) : false;
 			}
 			let latest;
 			switch (selection) {
@@ -224,7 +224,7 @@ export async function setupCompilersUI() {
 }
 
 export function makeCompilerDescription(compiler: DetectedCompiler): string | undefined {
-	let versionStrings: string[] = [];
+	const versionStrings: string[] = [];
 	if (compiler.version) {
 		if (compiler.has == "gdc") versionStrings.push("gcc " + compiler.version);
 		else versionStrings.push(compiler.version);
@@ -245,18 +245,18 @@ async function readHTTP(uri: string): Promise<string | undefined> {
 }
 
 async function doManualSelect(): Promise<void> {
-	let files = await vscode.window.showOpenDialog({
+	const files = await vscode.window.showOpenDialog({
 		title: "Select compiler executable",
 	});
 	if (files && files.length > 0) {
 		if (files.length > 1) {
 			vscode.window.showWarningMessage("ignoring more than 1 file");
 		}
-		let selectedPath = files[0].fsPath;
-		let filename = path.basename(selectedPath);
-		let type = getCompilerTypeFromPrefix(filename);
+		const selectedPath = files[0].fsPath;
+		const filename = path.basename(selectedPath);
+		const type = getCompilerTypeFromPrefix(filename);
 		if (!type) {
-			let tryAgain = "Try Again";
+			const tryAgain = "Try Again";
 			vscode.window
 				.showErrorMessage(
 					"Could not detect compiler type from executable name (tested for DMD, LDC and GDC) - make sure you open the compiler executable and name it correctly!",
@@ -266,9 +266,9 @@ async function doManualSelect(): Promise<void> {
 					if (b == tryAgain) doManualSelect();
 				});
 		} else {
-			let result = await checkCompiler(type, selectedPath);
+			const result = await checkCompiler(type, selectedPath);
 			if (!result.has) {
-				let tryAgain = "Try Again";
+				const tryAgain = "Try Again";
 				vscode.window
 					.showErrorMessage(
 						"The selected file was not executable or did not work with. Is the selected file a DMD, LDC or GDB executable?",
@@ -281,9 +281,9 @@ async function doManualSelect(): Promise<void> {
 			}
 
 			if (!result.version && !result.frontendVersion) {
-				let tryAgain = "Try Again";
-				let ignore = "Ignore";
-				let choice = await vscode.window.showWarningMessage(
+				const tryAgain = "Try Again";
+				const ignore = "Ignore";
+				const choice = await vscode.window.showWarningMessage(
 					"Could not detect the compiler version from the executable. Is the selected file a DMD, LDC or GDB executable?",
 					tryAgain,
 				);
@@ -296,17 +296,27 @@ async function doManualSelect(): Promise<void> {
 	}
 }
 
-type LabelWebsiteButton = { label: string; platform?: NodeJS.Platform | Function; binTest?: string; website: string };
+type LabelWebsiteButton = {
+	label: string;
+	platform?: NodeJS.Platform | (() => boolean);
+	binTest?: string;
+	website: string;
+};
 type LabelDownloadButton = {
 	label: string;
-	platform?: NodeJS.Platform | Function;
+	platform?: NodeJS.Platform | (() => boolean);
 	binTest?: string;
 	downloadAndRun: string;
 };
-type LabelCommandButton = { label: string; platform?: NodeJS.Platform | Function; binTest?: string; command: string };
+type LabelCommandButton = {
+	label: string;
+	platform?: NodeJS.Platform | (() => boolean);
+	binTest?: string;
+	command: string;
+};
 type LabelInstallShButton = {
 	label: string;
-	platform?: NodeJS.Platform | Function;
+	platform?: NodeJS.Platform | (() => boolean);
 	binTest?: string;
 	installSh: string;
 	global?: boolean;
@@ -321,7 +331,7 @@ async function showCompilerInstallationPrompt(
 ) {
 	const installPrompt = vscode.window.createQuickPick();
 	installPrompt.title = "Install " + name + " compiler";
-	let items: InstallQuickPickItem[] = [];
+	const items: InstallQuickPickItem[] = [];
 	for (let i = 0; i < buttons.length; i++) {
 		const button = buttons[i];
 		if (!button) continue;
@@ -354,24 +364,24 @@ async function showCompilerInstallationPrompt(
 	installPrompt.buttons = [vscode.QuickInputButtons.Back];
 	installPrompt.show();
 
-	installPrompt.onDidAccept(async (e) => {
+	installPrompt.onDidAccept(async () => {
 		function runTerminal(shell: string) {
-			let terminal = vscode.window.createTerminal("code-d compiler installation");
+			const terminal = vscode.window.createTerminal("code-d compiler installation");
 			terminal.show();
 			terminal.sendText(shell, true);
 		}
 
-		let selection = (<InstallQuickPickItem>installPrompt.selectedItems[0])?.button;
+		const selection = (<InstallQuickPickItem>installPrompt.selectedItems[0])?.button;
 		installPrompt.hide();
 		if (selection) {
 			if ((<LabelWebsiteButton>selection).website) {
 				vscode.env.openExternal(vscode.Uri.parse((<LabelWebsiteButton>selection).website));
 			} else if ((<LabelDownloadButton>selection).downloadAndRun) {
-				let link = (<LabelDownloadButton>selection).downloadAndRun;
+				const link = (<LabelDownloadButton>selection).downloadAndRun;
 				let aborted = false;
-				let outputFolder = determineOutputFolder();
-				let fileLocation = link.lastIndexOf("/");
-				let dstFile = path.join(
+				const outputFolder = determineOutputFolder();
+				const fileLocation = link.lastIndexOf("/");
+				const dstFile = path.join(
 					outputFolder,
 					fileLocation == -1 ? "compiler_dl.exe" : link.substr(fileLocation + 1),
 				);
@@ -382,7 +392,7 @@ async function showCompilerInstallationPrompt(
 					stream.pipe(fs.createWriteStream(dstFile)).on("finish", () => {
 						if (!aborted) {
 							// note: if not using an information prompt, add a timeout so on windows it doesn't fail with EBUSY here
-							let installBtn = "Run Installer";
+							const installBtn = "Run Installer";
 							vscode.window
 								.showInformationMessage("Executable is ready for install!", installBtn)
 								.then((btn) => {
@@ -410,7 +420,7 @@ async function showCompilerInstallationPrompt(
 											}
 
 											listCompilersCache = undefined; // clear cache for next list
-											let reloadBtn = "Reload Window";
+											const reloadBtn = "Reload Window";
 											vscode.window
 												.showInformationMessage(
 													"When finished installing, reload the window and setup the compiler in the getting started guide.",
@@ -422,7 +432,9 @@ async function showCompilerInstallationPrompt(
 															"workbench.action.openWalkthrough",
 															"webfreak.code-d#welcome",
 														);
-														vscode.commands.executeCommand("workbench.action.reloadWindow");
+														vscode.commands.executeCommand(
+															"workbench.action.restartExtensionHost",
+														);
 													}
 												});
 										} catch (e) {
@@ -436,10 +448,10 @@ async function showCompilerInstallationPrompt(
 			} else if ((<LabelCommandButton>selection).command) {
 				runTerminal((<LabelCommandButton>selection).command);
 			} else if ((<LabelInstallShButton>selection).installSh) {
-				let installSh = codedContext.asAbsolutePath("res/exe/install.sh").replace(/\\/g, "\\\\");
-				let installDir = getLocalCompilersDir().replace(/\\/g, "\\\\");
+				const installSh = codedContext.asAbsolutePath("res/exe/install.sh").replace(/\\/g, "\\\\");
+				const installDir = getLocalCompilersDir().replace(/\\/g, "\\\\");
 				runTerminal(
-					`${await testBinExists("bash")} \"${installSh}\" -p "${installDir}" ${(<LabelInstallShButton>selection).installSh}`,
+					`${await testBinExists("bash")} "${installSh}" -p "${installDir}" ${(<LabelInstallShButton>selection).installSh}`,
 				);
 				listCompilersCache = undefined; // clear cache for next list
 			}
@@ -457,15 +469,15 @@ export async function showDetectedCompilerInstallPrompt(compiler: DetectedCompil
 	const installPrompt = vscode.window.createQuickPick();
 	installPrompt.title = "Configure " + compiler.has + " compiler";
 
-	let [items, checked] = makeCompilerInstallButtons(compiler);
+	const [items, checked] = makeCompilerInstallButtons(compiler);
 	installPrompt.items = items;
 	installPrompt.selectedItems = checked;
 	installPrompt.canSelectMany = true;
 	installPrompt.buttons = [vscode.QuickInputButtons.Back];
 	installPrompt.show();
 
-	installPrompt.onDidAccept((e) => {
-		let selection = installPrompt.selectedItems;
+	installPrompt.onDidAccept(() => {
+		const selection = installPrompt.selectedItems;
 		installPrompt.hide();
 		for (let i = 0; i < selection.length; i++) {
 			const btn = <UIQuickPickItem>selection[i];
@@ -481,12 +493,12 @@ export async function showDetectedCompilerInstallPrompt(compiler: DetectedCompil
 }
 
 export function makeCompilerInstallButtons(compiler: DetectedCompiler): [UIQuickPickItem[], UIQuickPickItem[]] {
-	let items: UIQuickPickItem[] = [];
-	let checked: UIQuickPickItem[] = [];
+	const items: UIQuickPickItem[] = [];
+	const checked: UIQuickPickItem[] = [];
 
 	if (!compiler.path) throw new Error("Missing compiler path");
 
-	function makeSettingButton(label: string, settings: [string, any][], detail?: string): UIQuickPickItem {
+	function makeSettingButton(label: string, settings: [string, unknown][], detail?: string): UIQuickPickItem {
 		return {
 			label: label,
 			description:
@@ -519,8 +531,8 @@ export function makeCompilerInstallButtons(compiler: DetectedCompiler): [UIQuick
 		),
 	);
 
-	let dir = path.dirname(compiler.path);
-	let dubExe = path.join(dir, process.platform == "win32" ? "dub.exe" : "dub");
+	const dir = path.dirname(compiler.path);
+	const dubExe = path.join(dir, process.platform == "win32" ? "dub.exe" : "dub");
 	if (fs.existsSync(dubExe)) {
 		items.push(
 			check(
@@ -560,8 +572,8 @@ export async function checkCompilers(): Promise<DetectedCompiler> {
 		if (compiler.has) {
 			function isBetterVer(vs: number) {
 				if (vs == -1) return true;
-				var a = compilers[i].frontendVersion || compilers[i].version || "0";
-				var b = compilers[vs].frontendVersion || compilers[vs].version || "0";
+				const a = compilers[i].frontendVersion || compilers[i].version || "0";
+				const b = compilers[vs].frontendVersion || compilers[vs].version || "0";
 				return cmpVerGeneric(a, b) > 0;
 			}
 			switch (compiler.has) {
@@ -588,12 +600,12 @@ export async function checkCompilers(): Promise<DetectedCompiler> {
 }
 
 function cmpVerGeneric(a: string, b: string): number {
-	var as = a
-		.split(/[\s\.\-]+/g)
+	const as = a
+		.split(/[\s.-]+/g)
 		.map((i) => parseInt(i))
 		.filter((n) => isFinite(n));
-	var bs = b
-		.split(/[\s\.\-]+/g)
+	const bs = b
+		.split(/[\s.-]+/g)
 		.map((i) => parseInt(i))
 		.filter((n) => isFinite(n));
 	return as < bs ? -1 : as > bs ? 1 : 0;
@@ -620,13 +632,13 @@ export async function listCompilers(): Promise<DetectedCompiler[]> {
 }
 
 export async function listCompilersImpl(): Promise<DetectedCompiler[]> {
-	let ret: DetectedCompiler[] = [];
+	const ret: DetectedCompiler[] = [];
 	let fallbackPath: string | undefined = undefined;
 	let defaultDir: string | undefined;
 
 	async function testInstallShPath(dir: string, type: "dmd" | "ldc" | "gdc") {
-		let activateFile = process.platform == "win32" ? "activate.bat" : "activate";
-		let activateContent: string | undefined = await new Promise((resolve) => {
+		const activateFile = process.platform == "win32" ? "activate.bat" : "activate";
+		const activateContent: string | undefined = await new Promise((resolve) => {
 			fs.readFile(path.join(dir, activateFile), { encoding: "utf8" }, (err, data) => {
 				if (err) return resolve(undefined);
 				resolve(data);
@@ -635,24 +647,24 @@ export async function listCompilersImpl(): Promise<DetectedCompiler[]> {
 
 		if (!activateContent) return;
 
-		let foundPaths: string[] = [];
+		const foundPaths: string[] = [];
 		activatePathEnvironmentRegex.lastIndex = 0;
 		let m: RegExpMatchArray | null | undefined;
 		while ((m = activatePathEnvironmentRegex.exec(activateContent))) {
 			// unshift because the scripts are prepending and we want 0 to be most specific
 			// at least on windows this will prefer the bin64 over bin folder
-			foundPaths.unshift.apply(foundPaths, m[1].split(process.platform == "win32" ? /;/g : /:/g));
+			foundPaths.unshift(...m[1].split(process.platform == "win32" ? /;/g : /:/g));
 		}
 
-		for (var i = 0; i < foundPaths.length; i++) {
+		for (let i = 0; i < foundPaths.length; i++) {
 			let exeName: string = type;
 			if (type == "ldc") exeName += "2"; // ldc2.exe
 			if (process.platform == "win32") exeName += ".exe";
-			let exePath = path.join(foundPaths[i], exeName);
+			const exePath = path.join(foundPaths[i], exeName);
 
 			if (!fs.existsSync(exePath)) continue;
 
-			let result = await checkCompiler(type, exePath);
+			const result = await checkCompiler(type, exePath);
 			fallbackPath = fallbackPath || result.path;
 			if (result && result.has) {
 				result.has = type;
@@ -682,7 +694,7 @@ export async function listCompilersImpl(): Promise<DetectedCompiler[]> {
 	const compilers = ["dmd", "ldc2", "ldc", "gdc", "gcc"] as const;
 	for (let i = 0; i < compilers.length; i++) {
 		const check = compilers[i];
-		let result = await checkCompiler(<any>check);
+		const result = await checkCompiler(check);
 		fallbackPath = fallbackPath || result.path;
 		if (result && result.has) {
 			result.has = check == "ldc2" ? "ldc" : check == "gcc" ? "gdc" : check;
@@ -741,7 +753,7 @@ async function checkCompiler(
 			compilerPath = await which(compiler);
 			inPath = true;
 		}
-	} catch (e) {
+	} catch {
 		return { has: false };
 	}
 
@@ -755,7 +767,7 @@ async function checkCompiler(
 		proc = ChildProcess.spawn(compilerPath, versionArgs, {
 			stdio: [isGDC ? "pipe" : "ignore", "pipe", isGDC ? "pipe" : "ignore"],
 		});
-	} catch (err) {
+	} catch {
 		return { has: false, path: compilerPath };
 	}
 
@@ -776,7 +788,7 @@ async function checkCompiler(
 			let beVersionRegex: RegExp | undefined;
 			let feVersionRegex: RegExp | undefined;
 			let importRegex: RegExp | undefined;
-			let has: string | boolean;
+			let has: "dmd" | "gdc" | "ldc" | true;
 			switch (compiler) {
 				case "dmd":
 					beVersionRegex = feVersionRegex = dmdVersionRegex;
@@ -799,8 +811,8 @@ async function checkCompiler(
 					has = true;
 					break;
 			}
-			let ret: DetectedCompiler = {
-				has: <any>has,
+			const ret: DetectedCompiler = {
+				has: has,
 				path: compilerPath,
 				inPath: inPath,
 			};
@@ -815,7 +827,7 @@ async function checkCompiler(
 			}
 			if (importRegex) {
 				importRegex.lastIndex = 0;
-				let imports: string[] = [];
+				const imports: string[] = [];
 				let importMatch: RegExpExecArray | null;
 				while ((importMatch = importRegex.exec(stdout)) != null) {
 					imports.push(importMatch[1]);
@@ -827,14 +839,14 @@ async function checkCompiler(
 	});
 }
 
-let binExistsCache: { [index: string]: string | false } = {};
+const binExistsCache: { [index: string]: string | false } = {};
 async function testBinExists(binary: string): Promise<string | false> {
 	// common bash install case for windows users
 	const win32GitBashPath = "C:\\Program Files\\Git\\usr\\bin\\bash.exe";
 	if (binExistsCache[binary] !== undefined) return binExistsCache[binary];
 
 	try {
-		let founds = await which(binary, {
+		const founds = await which(binary, {
 			all: true,
 		});
 		if (process.platform == "win32" && (binary.toUpperCase() == "BASH" || binary.toUpperCase() == "BASH.EXE")) {
@@ -847,6 +859,8 @@ async function testBinExists(binary: string): Promise<string | false> {
 
 			return (binExistsCache[binary] = found);
 		}
-	} catch (e) {}
+	} catch (e) {
+		console.warn("Failed checking if binary exists ", binary, e);
+	}
 	return (binExistsCache[binary] = false);
 }

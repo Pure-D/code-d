@@ -1,9 +1,9 @@
 import * as path from "path";
 import * as fs from "fs";
 import * as os from "os";
-import * as cp from "child_process";
 
-const packageJson = require("../../package.json");
+// import * as cp from "child_process";
+// const packageJson = require("../../package.json");
 
 import { downloadAndUnzipVSCode, resolveCliArgsFromVSCodeExecutablePath, runTests } from "@vscode/test-electron";
 import { rimraf } from "rimraf";
@@ -20,7 +20,7 @@ async function main() {
 
 		const vscodeExecutablePath = await downloadAndUnzipVSCode();
 
-		const [cliPath, ...args] = resolveCliArgsFromVSCodeExecutablePath(vscodeExecutablePath);
+		resolveCliArgsFromVSCodeExecutablePath(vscodeExecutablePath);
 
 		// for (const extensionId of packageJson.extensionDependencies) {
 		//   cp.spawnSync(cliPath, [...args, "--install-extension", extensionId], {
@@ -31,7 +31,7 @@ async function main() {
 
 		await rimraf(".vscode-test/user-data");
 
-		let cwd = fs.mkdtempSync(path.join(os.tmpdir(), "coded_project"));
+		const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "coded_project"));
 		fs.writeFileSync(path.join(cwd, "dub.sdl"), 'name "codedproject"\n');
 		fs.mkdirSync(path.join(cwd, "source"));
 		fs.writeFileSync(

@@ -6,9 +6,9 @@ import * as path from "path";
 import stringArgv from "string-argv";
 
 export function registerDebuggers(context: vscode.ExtensionContext) {
-	var webfreakDebug = vscode.extensions.getExtension("webfreak.debug");
-	var cppDebug = vscode.extensions.getExtension("ms-vscode.cpptools");
-	var codeLLDB = vscode.extensions.getExtension("vadimcn.vscode-lldb");
+	const webfreakDebug = vscode.extensions.getExtension("webfreak.debug");
+	const cppDebug = vscode.extensions.getExtension("ms-vscode.cpptools");
+	const codeLLDB = vscode.extensions.getExtension("vadimcn.vscode-lldb");
 
 	if (webfreakDebug || cppDebug || codeLLDB) {
 		debugProvider = new DDebugProvider(context, webfreakDebug, cppDebug, codeLLDB);
@@ -16,7 +16,7 @@ export function registerDebuggers(context: vscode.ExtensionContext) {
 	}
 }
 
-var debugProvider: DDebugProvider;
+let debugProvider: DDebugProvider;
 export function linkDebuggersWithServed(served: ServeD) {
 	debugProvider.served = served;
 }
@@ -37,7 +37,7 @@ type DebuggerType =
 async function hasDebugger(name: string): Promise<boolean> {
 	try {
 		return !!(await which(name));
-	} catch (e) {
+	} catch {
 		return false;
 	}
 }
@@ -47,9 +47,9 @@ class DDebugProvider implements vscode.DebugConfigurationProvider {
 
 	constructor(
 		protected context: vscode.ExtensionContext,
-		public webfreakDebug: vscode.Extension<any> | undefined,
-		public cppDebug: vscode.Extension<any> | undefined,
-		public codeLLDB: vscode.Extension<any> | undefined,
+		public webfreakDebug: vscode.Extension<unknown> | undefined,
+		public cppDebug: vscode.Extension<unknown> | undefined,
+		public codeLLDB: vscode.Extension<unknown> | undefined,
 	) {}
 
 	get hasWebfreakDebug(): boolean {
@@ -82,7 +82,7 @@ class DDebugProvider implements vscode.DebugConfigurationProvider {
 	): vscode.DebugConfiguration {
 		const platform = debugConfiguration.platform || process.platform;
 		const args = debugConfiguration.args;
-		var config: vscode.DebugConfiguration = {
+		const config: vscode.DebugConfiguration = {
 			name: "code-d " + debugConfiguration.name,
 			request: "launch",
 			type: type,
@@ -106,7 +106,7 @@ class DDebugProvider implements vscode.DebugConfigurationProvider {
 
 	makeCodeLLDBConfiguration(debugConfiguration: vscode.DebugConfiguration): vscode.DebugConfiguration {
 		const args = debugConfiguration.args;
-		var config: vscode.DebugConfiguration = {
+		const config: vscode.DebugConfiguration = {
 			name: "code-d " + debugConfiguration.name,
 			request: "launch",
 			type: "lldb",
@@ -130,7 +130,7 @@ class DDebugProvider implements vscode.DebugConfigurationProvider {
 		debugConfiguration: vscode.DebugConfiguration,
 	): vscode.DebugConfiguration {
 		const args = debugConfiguration.args;
-		var config: vscode.DebugConfiguration = {
+		const config: vscode.DebugConfiguration = {
 			name: "code-d " + debugConfiguration.name,
 			request: "launch",
 			type: "cppdbg",
@@ -172,9 +172,8 @@ class DDebugProvider implements vscode.DebugConfigurationProvider {
 	}
 
 	makeCppVsdbgConfiguration(debugConfiguration: vscode.DebugConfiguration): vscode.DebugConfiguration {
-		const platform = debugConfiguration.platform || process.platform;
 		const args = debugConfiguration.args;
-		var config: vscode.DebugConfiguration = {
+		const config: vscode.DebugConfiguration = {
 			name: "code-d " + debugConfiguration.name,
 			request: "launch",
 			type: "cppvsdbg",
@@ -200,17 +199,17 @@ class DDebugProvider implements vscode.DebugConfigurationProvider {
 		if (!path.isAbsolute(debugConfiguration.program) && debugConfiguration.cwd)
 			debugConfiguration.program = path.join(debugConfiguration.cwd, debugConfiguration.program);
 
-		let debugType = <DebuggerType>debugConfiguration.debugger || "autodetect";
+		let debugType: DebuggerType | "autodetect" | "no-ext" | "no-dbg" = debugConfiguration.debugger || "autodetect";
 		let config = debugConfiguration;
 
 		if (debugType == "autodetect") {
-			debugType = <any>"no-ext";
+			debugType = "no-ext";
 
 			if (this.hasCodeLLDB && debugType.startsWith("no-") && platform != "win32") {
 				debugType = "code-lldb";
 			}
 			if (this.hasCppDebug && debugType.startsWith("no-")) {
-				debugType = <any>"no-dbg";
+				debugType = "no-dbg";
 
 				if (process.platform == "win32") {
 					// https://github.com/microsoft/vscode-cpptools/blob/76e427fdb24014399497f0598727f2fd2a097454/Extension/package.json#L2751-L2757
@@ -225,7 +224,7 @@ class DDebugProvider implements vscode.DebugConfigurationProvider {
 				}
 			}
 			if (this.hasWebfreakDebug && debugType.startsWith("no-")) {
-				debugType = <any>"no-dbg";
+				debugType = "no-dbg";
 
 				if (process.platform == "win32") {
 					if (await hasDebugger("mago-mi")) debugType = "mago";
@@ -244,12 +243,12 @@ class DDebugProvider implements vscode.DebugConfigurationProvider {
 				debugType = "code-lldb";
 			}
 
-			if (<any>debugType == "no-ext") {
+			if (debugType == "no-ext") {
 				throw new Error(
 					"No debugging extension installed. Please install ms-vscode.cpptools and/or webfreak.debug! To force a debugger, explicitly specify `debugger` in the debug launch config.",
 				);
 			}
-			if (<any>debugType == "no-dbg") {
+			if (debugType == "no-dbg") {
 				if (process.platform == "win32") {
 					throw new Error(
 						"No debugger installed. Please install Visual Studio, GDB, LLDB or mago-mi or force a debugger by specifying `debugger` in the debug launch config!",
@@ -321,11 +320,9 @@ class DDebugProvider implements vscode.DebugConfigurationProvider {
 		else if (debugType.startsWith("nd-") || debugType == "mago") await this.webfreakDebug?.activate();
 		else if (debugType == "code-lldb") await this.codeLLDB?.activate();
 
-		if (overwrite) {
-			for (const key in overwrite) {
-				if (overwrite.hasOwnProperty(key)) {
-					config[key] = overwrite[key];
-				}
+		if (typeof overwrite === "object" && overwrite) {
+			for (const [key, value] of Object.entries(overwrite)) {
+				config[key] = value;
 			}
 		}
 
@@ -333,9 +330,8 @@ class DDebugProvider implements vscode.DebugConfigurationProvider {
 	}
 
 	async resolveDebugConfigurationWithSubstitutedVariables?(
-		folder: vscode.WorkspaceFolder | undefined,
+		_folder: vscode.WorkspaceFolder | undefined,
 		debugConfiguration: vscode.DebugConfiguration,
-		token?: vscode.CancellationToken,
 	): Promise<vscode.DebugConfiguration | undefined | null> {
 		const config = await this.makeDebugConfiguration(debugConfiguration);
 
@@ -345,20 +341,20 @@ class DDebugProvider implements vscode.DebugConfigurationProvider {
 
 		if (!debugConfiguration.dubBuild) return config;
 
-		var dubconfig = await this.served?.getActiveDubConfig();
-		var hasCDebugInfo =
+		const dubconfig = await this.served?.getActiveDubConfig();
+		const hasCDebugInfo =
 			(dubconfig?.buildOptions?.indexOf("debugInfoC") ?? -1) != -1 ||
 			(dubconfig?.dflags?.indexOf("-gc") ?? -1) != -1;
-		var isSDL = dubconfig?.recipePath?.endsWith(".sdl") == true;
+		const isSDL = dubconfig?.recipePath?.endsWith(".sdl") == true;
 		console.log(dubconfig);
 		this.served?.outputChannel?.appendLine("Active DUB project info:\n\n" + JSON.stringify(dubconfig, null, "\t"));
 
 		function warnBuildSettings(msg: string): boolean | Thenable<boolean> {
-			let ignore = "Ignore";
-			let edit = isSDL ? "Edit dub.sdl" : "Edit dub.json";
-			let workspace = vscode.workspace.workspaceFolders ? vscode.workspace.workspaceFolders[0] : undefined;
-			let config = vscode.workspace.getConfiguration("d", workspace);
-			let ignoreAlways = workspace ? "Always Ignore (Workspace)" : "Always Ignore (Global)";
+			const ignore = "Ignore";
+			const edit = isSDL ? "Edit dub.sdl" : "Edit dub.json";
+			const workspace = vscode.workspace.workspaceFolders ? vscode.workspace.workspaceFolders[0] : undefined;
+			const config = vscode.workspace.getConfiguration("d", workspace);
+			const ignoreAlways = workspace ? "Always Ignore (Workspace)" : "Always Ignore (Global)";
 			if (config.get("ignoreDebugHints", false)) return true;
 
 			return vscode.window.showWarningMessage(msg, ignore, edit, ignoreAlways).then((btn: string | undefined) => {
@@ -370,7 +366,7 @@ class DDebugProvider implements vscode.DebugConfigurationProvider {
 				if (btn == edit) {
 					if (dubconfig?.recipePath == undefined)
 						throw new Error("Unable to open recipe, please open manually");
-					var path = dubconfig.recipePath;
+					const path = dubconfig.recipePath;
 					vscode.workspace.openTextDocument(path).then(vscode.window.showTextDocument);
 				}
 
@@ -399,64 +395,64 @@ class DDebugProvider implements vscode.DebugConfigurationProvider {
 				return undefined;
 		}
 
-		let exitCode = await new Promise<number>(async (done) => {
-			let task = <vscode.Task>await this.served?.tasksProvider?.resolveTask(
-				{
-					definition: {
-						type: "dub",
-						run: false,
-						compiler: "$current",
-						archType: "$current",
-						buildType: "$current",
-						configuration: "$current",
-						name: "debug dub build",
-						_id: "coded-debug-id-" + Math.random().toString(36),
-					},
-					isBackground: false,
+		const exitCode = await this.served?.tasksProvider
+			?.resolveTask({
+				definition: {
+					type: "dub",
+					run: false,
+					compiler: "$current",
+					archType: "$current",
+					buildType: "$current",
+					configuration: "$current",
 					name: "debug dub build",
-					source: "code-d debug",
-					runOptions: {
-						reevaluateOnRerun: false,
-					},
-					presentationOptions: {
-						clear: true,
-						echo: true,
-						panel: vscode.TaskPanelKind.Dedicated,
-						reveal: vscode.TaskRevealKind.Silent,
-						showReuseMessage: false,
-					},
-					problemMatchers: ["$dmd"],
-					group: vscode.TaskGroup.Build,
-					scope: undefined,
+					_id: "coded-debug-id-" + Math.random().toString(36),
 				},
-				undefined,
+				isBackground: false,
+				name: "debug dub build",
+				source: "code-d debug",
+				runOptions: {
+					reevaluateOnRerun: false,
+				},
+				presentationOptions: {
+					clear: true,
+					echo: true,
+					panel: vscode.TaskPanelKind.Dedicated,
+					reveal: vscode.TaskRevealKind.Silent,
+					showReuseMessage: false,
+				},
+				problemMatchers: ["$dmd"],
+				group: vscode.TaskGroup.Build,
+				scope: undefined,
+			})
+			.then(
+				(task) =>
+					new Promise<number>((done) => {
+						// hacky wait until finished task
+						let finished = false;
+						const waiter = vscode.tasks.onDidEndTask((e) => {
+							if (!finished && e.execution.task.definition._id == task.definition._id) {
+								setTimeout(() => {
+									if (!finished) {
+										finished = true;
+										waiter.dispose();
+										procWaiter.dispose();
+										done(-1);
+									}
+								}, 100);
+							}
+						});
+						const procWaiter = vscode.tasks.onDidEndTaskProcess((e) => {
+							if (!finished && e.execution.task.definition._id == task.definition._id) {
+								finished = true;
+								waiter.dispose();
+								procWaiter.dispose();
+								done(typeof e.exitCode == "undefined" ? -1 : e.exitCode);
+							}
+						});
+
+						vscode.tasks.executeTask(task);
+					}),
 			);
-
-			// hacky wait until finished task
-			let finished = false;
-			let waiter = vscode.tasks.onDidEndTask((e) => {
-				if (!finished && e.execution.task.definition._id == task.definition._id) {
-					setTimeout(() => {
-						if (!finished) {
-							finished = true;
-							waiter.dispose();
-							procWaiter.dispose();
-							done(-1);
-						}
-					}, 100);
-				}
-			});
-			let procWaiter = vscode.tasks.onDidEndTaskProcess((e) => {
-				if (!finished && e.execution.task.definition._id == task.definition._id) {
-					finished = true;
-					waiter.dispose();
-					procWaiter.dispose();
-					done(typeof e.exitCode == "undefined" ? -1 : e.exitCode);
-				}
-			});
-
-			await vscode.tasks.executeTask(task);
-		});
 
 		if (exitCode == -1) {
 			vscode.window.showErrorMessage("Could not start dub build task before debugging!");

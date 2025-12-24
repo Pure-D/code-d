@@ -8,37 +8,39 @@ function dubAPI() {
 	return reqJson("https://code.dlang.org/");
 }
 
-export function searchDubPackages(query: string): Thenable<any[]> {
+export function searchDubPackages(query: string): Thenable<unknown[]> {
 	return dubAPI()
 		.get("/api/packages/search?q=" + encodeURIComponent(query))
 		.then((body) => {
+			if (!Array.isArray(body?.data)) throw new Error("Unexpected reply from DUB API search");
 			return body.data;
 		})
-		.catch((e: AxiosError) => {
-			throw e.response ? "No packages found" : e;
+		.catch((e: AxiosError | Error) => {
+			throw "response" in e && e.response ? new Error("No packages found") : e;
 		});
 }
 
-export function listPackages(): Thenable<any[]> {
+export function listPackages(): Thenable<unknown[]> {
 	return dubAPI()
 		.get("/packages/index.json")
 		.then((body) => {
+			if (!Array.isArray(body?.data)) throw new Error("Unexpected reply from DUB API search");
 			return body.data;
 		})
-		.catch((e: AxiosError) => {
-			throw e.response ? "No packages found" : e;
+		.catch((e: AxiosError | Error) => {
+			throw "response" in e && e.response ? new Error("No packages found") : e;
 		});
 }
 
-var packageCache: any;
-var packageCacheDate = new Date(0);
+let packageCache: vscode.QuickPickItem[];
+let packageCacheDate = new Date(0);
 export function listPackageOptions(): Thenable<vscode.QuickPickItem[]> {
 	if (new Date().getTime() - packageCacheDate.getTime() < 15 * 60 * 1000) return Promise.resolve(packageCache);
 
 	return dubAPI()
 		.get<{ name: string; description: string; version: string }[]>("/api/packages/search")
 		.then((body) => {
-			var ret: vscode.QuickPickItem[] = [];
+			const ret: vscode.QuickPickItem[] = [];
 			body.data.forEach((element) => {
 				ret.push({
 					label: element.name,
@@ -55,7 +57,7 @@ export function listPackageOptions(): Thenable<vscode.QuickPickItem[]> {
 		});
 }
 
-export function getPackageInfo(pkg: string): Thenable<any> {
+export function getPackageInfo(pkg: string): Thenable<unknown> {
 	return dubAPI()
 		.get("/api/packages/" + encodeURIComponent(pkg) + "/info")
 		.then((body) => {
@@ -76,13 +78,15 @@ export function getLatestPackageInfo(pkg: string): Thenable<{
 	copyright?: string;
 }> {
 	return dubAPI()
-		.get<any>("/api/packages/" + encodeURIComponent(pkg) + "/latest/info")
+		.get("/api/packages/" + encodeURIComponent(pkg) + "/latest/info")
 		.then((body) => {
-			var json = body.data;
-			var subPackages: string[] = [];
+			const json = body.data;
+			const subPackages: string[] = [];
 			if (json.info.subPackages)
-				json.info.subPackages.forEach((pkg: any) => {
-					subPackages.push(pkg.name);
+				json.info.subPackages.forEach((pkg: unknown) => {
+					if (typeof pkg === "object" && pkg && "name" in pkg && typeof pkg.name === "string")
+						subPackages.push(pkg.name);
+					else console.error("Unexpected subpackage in DUB API response: ", pkg);
 				});
 			return {
 				version: json.version,
@@ -100,16 +104,16 @@ export function autoCompletePath(
 	fileName: string,
 	key: string,
 	currentValue: string,
-	addResult: (v: vscode.CompletionItem) => any,
-): Thenable<any> {
-	let folderOnly = ["path", "targetPath", "sourcePaths", "stringImportPaths", "importPaths"].indexOf(key) != -1;
-	let fileRegex = ["copyFiles"].indexOf(key) != -1 ? null : /\.di?$/i;
+	addResult: (v: vscode.CompletionItem) => void,
+): Thenable<void> {
+	const folderOnly = ["path", "targetPath", "sourcePaths", "stringImportPaths", "importPaths"].indexOf(key) != -1;
+	const fileRegex = ["copyFiles"].indexOf(key) != -1 ? null : /\.di?$/i;
 	return new Promise((resolve, reject) => {
 		if (currentValue != "") {
-			let end = currentValue.lastIndexOf("/");
+			const end = currentValue.lastIndexOf("/");
 			if (end != -1) currentValue = currentValue.substr(0, end);
 		}
-		let dir = path.join(path.dirname(fileName), currentValue);
+		const dir = path.join(path.dirname(fileName), currentValue);
 		fs.readdir(dir, { withFileTypes: true }, (err, files) => {
 			if (err) return reject(err);
 
@@ -127,11 +131,11 @@ export function autoCompletePath(
 				if (file.isDirectory() && !folderOnly) value += "/";
 				value = JSON.stringify(value);
 
-				let item = new vscode.CompletionItem(value, kind);
+				const item = new vscode.CompletionItem(value, kind);
 				if (file.isDirectory()) item.insertText = new vscode.SnippetString(value.slice(0, -1) + '${0}"');
 				addResult(item);
 			});
-			resolve(null);
+			resolve();
 		});
 	});
 }

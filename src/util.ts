@@ -3,7 +3,7 @@ import { default as axios, AxiosInstance, ResponseType } from "axios";
 import { currentVersion } from "./extension";
 
 export function reqType(type: ResponseType, baseURL?: string | undefined, timeout: number = 10000): AxiosInstance {
-	let proxy = vscode.workspace.getConfiguration("http").get("proxy", "");
+	const proxy = vscode.workspace.getConfiguration("http").get("proxy", "");
 	if (proxy) process.env["http_proxy"] = proxy;
 
 	return axios.create({
@@ -37,8 +37,8 @@ export function win32EscapeShellParam(param: string): string {
 
 	if (param.indexOf(" ") == -1 && param.indexOf('"') == -1) return param;
 
-	var ret = '"';
-	var backslash = 0;
+	let ret = '"';
+	let backslash = 0;
 	for (let i = 0; i < param.length; i++) {
 		const c = param[i];
 		if (c == '"') {
@@ -88,29 +88,29 @@ export function simpleBytesToString(bytes: Uint8Array): string {
 	return buffer.toString(encoding);
 }
 
-type QuickPickInputItem = vscode.QuickPickItem & { custom: true };
+type QuickPickInputDefaultItem = vscode.QuickPickItem & { custom: true };
 
 export function showQuickPickWithInput<T>(
 	items: T[] | Thenable<T[]>,
 	options: vscode.QuickPickOptions & { canPickMany: true },
-): Promise<(T | QuickPickInputItem)[] | undefined>;
+): Promise<readonly (T | QuickPickInputDefaultItem)[] | undefined>;
 export function showQuickPickWithInput<T>(
 	items: T[] | Thenable<T[]>,
 	options?: (vscode.QuickPickOptions & { canPickMany: false | undefined }) | undefined,
-): Promise<T | QuickPickInputItem | undefined>;
-export function showQuickPickWithInput<T>(
+): Promise<T | QuickPickInputDefaultItem | undefined>;
+export function showQuickPickWithInput<T extends vscode.QuickPickItem>(
 	items: T[] | Thenable<T[]>,
 	options?: vscode.QuickPickOptions,
-): Promise<(T | QuickPickInputItem) | (T | QuickPickInputItem)[] | undefined> {
+): Promise<(T | QuickPickInputDefaultItem) | readonly (T | QuickPickInputDefaultItem)[] | undefined> {
 	return new Promise((resolve) => {
-		let quickPick = vscode.window.createQuickPick();
+		const quickPick = vscode.window.createQuickPick<T | QuickPickInputDefaultItem>();
 		quickPick.canSelectMany = options?.canPickMany ?? false;
 		quickPick.ignoreFocusOut = options?.ignoreFocusOut ?? false;
 		quickPick.matchOnDescription = options?.matchOnDescription ?? false;
 		quickPick.matchOnDetail = options?.matchOnDetail ?? false;
 		quickPick.placeholder = options?.placeHolder;
 		quickPick.title = options?.title;
-		let input: QuickPickInputItem = {
+		const input: QuickPickInputDefaultItem = {
 			label: "",
 			description: "Custom Input",
 			alwaysShow: true,
@@ -119,23 +119,22 @@ export function showQuickPickWithInput<T>(
 		quickPick.items = [];
 		quickPick.busy = true;
 		(async function () {
-			quickPick.items = quickPick.items.concat(<any>await items);
+			quickPick.items = quickPick.items.concat(await items);
 			quickPick.busy = false;
 		})();
-		quickPick.onDidChangeValue((e) => {
+		quickPick.onDidChangeValue(() => {
 			input.label = quickPick.value;
-			let i = quickPick.items.indexOf(input);
+			const i = quickPick.items.indexOf(input);
 			if (quickPick.value) {
-				if (i == -1) quickPick.items = [<vscode.QuickPickItem>input].concat(quickPick.items);
-				else quickPick.items = quickPick.items;
+				if (i == -1) quickPick.items = [input, ...quickPick.items];
 			} else {
 				if (i != -1) quickPick.items = quickPick.items.slice(0, i).concat(quickPick.items.slice(i + 1));
 			}
 		});
 		let resolved = false;
 		quickPick.onDidChangeSelection((e) => {
-			options?.onDidSelectItem ? options.onDidSelectItem(e[0]) : null;
-			resolve(<any>(options?.canPickMany ? e : e[0]));
+			if (options?.onDidSelectItem) options.onDidSelectItem(e[0]);
+			resolve(options?.canPickMany ? e : e[0]);
 			resolved = true;
 			quickPick.hide();
 		});

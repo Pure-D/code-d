@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
 import { LanguageClient, TextEdit } from "vscode-languageclient/node";
-import { config, served, ServeD } from "./extension";
+import { ActiveDubConfig, config, served, ServeD } from "./extension";
 import { showProjectCreator, performTemplateCopy, openFolderWithExtension } from "./project-creator";
 import { listPackageOptions, getLatestPackageInfo } from "./dub-api";
 import { DubDependency } from "./dub-view";
@@ -12,18 +12,13 @@ import { showQuickPickWithInput, simpleBytesToString } from "./util";
 import { listCompilers, makeCompilerDescription } from "./compilers";
 import { DTerminalLinkProvider } from "./terminal-link-provider";
 
-const multiTokenWordPattern =
-	/[^\`\~\!\@\#\%\^\&\*\(\)\=\+\[\{\]\}\\\|\;\:\'\"\,\.\<\>\/\?\s]+(?:\.[^\`\~\!\@\#\%\^\&\*\(\)\=\+\[\{\]\}\\\|\;\:\'\"\,\.\<\>\/\?\s]+)*/;
-
-var gClient: LanguageClient;
+const multiTokenWordPattern = /[^`~!@#%^&*()=+[{\]}\\|;:'",.<>/?\s]+(?:\.[^`~!@#%^&*()=+[{\]}\\|;:'",.<>/?\s]+)*/;
 
 export function registerClientCommands(context: vscode.ExtensionContext, client: LanguageClient, served: ServeD) {
-	var subscriptions = context.subscriptions;
+	const subscriptions = context.subscriptions;
 
 	served.tasksProvider = new DubTasksProvider(client);
 	subscriptions.push(vscode.tasks.registerTaskProvider("dub", served.tasksProvider));
-
-	gClient = client;
 
 	subscriptions.push(
 		vscode.commands.registerCommand(
@@ -39,8 +34,8 @@ export function registerClientCommands(context: vscode.ExtensionContext, client:
 							});
 					});
 			},
-			(err: any) => {
-				client.outputChannel.appendLine(err.toString());
+			(err: unknown) => {
+				client.outputChannel.appendLine(err + "");
 				vscode.window.showErrorMessage("Failed to switch configuration. See extension output for details.");
 			},
 		),
@@ -50,7 +45,7 @@ export function registerClientCommands(context: vscode.ExtensionContext, client:
 		vscode.commands.registerCommand(
 			"code-d.switchArchType",
 			() => {
-				let items = client
+				const items = client
 					.sendRequest<
 						({ value: string; label?: string } | string)[]
 					>("served/listArchTypes", { withMeaning: true })
@@ -71,7 +66,7 @@ export function registerClientCommands(context: vscode.ExtensionContext, client:
 					title: "Pick new target architecture",
 				}).then((arch) => {
 					if (arch !== undefined) {
-						const v = (<any>arch)._value ? (<any>arch)._value : arch.label;
+						const v = "_value" in arch && arch._value ? arch._value : arch.label;
 						client.sendRequest<boolean>("served/switchArchType", v).then((success) => {
 							if (success) served.emit("arch-type-change", v);
 							else vscode.window.showErrorMessage("Invalid architecture type: " + v);
@@ -79,8 +74,8 @@ export function registerClientCommands(context: vscode.ExtensionContext, client:
 					}
 				});
 			},
-			(err: any) => {
-				client.outputChannel.appendLine(err.toString());
+			(err: unknown) => {
+				client.outputChannel.appendLine(err + "");
 				vscode.window.showErrorMessage("Failed to switch arch type. See extension output for details.");
 			},
 		),
@@ -98,8 +93,8 @@ export function registerClientCommands(context: vscode.ExtensionContext, client:
 						});
 				});
 			},
-			(err: any) => {
-				client.outputChannel.appendLine(err.toString());
+			(err: unknown) => {
+				client.outputChannel.appendLine(err + "");
 				vscode.window.showErrorMessage("Failed to switch build type. See extension output for details.");
 			},
 		),
@@ -108,9 +103,9 @@ export function registerClientCommands(context: vscode.ExtensionContext, client:
 	subscriptions.push(
 		vscode.commands.registerCommand("code-d.switchCompiler", () => {
 			client.sendRequest<string>("served/getCompiler").then(
-				(compiler) => {
-					let settingCompiler = config(null).get("dubCompiler", undefined);
-					let extra: (vscode.QuickPickItem & { value: string })[] = settingCompiler
+				() => {
+					const settingCompiler = config(null).get("dubCompiler", undefined);
+					const extra: (vscode.QuickPickItem & { value: string })[] = settingCompiler
 						? [{ label: settingCompiler, value: settingCompiler, description: "(from User Settings)" }]
 						: [];
 					showQuickPickWithInput(
@@ -118,14 +113,11 @@ export function registerClientCommands(context: vscode.ExtensionContext, client:
 							extra.concat(
 								compilers
 									.filter((a) => a.has && a.path)
-									.map(
-										(c) =>
-											<vscode.QuickPickItem & { value: string }>{
-												label: c.has,
-												value: c.path ?? c.has,
-												description: makeCompilerDescription(c),
-											},
-									),
+									.map<vscode.QuickPickItem & { value: string; custom?: true }>((c) => ({
+										label: c.has + "",
+										value: c.path ?? c.has + "",
+										description: makeCompilerDescription(c),
+									})),
 							),
 						),
 						{
@@ -136,8 +128,7 @@ export function registerClientCommands(context: vscode.ExtensionContext, client:
 						},
 					).then((v) => {
 						if (v) {
-							// @ts-ignore
-							let compiler: string = v.custom ? v.label : v.value;
+							const compiler: string = v.custom ? v.label : v.value;
 							client.sendRequest<boolean>("served/switchCompiler", compiler).then((success) => {
 								if (success) served.emit("compiler-change", compiler);
 								else vscode.window.showErrorMessage("Invalid compiler: " + compiler);
@@ -157,7 +148,7 @@ export function registerClientCommands(context: vscode.ExtensionContext, client:
 		vscode.commands.registerTextEditorCommand("code-d.sortImports", (editor, edit, location) => {
 			if (typeof location !== "number") location = editor.document.offsetAt(editor.selection.start);
 			client
-				.sendRequest<any>("served/sortImports", {
+				.sendRequest<TextEdit[]>("served/sortImports", {
 					textDocument: {
 						uri: editor.document.uri.toString(),
 					},
@@ -167,10 +158,10 @@ export function registerClientCommands(context: vscode.ExtensionContext, client:
 					(change: TextEdit[]) => {
 						if (!change.length) return;
 						editor.edit((edit) => {
-							var s = change[0].range.start;
-							var e = change[0].range.end;
-							var start = new vscode.Position(s.line, s.character);
-							var end = new vscode.Position(e.line, e.character);
+							const s = change[0].range.start;
+							const e = change[0].range.end;
+							const start = new vscode.Position(s.line, s.character);
+							const end = new vscode.Position(e.line, e.character);
 							edit.replace(new vscode.Range(start, end), change[0].newText);
 						});
 					},
@@ -186,7 +177,7 @@ export function registerClientCommands(context: vscode.ExtensionContext, client:
 		vscode.commands.registerTextEditorCommand("code-d.implementMethods", (editor, edit, location) => {
 			if (typeof location !== "number") location = editor.document.offsetAt(editor.selection.start);
 			client
-				.sendRequest<any>("served/implementMethods", {
+				.sendRequest<TextEdit[]>("served/implementMethods", {
 					textDocument: {
 						uri: editor.document.uri.toString(),
 					},
@@ -195,8 +186,8 @@ export function registerClientCommands(context: vscode.ExtensionContext, client:
 				.then(
 					(change: TextEdit[]) => {
 						if (!change.length) return;
-						var s = change[0].range.start;
-						var start = new vscode.Position(s.line, s.character);
+						const s = change[0].range.start;
+						const start = new vscode.Position(s.line, s.character);
 						editor.insertSnippet(new vscode.SnippetString(change[0].newText), start);
 					},
 					(err) => {
@@ -211,9 +202,9 @@ export function registerClientCommands(context: vscode.ExtensionContext, client:
 		vscode.commands.registerTextEditorCommand(
 			"code-d.ignoreDscannerKey",
 			(editor, edit, key: string, mode?: boolean | "line") => {
-				var ignored = vscode.workspace.getConfiguration("dscanner", editor.document.uri).get("ignoredKeys");
+				let ignored = vscode.workspace.getConfiguration("dscanner", editor.document.uri).get("ignoredKeys");
 				if (!ignored) ignored = vscode.workspace.getConfiguration("dscanner", null).get("ignoredKeys");
-				var doChange = function (key: string, global?: boolean) {
+				const doChange = function (key: string, global?: boolean) {
 					if (Array.isArray(ignored)) ignored.push(key);
 					else ignored = [key];
 					vscode.workspace
@@ -228,7 +219,7 @@ export function registerClientCommands(context: vscode.ExtensionContext, client:
 						});
 				};
 				if (typeof key !== "string" || !key.length) {
-					var available: string[] = [
+					const available: string[] = [
 						"dscanner.bugs.backwards_slices",
 						"dscanner.bugs.if_else_same",
 						"dscanner.bugs.logic_operator_operands",
@@ -283,7 +274,7 @@ export function registerClientCommands(context: vscode.ExtensionContext, client:
 					];
 					if (Array.isArray(ignored)) {
 						ignored.forEach((element) => {
-							var i = available.indexOf(element);
+							const i = available.indexOf(element);
 							if (i != -1) available.splice(i, 1);
 						});
 					}
@@ -320,7 +311,7 @@ export function registerClientCommands(context: vscode.ExtensionContext, client:
 	subscriptions.push(
 		vscode.commands.registerTextEditorCommand("code-d.addImport", (editor, edit, name, location) => {
 			client
-				.sendRequest<any>("served/addImport", {
+				.sendRequest<unknown>("served/addImport", {
 					textDocument: {
 						uri: editor.document.uri.toString(),
 					},
@@ -330,12 +321,19 @@ export function registerClientCommands(context: vscode.ExtensionContext, client:
 				.then(
 					(change) => {
 						client.outputChannel.appendLine("Importer resolve: " + JSON.stringify(change));
-						if (change.rename)
+						if (
+							typeof change != "object" ||
+							!change ||
+							!("replacements" in change) ||
+							("rename" in change && change.rename)
+						)
 							// no renames from addImport command
 							return;
 						editor.edit((edit) => {
-							for (var i = change.replacements.length - 1; i >= 0; i--) {
-								var r = change.replacements[i];
+							if (!Array.isArray(change.replacements)) return;
+
+							for (let i = change.replacements.length - 1; i >= 0; i--) {
+								const r = change.replacements[i];
 								if (r.range[0] == r.range[1])
 									edit.insert(editor.document.positionAt(r.range[0]), r.content);
 								else if (r.content == "")
@@ -399,12 +397,12 @@ export function registerClientCommands(context: vscode.ExtensionContext, client:
 	);
 
 	subscriptions.push(
-		vscode.commands.registerTextEditorCommand("code-d.convertDubRecipe", (editor, edit) => {
+		vscode.commands.registerTextEditorCommand("code-d.convertDubRecipe", (editor) => {
 			if (editor.document.isDirty || editor.document.isUntitled) {
 				vscode.window.showErrorMessage("Please save the file first");
 				return;
 			}
-			var uri = editor.document.uri.toString();
+			const uri = editor.document.uri.toString();
 			client.sendNotification("served/convertDubFormat", {
 				textDocument: { uri: uri },
 				newFormat: uri.toLowerCase().endsWith(".sdl") ? "json" : "sdl",
@@ -462,7 +460,7 @@ export function registerClientCommands(context: vscode.ExtensionContext, client:
 				.listDScannerConfig(vscode.window.activeTextEditor.document.uri)
 				.then(
 					(ini) => {
-						var text = "";
+						let text = "";
 						ini.forEach((section) => {
 							text += "; " + section.description + "\n";
 							text += "[" + section.name + "]\n";
@@ -474,7 +472,7 @@ export function registerClientCommands(context: vscode.ExtensionContext, client:
 						});
 						return text || defaultDscannerIni;
 					},
-					(err) => {
+					() => {
 						return defaultDscannerIni;
 					},
 				)
@@ -491,7 +489,7 @@ export function registerClientCommands(context: vscode.ExtensionContext, client:
 
 	subscriptions.push(
 		vscode.commands.registerCommand("code-d.dumpServedInfo", async () => {
-			let info = await client.sendRequest("served/getInfo", {
+			const info = await client.sendRequest("served/getInfo", {
 				includeConfig: true,
 				includeIndex: true,
 				includeTasks: true,
@@ -510,7 +508,7 @@ export function registerClientCommands(context: vscode.ExtensionContext, client:
 }
 
 export function registerCommands(context: vscode.ExtensionContext) {
-	var subscriptions = context.subscriptions;
+	const subscriptions = context.subscriptions;
 
 	vscode.commands.executeCommand("setContext", "d.isActive", true);
 
@@ -518,7 +516,7 @@ export function registerCommands(context: vscode.ExtensionContext) {
 
 	subscriptions.push(
 		vscode.commands.registerCommand("code-d.rdmdCurrent", async (file: vscode.Uri) => {
-			var args: vscode.ShellQuotedString[] = [];
+			let args: vscode.ShellQuotedString[] = [];
 			if (!vscode.window.activeTextEditor) return vscode.window.showErrorMessage("No text editor active");
 
 			const doc = vscode.window.activeTextEditor.document;
@@ -554,7 +552,7 @@ export function registerCommands(context: vscode.ExtensionContext) {
 
 			file = file || (doc.isUntitled ? undefined : doc.uri);
 
-			var cwd = file
+			const cwd = file
 				? path.dirname(file.fsPath)
 				: vscode.workspace.workspaceFolders
 					? vscode.workspace.workspaceFolders[0].uri.fsPath
@@ -571,7 +569,7 @@ export function registerCommands(context: vscode.ExtensionContext) {
 			const shell = new vscode.ShellExecution({ value: "rdmd", quoting: vscode.ShellQuoting.Strong }, args, {
 				cwd: cwd,
 			});
-			var evalCounter = 0;
+			let evalCounter = 0;
 			const task = new vscode.Task(
 				{ type: "rdmd" },
 				vscode.TaskScope.Workspace,
@@ -587,8 +585,9 @@ export function registerCommands(context: vscode.ExtensionContext) {
 		}),
 	);
 
-	function withProject(fn: (...args: any[]) => any) {
-		return async function (this: any, config: any) {
+	function withProject<T, Config>(fn: (config: Config, project: ActiveDubConfig) => T) {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		return async function (this: any, config: Config) {
 			if (!served) throw new Error("serve-d is not yet started, can't read DUB config");
 			const project = await served.getActiveDubConfig();
 			return fn.apply(this, [config, project]);
@@ -690,8 +689,8 @@ export function registerCommands(context: vscode.ExtensionContext) {
 	);
 
 	subscriptions.push(
-		vscode.commands.registerCommand("code-d.openDependencyFile", (root: string | DubDependency) => {
-			if (typeof root != "string") root = root.info?.path!;
+		vscode.commands.registerCommand("code-d.openDependencyFile", (root: string | DubDependency | undefined) => {
+			if (typeof root != "string") root = root?.info?.path;
 			if (!root) return;
 
 			vscode.window
@@ -708,12 +707,12 @@ export function registerCommands(context: vscode.ExtensionContext) {
 		}),
 	);
 	subscriptions.push(
-		vscode.commands.registerCommand("code-d.openDubRecipe", (root: string | DubDependency) => {
-			let explicit = root instanceof DubDependency;
-			let showError = function () {
+		vscode.commands.registerCommand("code-d.openDubRecipe", (root: string | undefined | DubDependency) => {
+			const explicit = root instanceof DubDependency;
+			const showError = function () {
 				if (explicit) vscode.window.showErrorMessage("No recipe found");
 			};
-			if (typeof root != "string") root = root.info?.path!;
+			if (typeof root != "string") root = root?.info?.path;
 			if (!root) return showError();
 
 			const recipeFilenames = ["dub.sdl", "dub.json", "package.json"];
@@ -730,15 +729,15 @@ export function registerCommands(context: vscode.ExtensionContext) {
 
 	subscriptions.push(
 		vscode.commands.registerCommand("code-d.openDubOnDpldocs", (root: DubDependency) => {
-			let explicit = root instanceof DubDependency;
-			let showError = function () {
+			const explicit = root instanceof DubDependency;
+			const showError = function () {
 				if (explicit) vscode.window.showErrorMessage("Could not determine package name");
 			};
 			let name = root?.info?.name;
 			let version = root?.info?.version;
 			if (!name) return showError();
 
-			let colon = name.indexOf(":");
+			const colon = name.indexOf(":");
 			if (colon >= 0) {
 				name = name.substr(0, colon); // strip subpackage
 				version = undefined; // versions are invalid for subpackages
@@ -757,12 +756,12 @@ export function registerCommands(context: vscode.ExtensionContext) {
 				root?: string,
 				packageName?: string,
 			) => {
-				let explicit = behavior instanceof DubDependency;
-				let showError = function (force?: boolean) {
+				const explicit = behavior instanceof DubDependency;
+				const showError = function (force?: boolean) {
 					if (explicit || force) {
 						if (root) {
-							let browseBtn = "Browse Files";
-							let openRecipe = "Open Recipe";
+							const browseBtn = "Browse Files";
+							const openRecipe = "Open Recipe";
 							vscode.window
 								.showErrorMessage("No viewable files found.", browseBtn, openRecipe)
 								.then((btn) => {
@@ -778,7 +777,7 @@ export function registerCommands(context: vscode.ExtensionContext) {
 				};
 
 				if (behavior instanceof DubDependency) {
-					root = behavior.info?.path!;
+					root = behavior.info?.path;
 					packageName = behavior.info?.name;
 					behavior = "listDocumentsBoth";
 
@@ -792,24 +791,24 @@ export function registerCommands(context: vscode.ExtensionContext) {
 				if (root) {
 					fs.readdir(root, { withFileTypes: true }, async (err, fileEntries) => {
 						if (err) return showError(true);
-						let files = fileEntries.filter((f) => f.isFile()).map((f) => f.name);
+						const files = fileEntries.filter((f) => f.isFile()).map((f) => f.name);
 						function isInterestingFilename(f: string): boolean {
 							f = f.toLowerCase();
-							let filter = <string[]>config(null).get("dependencyTextDocumentFilter");
+							const filter = <string[]>config(null).get("dependencyTextDocumentFilter");
 							for (let i = 0; i < filter.length; i++) {
 								if (new RegExp(filter[i], "i").exec(f)) return true;
 							}
 							return false;
 						}
-						let readmes = files.filter(isInterestingFilename);
+						const readmes = files.filter(isInterestingFilename);
 						if (!readmes.length) return showError(true);
 						readmes.sort();
 						readmes.reverse(); // README > LICENSE > CHANGELOG
 
-						let items: (vscode.QuickPickItem & { args: [string, boolean] })[] = [];
+						const items: (vscode.QuickPickItem & { args: [string, boolean] })[] = [];
 
 						for (let i = 0; i < readmes.length; i++) {
-							let previewable = isDubReadmePreviewable(readmes[i]);
+							const previewable = isDubReadmePreviewable(readmes[i]);
 							if (doPreview || !previewable)
 								items.push({
 									label: readmes[i],
@@ -839,8 +838,8 @@ export function registerCommands(context: vscode.ExtensionContext) {
 
 						if (!args) return;
 
-						let readme = path.join(root!, args[0]);
-						let uri = vscode.Uri.file(readme);
+						const readme = path.join(root!, args[0]);
+						const uri = vscode.Uri.file(readme);
 						previewDubReadme(vscode.Uri.file(root!), uri, args[1], packageName);
 					});
 				} else {
@@ -851,21 +850,25 @@ export function registerCommands(context: vscode.ExtensionContext) {
 	);
 
 	if (context.globalState.get("create-template", "")) {
-		var id = context.globalState.get("create-template", "");
+		const id = context.globalState.get("create-template", "");
 		context.globalState.update("create-template", undefined);
 		fs.readFile(path.join(context.extensionPath, "templates", "info.json"), function (err, data) {
 			if (err) return vscode.window.showErrorMessage("Failed to parse templates");
-			var templates = JSON.parse(data.toString());
-			for (var i = 0; i < templates.length; i++)
+			const templates = JSON.parse(data.toString());
+			for (let i = 0; i < templates.length; i++)
 				if (templates[i].path == id) {
-					var path = "";
+					let path = "";
 					if (!vscode.workspace.workspaceFolders)
 						return vscode.window.showErrorMessage("No workspace folder open");
 					path = vscode.workspace.workspaceFolders[0].uri.path;
-					fs.readdir(path, function (err: any, files: any) {
+					fs.readdir(path, function (err, files) {
+						if (err) {
+							console.error("Failed reading directory for creating template: ", path, err);
+							return;
+						}
 						if (files.length == 0)
 							performTemplateCopy(context, id, templates[i].dub, path, function () {
-								vscode.commands.executeCommand("workbench.action.reloadWindow");
+								vscode.commands.executeCommand("workbench.action.restartExtensionHost");
 							});
 						else
 							vscode.window
@@ -880,7 +883,7 @@ export function registerCommands(context: vscode.ExtensionContext) {
 										openFolderWithExtension(context);
 									} else if (r == "Merge into Folder") {
 										performTemplateCopy(context, id, templates[i].dub, path, function () {
-											vscode.commands.executeCommand("workbench.action.reloadWindow");
+											vscode.commands.executeCommand("workbench.action.restartExtensionHost");
 										});
 									}
 								});
@@ -893,7 +896,7 @@ export function registerCommands(context: vscode.ExtensionContext) {
 
 	subscriptions.push(
 		vscode.commands.registerCommand("code-d.searchDocs", () => {
-			var query = "";
+			let query = "";
 			if (vscode.window.activeTextEditor)
 				query = vscode.window.activeTextEditor.document.getText(vscode.window.activeTextEditor.selection);
 			showDpldocsSearch(query);
@@ -901,9 +904,8 @@ export function registerCommands(context: vscode.ExtensionContext) {
 	);
 
 	subscriptions.push(
-		vscode.commands.registerTextEditorCommand("code-d.openDocsAtCursor", (editor, edit) => {
+		vscode.commands.registerTextEditorCommand("code-d.openDocsAtCursor", (editor) => {
 			// TODO: we can probably add local ddoc rendering if we can jump to the symbol anyway
-			var query = "";
 			if (editor.selection.isEmpty) {
 				const range = editor.document.getWordRangeAtPosition(editor.selection.active, multiTokenWordPattern);
 				if (range) showDpldocsSearch(editor.document.getText(range), true);
@@ -960,13 +962,13 @@ async function previewDubReadme(dir: vscode.Uri, uri: vscode.Uri, useRichPreview
 
 	if (!useRichPreview) return openReadableTextFile(uri);
 
-	var extension = path.extname(uri.path).toLowerCase();
+	const extension = path.extname(uri.path).toLowerCase();
 	if (extension == ".md" || extension == ".markdown") {
 		// most packages have markdown or plaintext README
 		vscode.commands.executeCommand("markdown.showPreview", uri, { locked: true });
 	} else if (extension == ".html" || extension == ".htm") {
 		// some packages (e.g. tinyendian) have HTML READMEs
-		let panel = vscode.window.createWebviewPanel(
+		const panel = vscode.window.createWebviewPanel(
 			"dubReadme",
 			(packageName ? packageName + " " : "") + path.basename(uri.path),
 			vscode.ViewColumn.Active,
@@ -978,7 +980,7 @@ async function previewDubReadme(dir: vscode.Uri, uri: vscode.Uri, useRichPreview
 				retainContextWhenHidden: false,
 			},
 		);
-		let bytes = await vscode.workspace.fs.readFile(uri);
+		const bytes = await vscode.workspace.fs.readFile(uri);
 		panel.webview.html = simpleBytesToString(bytes);
 	} else if (extension == ".rst") {
 		if (vscode.extensions.getExtension("lextudio.restructuredtext")) {
@@ -999,7 +1001,7 @@ function openReadableTextFile(uri: vscode.Uri) {
 }
 
 function getDubPreviewDescription(filename: string): string | undefined {
-	let extension = path.extname(filename).toLowerCase();
+	const extension = path.extname(filename).toLowerCase();
 	switch (extension) {
 		case ".md":
 		case ".markdown":
@@ -1020,7 +1022,7 @@ function getDubPreviewDescription(filename: string): string | undefined {
 }
 
 function isDubReadmePreviewable(filename: string): boolean {
-	let extension = path.extname(filename).toLowerCase();
+	const extension = path.extname(filename).toLowerCase();
 	switch (extension) {
 		case ".md":
 		case ".markdown":

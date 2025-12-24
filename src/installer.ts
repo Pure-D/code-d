@@ -7,10 +7,10 @@ import { config, extensionContext, hideNextPotentialConfigUpdateWarning } from "
 import { AxiosResponse } from "axios";
 import { Readable } from "stream";
 
-var rimraf = require("rimraf");
-var AdmZip = require("adm-zip");
-var async = require("async");
-var mkdirp = require("mkdirp");
+import * as rimraf from "rimraf";
+import * as AdmZip from "adm-zip";
+import * as async from "async";
+import * as mkdirp from "mkdirp";
 
 function gitPath() {
 	return vscode.workspace.getConfiguration("git").get("path", "git") || "git";
@@ -28,7 +28,7 @@ export function determineOutputFolder(): string {
 	}
 }
 
-var installationLog: vscode.OutputChannel;
+let installationLog: vscode.OutputChannel;
 const installationTitle = "code-d/serve-d installation progress";
 
 export function getInstallOutput(): vscode.OutputChannel {
@@ -40,12 +40,12 @@ export function getInstallOutput(): vscode.OutputChannel {
 	return installationLog;
 }
 
-export function downloadFileInteractive(url: string, title: string, aborted: Function): Thenable<Readable> {
-	let progress: vscode.Progress<any> | undefined;
+export function downloadFileInteractive(url: string, title: string, aborted: () => void): Thenable<Readable> {
+	let progress: vscode.Progress<{ message: string; increment: number }> | undefined;
 	let cancel: vscode.CancellationToken | undefined;
-	let done: Function | false | undefined;
+	let done: () => void | false | undefined;
 
-	let stream = reqType("stream")
+	const stream = reqType("stream")
 		.get<Readable>(url)
 		.then((body): Readable => {
 			// manually aborting request object because we are consuming a stream, otherwise it would try to "reject" an already resolved promise
@@ -59,7 +59,7 @@ export function downloadFileInteractive(url: string, title: string, aborted: Fun
 				console.error("failed registering cancel token");
 			}
 
-			let len = parseInt(body.headers["Content-Length"] || body.headers["content-length"] || "0");
+			const len = parseInt(body.headers["Content-Length"] || body.headers["content-length"] || "0");
 			if (len == 0) return body.data;
 
 			let totalPercent: number = 0;
@@ -68,7 +68,7 @@ export function downloadFileInteractive(url: string, title: string, aborted: Fun
 			console.log(body.data);
 			return body.data
 				.on("data", (chunk) => {
-					let increment = chunk.length / len;
+					const increment = chunk.length / len;
 					totalPercent += increment;
 					if (progress)
 						progress.report({
@@ -118,7 +118,7 @@ export interface Release {
 }
 
 const nightlyReleaseId = 20717582;
-let servedVersionCache = {
+const servedVersionCache = {
 	release: <Release | undefined>undefined,
 	channel: "",
 };
@@ -132,7 +132,7 @@ export function findLatestServeD(force: boolean = false, channel?: string): Then
 
 	if (servedVersionCache.channel == channel) return Promise.resolve(servedVersionCache.release);
 
-	let randomUpdateReduction = config(null).get("smartServedUpdates", true);
+	const randomUpdateReduction = config(null).get("smartServedUpdates", true);
 	if (randomUpdateReduction && channel == "stable" && !force) {
 		if (Math.floor(Math.random() * 4) == 0) {
 			// only update approximately every 4th user/time running on stable.
@@ -146,7 +146,7 @@ export function findLatestServeD(force: boolean = false, channel?: string): Then
 			return Promise.resolve(undefined);
 		}
 	}
-	let timeout = force ? 8000 : 3000;
+	const timeout = force ? 8000 : 3000;
 
 	if (channel == "nightly") {
 		return fetchNightlyRelease(timeout);
@@ -174,16 +174,16 @@ async function fetchNightlyRelease(timeout: number): Promise<Release | undefined
 		return undefined;
 	}
 
-	let body = res.data;
+	const body = res.data;
 
 	if (typeof body != "object") return undefined;
 
-	var assets = body.assets;
+	const assets = body.assets;
 	// reverse sort (largest date first)
 	assets.sort((a, b) => b.name.localeCompare(a.name));
 
-	let targetAsset = findFirstMatchingAsset("nightly", assets);
-	let ret: Release = {
+	const targetAsset = findFirstMatchingAsset("nightly", assets);
+	const ret: Release = {
 		name: "nightly",
 		asset: targetAsset,
 	};
@@ -194,7 +194,7 @@ async function fetchNightlyRelease(timeout: number): Promise<Release | undefined
 }
 
 async function fetchLatestTaggedRelease(channel: "stable" | "beta", timeout: number): Promise<Release | undefined> {
-	let res: AxiosResponse<any>;
+	let res: AxiosResponse<any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 	try {
 		res = await reqJson().get("https://api.github.com/repos/Pure-D/serve-d/releases", {
 			headers: {
@@ -207,13 +207,13 @@ async function fetchLatestTaggedRelease(channel: "stable" | "beta", timeout: num
 		return undefined;
 	}
 
-	let body = res.data;
+	const body = res.data;
 
 	if (!Array.isArray(body)) return undefined;
 
 	let numMatching = 0;
 
-	let ret: Release = {
+	const ret: Release = {
 		name: "master",
 	};
 
@@ -223,7 +223,7 @@ async function fetchLatestTaggedRelease(channel: "stable" | "beta", timeout: num
 
 		if (channel == "stable" && release.prerelease) continue;
 
-		let targetAsset = findFirstMatchingAsset(release.tag_name, release.assets);
+		const targetAsset = findFirstMatchingAsset(release.tag_name, release.assets);
 		if (!targetAsset) {
 			if (ret.name == "master") {
 				ret.name = release.tag_name;
@@ -261,7 +261,7 @@ function getSystemArch(): string {
 
 function findFirstMatchingAsset(name: string | "nightly", assets: ReleaseAsset[]): ReleaseAsset | undefined {
 	let os = <string>process.platform;
-	let arch = getSystemArch();
+	const arch = getSystemArch();
 
 	if (os == "win32") {
 		os = "windows";
@@ -310,13 +310,13 @@ function findFirstMatchingAsset(name: string | "nightly", assets: ReleaseAsset[]
 	}
 }
 
-export function updateAndInstallServeD(env: any): Thenable<boolean | undefined | "retry"> {
+export function updateAndInstallServeD(env: NodeJS.ProcessEnv): Thenable<boolean | undefined | "retry"> {
 	return vscode.window.withProgress(
 		{
 			location: vscode.ProgressLocation.Notification,
 			title: "Searching for updates...",
 		},
-		(progress, token) => {
+		() => {
 			return findLatestServeD(true).then((version): Thenable<boolean | undefined | "retry"> => {
 				if (version === undefined) {
 					const compile = "Compile";
@@ -329,13 +329,13 @@ export function updateAndInstallServeD(env: any): Thenable<boolean | undefined |
 							userSettings,
 						)
 						.then((option) => {
-							if (option == compile) return compileServeD("master")(env);
+							if (option == compile) return compileServeD("master", env);
 							else if (userSettings)
 								vscode.commands.executeCommand("workbench.action.openGlobalSettings");
 							return Promise.resolve(undefined);
 						});
 				} else if (!version.asset || config(null).get("forceCompileServeD", false)) {
-					return compileServeD("master")(env);
+					return compileServeD("master", env);
 				} else {
 					return installServeD(
 						[{ url: version.asset.browser_download_url, title: "Serve-D" }],
@@ -352,11 +352,11 @@ export function installServeD(
 	ref: string,
 ): (env: NodeJS.ProcessEnv) => Thenable<boolean | undefined | "retry"> {
 	if (urls.length == 0)
-		return (env: any) => {
+		return (env: NodeJS.ProcessEnv) => {
 			return vscode.window
 				.showErrorMessage("No precompiled serve-d binary for this platform/architecture", "Compile from source")
 				.then((r?: string) => {
-					if (r == "Compile from source") return compileServeD(ref)(env);
+					if (r == "Compile from source") return compileServeD(ref, env);
 					else return Promise.resolve(undefined);
 				});
 		};
@@ -390,22 +390,22 @@ export function installServeD(
 			});
 	}
 
-	return (env: any) =>
+	return (env: NodeJS.ProcessEnv) =>
 		new Promise((done) => {
 			getInstallOutput().show(true);
-			var outputFolder = determineOutputFolder();
+			const outputFolder = determineOutputFolder();
 			mkdirp.sync(outputFolder);
-			var finalDestination = path.join(outputFolder, "serve-d" + (process.platform == "win32" ? ".exe" : ""));
+			const finalDestination = path.join(outputFolder, "serve-d" + (process.platform == "win32" ? ".exe" : ""));
 			installationLog.appendLine("Installing into " + outputFolder);
 			if (!fs.existsSync(outputFolder)) fs.mkdirSync(outputFolder);
 			if (fs.existsSync(finalDestination)) rimraf.sync(finalDestination);
-			async.each(urls, installServeDEntry(outputFolder), async function (err: any) {
+			async.each(urls, installServeDEntry.bind(null, outputFolder), async function (err) {
 				if (err) {
-					let r: string | undefined = await vscode.window.showErrorMessage(
+					const r: string | undefined = await vscode.window.showErrorMessage(
 						"Failed to download release",
 						"Compile from source",
 					);
-					if (r == "Compile from source") return done(compileServeD(ref)(env));
+					if (r == "Compile from source") return done(compileServeD(ref, env));
 					else return done(undefined);
 				} else {
 					hideNextPotentialConfigUpdateWarning();
@@ -417,248 +417,244 @@ export function installServeD(
 		});
 }
 
-function installServeDEntry(outputFolder: string): (data: { url: string; title: string }, cb: Function) => any {
-	return async ({ url, title }, cb: Function) => {
-		installationLog.appendLine("Downloading from " + url + " into " + outputFolder);
-		var ext = url.endsWith(".tar.xz") ? ".tar.xz" : url.endsWith(".tar.gz") ? ".tar.gz" : path.extname(url);
-		var fileName = path.basename(url);
-		var outputPath = path.join(outputFolder, fileName);
-		let aborted = false;
-		let stream = await downloadFileInteractive(url, title + " Download", () => {
-			aborted = true;
-			installationLog.appendLine("Aborted download");
-			fs.unlink(outputPath, function () {});
-		});
+async function installServeDEntry(
+	outputFolder: string,
+	{ url, title }: { url: string; title: string },
+	cb: (error: Error | number | null) => void,
+): Promise<void> {
+	installationLog.appendLine("Downloading from " + url + " into " + outputFolder);
+	const ext = url.endsWith(".tar.xz") ? ".tar.xz" : url.endsWith(".tar.gz") ? ".tar.gz" : path.extname(url);
+	const fileName = path.basename(url);
+	const outputPath = path.join(outputFolder, fileName);
+	let aborted = false;
+	const stream = await downloadFileInteractive(url, title + " Download", () => {
+		aborted = true;
+		installationLog.appendLine("Aborted download");
+		fs.unlink(outputPath, function () {});
+	});
 
-		stream.pipe(fs.createWriteStream(outputPath)).on("finish", () => {
-			if (aborted) return;
-			installationLog.appendLine("Extracting " + fileName);
-			if (ext == ".zip") {
+	stream.pipe(fs.createWriteStream(outputPath)).on("finish", () => {
+		if (aborted) return;
+		installationLog.appendLine("Extracting " + fileName);
+		if (ext == ".zip") {
+			try {
+				new AdmZip(outputPath).extractAllTo(outputFolder);
 				try {
-					new AdmZip(outputPath).extractAllTo(outputFolder);
-					try {
-						installationLog.appendLine("Deleting " + outputPath);
-						fs.unlink(outputPath, (err) => {
-							if (err) installationLog.appendLine("Failed to delete " + outputPath);
-						});
-					} catch (e) {
-						vscode.window.showErrorMessage("Failed to delete temporary file: " + outputPath);
-					}
-					cb();
+					installationLog.appendLine("Deleting " + outputPath);
+					fs.unlink(outputPath, (err) => {
+						if (err) installationLog.appendLine("Failed to delete " + outputPath);
+					});
 				} catch (e) {
-					return cb(e);
+					vscode.window.showErrorMessage("Failed to delete temporary file: " + outputPath);
+					console.error(e);
 				}
-			} else if (ext == ".tar.xz" || ext == ".tar.gz") {
-				var mod = ext == ".tar.xz" ? "J" : "z";
-				installationLog.appendLine("> tar xvf" + mod + " " + fileName);
-				ChildProcess.spawn("tar", ["xvf" + mod, fileName], {
-					cwd: outputFolder,
-				}).on("exit", function (code) {
-					if (code != 0) {
-						return cb(code);
-					}
-					try {
-						installationLog.appendLine("Deleting " + outputPath);
-						fs.unlink(outputPath, (err) => {
-							if (err) installationLog.appendLine("Failed to delete " + outputPath);
-						});
-					} catch (e) {
-						vscode.window.showErrorMessage("Failed to delete temporary file: " + outputPath);
-					}
-					return cb();
-				});
+				cb(null);
+			} catch (e) {
+				return cb(e instanceof Error ? e : 1);
 			}
-		});
-	};
+		} else if (ext == ".tar.xz" || ext == ".tar.gz") {
+			const mod = ext == ".tar.xz" ? "J" : "z";
+			installationLog.appendLine("> tar xvf" + mod + " " + fileName);
+			ChildProcess.spawn("tar", ["xvf" + mod, fileName], {
+				cwd: outputFolder,
+			}).on("exit", function (code) {
+				if (code != 0) {
+					return cb(code);
+				}
+				try {
+					installationLog.appendLine("Deleting " + outputPath);
+					fs.unlink(outputPath, (err) => {
+						if (err) installationLog.appendLine("Failed to delete " + outputPath);
+					});
+				} catch (e) {
+					vscode.window.showErrorMessage("Failed to delete temporary file: " + outputPath);
+					console.error(e);
+				}
+				return cb(null);
+			});
+		}
+	});
 }
 
 export function extractServedBuiltDate(log: string): Date | false {
-	var parsed = /Built: \w+\s+(\w+)\s+(\d+)\s+(\d+:\d+:\d+)\s+(\d+)/.exec(log);
+	const parsed = /Built: \w+\s+(\w+)\s+(\d+)\s+(\d+:\d+:\d+)\s+(\d+)/.exec(log);
 	if (!parsed) return false;
-	var month = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"].indexOf(
+	const month = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"].indexOf(
 		parsed[1].toLowerCase(),
 	);
 	if (month < 0) return false;
-	var date = parseInt(parsed[2]);
-	var parts = parsed[3].split(":");
-	var year = parseInt(parsed[4]);
-	var hour = parseInt(parts[0]);
-	var minute = parseInt(parts[1]);
-	var second = parseInt(parts[2]);
+	const date = parseInt(parsed[2]);
+	const parts = parsed[3].split(":");
+	const year = parseInt(parsed[4]);
+	const hour = parseInt(parts[0]);
+	const minute = parseInt(parts[1]);
+	const second = parseInt(parts[2]);
 	if (isNaN(year) || isNaN(date) || isNaN(hour) || isNaN(minute) || isNaN(second)) return false;
 	return new Date(Date.UTC(year, month, date, hour, minute, second));
 }
 
-export function compileServeD(ref?: string): (env: NodeJS.ProcessEnv) => Promise<boolean | undefined | "retry"> {
-	return (env: any) =>
-		new Promise<boolean | undefined | "retry">(async () => {
-			var outputFolder = determineOutputFolder();
-			mkdirp.sync(outputFolder);
-			const dubPath = config(null).get("dubPath", "dub");
-			const dmdPath = config(null).get("dmdPath", undefined);
-			const dubCompiler = config(null).get("dubCompiler", undefined);
-			env["DFLAGS"] = "-O -release";
-			let buildArgs = ["build"];
-			if (process.platform == "win32") {
-				env["DFLAGS"] = "-release";
-				buildArgs.push("--arch=x86_mscoff");
-			}
-			if (dubCompiler) {
-				buildArgs.push("--compiler=" + dubCompiler);
-			} else if (dubPath != "dub" && dmdPath) {
-				// explicit dub path specified, it won't automatically find dmd if it's not in the same folder so we just pass the path if we have it
-				buildArgs.push("--compiler=" + dmdPath);
-			}
-			await compileDependency(
-				outputFolder,
-				"serve-d",
-				"https://github.com/Pure-D/serve-d.git",
-				[[dubPath, buildArgs]],
-				env,
-				ref,
-			);
-			var finalDestination = path.join(
-				outputFolder,
-				"serve-d",
-				"serve-d" + (process.platform == "win32" ? ".exe" : ""),
-			);
+export async function compileServeD(
+	ref: string | undefined,
+	env: NodeJS.ProcessEnv,
+): Promise<boolean | undefined | "retry"> {
+	const outputFolder = determineOutputFolder();
+	mkdirp.sync(outputFolder);
+	const dubPath = config(null).get("dubPath", "dub");
+	const dmdPath = config(null).get("dmdPath", undefined);
+	const dubCompiler = config(null).get("dubCompiler", undefined);
+	env["DFLAGS"] = "-O -release";
+	const buildArgs = ["build"];
+	if (process.platform == "win32") {
+		env["DFLAGS"] = "-release";
+		buildArgs.push("--arch=x86_mscoff");
+	}
+	if (dubCompiler) {
+		buildArgs.push("--compiler=" + dubCompiler);
+	} else if (dubPath != "dub" && dmdPath) {
+		// explicit dub path specified, it won't automatically find dmd if it's not in the same folder so we just pass the path if we have it
+		buildArgs.push("--compiler=" + dmdPath);
+	}
+	await compileDependency(
+		outputFolder,
+		"serve-d",
+		"https://github.com/Pure-D/serve-d.git",
+		[[dubPath, buildArgs]],
+		env,
+		ref,
+	);
+	const finalDestination = path.join(
+		outputFolder,
+		"serve-d",
+		"serve-d" + (process.platform == "win32" ? ".exe" : ""),
+	);
 
-			hideNextPotentialConfigUpdateWarning();
-			await config(null).update("servedPath", finalDestination, true);
-			return true;
-		});
+	hideNextPotentialConfigUpdateWarning();
+	await config(null).update("servedPath", finalDestination, true);
+	return true;
 }
 
-function spawnCommand(cmd: string, args: string[], options: ChildProcess.SpawnOptions, cb: Function, onLog?: Function) {
-	function log(chunk: any) {
-		var dat = chunk.toString() || "null";
+function spawnCommand(
+	cmd: string,
+	args: string[],
+	options: ChildProcess.SpawnOptions,
+	onLog?: (line: string) => void,
+): Promise<number> {
+	function log(chunk: unknown) {
+		const dat = "" + chunk || "null";
 		installationLog.append(dat);
 		if (typeof onLog === "function") onLog(dat);
 	}
 
 	installationLog.appendLine("> " + cmd + " " + args.join(" "));
-	try {
-		var proc = ChildProcess.spawn(cmd, args, options);
-		if (proc.stdout) proc.stdout.on("data", log);
-		if (proc.stderr) proc.stderr.on("data", log);
+	return new Promise((cb) => {
+		try {
+			const proc = ChildProcess.spawn(cmd, args, options);
+			if (proc.stdout) proc.stdout.on("data", log);
+			if (proc.stderr) proc.stderr.on("data", log);
 
-		proc.on("error", function (error: any) {
-			if ((error ? error.message : "").toString().endsWith("ENOENT")) {
-				installationLog.appendLine(
-					"The program '" +
-						cmd +
-						"' could not be found! Did you perhaps not install it or misconfigure some path?",
-				);
-			} else {
-				installationLog.appendLine("An internal error occured while running the command: " + error);
-			}
-			cb(-1);
-		});
-		proc.on("exit", function (d: any) {
-			return cb(typeof d == "number" ? d : d.code || -1);
-		});
-	} catch (e) {
-		installationLog.appendLine("An internal error occured while running the command: " + e);
-		cb(-2);
-	}
+			proc.on("error", function (error: Error) {
+				if (((error?.message || "") + "").endsWith("ENOENT")) {
+					installationLog.appendLine(
+						"The program '" +
+							cmd +
+							"' could not be found! Did you perhaps not install it or misconfigure some path?",
+					);
+				} else {
+					installationLog.appendLine("An internal error occured while running the command: " + error);
+				}
+				cb(-1);
+			});
+			proc.on("exit", function (d: number | null | { code: number }) {
+				return cb(typeof d == "number" ? d : d?.code || -1);
+			});
+		} catch (e) {
+			installationLog.appendLine("An internal error occured while running the command: " + e);
+			cb(-2);
+		}
+	});
 }
 
-export function compileDependency(
+export async function compileDependency(
 	cwd: string,
 	name: string,
 	gitURI: string,
 	commands: [string, string[]][],
-	env: any,
+	env: NodeJS.ProcessEnv,
 	ref?: string,
-): Promise<any> {
-	return new Promise<any>((callback) => {
-		if (!installationLog) {
-			installationLog = vscode.window.createOutputChannel(installationTitle);
-			extensionContext.subscriptions.push(installationLog);
+): Promise<void> {
+	if (!installationLog) {
+		installationLog = vscode.window.createOutputChannel(installationTitle);
+		extensionContext.subscriptions.push(installationLog);
+	}
+	installationLog.show(true);
+	installationLog.appendLine("Installing into " + cwd);
+	const error = function (err: number) {
+		installationLog.appendLine("Failed to install " + name + " (Error code " + err + ")");
+	};
+	const newCwd = path.join(cwd, name);
+
+	if (fs.existsSync(newCwd)) {
+		installationLog.appendLine("Removing old version");
+		const success = await rimraf.rimraf(newCwd);
+		if (!success) installationLog.appendLine("Old folder " + newCwd + " was not able to be deleted fully");
+		installationLog.appendLine("Removed old version");
+	}
+
+	const git = gitPath();
+	const err = await spawnCommand(git, ["clone", "--recursive", gitURI, name], { cwd: cwd, env: env });
+	if (err !== 0) return error(err);
+	if (ref) commands.unshift([git, ["checkout", ref]]);
+
+	for (const command of commands) {
+		let failedArch = false;
+		let prevLog = "";
+		let err = await spawnCommand(
+			command[0],
+			command[1],
+			{
+				cwd: newCwd,
+			},
+			(log: string) => {
+				// concat with previous log just to make it very unlikely to split in middle because of buffering
+				if ((prevLog + log).toLowerCase().indexOf("unsupported architecture: x86_mscoff") != -1) {
+					failedArch = true;
+				}
+				prevLog = log;
+			},
+		);
+
+		const index = command[1].indexOf("--arch=x86_mscoff"); // must be this format for it to work
+		if (err && failedArch && command[0] == "dub" && index != -1) {
+			// failed because we tried to build with x86_mscoff but it wasn't available (LDC was probably used)
+			// try again with x86
+			command[1][index] = "--arch=x86";
+			installationLog.appendLine("Retrying with --arch=x86...");
+			err = await spawnCommand(command[0], command[1], {
+				cwd: newCwd,
+			});
+
+			if (err) {
+				return error(err);
+			}
+		} else if (err) {
+			return error(err);
 		}
-		installationLog.show(true);
-		installationLog.appendLine("Installing into " + cwd);
-		var error = function (err: any) {
-			installationLog.appendLine("Failed to install " + name + " (Error code " + err + ")");
-		};
-		var newCwd = path.join(cwd, name);
-		var startCompile = () => {
-			const git = gitPath();
-			spawnCommand(git, ["clone", "--recursive", gitURI, name], { cwd: cwd, env: env }, (err: any) => {
-				if (err !== 0) return error(err);
-				if (ref) commands.unshift([git, ["checkout", ref]]);
-				async.eachSeries(
-					commands,
-					function (command: [string, string[]], cb: Function) {
-						var failedArch = false;
-						var prevLog = "";
-						spawnCommand(
-							command[0],
-							command[1],
-							{
-								cwd: newCwd,
-							},
-							function (err: any) {
-								var index = command[1].indexOf("--arch=x86_mscoff"); // must be this format for it to work
-								if (err && failedArch && command[0] == "dub" && index != -1) {
-									// failed because we tried to build with x86_mscoff but it wasn't available (LDC was probably used)
-									// try again with x86
-									command[1][index] = "--arch=x86";
-									installationLog.appendLine("Retrying with --arch=x86...");
-									spawnCommand(
-										command[0],
-										command[1],
-										{
-											cwd: newCwd,
-										},
-										function (err: any) {
-											cb(err);
-										},
-									);
-								} else cb(err);
-							},
-							function (log: string) {
-								// concat with previous log just to make it very unlikely to split in middle because of buffering
-								if (
-									(prevLog + log).toLowerCase().indexOf("unsupported architecture: x86_mscoff") != -1
-								) {
-									failedArch = true;
-								}
-								prevLog = log;
-							},
-						);
-					},
-					function (err: any) {
-						if (err) return error(err);
-						installationLog.appendLine("Done compiling");
-						callback(undefined);
-					},
-				);
-			});
-		};
-		if (fs.existsSync(newCwd)) {
-			installationLog.appendLine("Removing old version");
-			rimraf(newCwd, function (e: any) {
-				if (e) installationLog.appendLine(e.toString());
-				installationLog.appendLine("Removed old version");
-				startCompile();
-			});
-		} else startCompile();
-	});
+	}
+	installationLog.appendLine("Done compiling");
 }
 
 export function parseSimpleSemver(a: string): [number, number, number, (string | number)[]] {
 	if (a.startsWith("~")) return [0, 0, 0, [a]];
-	if (a.startsWith("v")) a = a.substr(1);
+	if (a.startsWith("v")) a = a.substring(1);
 
 	const plus = a.indexOf("+");
-	if (plus != -1) a = a.substr(0, plus);
+	if (plus != -1) a = a.substring(0, plus);
 
 	const hyphen = a.indexOf("-");
 	let preRelease: (string | number)[] = [];
 	if (hyphen != -1) {
-		let part = a.substr(hyphen + 1);
-		a = a.substr(0, hyphen);
+		const part = a.substring(hyphen + 1);
+		a = a.substring(0, hyphen);
 
 		preRelease = part.split(".");
 		for (let i = 0; i < preRelease.length; i++) {

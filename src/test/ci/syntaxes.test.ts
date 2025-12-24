@@ -14,16 +14,14 @@ function res(pathStr: string): string {
 }
 
 const wasmBin = fs.readFileSync(res("node_modules/vscode-oniguruma/release/onig.wasm")).buffer;
-const vscodeOnigurumaLib = oniguruma.loadWASM(wasmBin).then(() => {
-	return {
-		createOnigScanner: function (patterns: any) {
-			return new oniguruma.OnigScanner(patterns);
-		},
-		createOnigString: function (s: any) {
-			return new oniguruma.OnigString(s);
-		},
-	};
-});
+const vscodeOnigurumaLib = oniguruma.loadWASM(wasmBin).then(() => ({
+	createOnigScanner: function (patterns: string[]) {
+		return new oniguruma.OnigScanner(patterns);
+	},
+	createOnigString: function (s: string) {
+		return new oniguruma.OnigString(s);
+	},
+}));
 
 function readFile(pathStr: string): Promise<Buffer> {
 	return new Promise((resolve, reject) => {
@@ -65,7 +63,7 @@ function testSyntaxes(grammar: vsctm.IGrammar, folder: string, ext: string) {
 
 					if (!file.endsWith(ext)) continue;
 
-					let ruleStack = vsctm.INITIAL;
+					const ruleStack = vsctm.INITIAL;
 
 					const text = await readFile(path.join(folder, file));
 					const lines = text.toString().split(/\r?\n/g);

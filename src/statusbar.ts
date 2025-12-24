@@ -2,10 +2,10 @@ import * as vscode from "vscode";
 import * as path from "path";
 import { ServeD, config } from "./extension";
 
-var dubLoaded = false;
+let dubLoaded = false;
 
 export function setupDub(served: ServeD): vscode.Disposable {
-	let subscriptions: vscode.Disposable[] = [
+	const subscriptions: vscode.Disposable[] = [
 		new vscode.Disposable(() => {
 			dubLoaded = false;
 		}),
@@ -23,9 +23,9 @@ export function setupDub(served: ServeD): vscode.Disposable {
 }
 
 export function isStatusbarRelevantDocument(document: vscode.TextDocument): boolean {
-	var language = document.languageId;
+	const language = document.languageId;
 	if (language == "d" || language == "dml" || language == "diet") return true;
-	var filename = path.basename(document.fileName.toLowerCase());
+	const filename = path.basename(document.fileName.toLowerCase());
 	if (filename == "dub.json" || filename == "dub.sdl") return true;
 	return false;
 }
@@ -159,8 +159,8 @@ export class StartupProgress {
 	workspace: string | undefined;
 
 	progress: vscode.Progress<{ message?: string; increment?: number }> | undefined;
-	resolve: Function | undefined;
-	reject: Function | undefined;
+	resolve: (() => void) | undefined;
+	reject: (() => void) | undefined;
 
 	constructor() {}
 
@@ -175,9 +175,9 @@ export class StartupProgress {
 				location: vscode.ProgressLocation.Window,
 				title: "D",
 			},
-			(progress, token) => {
+			(progress) => {
 				this.progress = progress;
-				return new Promise((resolve, reject) => {
+				return new Promise<void>((resolve, reject) => {
 					this.resolve = resolve;
 					this.reject = reject;
 				});
@@ -198,7 +198,7 @@ export class StartupProgress {
 	globalStep(step: number, max: number, title: string, msg: string) {
 		if (!this.startedGlobal || !this.progress) return;
 
-		let percent = step / (max || 1);
+		const percent = step / (max || 1);
 
 		this.progress.report({
 			message: title + " (" + formatPercent(percent) + "): " + msg,
