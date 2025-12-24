@@ -43,7 +43,7 @@ export function getInstallOutput(): vscode.OutputChannel {
 export function downloadFileInteractive(url: string, title: string, aborted: () => void): Thenable<Readable> {
 	let progress: vscode.Progress<{ message: string; increment: number }> | undefined;
 	let cancel: vscode.CancellationToken | undefined;
-	let done: () => void | false | undefined;
+	let done: (() => void) | false | undefined;
 
 	const stream = reqType("stream")
 		.get<Readable>(url)
@@ -93,8 +93,8 @@ export function downloadFileInteractive(url: string, title: string, aborted: () 
 		(_progress, _cancel) => {
 			progress = _progress;
 			cancel = _cancel;
-			return new Promise((resolve) => {
-				if (done === false) return resolve(undefined);
+			return new Promise<void>((resolve) => {
+				if (done === false) return resolve();
 				done = resolve;
 			});
 		},

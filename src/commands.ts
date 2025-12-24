@@ -105,7 +105,7 @@ export function registerClientCommands(context: vscode.ExtensionContext, client:
 			client.sendRequest<string>("served/getCompiler").then(
 				() => {
 					const settingCompiler = config(null).get("dubCompiler", undefined);
-					const extra: (vscode.QuickPickItem & { value: string })[] = settingCompiler
+					const extra: (vscode.QuickPickItem & { value: string; custom?: true })[] = settingCompiler
 						? [{ label: settingCompiler, value: settingCompiler, description: "(from User Settings)" }]
 						: [];
 					showQuickPickWithInput(
@@ -113,7 +113,7 @@ export function registerClientCommands(context: vscode.ExtensionContext, client:
 							extra.concat(
 								compilers
 									.filter((a) => a.has && a.path)
-									.map<vscode.QuickPickItem & { value: string; custom?: true }>((c) => ({
+									.map<(typeof extra)[0]>((c) => ({
 										label: c.has + "",
 										value: c.path ?? c.has + "",
 										description: makeCompilerDescription(c),
