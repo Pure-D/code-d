@@ -1469,7 +1469,7 @@
 		"vscode:prepublish": "tsc -p ./",
 		"vscode:uninstall": "node ./out/uninstall.js",
 		"compile": "tsc -p ./",
-		"lint": "eslint src; prettier --check .",
+		"lint": "tsc -p ./; eslint src; prettier --check .",
 		"watch": "tsc -watch -p ./",
 		"pretest": "npm run compile",
 		"test": "node ./out/test/runTest.js",

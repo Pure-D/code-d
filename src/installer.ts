@@ -11,6 +11,7 @@ import * as rimraf from "rimraf";
 import * as AdmZip from "adm-zip";
 import * as async from "async";
 import * as mkdirp from "mkdirp";
+import { getBundledDCDUrl, nightlyReleaseId } from "./_bundled_versions";
 
 function gitPath() {
 	return vscode.workspace.getConfiguration("git").get("path", "git") || "git";
@@ -117,7 +118,6 @@ export interface Release {
 	asset?: ReleaseAsset;
 }
 
-const nightlyReleaseId = 20717582;
 const servedVersionCache = {
 	release: <Release | undefined>undefined,
 	channel: "",
@@ -273,14 +273,14 @@ function findFirstMatchingAsset(name: string | "nightly", assets: ReleaseAsset[]
 		for (let i = 0; i < assets.length; i++) {
 			const asset = assets[i];
 			let test = asset.name;
-			if (test.startsWith("serve-d")) test = test.substr("serve-d".length);
-			if (test.startsWith("-") || test.startsWith("_")) test = test.substr(1);
+			if (test.startsWith("serve-d")) test = test.substring("serve-d".length);
+			if (test.startsWith("-") || test.startsWith("_")) test = test.substring(1);
 
 			if (!test.startsWith(os)) continue;
-			test = test.substr(os.length);
-			if (test.startsWith("-") || test.startsWith("_")) test = test.substr(1);
-			if (test.startsWith("nightly")) test = test.substr("nightly".length);
-			if (test.startsWith("-") || test.startsWith("_")) test = test.substr(1);
+			test = test.substring(os.length);
+			if (test.startsWith("-") || test.startsWith("_")) test = test.substring(1);
+			if (test.startsWith("nightly")) test = test.substring("nightly".length);
+			if (test.startsWith("-") || test.startsWith("_")) test = test.substring(1);
 
 			// remaining:
 			// either x86_64-20191017-4b5427.tar.xz
@@ -291,18 +291,18 @@ function findFirstMatchingAsset(name: string | "nightly", assets: ReleaseAsset[]
 		}
 		return undefined;
 	} else {
-		if (name.startsWith("v")) name = name.substr(1);
+		if (name.startsWith("v")) name = name.substring(1);
 
 		for (let i = 0; i < assets.length; i++) {
 			const asset = assets[i];
 			let test = asset.name;
-			if (test.startsWith("serve-d")) test = test.substr("serve-d".length);
-			if (test.startsWith("-") || test.startsWith("_")) test = test.substr(1);
-			if (test.startsWith(name)) test = test.substr(name.length);
-			if (test.startsWith("-") || test.startsWith("_")) test = test.substr(1);
+			if (test.startsWith("serve-d")) test = test.substring("serve-d".length);
+			if (test.startsWith("-") || test.startsWith("_")) test = test.substring(1);
+			if (test.startsWith(name)) test = test.substring(name.length);
+			if (test.startsWith("-") || test.startsWith("_")) test = test.substring(1);
 
 			const dot = test.indexOf(".");
-			if (dot != -1) test = test.substr(0, dot);
+			if (dot != -1) test = test.substring(0, dot);
 
 			if (test == `${os}-${arch}` || test == os) return asset;
 		}
@@ -362,33 +362,8 @@ export function installServeD(
 		};
 
 	// add DCD binaries here as well
-	if (process.platform == "linux" && process.arch == "x64") {
-		urls.push({
-			url: "https://github.com/dlang-community/DCD/releases/download/v0.15.2/dcd-v0.15.2-linux-x86_64.tar.gz",
-			title: "DCD",
-		});
-	} else if (process.platform == "darwin" && process.arch == "x64") {
-		urls.push({
-			url: "https://github.com/dlang-community/DCD/releases/download/v0.15.2/dcd-v0.15.2-osx-x86_64.tar.gz",
-			title: "DCD",
-		});
-	} else if (process.platform == "darwin" && process.arch == "arm64") {
-		urls.push({
-			url: "https://github.com/dlang-community/DCD/releases/download/v0.15.2/dcd-v0.15.2-osx-arm64.tar.gz",
-			title: "DCD",
-		});
-	} else if (process.platform == "win32") {
-		if (process.arch == "x64")
-			urls.push({
-				url: "https://github.com/dlang-community/DCD/releases/download/v0.15.2/dcd-v0.15.2-windows-x86_64.zip",
-				title: "DCD",
-			});
-		else
-			urls.push({
-				url: "https://github.com/dlang-community/DCD/releases/download/v0.15.2/dcd-v0.15.2-windows-x86.zip",
-				title: "DCD",
-			});
-	}
+	const bundledDCD = getBundledDCDUrl();
+	if (bundledDCD) urls.push({ url: bundledDCD, title: "DCD" });
 
 	return (env: NodeJS.ProcessEnv) =>
 		new Promise((done) => {
