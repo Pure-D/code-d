@@ -3,7 +3,7 @@ export const nightlyReleaseId = 20717582;
 
 /// Gets the URL for the binary tarball containing DCD, which is preloaded alongside serve-d to ensure DCD is installed
 export function getBundledDCDUrl(): string | undefined {
-	const latest = "0.15.2";
+	const latest = "0.16.0";
 
 	if (process.platform === "linux" && process.arch === "x64") {
 		return `https://github.com/dlang-community/DCD/releases/download/v${latest}/dcd-v${latest}-linux-x86_64.tar.gz`;
