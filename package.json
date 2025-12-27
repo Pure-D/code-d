@@ -914,6 +914,12 @@
 						"scope": "resource",
 						"default": true,
 						"markdownDescription": "Similar to `#d.enableDCDHighlight#`, but for simple cases, such as:\n\n- highlighting equivalent identifiers and text inside strings\n- on `return`, highlight the other `return` statements in the current function\n- on `switch`/`case`/`default` highlight the other switch-related control flow statements\n- on loops, `break`/`continue`, highlight break/continue/return\n- on `if`/`else`, highlight all if/if else/else blocks associated with the current if statement"
+					},
+					"d.enableInlayHints": {
+						"type": "boolean",
+						"scope": "resource",
+						"default": false,
+						"markdownDescription": "Enable inlay hints for showing resolved types, aliases, etc. inline where supported."
 					}
 				}
 			},
