@@ -8,14 +8,14 @@ jobs:
         name: "Release"
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@master
+            - uses: actions/checkout@v6
               with:
                   submodules: true
 
-            - name: Set Node.js 10.x
-              uses: actions/setup-node@master
+            - name: Set Node.js 22.x
+              uses: actions/setup-node@v6
               with:
-                  version: 14.x
+                  version: 22.x
 
             - name: npm install
               run: npm install
