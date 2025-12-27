@@ -36,7 +36,7 @@ To get a list of supported build and run operations for your project within VSCo
 
 You can copy the tasks into the special `.vscode/tasks.json` file by pressing the cog icon on the detected tasks. To quickly launch one of the configured tasks, press `Ctrl-Shift-B` or `Run Build Task` in the command palette to immediately run the build task or select from your custom defined list of build tasks.
 
-When you select a build task, for example `"Run <project name>"`, it will pop up in the integrated command line in VSCode:
+When you select a build task, for example `"dub: Run <project name>"`, it will pop up in the integrated command line in VSCode:
 
 ![command run output](images/build_run_output.png)
 

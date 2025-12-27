@@ -17,7 +17,7 @@ Discord chat
 
 [![Sponsor me on GitHub Sponsors](images/sponsor.png)](https://github.com/sponsors/WebFreak001)
 
-Donate for faster
+Support me for
 <br>
 development on
 <br>
@@ -26,6 +26,123 @@ code-d and serve-d
 </td>
 </tr>
 </table>
+
+# 0.25.0
+
+## IDE Features
+
+- Introduced a **project-wide symbol index**:
+  - Fast symbol search, references, and auto-import suggestions
+  - Fuzzy search support
+  - Auto-import while typing
+
+- Added **local symbol renaming** and improved reference finding.
+- Implemented **async project loading** for better responsiveness.
+- Added support for code folding (imports, functions, semantic blocks), improved document outlines, and LSP Inlay Hints.
+- Added D error link provider — makes compiler/mixin error messages clickable in the terminal.
+- Automatic continuation of doc comments and line comments
+
+## DUB & Project Management
+
+- Major **DUB integration overhaul**:
+  - Improved dependency resolution, linting, and error reporting
+  - Auto-download missing dependencies with confirmation
+  - Better handling of dependency versions, paths, and overrides
+  - Improved DUB schema validation (JSON + SDL)
+  - Added dependency sorting, deduplication, and fuzzy matching
+  - **DUB recipe editor GUI is now a separate extension** -> `webfreak.dub-editor`
+
+- Enhanced **dependency view UI**:
+  - Configurable click behavior
+  - Rich previews (README, CHANGELOG, LICENSE, RST)
+  - Right-click actions (open recipe, open on dpldocs, etc.)
+
+- Support for **dub.sdl formatting**, snippets, path completion, and validation.
+
+## Completions & Code Actions
+
+- Improved **auto-import suggestions**:
+  - Avoid duplicates
+  - Respect visibility and public imports
+  - Integrate snippet-based imports
+
+- Added many **new snippets**:
+  - Simple control flow snippets, feeling like auto-complete (`switch`, `with`, `scope`)
+  - Smart snippets for `if`/`else`, `try`/`catch`, `foreach` - appear depending on context
+
+- Added code actions:
+  - **Import sorting** (can be enabled automatically through `editor.codeActionsOnSave` -> `source.organizeImports`)
+  - Errorfix suggestions through "light bulbs" (e.g. on unknown symbol -> `import std.algorithm`)
+
+## Syntax Highlighting & Documentation
+
+- Major syntax highlighting improvements:
+  - Static `foreach`, casts, enums, interpolated strings
+  - Improved type, brace, semicolon, comment, and token handling
+
+- Added support for:
+  - Ddoc tables, colors, HTML, and trusted markdown
+  - Automatic continuation of doc and line comments
+
+- Fixed numerous long-standing highlighting edge cases.
+
+## Debugging, Diagnostics & Stability
+
+### Error Handling
+
+- Clickable compiler and mixin errors
+- Improved DMD/LDC/GDC error parsing
+- Clearer diagnostics for DUB, DCD, and D-Scanner failures
+- Added `served/getInfo` and extended diagnostic dump commands
+
+### Crash & Bug Fixes
+
+- Fixed crashes related to:
+  - DCD / D-Scanner
+  - JSON-RPC handling (editors outside vscode)
+  - Windows, BSD, macOS/ARM
+
+- Improved robustness of configuration loading and protocol handling
+- Reduced memory usage and GC pressure in RPC & indexing code
+
+## Configuration & UX Improvements
+
+- Revamped settings UX with better documentation
+- New settings:
+  - `d.ccdbPath`
+  - `d.dependencyClickBehavior`
+  - `d.dependencyTextDocumentFilter`
+  - `d.enableAutoImportCompletions`
+  - `d.enableDCDHighlight`
+  - `d.enableFallbackHighlight`
+  - `d.enableIndex`
+  - `d.enableInlayHints`
+  - `d.manyProjectsAllowList`
+  - `d.manyProjectsDenyList`
+  - `dscanner.excludedFiles`
+- Compiler selection is now machine-specific (better for remote dev like through SSH or WSL)
+- Improved startup behavior and reload notifications
+- Better handling of missing or partial LSP client capabilities
+
+## Internal Architecture & Maintenance
+
+- Major refactors:
+  - Merged `workspace-d` into `serve-d`
+  - Migrated protocol & RPC code from `painlessjson` to `mir-ion` (should include minor performance and memory improvements)
+  - Clean separation of protocol, serverbase, and indexing layers
+
+- Improved JSON-RPC implementation:
+  - Streaming responses (mostly unsupported in VSCode currently)
+  - Better error reporting
+  - Timeout and tracing support
+
+- Modernized codebase (ESLint, Prettier, autoformat, refactors)
+
+## Documentation & Ecosystem
+
+- Improved onboarding and walkthrough experience
+- Added Code of Conduct and updated sponsorship acknowledgements
+- Improved README, docs formatting, and links
 
 # 0.24.0
 

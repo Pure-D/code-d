@@ -32,7 +32,7 @@ Development
 
 [![Sponsor me on GitHub Sponsors](images/sponsor.png)](https://github.com/sponsors/WebFreak001)
 
-Donate for faster
+Support me for
 <br>
 development on
 <br>
@@ -41,6 +41,7 @@ code-d and serve-d
 </td>
 </tr>
 </table>
+
 Click a link below to open pages about certain topics.
 
 <!-- #include menu.md -->
