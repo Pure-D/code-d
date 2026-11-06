@@ -1,4 +1,5 @@
-/// Release ID for serve-d "nightly" release (API ID)
+/// Release ID for serve-d "nightly" release (API ID).
+/// The release object is from 2019, but its assets are replaced on every nightly build.
 export const nightlyReleaseId = 20717582;
 
 /// Gets the URL for the binary tarball containing DCD, which is preloaded alongside serve-d to ensure DCD is installed
