@@ -1514,7 +1514,7 @@
 		"@types/which": "^3.0.4",
 		"@vscode/test-electron": "^2.5.2",
 		"eslint": "^9.39.2",
-		"glob": "^13.0.0",
+		"glob": "^14.0.0",
 		"globals": "^16.5.0",
 		"husky": "^9.1.7",
 		"jiti": "^2.6.1",
