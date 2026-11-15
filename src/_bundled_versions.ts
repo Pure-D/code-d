@@ -1,5 +1,5 @@
 /// Release ID for serve-d "nightly" release (API ID)
-export const nightlyReleaseId = 20717582;
+export const nightlyReleaseId = 439662295;
 
 /// Gets the URL for the binary tarball containing DCD, which is preloaded alongside serve-d to ensure DCD is installed
 export function getBundledDCDUrl(): string | undefined {
