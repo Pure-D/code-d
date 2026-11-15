@@ -60,7 +60,7 @@ export function downloadFileInteractive(url: string, title: string, aborted: () 
 				console.error("failed registering cancel token");
 			}
 
-			const len = parseInt(body.headers["Content-Length"] || body.headers["content-length"] || "0");
+			const len = parseInt(body.headers["Content-Length"] as string || body.headers["content-length"] as string || "0");
 			if (len == 0) return body.data;
 
 			let totalPercent: number = 0;
