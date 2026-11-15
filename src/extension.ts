@@ -867,7 +867,7 @@ async function preStartup(context: vscode.ExtensionContext) {
 
 	const isLegacyBeta = config(null).get("betaStream", false);
 	const servedReleaseChannel = config(null).inspect("servedReleaseChannel");
-	let channelString = config(null).get("servedReleaseChannel", "stable");
+	let channelString = config(null).get("servedReleaseChannel", "nightly");
 
 	let reloading = false;
 	let started = false;

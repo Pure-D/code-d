@@ -2,7 +2,7 @@
 	"name": "code-d",
 	"displayName": "D Programming Language (code-d)",
 	"description": "auto-complete, snippets, linter and formatter for dlang",
-	"version": "0.23.2",
+	"version": "0.25.0",
 	"publisher": "webfreak",
 	"repository": {
 		"type": "git",
@@ -363,7 +363,7 @@
 					"d.servedReleaseChannel": {
 						"type": "string",
 						"scope": "application",
-						"default": "stable",
+						"default": "nightly",
 						"order": 1,
 						"enum": [
 							"stable",

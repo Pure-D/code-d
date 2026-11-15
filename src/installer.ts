@@ -124,7 +124,7 @@ const servedVersionCache = {
 };
 
 export function findLatestServeD(force: boolean = false, channel?: string): Thenable<Release | undefined> {
-	if (!channel) channel = config(null).get("servedReleaseChannel", "stable");
+	if (!channel) channel = config(null).get("servedReleaseChannel", "nightly");
 
 	if (channel == "frozen" && force) channel = "stable";
 
