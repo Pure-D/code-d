@@ -125,7 +125,7 @@ export interface Release {
 	asset?: ReleaseAsset;
 }
 
-const nightlyReleaseId = 20717582;
+const nightlyReleaseId = 439662295;
 let servedVersionCache = {
 	release: <Release | undefined>undefined,
 	channel: ""
