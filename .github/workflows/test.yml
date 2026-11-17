@@ -1,4 +1,4 @@
-name: Test ci folder
+name: Tests
 on: [push]
 
 jobs:
@@ -20,23 +20,23 @@ jobs:
               if: startsWith(matrix.os, 'ubuntu')
               run: /usr/bin/Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
 
-            - name: Set Node.js
+            - name: Set up Node.js
               uses: actions/setup-node@v7
               with:
                   node-version: lts/*
 
-            - name: npm install
+            - name: Install dependencies
               run: npm install
 
-            - name: typescript
+            - name: Build extensions
               run: npx tsc
 
-            - name: npm test
+            - name: Run testsuite
               env:
                   CODE_VERSION: ""
                   DISPLAY: ":99.0"
               run: npm test
 
-            - name: test grammar
+            - name: Test grammar
               if: startsWith(matrix.os, 'ubuntu')
               run: npm run grammar
