@@ -45,7 +45,7 @@ jobs:
       - name: Set up Node.js 22.x
         uses: actions/setup-node@v7
         with:
-          version: 22.x
+          node-version: 22.x
 
       - name: Install dependencies
         run: npm install
