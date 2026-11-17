@@ -34,17 +34,17 @@ jobs:
         run: git push -f origin nightly-ng
 
   publish:
-    name: "Release"
+    name: "Publish VSIX"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
         with:
-            submodules: true
+          submodules: true
 
-      - name: Set Node.js 22.x
+      - name: Set up Node.js 22.x
         uses: actions/setup-node@v7
         with:
-            version: 22.x
+          version: 22.x
 
       - name: Install dependencies
         run: npm install
