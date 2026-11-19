@@ -46,6 +46,12 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: 22.x
+      
+      - name: Set up AdvanceCOMP
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+          apt-get update
+          apt-get -y install advancecomp
 
       - name: Update version number
         run: |
@@ -67,6 +73,9 @@ jobs:
           dryRun: true
           pat: 'stub'
           preRelease: true
+      
+      - name: Recompress VSIX bundle
+        run: advzip -z4 ${{ steps.build-vsix.outputs.vsixPath }}
 
       - name: Publish nightly release
         uses: WebFreak001/deploy-nightly@master
