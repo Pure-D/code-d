@@ -11,7 +11,7 @@
 	"icon": "images/dlogo-square.png",
 	"license": "MIT",
 	"engines": {
-		"vscode": "^1.93.0"
+		"vscode": "^1.105.0"
 	},
 	"categories": [
 		"Programming Languages",
@@ -1491,7 +1491,7 @@
 		"@xmldom/xmldom": "^0.9.3",
 		"adm-zip": "^0.5.16",
 		"async": "^3.2.6",
-		"axios": "^1.13.2",
+		"axios": "^1.21.1",
 		"code-d-api": "^0.2.1",
 		"jsdom": "^27.3.0",
 		"mkdirp": "^3.0.1",
@@ -1514,7 +1514,7 @@
 		"@types/which": "^3.0.4",
 		"@vscode/test-electron": "^2.5.2",
 		"eslint": "^9.39.2",
-		"glob": "^13.0.0",
+		"glob": "^14.0.0",
 		"globals": "^16.5.0",
 		"husky": "^9.1.7",
 		"jiti": "^2.6.1",
