@@ -126,6 +126,33 @@ const servedVersionCache = {
 export function findLatestServeD(force: boolean = false, channel?: string): Thenable<Release | undefined> {
 	if (!channel) channel = config(null).get("servedReleaseChannel", "stable");
 
+	if (channel == "nightly")
+	{
+		const switchToNightlyNG = 'Switch to channel `nightly-ng`';
+		const switchToStable = 'Switch to channel `stable`';
+		vscode.window.showWarningMessage(
+			`serve-d: Release channel 'nightly' is no longer supported.\nPlease switch to 'stable' or 'nightly-ng'.`,
+			switchToNightlyNG,
+			switchToStable,
+		).then(selected => {
+			if (selected == undefined) {
+				return;
+			}
+			if (selected == switchToNightlyNG) {
+				config(null).update("servedReleaseChannel", "nightly-ng", vscode.ConfigurationTarget.Global).then(() =>
+					vscode.window.showInformationMessage("Please restart the editor to apply the channel switch.")
+				);
+			}
+			if (selected == switchToStable) {
+				config(null).update("servedReleaseChannel", "stable", vscode.ConfigurationTarget.Global).then(() =>
+					vscode.window.showInformationMessage("Please restart the editor to apply the channel switch.")
+				);
+			}
+		});
+
+		channel = "frozen";
+	}
+
 	if (channel == "frozen" && force) channel = "stable";
 
 	if (channel == "frozen" || config(null).get("forceCompileServeD", false)) return Promise.resolve(undefined);
@@ -148,7 +175,7 @@ export function findLatestServeD(force: boolean = false, channel?: string): Then
 	}
 	const timeout = force ? 8000 : 3000;
 
-	if (channel == "nightly") {
+	if (channel == "nightly-ng") {
 		return fetchNightlyRelease(timeout);
 	} else if (channel == "stable" || channel == "beta") {
 		return fetchLatestTaggedRelease(channel, timeout);
