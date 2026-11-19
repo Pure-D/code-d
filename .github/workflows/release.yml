@@ -12,31 +12,39 @@ jobs:
               with:
                   submodules: true
 
-            - name: Set Node.js 22.x
+            - name: Set up Node.js
               uses: actions/setup-node@v7
               with:
                   node-version: 22.x
 
-            - name: npm install
+            - name: Install dependencies
               run: npm install
 
-            - name: typescript
+            - name: Run TypeScript compiler
               run: npx tsc
 
+            - name: Build VSIX bundle
+              uses: HaaLeo/publish-vscode-extension@1b8df468b849f76a143b8c18bf0ffa2075398d12 # == v2.1.0
+              id: build-vsix
+              with:
+                  dryRun: true
+                  pat: 'stub'
+
             - name: Publish to Open VSX Registry
-              uses: HaaLeo/publish-vscode-extension@v0
-              id: publishToOpenVSX
+              uses: HaaLeo/publish-vscode-extension@1b8df468b849f76a143b8c18bf0ffa2075398d12
               with:
                   pat: ${{ secrets.OPEN_VSX_TOKEN }}
+                  extensionFile: ${{ steps.build-vsix.outputs.vsixPath }}
+
             - name: Publish to Visual Studio Marketplace
-              uses: HaaLeo/publish-vscode-extension@v0
+              uses: HaaLeo/publish-vscode-extension@1b8df468b849f76a143b8c18bf0ffa2075398d12
               with:
                   pat: ${{ secrets.VS_MARKETPLACE_TOKEN }}
                   registryUrl: https://marketplace.visualstudio.com
-                  extensionFile: ${{ steps.publishToOpenVSX.outputs.vsixPath }}
-                  packagePath: ""
-            - name: Upload
-              uses: djn24/add-asset-to-release@v1
+                  extensionFile: ${{ steps.build-vsix.outputs.vsixPath }}
+
+            - name: Upload VSIX file to release page on GitHub
+              uses: djn24/add-asset-to-release@dc65328ec8f76d54e5e71d930011a1da182a8406 # == v2
               with:
                   token: ${{secrets.GITHUB_TOKEN}}
-                  path: ${{ steps.publishToOpenVSX.outputs.vsixPath }}
+                  path: ${{ steps.build-vsix.outputs.vsixPath }}
