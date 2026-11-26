@@ -452,6 +452,15 @@ async function installServeDEntry(
 				}
 				cb(null);
 			} catch (e) {
+				if (title === "DCD") {
+					// A running dcd-server holds the old .exe files on Windows.
+					// serve-d replaces DCD on startup, so don't fail the serve-d install.
+					installationLog.appendLine(
+						"Failed to extract DCD (files may be in use), will let serve-d update it: " + e,
+					);
+					fs.unlink(outputPath, () => {});
+					return cb(null);
+				}
 				return cb(e instanceof Error ? e : 1);
 			}
 		} else if (ext == ".tar.xz" || ext == ".tar.gz") {
