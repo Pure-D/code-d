@@ -440,7 +440,7 @@ async function installServeDEntry(
 		installationLog.appendLine("Extracting " + fileName);
 		if (ext == ".zip") {
 			try {
-				new AdmZip(outputPath).extractAllTo(outputFolder);
+				new AdmZip(outputPath).extractAllTo(outputFolder, true);
 				try {
 					installationLog.appendLine("Deleting " + outputPath);
 					fs.unlink(outputPath, (err) => {
