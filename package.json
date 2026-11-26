@@ -369,11 +369,13 @@
 							"stable",
 							"beta",
 							"nightly",
+							"nightly-ng",
 							"frozen"
 						],
 						"enumDescriptions": [
 							"Always fetch the latest pre-compiled stable release binaries from the serve-d GitHub repository",
 							"Always fetch the latest pre-compiled potentially unstable pre-release binaries from the serve-d GitHub repository",
+							"DEPRECATED: Use `stable` or `nightly-ng` instead.",
 							"Always fetch the latest pre-compiled nightly binaries from the serve-d GitHub repository. These are being generated every night (UTC) if something changed and tests passed.",
 							"Don't do any update checks for serve-d (not recommended if you don't update serve-d outside code-d)"
 						],

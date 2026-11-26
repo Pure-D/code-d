@@ -17,6 +17,12 @@ jobs:
               with:
                   node-version: 22.x
 
+            - name: Set up AdvanceCOMP
+              run: |
+                  export DEBIAN_FRONTEND=noninteractive
+                  apt-get update
+                  apt-get -y install advancecomp
+
             - name: Install dependencies
               run: npm install
 
@@ -29,6 +35,9 @@ jobs:
               with:
                   dryRun: true
                   pat: 'stub'
+
+            - name: Recompress VSIX bundle
+              run: advzip -z4 ${{ steps.build-vsix.outputs.vsixPath }}
 
             - name: Publish to Open VSX Registry
               uses: HaaLeo/publish-vscode-extension@1b8df468b849f76a143b8c18bf0ffa2075398d12

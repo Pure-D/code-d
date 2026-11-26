@@ -126,6 +126,33 @@ const servedVersionCache = {
 export function findLatestServeD(force: boolean = false, channel?: string): Thenable<Release | undefined> {
 	if (!channel) channel = config(null).get("servedReleaseChannel", "stable");
 
+	if (channel == "nightly")
+	{
+		const switchToNightlyNG = 'Switch to channel `nightly-ng`';
+		const switchToStable = 'Switch to channel `stable`';
+		vscode.window.showWarningMessage(
+			`serve-d: Release channel 'nightly' is no longer supported.\nPlease switch to 'stable' or 'nightly-ng'.`,
+			switchToNightlyNG,
+			switchToStable,
+		).then(selected => {
+			if (selected == undefined) {
+				return;
+			}
+			if (selected == switchToNightlyNG) {
+				config(null).update("servedReleaseChannel", "nightly-ng", vscode.ConfigurationTarget.Global).then(() =>
+					vscode.window.showInformationMessage("Please restart the editor to apply the channel switch.")
+				);
+			}
+			if (selected == switchToStable) {
+				config(null).update("servedReleaseChannel", "stable", vscode.ConfigurationTarget.Global).then(() =>
+					vscode.window.showInformationMessage("Please restart the editor to apply the channel switch.")
+				);
+			}
+		});
+
+		channel = "frozen";
+	}
+
 	if (channel == "frozen" && force) channel = "stable";
 
 	if (channel == "frozen" || config(null).get("forceCompileServeD", false)) return Promise.resolve(undefined);
@@ -148,7 +175,7 @@ export function findLatestServeD(force: boolean = false, channel?: string): Then
 	}
 	const timeout = force ? 8000 : 3000;
 
-	if (channel == "nightly") {
+	if (channel == "nightly-ng") {
 		return fetchNightlyRelease(timeout);
 	} else if (channel == "stable" || channel == "beta") {
 		return fetchLatestTaggedRelease(channel, timeout);
@@ -413,7 +440,7 @@ async function installServeDEntry(
 		installationLog.appendLine("Extracting " + fileName);
 		if (ext == ".zip") {
 			try {
-				new AdmZip(outputPath).extractAllTo(outputFolder);
+				new AdmZip(outputPath).extractAllTo(outputFolder, true);
 				try {
 					installationLog.appendLine("Deleting " + outputPath);
 					fs.unlink(outputPath, (err) => {
@@ -425,6 +452,15 @@ async function installServeDEntry(
 				}
 				cb(null);
 			} catch (e) {
+				if (title === "DCD") {
+					// A running dcd-server holds the old .exe files on Windows.
+					// serve-d replaces DCD on startup, so don't fail the serve-d install.
+					installationLog.appendLine(
+						"Failed to extract DCD (files may be in use), will let serve-d update it: " + e,
+					);
+					fs.unlink(outputPath, () => {});
+					return cb(null);
+				}
 				return cb(e instanceof Error ? e : 1);
 			}
 		} else if (ext == ".tar.xz" || ext == ".tar.gz") {
