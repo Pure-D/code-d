@@ -69,7 +69,7 @@ Click a link below to open pages about certain topics.
 
 - [Troubleshooting](troubleshooting.md)
 
-- [Changelog](../CHANGELOG.md)
+- [Changelog](../changelog.md)
 
 ---
 

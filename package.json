@@ -393,7 +393,7 @@
 						"scope": "application",
 						"default": true,
 						"order": 3,
-						"markdownDescription": "Open `CHANGELOG.md` on every code-d update (which also includes serve-d updates) to see new features."
+						"markdownDescription": "Open `changelog.md` on every code-d update (which also includes serve-d updates) to see new features."
 					}
 				}
 			},

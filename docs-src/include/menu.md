@@ -21,4 +21,4 @@
 
 - [Troubleshooting](troubleshooting.md)
 
-- [Changelog](../CHANGELOG.md)
+- [Changelog](../changelog.md)

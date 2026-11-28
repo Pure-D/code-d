@@ -1157,7 +1157,7 @@ function greetNewUsers(context: vscode.ExtensionContext) {
 			if (config(null).get("showUpdateChangelogs", true)) {
 				vscode.commands.executeCommand(
 					"markdown.showPreview",
-					vscode.Uri.file(context.asAbsolutePath("CHANGELOG.md")),
+					vscode.Uri.file(context.asAbsolutePath("changelog.md")),
 					{ locked: true },
 				);
 				const disableChangelog = "Never show changelog";
