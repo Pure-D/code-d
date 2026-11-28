@@ -123,6 +123,10 @@ code-d and serve-d
 - Compiler selection is now machine-specific (better for remote dev like through SSH or WSL)
 - Improved startup behavior and reload notifications
 - Better handling of missing or partial LSP client capabilities
+- The release channel `nightly` has been deprecated.
+  - Please use `stable` or `nightly-ng` instead.
+    - A pop-up dialog has been added to will ask the user whether they want to migrate over to one of these channels.
+  - Rationale: The `nightly` release channel is commonly used these days as it has been treated by users as a quick workaround for various previously unfixed issues in older _serve-d_ versions. In order not to migrate the unsuspecting masses to actually unstable versions, the new `nightly-ng` release channel has been created. Furthermore, the _immutable releases_ feature of GitHub froze the legacy `nightly` release of _serve-d_ in an unfortunate turn of of events.
 
 ## Internal Architecture & Maintenance
 
