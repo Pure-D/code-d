@@ -16,7 +16,7 @@
   - [vibe.d Web App](vibe-d.md)
   - [Configuring non-DUB projects](non-dub.md)
 - **[Troubleshooting](troubleshooting.md)**
-- [Changelog](../CHANGELOG.md)
+- [Changelog](../changelog.md)
 
 </div>
 
