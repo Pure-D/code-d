@@ -50,8 +50,8 @@ jobs:
       - name: Set up AdvanceCOMP
         run: |
           export DEBIAN_FRONTEND=noninteractive
-          apt-get update
-          apt-get -y install advancecomp
+          sudo apt-get update
+          sudo apt-get -y install advancecomp
 
       - name: Update version number
         run: |
